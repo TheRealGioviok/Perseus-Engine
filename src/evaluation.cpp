@@ -982,8 +982,8 @@ Score pestoEval(Position* pos) {
 #define kingSafetyMG 2
 #define kingSafetyEG 0
         Score matCntOnShelter[] = {
-            Score(popcount(bb[P] & kingShelter[WHITE])) * PAWNSHELTERVALUE + Score(popcount(bb[N] & kingShelter[WHITE])) * KNIGHTSHELTERVALUE + Score(popcount(bb[B] & kingShelter[WHITE])) * BISHOPSHELTERVALUE,
-            Score(popcount(bb[p] & kingShelter[BLACK])) * PAWNSHELTERVALUE + Score(popcount(bb[n] & kingShelter[BLACK])) * KNIGHTSHELTERVALUE + Score(popcount(bb[b] & kingShelter[BLACK])) * BISHOPSHELTERVALUE,
+            Score(popcount(bb[P] & kingShelter[WHITE]) * PAWNSHELTERVALUE + popcount(bb[N] & kingShelter[WHITE]) * KNIGHTSHELTERVALUE + popcount(bb[B] & kingShelter[WHITE]) * BISHOPSHELTERVALUE),
+            Score(popcount(bb[p] & kingShelter[BLACK]) * PAWNSHELTERVALUE + popcount(bb[n] & kingShelter[BLACK]) * KNIGHTSHELTERVALUE + popcount(bb[b] & kingShelter[BLACK]) * BISHOPSHELTERVALUE)
         };
         Score mobSquaresInKingShelter[] = {
             (Score)popcount(mobilityAreaBlack & kingShelter[WHITE]),
