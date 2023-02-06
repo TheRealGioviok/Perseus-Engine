@@ -1,6 +1,8 @@
 #pragma once
 #include "types.h"
 #include "move.h"
+#include "tables.h"
+#include "magic.h"
 #include "BBmacros.h"
 
 constexpr BitBoard pawnAttacks[2][64] = {
@@ -128,7 +130,15 @@ void initSliderAttacks(bool sliderType);
  * @param occupancy The occupancy.
  * @return The bishop attack table.
  */
-BitBoard getBishopAttack(int square, U64 occupancy);
+inline BitBoard getBishopAttack(int square, U64 occupancy) {
+    // get bishop attacks assuming current board occupancy
+    occupancy &= bishopMasks[square];
+    occupancy *= bishopMagicNumbers[square];
+    occupancy >>= 64ULL - (U64)bishopRelevantBits[square];
+
+    // return bishop attacks
+    return bishopAttacks[square][occupancy];
+}
 
 /**
  * @brief The getRookAttack function returns the rook attacks for a given square and occupancy.
@@ -136,7 +146,15 @@ BitBoard getBishopAttack(int square, U64 occupancy);
  * @param occupancy The occupancy.
  * @return The rook attack table.
  */
-BitBoard getRookAttack(int square, U64 occupancy);
+inline BitBoard getRookAttack(int square, U64 occupancy) {
+    // get rook attacks assuming current board occupancy
+    occupancy &= rookMasks[square];
+    occupancy *= rookMagicNumbers[square];
+    occupancy >>= 64ULL - (U64)rookRelevantBits[square];
+
+    // return rook attacks
+    return rookAttacks[square][occupancy];
+}
 
 /**
  * @brief The getQueenAttack function returns the queen attacks for a given square and occupancy.
@@ -144,7 +162,9 @@ BitBoard getRookAttack(int square, U64 occupancy);
  * @param occupancy The occupancy.
  * @return The queen attack table.
  */
-BitBoard getQueenAttack(int square, U64 occupancy);
+inline BitBoard getQueenAttack(int square, U64 occupancy) {
+    return getBishopAttack(square, occupancy) | getRookAttack(square, occupancy);
+}
 
 /**
  * @brief The xrayRookAttacks function determines the xray rook attacks for a given square, blockers and occupancy
@@ -153,7 +173,11 @@ BitBoard getQueenAttack(int square, U64 occupancy);
  * @param square The square.
  * @return The xray rook attacks.
  */
-BitBoard xrayRookAttacks(U64 occupancy, U64 blockers, int square);
+inline BitBoard xRayRookAttacks(BitBoard occupancy, BitBoard blockers, Square square){
+    BitBoard attacks = getRookAttack(square, occupancy); // First, we generate normal rook attacks
+    blockers &= attacks; // Then, we remove the blockers (the candidate pinned pieces) from the attacks
+    return attacks ^ getRookAttack(square, occupancy ^ blockers); // Then we calculate attacks like if the blockers were not there. Finally we only take those attacks only in this new set of blockers.
+}
 
 /**
  * @brief The xrayBishopAttacks function determines the xray bishop attacks for a given square, blockers and occupancy
@@ -162,7 +186,11 @@ BitBoard xrayRookAttacks(U64 occupancy, U64 blockers, int square);
  * @param square The square.
  * @return The xray bishop attacks.
  */
-BitBoard xrayBishopAttacks(U64 occupancy, U64 blockers, int square);
+inline BitBoard xRayBishopAttacks(BitBoard occupancy, BitBoard blockers, Square square){
+    BitBoard attacks = getBishopAttack(square, occupancy); // First, we generate normal bishop attacks
+    blockers &= attacks; // Then, we remove the blockers (the candidate pinned pieces) from the attacks
+    return attacks ^ getBishopAttack(square, occupancy ^ blockers); // Then we calculate attacks like if the blockers were not there. Finally we only take those attacks only in this new set of blockers.
+}
 
 /**
  * @brief The getPinnedPieces function returns the squares of a certain bitboard that are pinned to a certain square.
@@ -173,4 +201,17 @@ BitBoard xrayBishopAttacks(U64 occupancy, U64 blockers, int square);
  * @param opBQ The opponent's Bishop and Queen bitboard.
  * @return The pinned pieces, if any.
  */
-BitBoard getPinnedPieces(U64 occupancy, BitBoard ownPieces, Square pinSquare, BitBoard opRQ, BitBoard opBQ);
+inline BitBoard getPinnedPieces(BitBoard occupancy, BitBoard ownPieces, Square pinSquare, BitBoard opRQ, BitBoard opBQ){
+    BitBoard pinned = 0;
+    BitBoard pinner = xRayRookAttacks(occupancy, ownPieces, pinSquare) & opRQ; // We generate the pinners for the rooks
+    while (pinner){
+        Square sq = popLsb(pinner);
+        pinned |= squaresBetween[sq][pinSquare] & ownPieces; // We add the squares between the pin square and the pinner to the pinned pieces
+    }
+    pinner = xRayBishopAttacks(occupancy, ownPieces, pinSquare) & opBQ; // We generate the pinners for the bishops
+    while (pinner){
+        Square sq = popLsb(pinner);
+        pinned |= squaresBetween[sq][pinSquare] & ownPieces; // We add the squares between the pin square and the pinner to the pinned pieces
+    }
+    return pinned;
+}

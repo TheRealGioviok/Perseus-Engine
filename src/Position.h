@@ -105,7 +105,7 @@ struct Position{
      * @param square The square to check.
      * @return The piece on the given square.
      */
-    Piece pieceOn(Square square);
+    inline Piece pieceOn(Square square);
 
     /**
     * @brief The legalizeTTMove function verifies if the TT move is Legal

@@ -487,7 +487,7 @@ static inline constexpr U64 getMvvLvaScore(U64 p1, U64 p2) {
  * @param ml The move list to add the move to.
  * @param move The move to add.
  */
-void Position::addMove( MoveList* ml, ScoredMove move){
+inline void Position::addMove( MoveList* ml, ScoredMove move){
 
     Piece movedPiece = movePiece(move);
     Piece capturedPiece = moveCapture(move);

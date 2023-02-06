@@ -52,7 +52,6 @@ void initTables() {
 
     for (Piece piece = P; piece <= K; piece++) {
         for(Square square = a8; square < noSquare; square++) {
-            //std::cout << "Initializing PeSTo tables: " << square + piece * 64 + 1 << "/384\r";
             // White
             mgTables[piece][square] = mgPestoTables[piece][square] + mgValues[piece];
             egTables[piece][square] = egPestoTables[piece][square] + egValues[piece];
