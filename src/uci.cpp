@@ -518,6 +518,17 @@ void uciLoop(Game* game){
 }
 
 int inputWaiting(){
+#ifndef WIN32
+    fd_set readfds;
+    struct timeval tv;
+    FD_ZERO(&readfds);
+    FD_SET(fileno(stdin), &readfds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    select(16, &readfds, 0, 0, &tv);
+
+    return (FD_ISSET(fileno(stdin), &readfds));
+#else
     static int init = 0, pipe;
     static HANDLE inh;
     DWORD dw;
@@ -541,6 +552,7 @@ int inputWaiting(){
         GetNumberOfConsoleInputEvents(inh, &dw);
         return dw <= 1 ? 0 : dw;
     }
+#endif
 }
 
 void readInput(Game *game){
@@ -559,7 +571,11 @@ void readInput(Game *game){
         // loop to read bytes from STDIN
         do {
             // read bytes from STDIN
+#ifndef WIN32
+            bytes = read(fileno(stdin), input, 256);
+#else
             bytes = _read(_fileno(stdin), input, 256);
+#endif
         }
         // until bytes available
         while (bytes < 0);
