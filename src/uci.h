@@ -20,9 +20,7 @@ extern std::string hashDumpFile; // Additional opening hash file
  * @brief The getTimeMs function returns the current time in milliseconds.
  * @return The current time in milliseconds.
  */
-U64 getTime64(){
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-}
+U64 getTime64();
 
 /**
  * @brief The uciLoop function is the main function of the engine.

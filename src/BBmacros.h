@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include <iostream>
+
 #include <cassert>
 
 #ifdef _MSC_VER
@@ -62,18 +62,7 @@ const std::string coords[65] = {
  * @brief The printBitBoard function prints a bitboard.
  * @notes For debugging purposes.
  */
-void printBitBoard(BitBoard bitboard) {
-	// loop over board ranks
-	for (int rank = 0; rank < 8; rank++) {
-		std::cout << 8 - rank << "  ";
-		for (int file = 0; file < 8; file++) {
-			Square square = rank * 8 + file;
-			std::cout << testBit(bitboard, square) << " ";
-		}
-		std::cout << "\n";
-	}
-	std::cout << "\n   a b c d e f g h\n\n";
-}
+void printBitBoard(BitBoard bitboard);
 
 #if defined(__GNUC__)  // GCC, Clang, ICC
 

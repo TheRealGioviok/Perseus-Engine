@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "history.h"
 #include "zobrist.h"
+#include "evaluation.h"
 #include "uci.h"
 #include "tt.h"
 #include <iostream>
@@ -159,7 +160,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
         if (alpha != origAlpha) ttStoreFlag = hashEXACT;
         else ttStoreFlag = hashALPHA;
     }
-    if (!stopped) writeTT(pos.hashKey, bestScore, -infinity, depth, ttStoreFlag, bestMove);
+    if (!stopped) writeTT(pos.hashKey, bestScore, -infinity, depth, ttStoreFlag, bestMove, ply);
 #endif
     
     return bestScore;

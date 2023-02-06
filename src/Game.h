@@ -1,6 +1,5 @@
 #pragma once
 #include "Position.h"
-#include "evaluation.h"
 
 class Game {
 public:
@@ -154,20 +153,4 @@ public:
      * @note This is a call to the uci communicate(Game) function.
      */
     void communicate();
-};
-
-struct Stack { // UNUSED
-    Move* pv;
-    S16 ply;
-    Move currMove;
-    Move excludedMove;
-    Move killers[2];
-    Score staticEval;
-    Score statScore;
-    U32 moveCount;
-    bool inCheck;
-    bool ttPv;
-    bool ttHit;
-    U8 doubleEctensions;
-    U64 cutoffCnt;
 };

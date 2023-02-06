@@ -2,6 +2,7 @@
 #include "movegen.h"
 #include "tables.h"
 #include "history.h"
+#include "evaluation.h"
 #include "zobrist.h"
 #include <iostream>
 

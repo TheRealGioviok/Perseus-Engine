@@ -24,12 +24,5 @@ static inline S32 stat_bonus(int depth) {
 }
 
 #define MAXHISTORYABS 16384
-void updateHistoryBonus(S32* current, Depth depth, bool isBonus) {
-    const S32 delta = isBonus ? stat_bonus(depth) : -stat_bonus(depth);
-    *current += delta - *current * abs(delta) / MAXHISTORYABS;
-}
-
-void updateHistoryScore(S32* current, S32 score, bool isBonus) {
-    *current += score - *current * abs(score) / MAXHISTORYABS;
-}
-	
+void updateHistoryBonus(S32 *current, Depth depth, bool isBonus);
+void updateHistoryScore(S32 *current, S32 score, bool isBonus);

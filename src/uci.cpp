@@ -2,6 +2,7 @@
 #include "types.h"
 #include "movegen.h"
 #include "tables.h"
+#include "evaluation.h"
 #include "uci.h"
 #include <fstream>
 #include <vector>
@@ -588,4 +589,12 @@ void UCICommunicate(Game *game){
         game->stopped = true;
     }
     readInput(game);
+}
+
+/**
+ * @brief The getTimeMs function returns the current time in milliseconds.
+ * @return The current time in milliseconds.
+ */
+U64 getTime64() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }

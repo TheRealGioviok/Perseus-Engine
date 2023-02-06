@@ -56,23 +56,7 @@
  * @param piece The piece to get the character of.
  * @return The character of the piece.
  */
-char getPieceChar(int piece) {
-	switch (piece) {
-		case P: return 'P';
-		case N:	return 'N';
-		case B:	return 'B';
-		case R:	return 'R';
-		case Q:	return 'Q';
-		case K:	return 'K';
-		case p:	return 'p';
-		case n:	return 'n';
-		case b:	return 'b';
-		case r:	return 'r';
-		case q:	return 'q';
-		case k:	return 'k';
-		default: return '.';
-	}
-}
+char getPieceChar(int piece);
 
 /**
  * @brief The getPromotionPieceChar function returns the character of a promotion piece.
@@ -80,57 +64,21 @@ char getPieceChar(int piece) {
  * @return The character of the piece.
  * @note This function is used for the promotion piece in the UCI protocol, since pieces are always in lowercase, despite the side to move.
  */
-char getPromotionPieceChar(int piece) {
-	switch (piece) {
-		case P: case p:	return 'p';
-		case N: case n:	return 'n';
-		case B: case b:	return 'b';
-		case R: case r:	return 'r';
-		case Q: case q:	return 'q';
-		case K: case k:	return 'k';
-		default:		return ' ';
-	}
-}
+char getPromotionPieceChar(int piece);
 
 /**
  * @brief The charToPiece function returns the piece of a character.
  * @param piece The character to get the piece of.
  * @return The piece of the character.
  */
-int charToPiece(char piece) {
-	switch (piece) {
-		case 'P': return P;
-		case 'N': return N;
-		case 'B': return B;
-		case 'R': return R;
-		case 'Q': return Q;
-		case 'K': return K;
-		case 'p': return p;
-		case 'n': return n;
-		case 'b': return b;
-		case 'r': return r;
-		case 'q': return q;	
-		case 'k': return k;
-		default: return NOPIECE;
-	}
-}
+int charToPiece(char piece);
 
 /**
  * @brief The squareFromName function returns the square of a square name.
  * @param squareName The pointer to a string containing the square name.
  * @return The square of the square name.
  */
-Square squareFromName(const char* squareName) {
-	// We expect square names to be in the form of "a1"
-	// so we can just use the ASCII values to get the file and rank
-	// and then multiply by 8 to get the square number
-	U8 rank = 7 - (squareName[1] - '1');
-	U8 file = squareName[0] - 'a';
-	if (rank < 0 || rank > 7 || file < 0 || file > 7) {
-		return noSquare;
-	}
-	return rank * 8 + file;
-}
+Square squareFromName(const char* squareName);
 
 struct MoveList {
 	//moves

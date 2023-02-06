@@ -11,3 +11,12 @@ Move killerTable[2][maxPly];
 
 // counter move table
 Move counterMoveTable[NUM_PIECES][NUM_SQUARES];
+
+void updateHistoryBonus(S32* current, Depth depth, bool isBonus) {
+    const S32 delta = isBonus ? stat_bonus(depth) : -stat_bonus(depth);
+    *current += delta - *current * abs(delta) / MAXHISTORYABS;
+}
+
+void updateHistoryScore(S32* current, S32 score, bool isBonus) {
+    *current += score - *current * abs(score) / MAXHISTORYABS;
+}
