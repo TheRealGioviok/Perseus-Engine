@@ -227,8 +227,6 @@ int executeCommand(Game* game, char* command) {
     if (uciNewGame){
         initTT();
         game->reset();
-        // If hash dump is present, load it.
-        std::cout << "hashDump is " << hashDumpFile << "\n";
         if (hashDumpFile != "") {
             std::cout << "info string Loading opening hash dump...\n";
             std::ifstream f;
@@ -242,9 +240,7 @@ int executeCommand(Game* game, char* command) {
             // Close
             f.close();
         }    
-    }
-
-    if (uci) {
+    }else if (uci) {
         uciStr();
         return 0;
     }
@@ -467,9 +463,6 @@ void uciLoop(Game* game){
 
     // define user / GUI input buffer
     char userInput[MAX_INPUT_LENGTH];
-
-    // print the engine info
-    uciStr();
 
     std::string input = "";
 
