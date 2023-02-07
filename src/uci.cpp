@@ -2,6 +2,7 @@
 #include "types.h"
 #include "movegen.h"
 #include "tables.h"
+#include "bench.h"
 #include "evaluation.h"
 #include "uci.h"
 #include <fstream>
@@ -64,6 +65,7 @@ int executeCommand(Game* game, char* command) {
     char* moveList = strstr((char*)command, "movelist");
     char* exec = strstr((char*)command, "exec");
     char* flip = strstr((char*)command, "flip");
+    char* bench = strstr((char*)command, "bench");
     // The order of execution is the following:
     // - uci
     
@@ -81,6 +83,7 @@ int executeCommand(Game* game, char* command) {
     // - divide
     // - movelist
     // - tt
+    // - bench
 
     if (uciNewGame){
         initTT();
@@ -270,6 +273,10 @@ int executeCommand(Game* game, char* command) {
     if (moveList) game->divide(1);
 
     if (exec) execCommand(game, command);
+
+    if (bench){
+        benchmark();
+    }
 
     return 0;
 }

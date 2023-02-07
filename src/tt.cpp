@@ -44,26 +44,14 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
     score -= ply * (score < -mateValue);
     score += ply * (score > mateValue);
     ttEntry *entry = &tt[key % (ttEntryCount)];
-    // Iterate through the entries. 
-    // We will replace the first entry which has a lower or equal depth, or, in the case of same key, entry->depth < depth + (flags == hashEXACT) << 1.
-    if (entry->hashKey == key) {
-        if (entry->depth + (entry->flags == hashEXACT) * TTEXACTDEPTHBONUS <= depth + (flags == hashEXACT) * TTEXACTDEPTHBONUS) {
-            entry->score = score;
-            entry->eval = staticEval;
-            entry->depth = depth;
-            entry->flags = flags;
-            entry->bestMove = move;
-            return;
-        }
-        return;
-    }
-    if (entry->depth + (entry->flags == hashEXACT) * TTEXACTDEPTHBONUS <= depth + (flags == hashEXACT) * TTEXACTDEPTHBONUS) {
-        entry->hashKey = key;
+    // Iterate through the entries.
+    if (depth >= entry->depth) {
         entry->score = score;
         entry->eval = staticEval;
         entry->depth = depth;
         entry->flags = flags;
         entry->bestMove = move;
+        return;
     }
     return;
 }
