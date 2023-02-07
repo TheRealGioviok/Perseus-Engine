@@ -82,6 +82,31 @@ int executeCommand(Game* game, char* command) {
     // - movelist
     // - tt
 
+    if (uciNewGame){
+        initTT();
+        game->reset();
+        if (hashDumpFile != "") {
+            std::cout << "info string Loading opening hash dump...\n";
+            std::ifstream f;
+            f.open(hashDumpFile, std::ios::out | std::ios::binary);
+            if (!f.good()) {
+                std::cout << "info string Invalid file or path to file! Falling back to empty TT\n";
+            }
+            else {
+                f.read((char*)tt, ttBucketCount * sizeof(ttBucket));
+            }
+            // Close
+            f.close();
+        }    
+    }
+    else if (uci) {
+        uciStr();
+        return 0;
+    }
+
+    if (isReady)
+        std::cout << "readyok" << std::endl;
+
     if (flip) {
         game->pos.reflect();
         return 0;
@@ -125,7 +150,7 @@ int executeCommand(Game* game, char* command) {
         exit(-1);
     }
 
-    if (isReady) std::cout << "readyok" << std::endl;
+    
 	
 
     if (setOption){
@@ -224,26 +249,7 @@ int executeCommand(Game* game, char* command) {
     }
 
 
-    if (uciNewGame){
-        initTT();
-        game->reset();
-        if (hashDumpFile != "") {
-            std::cout << "info string Loading opening hash dump...\n";
-            std::ifstream f;
-            f.open(hashDumpFile, std::ios::out | std::ios::binary);
-            if (!f.good()) {
-                std::cout << "info string Invalid file or path to file! Falling back to empty TT\n";
-            }
-            else {
-                f.read((char*)tt, ttBucketCount * sizeof(ttBucket));
-            }
-            // Close
-            f.close();
-        }    
-    }else if (uci) {
-        uciStr();
-        return 0;
-    }
+    
 
     if (position) positionCommand(game, command);
     

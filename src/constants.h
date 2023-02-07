@@ -71,6 +71,9 @@ enum Squares {
 // FUNCTIONALITY SYMBOL DEFINITIONS
 
 // SEARCH TECHNIQUES
+/* -- TT PARAMETERS */
+#define TTEXACTDEPTHBONUS 				1
+
 
 /* -- SEARCH TECHNIQUES -- */
 #define ENABLETTSCORING                 true // If true the transposition table is used for cutoffs. The transposition table is automatically implemented in the search function if this is true.
@@ -85,10 +88,11 @@ enum Squares {
 #define ENABLEPROMOTIONSORTING          true // If true the move ordering is sorted by the promotion heuristic. The move ordering is automatically implemented in the search function if this is true.
 #define ENABLEPSQTDIFFSORTING           true // If true the move ordering is sorted by the difference in the piece square tables. The move ordering is automatically implemented in the search function if this is true.
 #define ENABLEHISTORYHEURISTIC          true // If true the history heuristic is used. The history heuristic is automatically implemented in the search function if this is true.
-#define ENABLETTORDERING                false // If true the transposition table is used for move ordering. The transposition table is automatically implemented in the search function if this is true. ENABLETTSCORING must be true for this to work.
+#define ENABLETTORDERING                true // If true the transposition table is used for move ordering. The transposition table is automatically implemented in the search function if this is true. ENABLETTSCORING must be true for this to work.
 #define ENABLEKILLERHEURISTIC           true // If true the killer heuristic is used. The killer heuristic is automatically implemented in the search function if this is true.
 #define ENABLECOUNTERMOVEHEURISTIC      true // If true the counter move heuristic is used. The counter move heuristic is automatically implemented in the search function if this is true.
 #define ENABLEBETTERHISTORYFORMULA      true // If true the better history formula is used. The better history formula is automatically implemented in the search function if this is true.
+
 // QUIESCENCE TECHNIQUES
 #define ENABLEQUIESCENCESEARCH          true // If true the quiescence search is used. The quiescence search is automatically implemented in the search function if this is true.
 #define EVASIONSINQUIESCENCE            true // If true the search function will search for evasions in quiescence search. Quiescence search must be enabled for this to work.

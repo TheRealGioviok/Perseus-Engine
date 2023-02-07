@@ -55,7 +55,7 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
         ttEntry* sentry = &(entry->entries[i]);
         // Same hash key?
         if (sentry->hashKey == key) {
-            if (sentry->depth <= depth + ((flags == hashEXACT) * 2)) {
+            if (sentry->depth <= depth + (flags == hashEXACT) * TTEXACTDEPTHBONUS) {
                 sentry->score = score;
                 sentry->eval = staticEval;
                 sentry->depth = depth;
@@ -66,7 +66,7 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
             return; // If we found an entry with the same key, we must return in any case, in order to not duplicate.
         }
     }
-    for (; i > 0 && entry->entries[i].depth + (!!(entry->entries[i].flags & hashEXACT)) <= depth + (!!(flags & hashEXACT));)--i;
+    for (; i > 0 && entry->entries[i].depth + (!!(entry->entries[i].flags & hashEXACT)) * TTEXACTDEPTHBONUS <= depth + (!!(flags & hashEXACT)) * TTEXACTDEPTHBONUS;)--i;
     
     ttEntry* sentry = &(entry->entries[i]);
     // Shift entries to the right, starting from this
@@ -78,7 +78,6 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
     sentry->flags = flags;
     sentry->bestMove = move;
     return;
-    
 }
 
 Score getCachedEval(HashKey h){
@@ -95,8 +94,11 @@ void cacheEval(HashKey h, Score s){
 
 U16 hashfull() {
     U16 cnt = 0;
-	for (int i = 0; i < 1000; i++) {
+	for (int i = 0; i < 250; i++) {
 		if (tt[i].entries[0].hashKey && (!(tt[i].entries[0].hashKey & hashOLD))) cnt++;
-	}
+        if (tt[i].entries[1].hashKey && (!(tt[i].entries[0].hashKey & hashOLD))) cnt++;
+        if (tt[i].entries[2].hashKey && (!(tt[i].entries[0].hashKey & hashOLD))) cnt++;
+        if (tt[i].entries[3].hashKey && (!(tt[i].entries[0].hashKey & hashOLD))) cnt++;
+    }
 	return cnt;
 }
