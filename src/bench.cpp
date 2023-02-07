@@ -1,5 +1,6 @@
 #include "types.h"
 #include "Game.h"
+#include "tt.h"
 #include "uci.h"
 const char *benchmarkfens[50] = {
     "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14",
@@ -55,14 +56,17 @@ const char *benchmarkfens[50] = {
 };
 
 S32 benchmark(){
+    initTT();
     U64 nodes = 0;
     U64 totalTime = 0;
+    Game game;
+    game.searchMode = 1;
+    game.depth = 6;
     for(int i = 0; i < 50; i++){
         std::cout << "Benchmarking position " << i << std::endl;
-        Game game;
         U64 currTime = getTime64();
         game.parseFEN((char*)benchmarkfens[i]);
-        game.search(-infinity, infinity, 6);
+        game.startSearch(false);
         nodes += game.nodes;
         totalTime += getTime64() - currTime;
     }
