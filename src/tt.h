@@ -79,7 +79,7 @@ struct ttBucket {
 
 
 // Transposition table and evaluation hash table
-extern ttBucket* tt;
+extern ttEntry* tt;
 extern evalHashEntry* evalHash;
 
 /**

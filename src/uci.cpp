@@ -93,7 +93,7 @@ int executeCommand(Game* game, char* command) {
                 std::cout << "info string Invalid file or path to file! Falling back to empty TT\n";
             }
             else {
-                f.read((char*)tt, ttBucketCount * sizeof(ttBucket));
+                f.read((char*)tt, ttEntryCount * sizeof(ttEntry));
             }
             // Close
             f.close();
@@ -114,36 +114,33 @@ int executeCommand(Game* game, char* command) {
 	
     if (sanity) {
         int cnt = 0;
-        for (U64 i = 0; i < ttBucketCount; i++) {
-            ttBucket bucket = tt[i];
-            for (U64 j = 0; j < ttBucketSize; j++) {
-                ttEntry entry = bucket.entries[j];
-                if ((entry.eval != -infinity) && (entry.eval != entry.score)) {
-                    Depth depth;
-                    Score score, eval;
-                    HashKey hash;
-                    PackedMove bestMove;
-                    U8 flags;
+        for (U64 i = 0; i < ttEntryCount; i++) {
+            ttEntry entry = tt[i];
+            if ((entry.eval != -infinity) && (entry.eval != entry.score)) {
+                Depth depth;
+                Score score, eval;
+                HashKey hash;
+                PackedMove bestMove;
+                U8 flags;
 
-                    depth = entry.depth;
-                    score = entry.score;
-                    eval = entry.eval;
-                    hash = entry.hashKey;
-                    bestMove = entry.bestMove;
-                    flags = entry.flags;
+                depth = entry.depth;
+                score = entry.score;
+                eval = entry.eval;
+                hash = entry.hashKey;
+                bestMove = entry.bestMove;
+                flags = entry.flags;
 
-                    std::cout << "TT for hashKey " << std::hex << hash << std::dec << ":\n";
-                    std::cout << "Score: " << score << "\t\tStatic eval: " << eval << "\n";
-                    std::cout << "Depth: " << (int)depth << "\n";
-                    std::cout << "BestMove: " << getMoveString(bestMove) << "\n";
-                    std::cout << "Flags:\n" <<
-                        (flags & hashALPHA ? "\thashALPHA\n" : "") <<
-                        (flags & hashBETA ? "\thashBETA\n" : "") <<
-                        (flags & hashEXACT ? "\thashEXACT\n" : "") <<
-                        (flags & hashSINGULAR ? "\thashALPHA\n" : "") <<
-                        (flags & hashINVALID ? "\thashALPHA\n" : "") << "\n\n";
-                    if (cnt++ >= 100) goto megabreak;
-                }
+                std::cout << "TT for hashKey " << std::hex << hash << std::dec << ":\n";
+                std::cout << "Score: " << score << "\t\tStatic eval: " << eval << "\n";
+                std::cout << "Depth: " << (int)depth << "\n";
+                std::cout << "BestMove: " << getMoveString(bestMove) << "\n";
+                std::cout << "Flags:\n" <<
+                    (flags & hashALPHA ? "\thashALPHA\n" : "") <<
+                    (flags & hashBETA ? "\thashBETA\n" : "") <<
+                    (flags & hashEXACT ? "\thashEXACT\n" : "") <<
+                    (flags & hashSINGULAR ? "\thashALPHA\n" : "") <<
+                    (flags & hashINVALID ? "\thashALPHA\n" : "") << "\n\n";
+                if (cnt++ >= 100) goto megabreak;
             }
         }
     megabreak:
@@ -210,7 +207,7 @@ int executeCommand(Game* game, char* command) {
             return 1;
         }
         // Binary dump (faster and smaller than human readable dump)
-        file.write((char*)tt, ttBucketCount * sizeof(ttBucket));
+        file.write((char*)tt, ttEntryCount * sizeof(ttEntry));
         // now we can close the file
         file.close();
         return 0;

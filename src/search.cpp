@@ -327,9 +327,9 @@ bmove:
 #if ENABLETTSCORING
     if (halveTT) {
         // Age pv table
-        for (U64 i = 0; i < ttBucketCount; i++) for (U64 j = 0; j < ttBucketSize; j++) {
-            tt[i].entries[j].depth = std::max(0, tt[i].entries[j].depth - 2 - 12 * (((tt[i].entries[j].flags) & hashOLD)> 0));
-            tt[i].entries[j].flags |= hashOLD;
+        for (U64 i = 0; i < ttEntryCount; i++) {
+            tt[i].depth = std::max(Depth(0), Depth(tt[i].depth - Depth(2)));
+            tt[i].flags |= hashOLD;
         }
     }
 #endif

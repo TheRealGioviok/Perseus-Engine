@@ -123,7 +123,7 @@ void Game::reset(){
 
     // Clear hashTable
 #if ENABLETTSCORING
-    memset(tt, 0, ttBucketCount * sizeof(ttBucket));
+    memset(tt, 0, ttEntryCount * sizeof(ttEntry));
 #endif
 
     // Clear eval cache

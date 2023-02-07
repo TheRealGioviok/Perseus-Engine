@@ -72,7 +72,7 @@ enum Squares {
 
 // SEARCH TECHNIQUES
 /* -- TT PARAMETERS */
-#define TTEXACTDEPTHBONUS 				1
+#define TTEXACTDEPTHBONUS 				0 // The depth bonus for exact entries in the transposition table.
 
 
 /* -- SEARCH TECHNIQUES -- */
@@ -81,14 +81,14 @@ enum Squares {
 #define ENABLEPREFETCHING               true // If true the prefetching is used. The prefetching is automatically implemented in the search function if this is true.
 
 /* -- PRUNING TECHNIQUES -- */
-#define ENABLENMP                       true // If true the null move pruning is used. The null move pruning is automatically implemented in the search function if this is true.
+#define ENABLENMP                       false // If true the null move pruning is used. The null move pruning is automatically implemented in the search function if this is true.
 
 /* -- MOVE ORDERING TECHNIQUES -- */
 #define ENABLEMVVLVASORTING             true // If true the move ordering is sorted by the MVV/LVA heuristic. The move ordering is automatically implemented in the search function if this is true.
 #define ENABLEPROMOTIONSORTING          true // If true the move ordering is sorted by the promotion heuristic. The move ordering is automatically implemented in the search function if this is true.
 #define ENABLEPSQTDIFFSORTING           true // If true the move ordering is sorted by the difference in the piece square tables. The move ordering is automatically implemented in the search function if this is true.
 #define ENABLEHISTORYHEURISTIC          true // If true the history heuristic is used. The history heuristic is automatically implemented in the search function if this is true.
-#define ENABLETTORDERING                true // If true the transposition table is used for move ordering. The transposition table is automatically implemented in the search function if this is true. ENABLETTSCORING must be true for this to work.
+#define ENABLETTORDERING                false // If true the transposition table is used for move ordering. The transposition table is automatically implemented in the search function if this is true. ENABLETTSCORING must be true for this to work.
 #define ENABLEKILLERHEURISTIC           true // If true the killer heuristic is used. The killer heuristic is automatically implemented in the search function if this is true.
 #define ENABLECOUNTERMOVEHEURISTIC      true // If true the counter move heuristic is used. The counter move heuristic is automatically implemented in the search function if this is true.
 #define ENABLEBETTERHISTORYFORMULA      true // If true the better history formula is used. The better history formula is automatically implemented in the search function if this is true.
