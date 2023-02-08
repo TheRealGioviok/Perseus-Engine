@@ -47,20 +47,20 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     Score ttScore = -infinity;
     Move ttMove = 0;
     U8 ttFlags;
+    if (tte != nullptr) {
+        ttScore = tte->score;
+        ttFlags = tte->flags;
+        ttMove = tte->bestMove;
 
-    if (tte != nullptr && !RootNode && tte->depth >= depth) {
-       ttScore = tte->score;
-       ttFlags = tte->flags;
-       ttMove = tte->bestMove;
-       
-       // Account for mate values
-       ttScore += ply * (ttScore < -mateValue);
-       ttScore -= ply * (ttScore > mateValue);
-       
-       if (ttFlags & hashEXACT) return ttScore;
-       if ((ttFlags & hashALPHA)) alpha = std::max(alpha, ttScore);
-       else if ((ttFlags & hashBETA)) beta = std::min(beta, ttScore);
-       if (alpha >= beta) return ttScore;
+        // Account for mate values
+        ttScore += ply * (ttScore < -mateValue);
+        ttScore -= ply * (ttScore > mateValue);
+        if (!RootNode && tte->depth >= depth){
+            if (ttFlags & hashEXACT) return ttScore;
+            if ((ttFlags & hashLOWER)) alpha = std::max(alpha, ttScore);
+            else if ((ttFlags & hashUPPER)) beta = std::min(beta, ttScore);
+            if (alpha >= beta) return ttScore;
+        }
     }
 #endif
 
@@ -104,6 +104,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     //// Sort ttMove
 #if ENABLETTORDERING
     if (ttMove) {
+        
         for (int i = 0; i < moveList.count; i++) {
             if (packedMoveCompare(ttMove, (Move)moveList.moves[i])) {
                 moveList.moves[0] = moveList.moves[i];
@@ -155,10 +156,10 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
 
 #if ENABLETTSCORING
     U8 ttStoreFlag = hashINVALID;
-    if (bestScore >= beta) ttStoreFlag = hashBETA;
+    if (bestScore >= beta) ttStoreFlag = hashLOWER;
     else {
         if (alpha != origAlpha) ttStoreFlag = hashEXACT;
-        else ttStoreFlag = hashALPHA;
+        else ttStoreFlag = hashUPPER;
     }
     if (!stopped) writeTT(pos.hashKey, bestScore, -infinity, depth, ttStoreFlag, bestMove, ply);
 #endif
@@ -301,8 +302,7 @@ void Game::startSearch(bool halveTT = true){
         S64 locNodes = nodes; // Save nodes for nps calculation
         U64 timer1 = getTime64(); // Save time for nps calculation
         score = search(-infinity, infinity, currSearch); // Search at depth currSearch
-        if (stopped)
-            goto bmove;
+        if (stopped) goto bmove;
         bestMove = pvTable[0][0];
         U64 timer2 = getTime64();
         if (score < -mateValue && score > -mateScore)

@@ -9,13 +9,14 @@ constexpr U64 ttBucketCount = ttEntryCount / ttBucketSize; // 2^18
 constexpr U64 evalHashSize = 1048576;                      // 2^20
 
 // The enum of hashFlags
-enum HashFlag {
-	hashALPHA = 1,
-	hashBETA = 2,
-	hashEXACT = 4,
-	hashINVALID = 8,
-	hashOLD = 16,
-	hashSINGULAR = 32
+enum HashFlag
+{
+    hashUPPER = 1,
+    hashLOWER = 2,
+    hashEXACT = 4,
+    hashINVALID = 8,
+    hashOLD = 16,
+    hashSINGULAR = 32
 };
 
 struct evalHashEntry {

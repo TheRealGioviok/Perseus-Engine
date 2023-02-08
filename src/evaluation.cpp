@@ -885,12 +885,6 @@ Score pestoEval(Position* pos) {
                     }
                 }
             }
-
-            
-
-            
-
-            
         }
     }
     //std::cout << "Rook checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";

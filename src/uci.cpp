@@ -138,8 +138,8 @@ int executeCommand(Game* game, char* command) {
                 std::cout << "Depth: " << (int)depth << "\n";
                 std::cout << "BestMove: " << getMoveString(bestMove) << "\n";
                 std::cout << "Flags:\n" <<
-                    (flags & hashALPHA ? "\thashALPHA\n" : "") <<
-                    (flags & hashBETA ? "\thashBETA\n" : "") <<
+                    (flags & hashUPPER ? "\thashUPPER\n" : "") <<
+                    (flags & hashLOWER ? "\thashLOWER\n" : "") <<
                     (flags & hashEXACT ? "\thashEXACT\n" : "") <<
                     (flags & hashSINGULAR ? "\thashALPHA\n" : "") <<
                     (flags & hashINVALID ? "\thashALPHA\n" : "") << "\n\n";
@@ -168,7 +168,7 @@ int executeCommand(Game* game, char* command) {
         // all the numbers will be in hex format
         // the flags will be a string of the following characters:
         // A = hashALPHA
-        // B = hashBETA
+        // B = hashLOWER
         // E = hashEXACT
         // S = hashSINGULAR
         // I = hashINVALID
@@ -241,11 +241,11 @@ int executeCommand(Game* game, char* command) {
         std::cout << "Depth: " << (int)depth << "\n";
         std::cout << "BestMove: " << getMoveString(bestMove) << "\n";
         std::cout << "Flags:\n" <<
-            (flags & hashALPHA ? "\thashALPHA\n" : "") <<
-            (flags & hashBETA ? "\thashBETA\n" : "") <<
+            (flags & hashUPPER ? "\thashUPPER\n" : "") <<
+            (flags & hashLOWER ? "\thashLOWER\n" : "") <<
             (flags & hashEXACT ? "\thashEXACT\n" : "") <<
-            (flags & hashSINGULAR ? "\thashALPHA\n" : "") <<
-            (flags & hashINVALID ? "\thashALPHA\n" : "") << "\n";
+            (flags & hashSINGULAR ? "\thashSingular\n" : "") <<
+            (flags & hashINVALID ? "\thashInvalid\n" : "") << "\n";
     }
 
 

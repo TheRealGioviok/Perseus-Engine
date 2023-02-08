@@ -88,7 +88,7 @@ enum Squares {
 #define ENABLEPROMOTIONSORTING          true // If true the move ordering is sorted by the promotion heuristic. The move ordering is automatically implemented in the search function if this is true.
 #define ENABLEPSQTDIFFSORTING           true // If true the move ordering is sorted by the difference in the piece square tables. The move ordering is automatically implemented in the search function if this is true.
 #define ENABLEHISTORYHEURISTIC          true // If true the history heuristic is used. The history heuristic is automatically implemented in the search function if this is true.
-#define ENABLETTORDERING                false // If true the transposition table is used for move ordering. The transposition table is automatically implemented in the search function if this is true. ENABLETTSCORING must be true for this to work.
+#define ENABLETTORDERING                true // If true the transposition table is used for move ordering. The transposition table is automatically implemented in the search function if this is true. ENABLETTSCORING must be true for this to work.
 #define ENABLEKILLERHEURISTIC           true // If true the killer heuristic is used. The killer heuristic is automatically implemented in the search function if this is true.
 #define ENABLECOUNTERMOVEHEURISTIC      true // If true the counter move heuristic is used. The counter move heuristic is automatically implemented in the search function if this is true.
 #define ENABLEBETTERHISTORYFORMULA      true // If true the better history formula is used. The better history formula is automatically implemented in the search function if this is true.
@@ -100,7 +100,6 @@ enum Squares {
 
 // EVALUATION TECHNIQUES
 #define USINGEVALCACHE                  true // If true the evaluation cache is used. The evaluation cache is automatically implemented in the evaluation function if this is true.
-
 
 // DEBUGGING SYMBOL DEFINITIONS
 #define DEBUG                           false // If true the debugging is used. The debugging is automatically implemented in the code if this is true.

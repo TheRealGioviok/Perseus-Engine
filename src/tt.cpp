@@ -46,6 +46,7 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
     ttEntry *entry = &tt[key % (ttEntryCount)];
     // Iterate through the entries.
     if (depth >= entry->depth) {
+        entry->hashKey = key;
         entry->score = score;
         entry->eval = staticEval;
         entry->depth = depth;
