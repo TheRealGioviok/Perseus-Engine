@@ -7,7 +7,7 @@ THIS := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 ROOT := $(realpath $(THIS)/..)
 CXX := g++
 TARGET:= Perseus
-CXXFLAGS := -Wall -std=c++17
+CXXFLAGS := -Wall -std=c++17 -O3 -flto -DNDEBUG -lm
 NATIVE := -march=native
 
 NAME := $(TARGET)
@@ -25,11 +25,17 @@ endif
 SOURCES := $(wildcard *.cpp)
 EXECUTABLE := $(NAME)$(SUFFIX)
 
+.PHONY: all debug release
+
+all: release
+
 # Debug target
 debug: CXXFLAGS += -g -O0
+debug: $(EXECUTABLE)
 
 # Release target
-release: CXXFLAGS += -O3
+release: CXXFLAGS += -O3 -flto -DNDEBUG -lm
+release: $(EXECUTABLE)
 
 
 # Build the program
