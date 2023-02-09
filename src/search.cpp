@@ -27,6 +27,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     pvLen[ply] = ply;
 
     const bool RootNode = ply == 0;
+    const bool PVNode = beta - alpha > 1;
 
     // Draws - mate distance
     if (!RootNode) {
@@ -55,11 +56,11 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
         // Account for mate values
         ttScore += ply * (ttScore < -mateValue);
         ttScore -= ply * (ttScore > mateValue);
-        if (!RootNode && tte->depth >= depth){
+        if (!RootNode && tte->depth >= depth && !PVNode){
             if (ttFlags & hashEXACT) return ttScore;
             if ((ttFlags & hashLOWER)) alpha = std::max(alpha, ttScore);
             else if ((ttFlags & hashUPPER)) beta = std::min(beta, ttScore);
-            if (alpha >= beta) return ttScore;
+            if (alpha >= beta ) return ttScore;
         }
     }
 #endif
@@ -77,7 +78,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
 
 #if ENABLENMP
     // Null move pruning
-    if (!RootNode && depth >= 3 && !inCheck && okToReduce(pos.lastMove) && abs(alpha) < mateValue && abs(beta) < mateValue) {
+    if (!PVNode && depth >= 3 && !inCheck && isOk(pos.lastMove) && okToReduce(pos.lastMove) && !pos.mayBeZugzwang() && abs(alpha) < mateValue && abs(beta) < mateValue) {
        // make null move
        makeNullMove();
        constexpr Depth R = 2;
@@ -125,16 +126,23 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
             if (RootNode && depth >= LOGROOTMOVEDEPTH) {
                 std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl;
             }
-            Score score = -search(-beta, -alpha, depth - 1);
+            Score score;
+            if (moveSearched == 0) score = -search(-beta, -alpha, depth - 1);
+            else {
+                score = -search(-alpha - 1, -alpha, depth - 1);
+                if (PVNode && (score > alpha && score < beta)) score = -search(-beta, -alpha, depth - 1);
+            }
             restore(save);
 
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = currMove;
-                pvTable[ply][ply] = currMove;
-                if (ply + 1 < maxPly) {
-                    memcpy(&(pvTable[ply][ply + 1]), &(pvTable[ply + 1][ply + 1]), sizeof(Move)* (static_cast<unsigned long long>(pvLen[ply + 1]) - ply - 1));
-                    pvLen[ply] = pvLen[ply + 1];
+                if (PVNode){
+                    pvTable[ply][ply] = currMove;
+                    if (ply + 1 < maxPly) {
+                        memcpy(&(pvTable[ply][ply + 1]), &(pvTable[ply + 1][ply + 1]), sizeof(Move)* (static_cast<unsigned long long>(pvLen[ply + 1]) - ply - 1));
+                        pvLen[ply] = pvLen[ply + 1];
+                    }
                 }
             }
 

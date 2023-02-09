@@ -81,7 +81,7 @@ enum Squares {
 #define ENABLEPREFETCHING               true // If true the prefetching is used. The prefetching is automatically implemented in the search function if this is true.
 
 /* -- PRUNING TECHNIQUES -- */
-#define ENABLENMP                       false // If true the null move pruning is used. The null move pruning is automatically implemented in the search function if this is true.
+#define ENABLENMP                       true // If true the null move pruning is used. The null move pruning is automatically implemented in the search function if this is true.
 
 /* -- MOVE ORDERING TECHNIQUES -- */
 #define ENABLEMVVLVASORTING             true // If true the move ordering is sorted by the MVV/LVA heuristic. The move ordering is automatically implemented in the search function if this is true.
