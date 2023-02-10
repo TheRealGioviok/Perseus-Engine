@@ -26,3 +26,4 @@ static inline S32 stat_bonus(int depth) {
 #define MAXHISTORYABS 16384
 void updateHistoryBonus(S32 *current, Depth depth, bool isBonus);
 void updateHistoryScore(S32 *current, S32 score, bool isBonus);
+void updateHH(bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount);

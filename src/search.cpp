@@ -100,6 +100,8 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     pvLen[ply] = ply;
 
     MoveList moveList;
+    Move quiets[128];
+    U16 quietsCount = 0;
     generateMoves(moveList); // Already sorted, except for ttMove
 
     //// Sort ttMove
@@ -123,6 +125,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
         if (makeMove(currMove)) {
             ++moveSearched;
             ++nodes;
+            if (okToReduce(currMove)) quiets[quietsCount++] = currMove;
             if (RootNode && depth >= LOGROOTMOVEDEPTH) {
                 std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl;
             }
@@ -149,9 +152,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
             if (score > alpha) {
                 alpha = score;
                 if (score >= beta) {
-#if ENABLEHISTORYHEURISTIC
-                    updateHistoryBonus(&historyTable[pos.side][moveSource(currMove)][moveTarget(currMove)], depth, true);
-#endif
+                    updateHH(pos.side, depth, currMove, quiets, quietsCount);
                     break;
                 }
             }
