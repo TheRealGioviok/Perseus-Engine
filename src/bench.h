@@ -1,3 +1,3 @@
 #include "types.h"
 
-U64 benchmark();
+S32 benchmark();

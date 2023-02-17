@@ -92,13 +92,13 @@ struct Position{
      * @brief The generateMoves function generates all pseudo legal moves for the current side.
      * @param moveList The moveList to fill with the generated moves.
      */
-    void generateMoves(MoveList& moveList);
+    void generateMoves(MoveList& moveList, Ply ply);
 
     /**
      * @brief The generateCaptures function generates all pseud legal captures for the current side.
      * @param moveList The moveList to fill with the generated moves.
      */
-    void generateCaptures(MoveList &moveList);
+    void generateCaptures(MoveList &moveList, Ply ply);
 
     /**
      * @brief The pieceOn function returns the piece on the given square.
@@ -117,8 +117,9 @@ struct Position{
      * @brief The addMove function adds a move to the move list.
      * @param ml The move list to add the move to.
      * @param move The move to add.
+     * @param ply The current ply.
      */
-    inline void addMove(MoveList *ml, ScoredMove move);
+    inline void addMove(MoveList *ml, ScoredMove move, Ply ply);
 
     /**
 	* @brief The getFEN function returns the FEN string of the current position

@@ -216,8 +216,6 @@ void initEvalTables() {
 		// Outer ring
         {
             BitBoard ring = 0ULL;
-            S8 rank = rankOf(sq1);
-            S8 file = fileOf(sq1);
             for (int i = -2; i < 3; i++) {
                 for (int j = -2; j < 3; j++) {
                     if (rank + i >= 0 && rank + i < 8 && file + j >= 0 && file + j < 8) {

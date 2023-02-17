@@ -9,7 +9,7 @@ typedef signed short S16;
 typedef unsigned char U8;
 typedef signed char S8;
 typedef signed char Depth;
-typedef unsigned char Ply;
+typedef signed short Ply;
 
 // The BitBoard type is a typedef for U64.
 typedef unsigned long long BitBoard;

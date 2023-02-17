@@ -1,16 +1,14 @@
 #pragma once
 
+#pragma once
 #include "Game.h"
-#ifndef _WIN32
-#include <windows.h>
-#else
-#include <Windows.h>
-#endif
 #ifndef _WIN32
 #include <unistd.h>
 #else
+#include <Windows.h>
 #include <io.h>
 #endif
+#include <cstring>
 #include <chrono>
 
 extern bool quit;

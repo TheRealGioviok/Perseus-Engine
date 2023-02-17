@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
+#include <cassert>
 
 /**
  * @brief The perft function calculates the number of leaf nodes in the subtree rooted at the current position.
@@ -32,7 +33,7 @@ U64 Game::divide(Depth depth) {
     std::cout << "Starting divide at depth " << (int)depth << std::endl;
     nodes = 0;
     MoveList moveList;
-    pos.generateMoves(moveList);
+    pos.generateMoves(moveList, ply);
     Position save = pos;
 
     for (int i = 0; i < moveList.count; i++) {
@@ -69,7 +70,7 @@ U64 Game::_perft(Depth depth) {
     }
     U64 n = 0;
     MoveList moveList;
-    pos.generateMoves(moveList);
+    pos.generateMoves(moveList, ply);
     Position save = pos;
     ++ply;
     for (int i = 0; i < moveList.count; i++) {
@@ -97,7 +98,6 @@ void Game::reset(){
     winc = 0;
     binc = 0;
     stopped = false;
-    bestMove = 0;
     lastScore = 0;
     ply = 0;
     repetitionCount = 0;
@@ -150,15 +150,19 @@ bool Game::parseFEN(char *FEN){
  * @return True if the move list was executed successfully, false otherwise (state of the position is undefined).
  */
 bool Game::executeMoveList(char *moveList){
+    repetitionCount = 0;
+    pos.fiftyMove = 0;
+
     std::stringstream ss(moveList);
     std::string move;
+    
     while (ss >> move) {
-        //std::cout << "Newmove is now: " << move << "\n";
-       Move parsedMove = getLegal(move.c_str());
+        Move parsedMove = getLegal(move.c_str());
+        repetitionTable[repetitionCount++] = pos.hashKey;
         if (!pos.makeMove(parsedMove)) return false;
         if (!isReversible(parsedMove))repetitionCount = 0;
-        repetitionTable[repetitionCount++] = pos.hashKey;
     }
+
     return true;
 }
 
@@ -169,7 +173,7 @@ bool Game::executeMoveList(char *moveList){
  */
 Move Game::getLegal(std::string move){
     MoveList moveList;
-    pos.generateMoves(moveList);
+    pos.generateMoves(moveList, ply);
     for (int i = 0; i < moveList.count; i++) {
         if (move == getMoveString(moveList.moves[i])) {
             return (Move)moveList.moves[i];
@@ -191,16 +195,16 @@ void Game::print(){
  * @brief The generateMoves function generates all pseudo legal moves for the current position. It is a call to the internal Position::generateMoves function.
  * @param moves The MoveList object to store the moves in.
  */
-void Game::generateMoves(MoveList &moves){
-    pos.generateMoves(moves);
+void Game::generateMoves(MoveList &moves, Ply ply){
+    pos.generateMoves(moves, ply);
 }
 
 /**
  * @brief The generateCaptures function generates all pseud legal captures for the current position. It is a call to the internal Position::generateCaptures function.
  * @param moves The MoveList object to store the moves in.
  */
-void Game::generateCaptures(MoveList &moves){
-    pos.generateCaptures(moves);
+void Game::generateCaptures(MoveList &moves, Ply ply){
+    pos.generateCaptures(moves, ply);
 }
 
 /**
@@ -209,6 +213,8 @@ void Game::generateCaptures(MoveList &moves){
  * @return True if the move was made, false otherwise (state of the position is undefined).
  */
 bool Game::makeMove(Move move){
+    assert(repetitionCount <= std::numeric_limits<Ply>::max());
+    assert(repetitionCount >= 0);
     ++ply;
 #if DETECTREPETITION
     repetitionTable[repetitionCount++] = pos.hashKey;
@@ -228,10 +234,9 @@ bool Game::isRepetition() {
     // Get the hash key of the current position
     HashKey hashKey = pos.hashKey;
     // Iterate over the repetition table
-    for (int i = repetitionCount - 1 ; i >= repetitionCount - pos.fiftyMove - 1; i -= 2) {
+    for (int i = std::max(0,repetitionCount - pos.fiftyMove); i < repetitionCount - 2; i++) {
         // If the hash key is found, return true
-        if (hashKey == repetitionTable[i])
-            return true;
+        if (repetitionTable[i] == hashKey) return true;
     }
     // If the hash key is not found, return false
     return false;
@@ -372,8 +377,9 @@ Score Game::evaluate(){
                     else score -= 15 * chebyshevDistance[ourKing][ourPiece];
                 }
             }
-        }
             return score;
+        }
+            
         case 3:
             // We are winning in all endgames except K v KNN ans some difficult K v KPP
             if (popcount(ourKnights) == 2) {
@@ -440,6 +446,8 @@ Score Game::evaluate(){
 }
 
 void Game::makeNullMove() {
+    assert(repetitionCount <= std::numeric_limits<Ply>::max());
+    assert(repetitionCount >= 0);
     ++ply;
 #if DETECTREPETITION
     repetitionTable[++repetitionCount] = pos.hashKey;
@@ -448,6 +456,8 @@ void Game::makeNullMove() {
 }
 
 void Game::restore(Position save) {
+    assert(repetitionCount <= std::numeric_limits<Ply>::max());
+    assert(repetitionCount > 0);
     --ply;
 #if DETECTREPETITION
     --repetitionCount;

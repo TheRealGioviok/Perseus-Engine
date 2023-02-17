@@ -15,7 +15,8 @@ ttEntry::ttEntry() {
     bestMove = 0;
     depth = 0;
     flags = hashINVALID;
-    score = 0;
+    score = -infinity;
+    eval = -infinity;
 }
 
 // Transposition table and evaluation hash table

@@ -19,7 +19,7 @@ static inline S32 stat_bonus(int depth) {
 	// Approximately verbatim stat bonus formula from Stockfish // Formula from Ethereal, who took it from stockfish. I love chess programming.
     return depth > 13 ? 32 : 16 * depth * depth + 128 * std::max(depth - 1, 0);
 #else
-	return depth * depth;
+	return std::min(16 * depth * depth, 1200);
 #endif
 }
 

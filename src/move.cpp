@@ -54,7 +54,7 @@ Square squareFromName(const char* squareName) {
 	// and then multiply by 8 to get the square number
 	U8 rank = 7 - (squareName[1] - '1');
 	U8 file = squareName[0] - 'a';
-	if (rank < 0 || rank > 7 || file < 0 || file > 7) {
+	if (rank > 7 || file > 7) {
 		return noSquare;
 	}
 	return rank * 8 + file;

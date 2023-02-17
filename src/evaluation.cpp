@@ -421,9 +421,9 @@ Score pestoEval(Position* pos) {
         // TODO: consider the whole path to promotion (needs  to have attack mask set)
         eg[WHITE] -= (candidateScore * 4 * std::min(pawnFile, U8(7 - pawnFile))) >> 2;
 
-        Score egScore = (1 + !isOpposed + isConnected - isDoubled) * ((1 + (KPendgame && candidate)) << candidate);
-        eg[WHITE] += (7 - chebyshevDistance[pawn][whiteKing]) * egScore;
-        eg[WHITE] -= (7 - chebyshevDistance[pawn][blackKing]) * egScore;
+        Score pawnEgScore = (1 + !isOpposed + isConnected - isDoubled) * ((1 + (KPendgame && candidate)) << candidate);
+        eg[WHITE] += (7 - chebyshevDistance[pawn][whiteKing]) * pawnEgScore;
+        eg[WHITE] -= (7 - chebyshevDistance[pawn][blackKing]) * pawnEgScore;
         if (KPendgame && passed) {
             Square promoSquare = lsb(squaresAhead(pawn) & ranks(0));
             eg[WHITE] += 500 * (std::min(U8(5), chebyshevDistance[pawn][promoSquare]) < (chebyshevDistance[blackKing][promoSquare] - side));
@@ -533,9 +533,9 @@ Score pestoEval(Position* pos) {
         // TODO: consider the whole path to promotion (needs  to have attack mask set)
         eg[BLACK] -= (candidateScore * 4 * std::min(pawnFile, U8(7 - pawnFile))) >> 2;
 
-        Score egScore = (1 + !isOpposed + isConnected - isDoubled) * ((1 + (KPendgame && candidate)) << candidate);
-        eg[BLACK] += (7 - chebyshevDistance[pawn][blackKing]) * egScore;
-        eg[BLACK] -= (7 - chebyshevDistance[pawn][whiteKing]) * egScore;
+        Score pawnEgScore = (1 + !isOpposed + isConnected - isDoubled) * ((1 + (KPendgame && candidate)) << candidate);
+        eg[BLACK] += (7 - chebyshevDistance[pawn][blackKing]) * pawnEgScore;
+        eg[BLACK] -= (7 - chebyshevDistance[pawn][whiteKing]) * pawnEgScore;
         if (KPendgame && passed) {
             Square promoSquare = lsb(squaresBehind(pawn) & ranks(7));
             eg[BLACK] += 500 * (std::min(U8(5), chebyshevDistance[pawn][promoSquare]) < (chebyshevDistance[whiteKing][promoSquare] - 1 + side));

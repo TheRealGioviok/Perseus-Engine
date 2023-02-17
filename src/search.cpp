@@ -12,8 +12,20 @@
 static inline Score mateIn(U16 ply) { return ((mateScore) - (ply)); }
 static inline Score matedIn(U16 ply) { return ((-mateScore) + (ply)); }
 
+static inline Depth reduction(Depth d, U16 m, bool isPv){
+    S32 r = reductionTable[d] * reductionTable[m];
+    return std::max(0, ((r + 1642 - (512 * isPv)) / 1024));
+}
+
+static inline void updateKillers(Move m, Move lastMove, U16 ply){
+    if (m != killerTable[ply][0]) {
+        killerTable[ply][1] = killerTable[ply][0];
+        killerTable[ply][0] = m;
+    }
+    counterMoveTable[movePiece(lastMove)][moveTarget(lastMove)] = m;
+}
+
 Score Game::search(Score alpha, Score beta, Depth depth) {
-	
     // Comms
     if (stopped) return 0;
     if ((nodes & comfrequency) == 0) {
@@ -81,7 +93,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     if (!PVNode && depth >= 3 && !inCheck && isOk(pos.lastMove) && okToReduce(pos.lastMove) && !pos.mayBeZugzwang() && abs(alpha) < mateValue && abs(beta) < mateValue) {
        // make null move
        makeNullMove();
-       constexpr Depth R = 2;
+       Depth R = 2;
        Score nullScore = -search(-beta, -beta + 1, depth - R);
        restore(save);
        if (nullScore >= beta) {
@@ -102,7 +114,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     MoveList moveList;
     Move quiets[128];
     U16 quietsCount = 0;
-    generateMoves(moveList); // Already sorted, except for ttMove
+    generateMoves(moveList, ply); // Already sorted, except for ttMove
 
     //// Sort ttMove
 #if ENABLETTORDERING
@@ -117,6 +129,10 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
         }
     }
 #endif
+
+    // Clear killers for the next ply
+    killerTable[ply + 1][0] = 0;
+    killerTable[ply + 1][1] = 0;
 
     // Iterate through moves
     for (int i = 0; i < moveList.count; i++) {
@@ -153,6 +169,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
                 alpha = score;
                 if (score >= beta) {
                     updateHH(pos.side, depth, currMove, quiets, quietsCount);
+                    if (okToReduce(currMove)) updateKillers(currMove, pos.lastMove, ply);
                     break;
                 }
             }
@@ -206,7 +223,7 @@ Score Game::quiescence(Score alpha, Score beta){
     // Generate moves
     MoveList moveList;
 #if EVASIONSINQUIESCENCE
-    inCheck ? generateMoves(moveList) : generateCaptures(moveList);
+    inCheck ? generateMoves(moveList, ply) : generateCaptures(moveList, ply);
 #else
     generateCaptures(moveList);
 #endif
@@ -296,7 +313,7 @@ void Game::startSearch(bool halveTT = true){
     currSearch = 1;
 
     Score score = search(-infinity, infinity, 1);
-    bestMove = pvTable[0][0];
+    Move bestMove = pvTable[0][0];
     
     std::cout << "info score depth 1 cp " << score << " nodes " << nodes << " moves " ;
     printMove(bestMove);
@@ -304,7 +321,7 @@ void Game::startSearch(bool halveTT = true){
 
     if (depth < 0) depth = maxPly - 1;
     if (stopped) goto bmove;
-
+    
     for (currSearch = 2; (currSearch <= depth) && currSearch >= 2 && !stopped; currSearch++) {
         seldepth = 0; // Reset seldepth
         ply = 0;

@@ -18,7 +18,6 @@ public:
     S32 rootDelta = infinity;
     Score lastScore = 0;
     bool stopped = false;
-    Move bestMove = 0;
 
     /**
      * @brief The print function prints the position to stdout.
@@ -30,7 +29,7 @@ public:
      * @param depth The depth to calculate to.
      * @return The number of leaf nodes in the subtree rooted at the current position.
      */
-    U64 perft(Depth depth);
+    U64 perft(Depth _depth);
 
     /**
      * @brief The _perft function calculates the number of leaf nodes in the subtree rooted at the current position.
@@ -38,7 +37,7 @@ public:
      * @return The number of leaf nodes in the subtree rooted at the current position.
      * @note This function is used by the perft function.
      */
-    U64 _perft(Depth depth);
+    U64 _perft(Depth _depth);
 
     /**
      * @brief The divide function calculates the number of leaf nodes in the subtree rooted at the current position.
@@ -79,14 +78,16 @@ public:
     /**
      * @brief The generateMoves function generates all pseudo legal moves for the current position. It is a call to the internal Position::generateMoves function.
      * @param moves The MoveList object to store the moves in.
+     * @param ply The ply of the current position.
      */
-    void generateMoves(MoveList& moves);
+    void generateMoves(MoveList& moves, Ply ply);
 
     /**
      * @brief The generateCaptures function generates all pseud legal captures for the current position. It is a call to the internal Position::generateCaptures function.
      * @param moves The MoveList object to store the moves in.
+     * @param ply The ply of the current position.
      */
-    void generateCaptures(MoveList &moves);
+    void generateCaptures(MoveList &move, Ply ply);
 
     /**
      * @brief The makeMove function makes a move on the board. It is a call to the internal Position::makeMove function, but it also updates the repetition table, as well as the ply.
