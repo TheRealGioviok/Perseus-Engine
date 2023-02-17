@@ -17,7 +17,7 @@ static inline Depth reduction(Depth d, U16 m, bool isPv){
     return std::max(0, ((r + 1642 - (512 * isPv)) / 1024));
 }
 
-static inline void updateKillers(Move m, Move lastMove, U16 ply){
+static inline void updateKillers(Move m, Move lastMove, Ply ply){
     if (m != killerTable[0][ply]) {
         killerTable[1][ply] = killerTable[0][ply];
         killerTable[0][ply] = m;
@@ -130,9 +130,9 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     }
 #endif
 
-    // Clear killers for the next ply
-    killerTable[0][ply + 1] = 0;
-    killerTable[1][ply + 1] = 0;
+    // // Clear killers for the next ply
+    // killerTable[0][ply + 1] = 0;
+    // killerTable[1][ply + 1] = 0;
 
     // Iterate through moves
     for (int i = 0; i < moveList.count; i++) {

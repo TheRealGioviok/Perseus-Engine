@@ -493,28 +493,17 @@ inline void Position::addMove(MoveList* ml, ScoredMove move, Ply ply) {
     Piece capturedPiece = moveCapture(move);
     Square from = moveSource(move);
     Square to = moveTarget(move);
-	
-	
-    if (isCapture(move)) {
+
+    Move oMove = onlyMove(move);
+    if (isCapture(oMove)) {
         ml->moves[ml->count++] = (getMvvLvaScore(movedPiece, capturedPiece)) | move;
         return;
     }
-    else if (isPromotion(move)){
-        ml->moves[ml->count++] = (((U64)promotionBonus[movePromotion(move)] * 1000) <<32) | move;
+    else if (isPromotion(oMove)){
+        ml->moves[ml->count++] = (((U64)promotionBonus[movePromotion(oMove)] * 1000) << 32) | move;
         return;
     }
-	//Move oMove = onlyMove(move);
-	////score += MvvLva[movePiece(move)][moveCapture(move)] * 1000;
-	////score += promotionBonus[movePromotion(move)] * 1000; 
-
-      //prefetch(&historyTable[side][from][to]);
- //   prefetch(&pieceFromHistoryTable[movedPiece][from]);
- //   prefetch(&pieceToHistoryTable[movedPiece][to]);
- //   prefetch(&mgTables[movedPiece][from]);
- //   prefetch(&mgTables[movedPiece][to]);
-	//
-    Move oMove = onlyMove(move);
-    if (oMove == killerTable[0][ply]) {
+    else if (oMove == killerTable[0][ply]) {
         ml->moves[ml->count++] = (9999999ULL << 32) | move;
         return;
     }
@@ -530,24 +519,10 @@ inline void Position::addMove(MoveList* ml, ScoredMove move, Ply ply) {
         ml->moves[ml->count++] = (9999997ULL << 32) | move;
         return;
     }
- //   
     S32 hScore = (((S64)historyTable[side][from][to])); // *22 + ((S64)pieceFromHistoryTable[movedPiece][from]) + ((S64)pieceToHistoryTable[movedPiece][to]) * 2) / 25;
     S64 score = ((mgTables[movedPiece][to] - mgTables[movedPiece][from]) * gamePhase + (egTables[movedPiece][to] - egTables[movedPiece][from]) * (24 - gamePhase)) / 24;
     score += 16383 +hScore;
 	score = std::max(0LL, score);
-    //   
-
- //   assert(hScore >= -16384);
- //   assert(hScore < 9999996);
-	//
- //   //locScore += (7 - chebyshevDistance[lsb(bitboards[k - 6 * side])][to]);
-	//
- //   // score += ((fiftyMove >> 3) * ((movedPiece % 6) == 0));
-	//S64 score = (S64)hScore + 16383 + locScore;
- //   score = std::max(0LL, score);
- //   assert(score >= 0 && score < 9999996);
- //   score += isCheck(move) ? ((5000 * (ply + 1) * (ply + 1)) << 7) : 0;
-    
     ml->moves[ml->count++] = (score << 32) | move; // 
     
 }
