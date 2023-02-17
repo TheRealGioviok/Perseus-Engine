@@ -93,10 +93,10 @@ void initEvalTables() {
     //BitBoard passedPawnMask[2][64];
     for (Square square = a8; square < noSquare; square++) {
 
-        BitBoard res = squaresAhead(square) | (squaresAhead(square + 1) * (fileOf(square) != 7)) | (squaresAhead(square - 1) * (fileOf(square) != 0));
+        BitBoard res = squaresAhead(square) | ((fileOf(square) != 7) ? squaresAhead(square + 1) : 0) | ((fileOf(square) != 0)  ? squaresAhead(square - 1) : 0);
         passedPawnMask[WHITE][square] = res;
 
-        res = squaresBehind(square) | (squaresBehind(square+1) * (fileOf(square) != 7)) | (squaresBehind(square - 1) * (fileOf(square) != 0));
+        res = squaresBehind(square) | ((fileOf(square) != 7) ? squaresBehind(square+1) : 0 ) | ((fileOf(square) != 0) ? squaresBehind(square - 1) : 0 );
         passedPawnMask[BLACK][square] = res;
         
     }
@@ -216,11 +216,10 @@ void initEvalTables() {
 		// Outer ring
         {
             BitBoard ring = 0ULL;
-            for (int i = -2; i < 3; i++) {
-                for (int j = -2; j < 3; j++) {
-                    if (rank + i >= 0 && rank + i < 8 && file + j >= 0 && file + j < 8) {
-						ring |= squareBB(sq1 + (i << 3) + j);
-                    }
+            for (int i = -1; i < 2; i++){
+                for (int j = -1; j < 2; j++){
+                    if (rank + i < 0 || rank + i > 7 || file + j < 0 || file + j > 7) continue;
+                    ring |= kingAttacks[makeSquare(rank + i, file + j)];
                 }
             }
             fiveSquare[sq1] = ring;
