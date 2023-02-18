@@ -3,7 +3,6 @@
 #include <algorithm>
 #include "BBmacros.h"
 
-
 struct Position{
     
     BitBoard bitboards[12];

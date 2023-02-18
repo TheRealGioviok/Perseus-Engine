@@ -477,10 +477,14 @@ bool Position::makeMove(Move move) {
     return true;
 }
 
-
 static inline constexpr U64 getMvvLvaScore(U64 p1, U64 p2) {
     return (500000LL - (p1 % 6) * 100000LL + 10000000LL * (1 + (p2 % 6))) << 32;
 };
+
+#define KILLER1SCORE (9999999ULL << 32ULL)
+#define KILLER2SCORE (9999998ULL << 32ULL)
+#define COUNTERSCORE (9999997ULL << 32ULL)
+#define LASTMOVEKILERSCORE (9999996ULL << 32ULL)
 
 /**
  * @brief The addMove function adds a move to the move list.
@@ -488,7 +492,6 @@ static inline constexpr U64 getMvvLvaScore(U64 p1, U64 p2) {
  * @param move The move to add.
  */
 inline void Position::addMove(MoveList* ml, ScoredMove move, Ply ply) {
-
     Piece movedPiece = movePiece(move);
     Piece capturedPiece = moveCapture(move);
     Square from = moveSource(move);
@@ -503,25 +506,25 @@ inline void Position::addMove(MoveList* ml, ScoredMove move, Ply ply) {
         ml->moves[ml->count++] = (((U64)promotionBonus[movePromotion(oMove)] * 1000) << 32) | move;
         return;
     }
-    else if (oMove == killerTable[0][ply]) {
-        ml->moves[ml->count++] = (9999999ULL << 32) | move;
+    else if (oMove == killerTable[0][ply]){
+        ml->moves[ml->count++] = KILLER1SCORE | move;
         return;
     }
-    else if (oMove == killerTable[1][ply]) {
-        ml->moves[ml->count++] = (9999998ULL << 32) | move;
+    else if (oMove == killerTable[1][ply]){
+        ml->moves[ml->count++] = KILLER2SCORE | move;
         return;
     }
-    else if (ply >= 2 && oMove == killerTable[0][ply - 2]) {
-        ml->moves[ml->count++] = (9999996ULL << 32) | move;
+    else if (oMove == counterMoveTable[movedPiece][to]){
+        ml->moves[ml->count++] = COUNTERSCORE | move;
         return;
     }
-    else if (oMove == counterMoveTable[movePiece(lastMove)][moveTarget(lastMove)]) {
-        ml->moves[ml->count++] = (9999997ULL << 32) | move;
+    else if (ply >= 2 && oMove == killerTable[0][ply - 2]){
+        ml->moves[ml->count++] = LASTMOVEKILERSCORE | move;
         return;
     }
     S32 hScore = (((S64)historyTable[side][from][to])); // *22 + ((S64)pieceFromHistoryTable[movedPiece][from]) + ((S64)pieceToHistoryTable[movedPiece][to]) * 2) / 25;
     S64 score = ((mgTables[movedPiece][to] - mgTables[movedPiece][from]) * gamePhase + (egTables[movedPiece][to] - egTables[movedPiece][from]) * (24 - gamePhase)) / 24;
-    score += 16383 +hScore;
+    score += 16384 + hScore;
 	score = std::max(0LL, score);
     ml->moves[ml->count++] = (score << 32) | move; // 
     

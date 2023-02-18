@@ -9,20 +9,38 @@
 #include <iostream>
 #include <cstdlib>
 
-static inline Score mateIn(U16 ply) { return ((mateScore) - (ply)); }
-static inline Score matedIn(U16 ply) { return ((-mateScore) + (ply)); }
+static inline Score mateIn(Ply ply) { return ((mateScore) - (ply)); }
+static inline Score matedIn(Ply ply) { return ((-mateScore) + (ply)); }
 
 static inline Depth reduction(Depth d, U16 m, bool isPv){
     S32 r = reductionTable[d] * reductionTable[m];
     return std::max(0, ((r + 1642 - (512 * isPv)) / 1024));
 }
 
-static inline void updateKillers(Move m, Move lastMove, Ply ply){
-    if (m != killerTable[0][ply]) {
-        killerTable[1][ply] = killerTable[0][ply];
-        killerTable[0][ply] = m;
+static inline void sortTTUp(MoveList& ml, Move ttMove){
+    for (int i = 0; i < ml.count; i++) {
+        if (packedMoveCompare(ttMove, (Move)ml.moves[i])) {
+            ml.moves[0] = ml.moves[i];
+            ml.moves[i] = 0;
+            break;
+        }
     }
-    counterMoveTable[movePiece(lastMove)][moveTarget(lastMove)] = m;
+}
+
+static inline void updateKillers(Move killer, Ply ply){
+    if (killer != killerTable[0][ply]){
+        killerTable[1][ply] = killerTable[0][ply];
+        killerTable[0][ply] = killer;
+    }
+}
+
+static inline void updateCounters(Move counter, Move lastMove){
+    if (isOk(lastMove)) counterMoveTable[movePiece(lastMove)][moveTarget(lastMove)] = counter;
+}
+
+static inline void clearNextPlyKillers(Ply ply){
+    killerTable[0][ply + 1] = 0;
+    killerTable[1][ply + 1] = 0;
 }
 
 Score Game::search(Score alpha, Score beta, Depth depth) {
@@ -43,9 +61,8 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
 
     // Draws - mate distance
     if (!RootNode) {
-#if DETECTREPETITION
         if (isRepetition()) return 0; // contempt()
-#endif
+
         if (pos.fiftyMove >= 100) return 0; // contempt()
 
         alpha = std::max(alpha, matedIn(ply));
@@ -53,8 +70,6 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
         if (alpha >= beta) return alpha;
     }
     
-    
-#if ENABLETTSCORING
     //// TT probe
     ttEntry* tte = probeTT(pos.hashKey);
     Score ttScore = -infinity;
@@ -75,20 +90,17 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
             if (alpha >= beta ) return ttScore;
         }
     }
-#endif
 
     // Quiescence drop
-#if ENABLEQUIESCENCESEARCH
     if (depth <= 0) return quiescence(alpha, beta);
-#else
-    if (depth <= 0) return evaluate();
-#endif
+
+    clearNextPlyKillers(ply);
 
     seldepth = std::max(seldepth, (U16)(ply + 1));
+
     bool inCheck = pos.inCheck();
     Position save = pos;
 
-#if ENABLENMP
     // Null move pruning
     if (!PVNode && depth >= 3 && !inCheck && isOk(pos.lastMove) && okToReduce(pos.lastMove) && !pos.mayBeZugzwang() && abs(alpha) < mateValue && abs(beta) < mateValue) {
        // make null move
@@ -101,7 +113,6 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
            return nullScore;
        }
     }
-#endif
 
     // Search
     Score origAlpha = alpha;
@@ -117,35 +128,21 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     generateMoves(moveList, ply); // Already sorted, except for ttMove
 
     //// Sort ttMove
-#if ENABLETTORDERING
-    if (ttMove) {
-        
-        for (int i = 0; i < moveList.count; i++) {
-            if (packedMoveCompare(ttMove, (Move)moveList.moves[i])) {
-                moveList.moves[0] = moveList.moves[i];
-                moveList.moves[i] = 0;
-                break;
-            }
-        }
-    }
-#endif
-
-    // // Clear killers for the next ply
-    // killerTable[0][ply + 1] = 0;
-    // killerTable[1][ply + 1] = 0;
+    if (ttMove) sortTTUp(moveList, ttMove);
 
     // Iterate through moves
     for (int i = 0; i < moveList.count; i++) {
         Move currMove = onlyMove(moveList.moves[i]);
         S32 currMoveScore = getScore(moveList.moves[i]) - 16384;
         if (makeMove(currMove)) {
+            Score score;
+
             ++moveSearched;
             ++nodes;
+
             if (okToReduce(currMove)) quiets[quietsCount++] = currMove;
-            if (RootNode && depth >= LOGROOTMOVEDEPTH) {
-                std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl;
-            }
-            Score score;
+            if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl;
+            
             if (moveSearched == 0) score = -search(-beta, -alpha, depth - 1);
             else {
                 score = -search(-alpha - 1, -alpha, depth - 1);
@@ -168,8 +165,11 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
             if (score > alpha) {
                 alpha = score;
                 if (score >= beta) {
+                    if (okToReduce(currMove)){
+                        updateKillers(currMove, ply);
+                        updateCounters(currMove, pos.lastMove);
+                    }
                     updateHH(pos.side, depth, currMove, quiets, quietsCount);
-                    if (okToReduce(currMove)) updateKillers(currMove, pos.lastMove, ply);
                     break;
                 }
             }
@@ -180,7 +180,6 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     //// Check for checkmate / stalemate
     if (moveSearched == 0) return inCheck ? matedIn(ply) : 0;
 
-#if ENABLETTSCORING
     U8 ttStoreFlag = hashINVALID;
     if (bestScore >= beta) ttStoreFlag = hashLOWER;
     else {
@@ -188,7 +187,6 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
         else ttStoreFlag = hashUPPER;
     }
     if (!stopped) writeTT(pos.hashKey, bestScore, -infinity, depth, ttStoreFlag, bestMove, ply);
-#endif
     
     return bestScore;
 
@@ -197,40 +195,23 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
 Score Game::quiescence(Score alpha, Score beta){
 
     bool inCheck = pos.inCheck();
+    if (inCheck) if (isRepetition()) return 0;
 
     Score standPat = evaluate();
 
     if (ply >= maxPly - 1) return standPat;
 
-#if EVASIONSINQUIESCENCE
     if (!inCheck) {
         if (standPat >= beta) return beta;
-#if DODELTAPRUNING
         Score bigDelta = (egValues[R] + egValues[N]) * isPromotion(pos.lastMove) + egValues[Q];
         if (standPat < alpha - bigDelta) return alpha;
-#endif
         if (alpha < standPat) alpha = standPat;
     }
-#else
-    if (standPat >= beta) return beta;
-#if DODELTAPRUNING
-    Score bigDelta = (egValues[R] + egValues[N]) * isPromotion(pos.lastMove) + egValues[Q];
-    if (standPat < alpha - bigDelta) return alpha;
-#endif
-    if (alpha < standPat) alpha = standPat;
-#endif
-
+    
     // Generate moves
     MoveList moveList;
-#if EVASIONSINQUIESCENCE
-    inCheck ? generateMoves(moveList, ply) : generateCaptures(moveList, ply);
-#else
-    generateCaptures(moveList);
-#endif
 
-#if DETECTREPETITION
-    if (inCheck) if (isRepetition()) return 0;
-#endif
+    inCheck ? generateMoves(moveList, ply) : generateCaptures(moveList, ply);
 
     Position save = pos;
 
@@ -257,7 +238,6 @@ void Game::startSearch(bool halveTT = true){
     seldepth = 0;
 
     std::cin.clear();
-    //std::cout << std::endl;
 
     pos.lastMove = 0;
     lastScore = 0;
@@ -285,19 +265,9 @@ void Game::startSearch(bool halveTT = true){
     }
 	
     // Clear history, killer and counter move tables
-#if ENABLEHISTORYHEURISTIC
     memset(historyTable, 0, sizeof(historyTable));
-    // memset(pieceFromHistoryTable, 0, sizeof(pieceFromHistoryTable));
-    // memset(pieceToHistoryTable, 0, sizeof(pieceToHistoryTable));
-#endif
-
-#if ENABLEKILLERHEURISTIC
     memset(killerTable, 0, sizeof(killerTable));
-#endif
-
-#if ENABLECOUNTERMOVEHEURISTIC
     memset(counterMoveTable, 0, sizeof(counterMoveTable));
-#endif
 
     // Clear pv len and pv table
     memset(pvLen, 0, sizeof(pvLen));
@@ -350,7 +320,6 @@ bmove:
     printMove(bestMove);
     std::cout << std::endl;
 
-#if ENABLETTSCORING
     if (halveTT) {
         // Age pv table
         for (U64 i = 0; i < ttEntryCount; i++) {
@@ -358,5 +327,4 @@ bmove:
             tt[i].flags |= hashOLD;
         }
     }
-#endif
 }
