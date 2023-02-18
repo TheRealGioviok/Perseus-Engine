@@ -39,8 +39,10 @@ static inline void updateCounters(Move counter, Move lastMove){
 }
 
 static inline void clearNextPlyKillers(Ply ply){
-    killerTable[0][ply + 1] = 0;
-    killerTable[1][ply + 1] = 0;
+    if (ply < maxPly - 1){
+        killerTable[0][ply + 1] = 0;
+        killerTable[1][ply + 1] = 0;
+    }
 }
 
 Score Game::search(Score alpha, Score beta, Depth depth) {
