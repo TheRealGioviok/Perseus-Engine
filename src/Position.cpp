@@ -16,7 +16,6 @@ Position::Position(const char* fen){
     parseFEN((char*)fen);
 }
 
-
 /**
  * @brief The Position::generateHashKey function generates the hash key of the position from scratch.
  * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
