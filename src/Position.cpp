@@ -245,11 +245,11 @@ bool Position::mayBeZugzwang(){
     // We are going to check if there is some non pawn material.
     // If there is not, then the position is not to be reduced, since it is simple enough and risky (most zugzwang positions are King and pawn positions)
     // We also need to check if there is few material on the board, in which case we make sure there is some legal move for the pawn
-    // If there is no legal move for the pawn, then the position is zugzwang
+    // If there is no legal move for the pawn, then the position is possibly a zugzwang
     BitBoard nonPawnWhite = bitboards[N] | bitboards[B] | bitboards[R];
     BitBoard nonPawnBlack = bitboards[n] | bitboards[b] | bitboards[r];
     U8 count = (U8)std::max(popcount(nonPawnWhite),popcount(nonPawnBlack));
-    if (bitboards[Q] | bitboards[q]) return false;
+    if (bitboards[Q] | bitboards[q]) return false; // Queen positions have enough material to not be zugzwang, most of the time
     if (count <= 2){
         return true;
     }
@@ -480,10 +480,10 @@ static inline constexpr U64 getMvvLvaScore(U64 p1, U64 p2) {
     return (500000LL - (p1 % 6) * 100000LL + 10000000LL * (1 + (p2 % 6))) << 32;
 };
 
-#define KILLER1SCORE (9999999ULL << 32ULL)
-#define KILLER2SCORE (9999998ULL << 32ULL)
-#define COUNTERSCORE (9999997ULL << 32ULL)
-#define LASTMOVEKILERSCORE (9999996ULL << 32ULL)
+#define KILLER1SCORE (9999999ULL)
+#define KILLER2SCORE (9999998ULL)
+#define COUNTERSCORE (9999997ULL)
+#define LASTMOVEKILERSCORE (9999996ULL)
 
 /**
  * @brief The addMove function adds a move to the move list.
@@ -505,24 +505,9 @@ inline void Position::addMove(MoveList* ml, ScoredMove move, Ply ply) {
         ml->moves[ml->count++] = (((U64)promotionBonus[movePromotion(oMove)] * 1000) << 32) | move;
         return;
     }
-    else if (oMove == killerTable[0][ply]){
-        ml->moves[ml->count++] = KILLER1SCORE | move;
-        return;
-    }
-    else if (oMove == killerTable[1][ply]){
-        ml->moves[ml->count++] = KILLER2SCORE | move;
-        return;
-    }
-    else if (oMove == counterMoveTable[movedPiece][to]){
-        ml->moves[ml->count++] = COUNTERSCORE | move;
-        return;
-    }
-    else if (ply >= 2 && oMove == killerTable[0][ply - 2]){
-        ml->moves[ml->count++] = LASTMOVEKILERSCORE | move;
-        return;
-    }
     S32 hScore = (((S64)historyTable[side][from][to])); // *22 + ((S64)pieceFromHistoryTable[movedPiece][from]) + ((S64)pieceToHistoryTable[movedPiece][to]) * 2) / 25;
     S64 score = ((mgTables[movedPiece][to] - mgTables[movedPiece][from]) * gamePhase + (egTables[movedPiece][to] - egTables[movedPiece][from]) * (24 - gamePhase)) / 24;
+    
     score += 16384 + hScore;
 	score = std::max(0LL, score);
     ml->moves[ml->count++] = (score << 32) | move; // 

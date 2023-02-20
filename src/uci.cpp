@@ -4,6 +4,7 @@
 #include "tables.h"
 #include "bench.h"
 #include "evaluation.h"
+#include "constants.h"
 #include "uci.h"
 #include <fstream>
 #include <vector>
@@ -24,6 +25,9 @@ void uciStr() {
     std::cout << "id name " << "Perseus" << std::endl;
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     //std::cout << "option name stposHashDump type string default  " << std::endl;
+    std::cout << "option name hhthresh type spin default 3562 min 0 max 16383" << std::endl;
+    std::cout << "option name LMRa type spin default 767 min 0 max 3000" << std::endl;
+    std::cout << "option name LMRb type spin default 1066 min 0 max 3000" << std::endl;
     std::cout << "uciok" << std::endl;
 }
 
@@ -293,13 +297,27 @@ int setOptionCommand(Game* game, char* command) {
     std::string arg = optionName.substr(space + 1 + 5 + 1);
     // remove last characters from optionName
     optionName.erase(space);
-    std::cout << "option name " << optionName << " value " << arg;
 	// Depending on optionName
     if (optionName == "stposHashDump") {
         // Set hashDumpFile to arg
         hashDumpFile = arg;
     }
-    
+    else if (optionName == "hhthresh"){
+        // set goodHistoryThreshold to arg
+        goodHistoryThreshold = atoi(arg.c_str());
+    }
+    else if (optionName == "LMRa"){
+        // set LMRa to arg
+        LMRa = double(atoi(arg.c_str()));
+        // Also, call the initLMRTable function
+        initLMRTable();
+    }
+    else if (optionName == "LMRb"){
+        // set LMRb to arg
+        LMRb = double(atoi(arg.c_str()));
+        // Also, call the initLMRTable function
+        initLMRTable();
+    }
     return 0;
 }
 

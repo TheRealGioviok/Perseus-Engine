@@ -234,7 +234,7 @@ bool Game::isRepetition() {
     // Get the hash key of the current position
     HashKey hashKey = pos.hashKey;
     // Iterate over the repetition table
-    for (int i = std::max(0,repetitionCount - pos.fiftyMove); i < repetitionCount - 2; i++) {
+    for (int i = std::max(0,repetitionCount - pos.fiftyMove - 1); i < repetitionCount - 2; i++) {
         // If the hash key is found, return true
         if (repetitionTable[i] == hashKey) return true;
     }

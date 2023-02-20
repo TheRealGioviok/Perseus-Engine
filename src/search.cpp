@@ -12,9 +12,8 @@
 static inline Score mateIn(Ply ply) { return ((mateScore) - (ply)); }
 static inline Score matedIn(Ply ply) { return ((-mateScore) + (ply)); }
 
-static inline Depth reduction(Depth d, U16 m, bool isPv){
-    S32 r = reductionTable[d] * reductionTable[m];
-    return std::max(0, ((r + 1642 - (512 * isPv)) / 1024));
+static inline Depth reduction(Depth d, U16 m){
+    S32 r = reductionTable[d][m];
 }
 
 static inline void sortTTUp(MoveList& ml, Move ttMove){
@@ -96,9 +95,9 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta);
 
-    clearNextPlyKillers(ply);
+    //clearNextPlyKillers(ply);
 
-    seldepth = std::max(seldepth, (U16)(ply + 1));
+    seldepth = std::max(Ply(seldepth), Ply(ply + 1));
 
     bool inCheck = pos.inCheck();
     Position save = pos;
@@ -137,20 +136,33 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
         Move currMove = onlyMove(moveList.moves[i]);
         S32 currMoveScore = getScore(moveList.moves[i]) - 16384;
         if (makeMove(currMove)) {
-            Score score;
 
-            ++moveSearched;
+            Score score;
+            bool givesCheck = isCheck(currMove) || pos.inCheck(); // While isCheck finds direct checks, it won't find discovered checks
+
             ++nodes;
 
             if (okToReduce(currMove)) quiets[quietsCount++] = currMove;
-            if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl;
-            
-            if (moveSearched == 0) score = -search(-beta, -alpha, depth - 1);
-            else {
-                score = -search(-alpha - 1, -alpha, depth - 1);
-                if (PVNode && (score > alpha && score < beta)) score = -search(-beta, -alpha, depth - 1);
+            if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl;
+            bool doFullSearch = false;
+            if (moveSearched >= 3 && !inCheck && okToReduce(currMove) && depth >= 3){
+                Depth R = reduction(depth, moveSearched);
+                // If a move gives check, reduce less
+                // R -= givesCheck; Didn't pass 
+                // Reduction modification 1: if the move has a good history score, reduce less
+                R -= std::min(Depth(2), std::max(Depth(-2), Depth(currMoveScore / goodHistoryThreshold))); // Passed
+                // Ensure that we are still reducing and we are not going directly to quiescence
+                R = std::max(Depth(1), std::min(R, Depth(depth - 1)));
+
+                score = -search(-alpha - 1, -alpha, depth - R);
+                doFullSearch  = (score > alpha) && (R != 1);
             }
+            else doFullSearch = !PVNode || moveSearched > 0;
+            if (doFullSearch) score = -search(-alpha - 1, -alpha, depth - 1);
+            if (PVNode && (moveSearched == 0 || (score > alpha && score < beta))) score = -search(-beta, -alpha, depth - 1);
             restore(save);
+
+            ++moveSearched;
 
             if (score > bestScore) {
                 bestScore = score;
@@ -167,10 +179,8 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
             if (score > alpha) {
                 alpha = score;
                 if (score >= beta) {
-                    if (okToReduce(currMove)){
-                        updateKillers(currMove, ply);
-                        updateCounters(currMove, pos.lastMove);
-                    }
+                    //updateKillers(currMove, ply);
+                    //updateCounters(currMove, lastMove);
                     updateHH(pos.side, depth, currMove, quiets, quietsCount);
                     break;
                 }
@@ -234,6 +244,7 @@ Score Game::quiescence(Score alpha, Score beta){
 }
 
 void Game::startSearch(bool halveTT = true){
+
     nodes = 0ULL;
     stopped = false;
     ply = 0;

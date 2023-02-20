@@ -51,16 +51,16 @@ BitBoard outerRing[64];
 BitBoard fiveSquare[64]; // The 5x5 square
 
 // The LMR reduction table
-U8 reductionTable[128]= {0};
+Ply reductionTable[128][128]= {{0}};
 
 /**
  * @brief The initLMRTable function initializes the LMR reduction table
  */
-#define LMR_FACTOR 12.892727272727274 // 20.26
 void initLMRTable(){
     for (int depth = 0; depth < 128; depth++) {
-        double res = int((20.26 + std::log(1/ 2) * std::log(depth)));
-        reductionTable[depth] = (int)(res);
+        for (int move = 0; move < 128; move++) {
+            reductionTable[depth][move] = std::max(0, int(log(depth) * log(move)));
+        }
     }
 }
 
