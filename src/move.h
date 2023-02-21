@@ -49,7 +49,7 @@
 #define NULLMOVE encodeMove(a8,a8,NOPIECE,NOPIECE,NOPIECE,false,false,false,false)
 #define isOk(move) ((move & 0xfff) != 0)
 
-#define sameMovePos(move1,move2) ((move1 & 0x3ff) == (move2 & 0x3ff)) // To compare two pseudolegal moves in the same position, it is enough to compare the source and target squares
+#define sameMovePos(move1,move2) ((move1 & 0xffff) == (move2 & 0xffff)) // To compare two pseudolegal moves in the same position, it is enough to compare the source, target and piece
 
 /**
  * @brief The getPieceChar function returns the character of a piece.
