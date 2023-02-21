@@ -52,14 +52,25 @@ BitBoard fiveSquare[64]; // The 5x5 square
 
 // The LMR reduction table
 Ply reductionTable[128][128]= {{0}};
-
+#define RESOLUTION 1000
+S32 lmrDepthValue = 1000;
+S32 lmrMoveValue = 1000;
+S32 lmrC = 0;
+S32 lmrA = 1000;
 /**
  * @brief The initLMRTable function initializes the LMR reduction table
  */
 void initLMRTable(){
     for (int depth = 0; depth < 128; depth++) {
         for (int move = 0; move < 128; move++) {
-            reductionTable[depth][move] = std::max(0, int(log(depth) * log(move)));
+            reductionTable[depth][move] = std::max(0, 
+                int(
+                    lmrA / RESOLUTION *
+                    log(depth * lmrDepthValue / RESOLUTION) *
+                    log(move * lmrMoveValue / RESOLUTION) +
+                    lmrC / RESOLUTION
+                )
+            );
         }
     }
 }
