@@ -107,3 +107,7 @@ enum Squares {
 #define LOGROOTMOVEDEPTH                12 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
 
 extern S32 goodHistoryThreshold;
+extern S32 lmrDepthValue;
+extern S32 lmrMoveValue;
+extern S32  lmrC;
+extern S32  lmrA;

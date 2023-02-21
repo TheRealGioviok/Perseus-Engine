@@ -26,6 +26,10 @@ void uciStr() {
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     //std::cout << "option name stposHashDump type string default  " << std::endl;
     std::cout << "option name hhthresh type spin default 3562 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrDepthValue type spin default 1000 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrMoveValue type spin default 1000 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrA type spin default 1000 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrC type spin default 0 min -1000 max 1000" << std::endl;
     std::cout << "uciok" << std::endl;
 }
 
@@ -250,9 +254,6 @@ int executeCommand(Game* game, char* command) {
             (flags & hashINVALID ? "\thashInvalid\n" : "") << "\n";
     }
 
-
-    
-
     if (position) positionCommand(game, command);
     
     if (fen) std::cout << game->pos.getFEN() << std::endl;
@@ -303,6 +304,22 @@ int setOptionCommand(Game* game, char* command) {
     else if (optionName == "hhthresh"){
         // set goodHistoryThreshold to arg
         goodHistoryThreshold = atoi(arg.c_str());
+    }
+    else if (optionName == "lmrDepthValue"){
+        lmrDepthValue = atoi(arg.c_str());
+        initLMRTable();
+    }
+    else if (optionName == "lmrMoveValue"){
+        lmrMoveValue = atoi(arg.c_str());
+        initLMRTable();
+    }
+    else if (optionName == "lmrA"){
+        lmrA = atoi(arg.c_str());
+        initLMRTable();
+    }
+    else if (optionName == "lmrC"){
+        lmrC = atoi(arg.c_str());
+        initLMRTable();
     }
     return 0;
 }
