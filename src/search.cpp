@@ -12,8 +12,8 @@
 static inline Score mateIn(Ply ply) { return ((mateScore) - (ply)); }
 static inline Score matedIn(Ply ply) { return ((-mateScore) + (ply)); }
 
-static inline Depth reduction(Depth d, U16 m){
-    S32 r = reductionTable[d][m];
+static inline Depth reduction(Depth d, U16 m, bool isPv){
+    return reductionTable[d][m] - !isPv;
 }
 
 static inline void sortTTUp(MoveList& ml, Move ttMove){
@@ -145,21 +145,24 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
             if (okToReduce(currMove)) quiets[quietsCount++] = currMove;
             if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl;
             bool doFullSearch = false;
-            if (moveSearched >= 3 && !inCheck && okToReduce(currMove) && depth >= 3){
-                Depth R = reduction(depth, moveSearched);
-                // If a move gives check, reduce less
-                // R -= givesCheck; Didn't pass 
-                // Reduction modification 1: if the move has a good history score, reduce less
-                R -= std::min(Depth(2), std::max(Depth(-2), Depth(currMoveScore / goodHistoryThreshold))); // Passed
-                // Ensure that we are still reducing and we are not going directly to quiescence
-                R = std::max(Depth(1), std::min(R, Depth(depth - 1)));
-
+            if (moveSearched >= 5 && !inCheck && okToReduce(currMove) && depth >= 3){
+                Depth R = reduction(depth, moveSearched, PVNode);
+                // Give a bonus to moves that are likely to be good
+                R -= currMoveScore > goodHistoryThreshold;
+                // Reduce less if the move gives check
+                R -= givesCheck;
+                // If ttMove is present and is non quiet, reduce more the moves that are quiet
+                R += (!PVNode && ttMove && !okToReduce(ttMove));
+                // Ensure we don't reduce into quiescence
+                R = std::min(R, Depth(depth - 1));
+                // Ensure we are not extending
+                R = std::max(R, Depth(1));
                 score = -search(-alpha - 1, -alpha, depth - R);
                 doFullSearch  = (score > alpha) && (R != 1);
             }
             else doFullSearch = !PVNode || moveSearched > 0;
-            if (doFullSearch) score = -search(-alpha - 1, -alpha, depth - 1);
-            if (PVNode && (moveSearched == 0 || (score > alpha && score < beta))) score = -search(-beta, -alpha, depth - 1);
+            if (doFullSearch) score = -search(-alpha - 1, -alpha, depth - 1 + givesCheck);
+            if (PVNode && (moveSearched == 0 || (score > alpha && score < beta))) score = -search(-beta, -alpha, depth - 1 + givesCheck);
             restore(save);
 
             ++moveSearched;
@@ -179,9 +182,11 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
             if (score > alpha) {
                 alpha = score;
                 if (score >= beta) {
+                    if (okToReduce(currMove)){
                     //updateKillers(currMove, ply);
                     //updateCounters(currMove, lastMove);
-                    updateHH(pos.side, depth, currMove, quiets, quietsCount);
+                        updateHH(pos.side, depth, currMove, quiets, quietsCount);
+                    }
                     break;
                 }
             }

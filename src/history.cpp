@@ -24,9 +24,7 @@ void updateHistoryScore(S32* current, S32 score, bool isBonus) {
 }
 
 void updateHH(bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount){
-    updateHistoryBonus(&historyTable[side][moveSource(bestMove)][moveTarget(bestMove)], depth, true);
     for (int i = 0; i < quietsCount; i++) {
-        if (quietMoves[i] == bestMove) continue;
-        updateHistoryBonus(&historyTable[side][moveSource(quietMoves[i])][moveTarget(quietMoves[i])], depth, false);
+        updateHistoryBonus(&historyTable[side][moveSource(quietMoves[i])][moveTarget(quietMoves[i])], depth, quietMoves[i] == bestMove);
     }
 }

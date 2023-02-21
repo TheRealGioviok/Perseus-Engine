@@ -104,4 +104,6 @@ enum Squares {
 // DEBUGGING SYMBOL DEFINITIONS
 #define DEBUG                           false // If true the debugging is used. The debugging is automatically implemented in the code if this is true.
 #define ASSERTS                         true // If true the asserts are used. The asserts are automatically implemented in the code if this is true.
-#define LOGROOTMOVEDEPTH                7 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
+#define LOGROOTMOVEDEPTH                12 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
+
+extern S32 goodHistoryThreshold;
