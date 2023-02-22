@@ -53,10 +53,10 @@ BitBoard fiveSquare[64]; // The 5x5 square
 // The LMR reduction table
 Ply reductionTable[128][128]= {{0}};
 #define RESOLUTION 1000
-S32 lmrDepthValue = 1000;
-S32 lmrMoveValue = 1000;
-S32 lmrC = 0;
-S32 lmrA = 1000;
+double lmrDepthValue = 1000;
+double lmrMoveValue = 1000;
+double lmrC = 0;
+double lmrA = 1000;
 /**
  * @brief The initLMRTable function initializes the LMR reduction table
  */
