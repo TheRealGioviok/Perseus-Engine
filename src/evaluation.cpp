@@ -5,30 +5,6 @@
 #include "types.h"
 #include <iostream>
 
-Score simpleEval(Position* pos) {
-    // We will return the sum of the material of the board, from the player to move perspective.
-    Score score = 0;
-
-    score += (Score)popcount(pos->bitboards[P]) * 100;
-    score -= (Score)popcount(pos->bitboards[p]) * 100;
-
-    score += (Score)popcount(pos->bitboards[N]) * 320;
-    score -= (Score)popcount(pos->bitboards[n]) * 320;
-
-    score += (Score)popcount(pos->bitboards[B]) * 330;
-    score -= (Score)popcount(pos->bitboards[b]) * 330;
-
-    score += (Score)popcount(pos->bitboards[R]) * 500;
-    score -= (Score)popcount(pos->bitboards[r]) * 500;
-
-    score += (Score)popcount(pos->bitboards[Q]) * 900;
-    score -= (Score)popcount(pos->bitboards[q]) * 900;
-
-    score *= 1 - 2 * pos->side;
-
-    return score;
-}
-
 Score mgTables[12][64] = { {0} };
 Score egTables[12][64] = { {0} };
 
@@ -60,7 +36,6 @@ void initTables() {
             egTables[piece + 6][square] = egPestoTables[piece][flipSquare(square)] + egValues[piece];
         }
     }
-    //std::cout << std::endl;
 }
 
 constexpr Score DOUBLEDPENMG = 7;
@@ -135,9 +110,6 @@ constexpr Score OPENFILEONKINGEG = -12;
 
 constexpr Score PAWNSTORM = 1;
 
-constexpr Score MG_TARRASH = 5;
-constexpr Score EG_TARRASH = 15;
-
 constexpr Score KNIGHTATTACKOUTERRING = 10;
 constexpr Score KNIGHTATTACKINNERRING = 23;
 constexpr Score KNIGHTATTACKZONE = 31;
@@ -185,8 +157,6 @@ static inline constexpr Score bishopOutpostEg(BitBoard pAttacks, U8 pSupport) {
 static inline constexpr BitBoard centralFiles() {
     return files(2) | files(3) | files(4) | files(5);
 }
-
-
 
 Score pestoEval(Position* pos) {
 
@@ -541,7 +511,6 @@ Score pestoEval(Position* pos) {
             eg[BLACK] += 500 * (std::min(U8(5), chebyshevDistance[pawn][promoSquare]) < (chebyshevDistance[whiteKing][promoSquare] - 1 + side));
         }
         pawnStormTo[WHITE] += std::max(0, (5 + candidate + isSupported + (passed && isSupported) - isWeakLever - isOpposed - (S8)chebyshevDistance[pawn][whiteKing]));
-
     }
 
     openFile = openFileFor[WHITE] & openFileFor[BLACK];
@@ -564,8 +533,6 @@ Score pestoEval(Position* pos) {
 
             mg[WHITE] += mgTables[N][knight];
             eg[WHITE] += egTables[N][knight];
-
-            
             
             BitBoard sqb = squareBB(knight);
             mg[WHITE] += MG_MINORBEHINDPAWN * ((bool)(sqb & whiteRearSpan));
@@ -822,10 +789,6 @@ Score pestoEval(Position* pos) {
                     }
                 }
             }
-
-            
-
-            
         }
     }
     // Black rooks
@@ -1033,16 +996,15 @@ Score pestoEval(Position* pos) {
         if (whiteNonPawnMaterial + blackNonPawnMaterial > 6434) {
             BitBoard safeCentralWhite = (~attackedByBlackPawns) & (files(2) | files(3) | files(4) | files(5)) & (ranks(6) | ranks(5) | ranks(4));
             BitBoard safeCentralBlack = (~attackedByWhitePawns) & (files(2) | files(3) | files(4) | files(5)) & (ranks(1) | ranks(2) | ranks(3));
+            
             Score cW = popcount(safeCentralWhite);
             Score cB = popcount(safeCentralBlack);
+
             safeCentralWhite &= whiteRearSpan;
             safeCentralBlack &= blackRearSpan;
             cW += popcount(safeCentralWhite);
             cB += popcount(safeCentralBlack);
-           /* safeCentralWhite &= mobilityAreaWhite;
-            safeCentralBlack &= mobilityAreaBlack;
-            cW += (popcount(safeCentralWhite)+1)>>1;
-            cB += (popcount(safeCentralBlack)+1)>>1; */
+
             Score w = popcount(whiteNonPawns | blackNonPawns) - 3 + std::min(7, popcount(unadvancablePawnsFor[WHITE]|unadvancablePawnsFor[BLACK]));
             mg[WHITE] += (cW * w * (w)) >> 5;
             mg[BLACK] += (cB * w * (w)) >> 5;
@@ -1054,18 +1016,12 @@ Score pestoEval(Position* pos) {
     mgScore += (int)(mg[side] - mg[other]);// *(100 - fC) / 100;
     egScore += (int)(eg[side] - eg[other]);// *(100 - fC) / 100;
 
-
-
-    // std::cout << "Safety of current side to move: " << (int)((kingSafetyMG * (tropismToBlackKing)) * (1 - (2 * side)))  << "\n";
-
     // phase is capped to 24, in case of early promotion
 #define midgameLimit (11444)
 #define endgameLimit (2936)
 	
     Score mgPhase = std::min(Score(24), gamePhase);
-    Score egPhase = 24 - mgPhase;
-
-   
+    Score egPhase = 24 - mgPhase;   
 
     // We add a tempo bonus to the score, meaning that we will give a bonus to the side that has to move (10 cp)
     // Score tempoBonus = (side == WHITE) ? 10 : -10;
@@ -1080,25 +1036,4 @@ Score pestoEval(Position* pos) {
 #endif
     return res * (100 - fC) / 100;
 
-    //return res * (195 - (pos->fiftyMove*2)) / 211;
-
 }
-
-#define CENTRAL_SPACE_WEIGHT 1
-
-#define doubleIsolatedPawnBonusMG 0
-#define doubleIsolatedPawnBonusEG 0
-
-#define isolatedPawnBonusMG 0
-#define isolatedPawnBonusEG 0
-
-#define backwardPawnBonusMG 0
-#define backwardPawnBonusEG 0
-
-#define doubledPawnBonusMG 0
-#define doubledPawnBonusEG 0
-
-#define weakUnopposedPawnBonusMG 0
-#define weakUnopposedPawnBonusEG 0
-
-#define weakLeverPawnBonusEG 0

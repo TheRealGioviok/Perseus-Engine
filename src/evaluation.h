@@ -9,7 +9,6 @@
  * @return The value of the board.
  * @note This evaluation function is not very good, but it is a good starting point.
  */
-Score simpleEval(Position* pos);
 
 constexpr Score mgValues[6] = { 103, 559, 595, 876, 1782, 0 };
 constexpr Score egValues[6] = { 150, 567, 606, 946, 1809, 0 };
