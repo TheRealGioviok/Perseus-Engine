@@ -25,7 +25,7 @@ void uciStr() {
     std::cout << "id name " << "Perseus" << std::endl;
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     //std::cout << "option name stposHashDump type string default  " << std::endl;
-    std::cout << "option name hhthresh type spin default 3562 min 0 max 16383" << std::endl;
+    std::cout << "option name hhthresh type spin default 3500 min 0 max 16383" << std::endl;
     std::cout << "option name lmrDepthValue type spin default 1000 min 0 max 16383" << std::endl;
     std::cout << "option name lmrMoveValue type spin default 1000 min 0 max 16383" << std::endl;
     std::cout << "option name lmrA type spin default 1000 min 0 max 16383" << std::endl;
@@ -306,19 +306,19 @@ int setOptionCommand(Game* game, char* command) {
         goodHistoryThreshold = atoi(arg.c_str());
     }
     else if (optionName == "lmrDepthValue"){
-        lmrDepthValue = atoi(arg.c_str());
+        lmrDepthValue = double(atoi(arg.c_str()));
         initLMRTable();
     }
     else if (optionName == "lmrMoveValue"){
-        lmrMoveValue = atoi(arg.c_str());
+        lmrMoveValue = double(atoi(arg.c_str()));
         initLMRTable();
     }
     else if (optionName == "lmrA"){
-        lmrA = atoi(arg.c_str());
+        lmrA = double(atoi(arg.c_str()));
         initLMRTable();
     }
     else if (optionName == "lmrC"){
-        lmrC = atoi(arg.c_str());
+        lmrC = double(atoi(arg.c_str()));
         initLMRTable();
     }
     return 0;
