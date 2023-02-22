@@ -26,10 +26,10 @@ static inline void sortTTUp(MoveList& ml, Move ttMove){
     }
 }
 
-static inline void updateKillers(Move killer, Ply ply){
-    if (killer != killerTable[0][ply]){
+static inline void updateKillers(Move killerMove, Ply ply){
+    if (killerMove != killerTable[0][ply]){
         killerTable[1][ply] = killerTable[0][ply];
-        killerTable[0][ply] = killer;
+        killerTable[0][ply] = killerMove;
     }
 }
 
@@ -121,6 +121,8 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     Move bestMove = 0;
     U16 moveSearched = 0;
     
+    // bool searchedAKiller = false;
+
     pvLen[ply] = ply;
 
     MoveList moveList;
@@ -139,6 +141,8 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
 
             Score score;
             bool givesCheck = isCheck(currMove) || pos.inCheck(); // While isCheck finds direct checks, it won't find discovered checks
+            // if (currMoveScore == 9999996 - 16384 || currMoveScore == 9999998 - 16384 || currMoveScore == 9999999 - 16384)
+            //     searchedAKiller = true;
 
             ++nodes;
 
@@ -153,6 +157,9 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
                 R -= givesCheck;
                 // If ttMove is present and is non quiet, reduce more the moves that are quiet
                 R += (!PVNode && ttMove && !okToReduce(ttMove));
+                // If the move is a killer, reduce less
+                // R -= 2 * (currMoveScore == 99999999 - 16384);
+                // R -= 1 * (currMoveScore == 99999998 - 16384 || currMoveScore == 99999996 - 16384);
                 // Ensure we don't reduce into quiescence
                 R = std::min(R, Depth(depth - 1));
                 // Ensure we are not extending
@@ -182,8 +189,9 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
             if (score > alpha) {
                 alpha = score;
                 if (score >= beta) {
+                    // if (currMoveScore == 9999996 - 16384 || currMoveScore == 9999998 - 16384 || currMoveScore == 9999999 - 16384) killerCutoffs++;
                     if (okToReduce(currMove)){
-                    //updateKillers(currMove, ply);
+                        //updateKillers(currMove, ply);
                     //updateCounters(currMove, lastMove);
                         updateHH(pos.side, depth, currMove, quiets, quietsCount);
                     }
@@ -193,7 +201,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
         }
         else restore(save);
     }
-
+    // posKillerSearches += searchedAKiller;
     //// Check for checkmate / stalemate
     if (moveSearched == 0) return inCheck ? matedIn(ply) : 0;
 
@@ -248,6 +256,7 @@ Score Game::quiescence(Score alpha, Score beta){
     return alpha;
 }
 
+#define ASPIRATIONWINDOW 25
 void Game::startSearch(bool halveTT = true){
 
     nodes = 0ULL;
@@ -259,6 +268,9 @@ void Game::startSearch(bool halveTT = true){
 
     pos.lastMove = 0;
     lastScore = 0;
+
+    // killerCutoffs = 0;
+    // posKillerSearches = 0;
 
     startTime = getTime64();
 
@@ -291,10 +303,11 @@ void Game::startSearch(bool halveTT = true){
     memset(pvLen, 0, sizeof(pvLen));
     memset(pvTable, 0, sizeof(pvTable));
     
-#if USINGEVALCACHE
+    Score alpha = -infinity;
+    Score beta = infinity;
+
     // Clear evaluation hash table
     for (U64 i = 0; i < (evalHashSize); i++) evalHash[i].score = -infinity;
-#endif
 
     // Always compute a depth 1 search
     rootDelta = 2 * infinity;
@@ -311,32 +324,70 @@ void Game::startSearch(bool halveTT = true){
     if (stopped) goto bmove;
     
     for (currSearch = 2; (currSearch <= depth) && currSearch >= 2 && !stopped; currSearch++) {
-        seldepth = 0; // Reset seldepth
-        ply = 0;
-        S64 locNodes = nodes; // Save nodes for nps calculation
-        U64 timer1 = getTime64(); // Save time for nps calculation
-        score = search(-infinity, infinity, currSearch); // Search at depth currSearch
-        if (stopped) goto bmove;
-        bestMove = pvTable[0][0];
-        U64 timer2 = getTime64();
-        if (score < -mateValue && score > -mateScore)
-            std::cout << std::dec << "info score mate " << -(mateScore + score + 2) / 2 << " depth " << (int)currSearch << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
-        else if (score > mateValue && score < mateScore)
-            std::cout << std::dec << "info score mate " << (mateScore + 1 - score) / 2 << " depth " << (int)currSearch << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
-        else
-            std::cout << std::dec << "info score cp " << (score >> 1) << " depth " << (int)currSearch << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
-
-        for (int i = 0; i < pvLen[0]; i++){
-            printMove(pvTable[0][i]);
-            std::cout << " ";
+        if (currSearch >= 4){
+            alpha = std::max(S32(-infinity), score - ASPIRATIONWINDOW);
+            beta = std::min(S32(infinity), score + ASPIRATIONWINDOW);
         }
-        std::cout << " nps " << ((nodes - locNodes) / (timer2 - timer1 + 1)) * 1000 << std::endl;
+        while (true){
+            seldepth = 0; // Reset seldepth
+            ply = 0;
+            S64 locNodes = nodes; // Save nodes for nps calculation
+            U64 timer1 = getTime64(); // Save time for nps calculation
+            score = search(alpha, beta, currSearch); // Search at depth currSearch
+            if (stopped) goto bmove;
+            bestMove = pvTable[0][0];
+            U64 timer2 = getTime64();
+
+            if (score <= alpha){
+                beta = (alpha + beta) / 2;
+                alpha = std::max(S32(-infinity), score - ASPIRATIONWINDOW);
+
+                if (score < -mateValue && score > -mateScore)
+                    std::cout << std::dec << "info depth " << (int)currSearch << " score mate " << -(mateScore + score + 2) / 2 << " lowerbound nodes " << nodes << " pv ";
+                else if (score > mateValue && score < mateScore)
+                    std::cout << std::dec << "info depth " << (int)currSearch << " score mate " << (mateScore + 1 - score) / 2 << " lowerbound nodes " << nodes << " pv ";
+                else
+                    std::cout << std::dec << "info depth " << (int)currSearch << " score cp " << (score >> 1) << " lowerbound nodes " << nodes << " pv ";
+                printMove(pvTable[0][0]);
+                std::cout << " nps " << ((nodes - locNodes) / (timer2 - timer1 + 1)) * 1000 << std::endl;
+            }
+            else if (score >= beta){
+                beta = std::min(S32(infinity), score + ASPIRATIONWINDOW);
+                if (score < -mateValue && score > -mateScore)
+                    std::cout << std::dec << "info depth " << (int)currSearch << " score mate " << -(mateScore + score + 2) / 2 << " upperbound nodes " << nodes << " pv ";
+                else if (score > mateValue && score < mateScore)
+                    std::cout << std::dec << "info depth " << (int)currSearch << " score mate " << (mateScore + 1 - score) / 2 << " upperbound nodes " << nodes << " pv ";
+                else
+                    std::cout << std::dec << "info depth " << (int)currSearch << " score cp " << (score >> 1) << " upperbound nodes " << nodes << " pv ";
+                printMove(pvTable[0][0]);
+                std::cout << " nps " << ((nodes - locNodes) / (timer2 - timer1 + 1)) * 1000 << std::endl;
+            }
+            else{
+                if (score < -mateValue && score > -mateScore)
+                    std::cout << std::dec << "info score mate " << -(mateScore + score + 2) / 2 << " depth " << (int)currSearch << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
+                else if (score > mateValue && score < mateScore)
+                    std::cout << std::dec << "info score mate " << (mateScore + 1 - score) / 2 << " depth " << (int)currSearch << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
+                else
+                    std::cout << std::dec << "info score cp " << (score >> 1) << " depth " << (int)currSearch << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
+
+                for (int i = 0; i < pvLen[0]; i++){
+                    printMove(pvTable[0][i]);
+                    std::cout << " ";
+                }
+                std::cout << " nps " << ((nodes - locNodes) / (timer2 - timer1 + 1)) * 1000 << std::endl;
+                break;
+            }
+        }
     }
 
 bmove:
     std::cout << "bestmove ";
     printMove(bestMove);
     std::cout << std::endl;
+    // std::cout << "At least one killer was searched in " << posKillerSearches << " positions out of " << nodes << " searched." << std::endl;
+    // std::cout << "Percentage: " << (double)posKillerSearches / (double)nodes * 100 << "%" << std::endl;
+    // std::cout << "Of those positions, a killer caused a cutoff " << killerCutoffs << " times out of " << posKillerSearches << " killer searches." << std::endl;
+    // std::cout << "Percentage: " << (double)killerCutoffs / (double)posKillerSearches * 100 << "%" << std::endl;
 
     if (halveTT) {
         // Age pv table
