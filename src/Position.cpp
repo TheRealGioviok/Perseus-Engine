@@ -253,7 +253,7 @@ bool Position::mayBeZugzwang(){
     if (count <= 2){
         return true;
     }
-    else if (count <= 4 && (bitboards[P] | bitboards[P])){
+    else if (count <= 5 && (bitboards[P] | bitboards[P])){
         BitBoard freeOccupancy = ~(nonPawnBlack | nonPawnWhite | bitboards[p] | bitboards[P] | bitboards[k] | bitboards[K]);
         // To see if there are free squares ahead, we just shift the pawns forward (or backward if white)
         if (side == WHITE){
