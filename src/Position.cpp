@@ -866,32 +866,31 @@ std::string Position::getFEN() {
  * @param moveList The moveList to fill with the generated moves.
  */
 void Position::generateMoves(MoveList& moveList, Ply ply) {
-    //moveList.clear();
-    BitBoard ourPawns = bitboards[P + 6 * side];
+    BitBoard ourPawns   = bitboards[P + 6 * side];
     BitBoard ourKnights = bitboards[N + 6 * side];
     BitBoard ourBishops = bitboards[B + 6 * side];
-    BitBoard ourRooks = bitboards[R + 6 * side];
-    BitBoard ourQueens = bitboards[Q + 6 * side];
-    BitBoard ourKing = bitboards[K + 6 * side];
+    BitBoard ourRooks   = bitboards[R + 6 * side];
+    BitBoard ourQueens  = bitboards[Q + 6 * side];
+    BitBoard ourKing    = bitboards[K + 6 * side];
 
-    BitBoard theirPawns = bitboards[P + 6 * (side ^ 1)];
-    BitBoard theirKnights = bitboards[N + 6 * (side ^ 1)];
-    BitBoard theirBishops = bitboards[B + 6 * (side ^ 1)];
-    BitBoard theirRooks = bitboards[R + 6 * (side ^ 1)];
-    BitBoard theirQueens = bitboards[Q + 6 * (side ^ 1)];
-    BitBoard theirKing = bitboards[K + 6 * (side ^ 1)];
+    BitBoard theirPawns     = bitboards[P + 6 * (side ^ 1)];
+    BitBoard theirKnights   = bitboards[N + 6 * (side ^ 1)];
+    BitBoard theirBishops   = bitboards[B + 6 * (side ^ 1)];
+    BitBoard theirRooks     = bitboards[R + 6 * (side ^ 1)];
+    BitBoard theirQueens    = bitboards[Q + 6 * (side ^ 1)];
+    BitBoard theirKing      = bitboards[K + 6 * (side ^ 1)];
 
-    BitBoard ourPieces = ourPawns | ourKnights | ourBishops | ourRooks | ourQueens | ourKing;
-    BitBoard theirPieces = theirPawns | theirKnights | theirBishops | theirRooks | theirQueens | theirKing;
-    BitBoard occupancy = ourPieces | theirPieces;
+    BitBoard ourPieces      = (ourPawns | ourKnights) | (ourBishops | ourRooks) | (ourQueens | ourKing);
+    BitBoard theirPieces    = (theirPawns | theirKnights) | (theirBishops | theirRooks) | (theirQueens | theirKing);
+    BitBoard occupancy      = ourPieces | theirPieces;
 
-    Square theirKingPos = lsb(theirKing);
+    Square theirKingPos     = lsb(theirKing);
 
-    BitBoard pawnCheckers = pawnAttacks[side ^ 1][theirKingPos];
+    BitBoard pawnCheckers   = pawnAttacks[side ^ 1][theirKingPos];
     BitBoard knightCheckers = knightAttacks[theirKingPos];
     BitBoard bishopCheckers = getBishopAttack(theirKingPos, occupancy);
-    BitBoard rookCheckers = getRookAttack(theirKingPos, occupancy);
-    BitBoard queenCheckers = getQueenAttack(theirKingPos, occupancy);
+    BitBoard rookCheckers   = getRookAttack(theirKingPos, occupancy);
+    BitBoard queenCheckers  = bishopCheckers | rookCheckers;
 
     // We will generate the moves in a way that the sort function will need to do minimal work
     // We will generate first moves that we expect to have an higher probability of being useful (high score moves)
