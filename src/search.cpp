@@ -106,7 +106,7 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
     if (!PVNode && depth >= 3 && !inCheck && isOk(pos.lastMove) && okToReduce(pos.lastMove) && !pos.mayBeZugzwang() && abs(alpha) < mateValue && abs(beta) < mateValue) {
        // make null move
        makeNullMove();
-       Depth R = 2;
+       Depth R = 2 + (depth / 6);
        Score nullScore = -search(-beta, -beta + 1, depth - R);
        restore(save);
        if (nullScore >= beta) {
@@ -259,6 +259,7 @@ Score Game::quiescence(Score alpha, Score beta){
 #define ASPIRATIONWINDOW 25
 void Game::startSearch(bool halveTT = true){
 
+    Score delta = ASPIRATIONWINDOW;
     nodes = 0ULL;
     stopped = false;
     ply = 0;
@@ -325,8 +326,8 @@ void Game::startSearch(bool halveTT = true){
     
     for (currSearch = 2; (currSearch <= depth) && currSearch >= 2 && !stopped; currSearch++) {
         if (currSearch >= 4){
-            alpha = std::max(S32(-infinity), score - ASPIRATIONWINDOW);
-            beta = std::min(S32(infinity), score + ASPIRATIONWINDOW);
+            alpha = std::max(S32(-infinity), score - delta);
+            beta = std::min(S32(infinity), score + delta);
         }
         while (true){
             seldepth = 0; // Reset seldepth
@@ -340,7 +341,7 @@ void Game::startSearch(bool halveTT = true){
 
             if (score <= alpha){
                 beta = (alpha + beta) / 2;
-                alpha = std::max(S32(-infinity), score - ASPIRATIONWINDOW);
+                alpha = std::max(S32(-infinity), score - delta);
 
                 if (score < -mateValue && score > -mateScore)
                     std::cout << std::dec << "info depth " << (int)currSearch << " score mate " << -(mateScore + score + 2) / 2 << " lowerbound nodes " << nodes << " pv ";
@@ -350,9 +351,10 @@ void Game::startSearch(bool halveTT = true){
                     std::cout << std::dec << "info depth " << (int)currSearch << " score cp " << (score >> 1) << " lowerbound nodes " << nodes << " pv ";
                 printMove(pvTable[0][0]);
                 std::cout << " nps " << ((nodes - locNodes) / (timer2 - timer1 + 1)) * 1000 << std::endl;
+                delta *= 1.44;
             }
             else if (score >= beta){
-                beta = std::min(S32(infinity), score + ASPIRATIONWINDOW);
+                beta = std::min(S32(infinity), score + delta);
                 if (score < -mateValue && score > -mateScore)
                     std::cout << std::dec << "info depth " << (int)currSearch << " score mate " << -(mateScore + score + 2) / 2 << " upperbound nodes " << nodes << " pv ";
                 else if (score > mateValue && score < mateScore)
@@ -361,6 +363,7 @@ void Game::startSearch(bool halveTT = true){
                     std::cout << std::dec << "info depth " << (int)currSearch << " score cp " << (score >> 1) << " upperbound nodes " << nodes << " pv ";
                 printMove(pvTable[0][0]);
                 std::cout << " nps " << ((nodes - locNodes) / (timer2 - timer1 + 1)) * 1000 << std::endl;
+                delta *= 1.44;
             }
             else{
                 if (score < -mateValue && score > -mateScore)
