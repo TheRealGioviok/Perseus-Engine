@@ -158,8 +158,6 @@ Score Game::search(Score alpha, Score beta, Depth depth) {
                 // If ttMove is present and is non quiet, reduce more the moves that are quiet
                 R += (!PVNode && ttMove && !okToReduce(ttMove));
                 // If the move is a killer, reduce less
-                // R -= 2 * (currMoveScore == 99999999 - 16384);
-                // R -= 1 * (currMoveScore == 99999998 - 16384 || currMoveScore == 99999996 - 16384);
                 // Ensure we don't reduce into quiescence
                 R = std::min(R, Depth(depth - 1));
                 // Ensure we are not extending
@@ -387,11 +385,7 @@ bmove:
     std::cout << "bestmove ";
     printMove(bestMove);
     std::cout << std::endl;
-    // std::cout << "At least one killer was searched in " << posKillerSearches << " positions out of " << nodes << " searched." << std::endl;
-    // std::cout << "Percentage: " << (double)posKillerSearches / (double)nodes * 100 << "%" << std::endl;
-    // std::cout << "Of those positions, a killer caused a cutoff " << killerCutoffs << " times out of " << posKillerSearches << " killer searches." << std::endl;
-    // std::cout << "Percentage: " << (double)killerCutoffs / (double)posKillerSearches * 100 << "%" << std::endl;
-
+    
     if (halveTT) {
         // Age pv table
         for (U64 i = 0; i < ttEntryCount; i++) {
