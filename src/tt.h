@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "constants.h"
+#include <vector>
 
 // Table sizes (TODO: Make these configurable at runtime)
 constexpr U64 ttEntryCount = 1048576;                      // 2^20
@@ -28,7 +29,6 @@ struct evalHashEntry {
     HashKey hashKey = 0;
     Score score = 0;
 };
-
 
 #ifdef _MSC_VER
 __declspec(align(16)) struct ttEntry {
@@ -80,8 +80,15 @@ struct ttBucket {
 
 
 // Transposition table and evaluation hash table
-extern ttEntry* tt;
+extern std::vector<ttEntry> tt;
 extern evalHashEntry* evalHash;
+
+static inline void resizeTT(S32 mbSize){
+    // calculate the number of entries
+    S32 ttEntryCount = 1024 * 1024 * mbSize / sizeof(ttEntry);
+    // allocate the memory on the tt vector
+    tt.resize(ttEntryCount);
+}
 
 /**
  * @brief The initTT function initializes the transposition table and evaluation cache.

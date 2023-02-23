@@ -21,10 +21,12 @@ bool ponder = false;   // True if the engine is pondering.
 U8 timeSet = -1;    // 0 for infinite, 1 for time per move, 2 for depth, 3 for normal play.
 std::string hashDumpFile; // Additional opening hash file
 
+U32 hashSize = 16; // The size of the hash table in MB.
+
 void uciStr() {
     std::cout << "id name " << "Perseus" << std::endl;
     std::cout << "id author " << "G.M. Manduca" << std::endl;
-    //std::cout << "option name stposHashDump type string default  " << std::endl;
+    std::cout << "option name Hash type spin default 16 min 8 max 1024" << std::endl;
     std::cout << "option name hhthresh type spin default 3562 min 0 max 16383" << std::endl;
     std::cout << "option name lmrDepthValue type spin default 1000 min 0 max 16383" << std::endl;
     std::cout << "option name lmrMoveValue type spin default 1000 min 0 max 16383" << std::endl;
@@ -94,19 +96,6 @@ int executeCommand(Game* game, char* command) {
     if (uciNewGame){
         initTT();
         game->reset();
-        if (hashDumpFile != "") {
-            std::cout << "info string Loading opening hash dump...\n";
-            std::ifstream f;
-            f.open(hashDumpFile, std::ios::out | std::ios::binary);
-            if (!f.good()) {
-                std::cout << "info string Invalid file or path to file! Falling back to empty TT\n";
-            }
-            else {
-                f.read((char*)tt, ttEntryCount * sizeof(ttEntry));
-            }
-            // Close
-            f.close();
-        }    
     }
     else if (uci) {
         uciStr();
@@ -162,63 +151,6 @@ int executeCommand(Game* game, char* command) {
     if (setOption){
         // TODO: implement setoption
         setOptionCommand(game, command);
-        return 0;
-    }
-
-    if (openingTT) {
-        // the command should be "openingTT <depth>"
-        // This will do a search at the given depth, then store the TT in a file
-        // The file will be named "openingTT_<depth>.txt"
-        // The file will contain the TT entries, one per line, in the following format:
-        // <hashKey>|<depth>|<score>|<eval>|<bestMove>|<flags>
-        // all the numbers will be in hex format
-        // the flags will be a string of the following characters:
-        // A = hashALPHA
-        // B = hashLOWER
-        // E = hashEXACT
-        // S = hashSINGULAR
-        // I = hashINVALID
-        // O = hashOLD
-        // The file will be overwritten if it already exists
-
-        // first, we need to get the depth
-        char* depthStr = strstr((char*)command, "openingTT");
-        depthStr += 9;
-        int depth = atoi(depthStr);
-        if (depth <= 0) {
-            std::cout << "Invalid depth!\n";
-            return 0;
-        }
-        // now we can start the search
-        // we will use the startpos
-        game->reset();
-        // we will use the given depth
-        for (Depth d = 1; d <= depth; d++) {
-            game->depth = d;
-            game->searchMode = 1; // fixed depth search
-            game->startSearch(false);
-        }
-        for (Depth d = 1; d <= depth; d++) {
-            game->depth = depth;
-            game->searchMode = 1; // fixed depth search
-            game->startSearch(false);
-        }
-        // now we can save the TT
-        // first, we need to create the file name
-        std::string fileName = "openingTT_";
-        fileName += std::to_string(depth);
-        fileName += ".ttdump";
-        // now we can open the file
-        std::ofstream file;
-        file.open(fileName, std::ios::out | std::ios::binary );
-        if (!file) {
-            std::cout << "info string Cannot open file to dump!" << std::endl;
-            return 1;
-        }
-        // Binary dump (faster and smaller than human readable dump)
-        file.write((char*)tt, ttEntryCount * sizeof(ttEntry));
-        // now we can close the file
-        file.close();
         return 0;
     }
 
@@ -300,6 +232,14 @@ int setOptionCommand(Game* game, char* command) {
     if (optionName == "stposHashDump") {
         // Set hashDumpFile to arg
         hashDumpFile = arg;
+    }
+    else if (optionName == "Hash"){
+        hashSize = atoi(arg.c_str());
+        if (hashSize < 1) {
+            std::cout << "Invalid hash size!\n";
+            return 0;
+        }
+        resizeTT(hashSize);
     }
     else if (optionName == "hhthresh"){
         // set goodHistoryThreshold to arg

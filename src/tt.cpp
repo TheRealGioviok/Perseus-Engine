@@ -1,6 +1,8 @@
 #include "tt.h"
 #include "constants.h"
 #include "move.h"
+#include "uci.h"
+#include <vector>
 
 ttEntry::ttEntry(HashKey h, U16 b, Depth d, U8 f, Score s) {
     hashKey = h;
@@ -20,18 +22,17 @@ ttEntry::ttEntry() {
 }
 
 // Transposition table and evaluation hash table
-ttEntry* tt;
+std::vector<ttEntry> tt;
 evalHashEntry* evalHash;
 
 void initTT(){
-    if(tt != nullptr) delete[] tt;
-    tt = new ttEntry[ttEntryCount];
+    resizeTT(hashSize);
     if(evalHash != nullptr) delete[] evalHash;
     evalHash = new evalHashEntry[evalHashSize];
 }
 
 ttEntry* probeTT(HashKey key) {
-    ttEntry *entry = &tt[key % (ttEntryCount)];
+    ttEntry *entry = &tt[key % (tt.size())];
     // Iterate through the entries.
     if (entry->hashKey == key) {
         entry->flags &= ~hashOLD;
@@ -44,7 +45,7 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
     move = packMove(move); // pack to 2 bytes
     score -= ply * (score < -mateValue);
     score += ply * (score > mateValue);
-    ttEntry *entry = &tt[key % (ttEntryCount)];
+    ttEntry *entry = &tt[key % (tt.size())];
     // Iterate through the entries.
     if (depth >= entry->depth) {
         entry->hashKey = key;

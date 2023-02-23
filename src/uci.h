@@ -21,7 +21,7 @@ extern bool timeIsUp; // True if the time is up.
 extern bool ponder;   // True if the engine is pondering.
 extern U8 timeSet; // 0 for infinite, 1 for time per move, 2 for depth, 3 for normal play.
 extern std::string hashDumpFile; // Additional opening hash file
-
+extern U32 hashSize; // The size of the hash table in megabytes.
 /**
  * @brief The getTimeMs function returns the current time in milliseconds.
  * @return The current time in milliseconds.

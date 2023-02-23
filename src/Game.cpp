@@ -123,7 +123,15 @@ void Game::reset(){
 
     // Clear hashTable
 #if ENABLETTSCORING
-    memset(tt, 0, ttEntryCount * sizeof(ttEntry));
+    // tt is a vector, so we can't use memset. We have to clear it manually.
+    for (int i = 0; i < tt.size(); i++) {
+        tt[i].hashKey = 0;
+        tt[i].bestMove = 0;
+        tt[i].depth = 0;
+        tt[i].score = -infinity;
+        tt[i].eval = -infinity;
+        tt[i].flags = hashINVALID;
+    }
 #endif
 
     // Clear eval cache
@@ -348,6 +356,15 @@ Score Game::evaluate(){
                     return -KNOWNWIN - 5 * chebyshevDistance[pawn][promotionSquare] - 10 * (7 - chebyshevDistance[ourKing][pawn]);
                 }
             }
+            else if ((theirPieces ^ theirKings) == theirBishops){
+                // KBB v K is a draw if the bishops are on the same color, otherwise it's a win
+                if ((theirBishops & squaresOfColor[BLACK]) && (theirBishops & squaresOfColor[WHITE])) {
+                    return -KNOWNWIN - 5 * centerDistance[ourKing] - 5 * (Score)chebyshevDistance[ourKing][theirKing];
+                }
+                else {
+                    return 0;
+                }
+            }
             else {
                 return -KNOWNWIN - 100 * (Score)popcount(theirPawns)
                     - 300 * popcount(theirBishops | theirKnights)
@@ -426,6 +443,15 @@ Score Game::evaluate(){
                 else {
 					// Right colour bishop
                     return KNOWNWIN + 5 * chebyshevDistance[pawn][promotionSquare] + 10 * (7 - chebyshevDistance[theirKing][pawn]);
+                }
+            }
+            else if ((ourPieces ^ ourKings) == ourBishops){
+                // KBB v K is a draw if the bishops are on the same color, otherwise it's a win
+                if ((ourBishops & squaresOfColor[BLACK]) && (ourBishops & squaresOfColor[WHITE])) {
+                    return KNOWNWIN + 5 * centerDistance[theirKing] + 5 * (Score)chebyshevDistance[theirKing][ourKing];
+                }
+                else {
+                    return 0;
                 }
             }
             else {
