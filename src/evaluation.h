@@ -182,4 +182,3 @@ Score pestoEval(Position* pos);
  * @note This is called at the start of the program 
  */
 void initTropism();
-

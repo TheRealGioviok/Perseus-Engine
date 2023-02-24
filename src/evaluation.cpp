@@ -158,7 +158,29 @@ static inline constexpr BitBoard centralFiles() {
     return files(2) | files(3) | files(4) | files(5);
 }
 
-Score pestoEval(Position* pos) {
+static inline constexpr BitBoard ne(BitBoard bb) {
+    return (bb & notFile(7)) << 9;
+}
+
+static inline constexpr BitBoard nw(BitBoard bb) {
+    return (bb & notFile(0)) << 7;
+}
+
+static inline constexpr BitBoard se(BitBoard bb) {
+    return (bb & notFile(7)) >> 7;
+}
+
+static inline constexpr BitBoard sw(BitBoard bb) {
+    return (bb & notFile(0)) >> 9;
+}
+
+
+Score pestoEval(Position* pos){
+    return (pos->side == WHITE ? 1 : -1) * 
+        (pos->psqtScore[0] * pos->gamePhase + pos->psqtScore[1] * (24 - pos->gamePhase)) / 24;
+}
+
+Score pestoEval2(Position* pos) {
 
 #if USINGEVALCACHE
     Score cachedEval = getCachedEval(pos->hashKey);
