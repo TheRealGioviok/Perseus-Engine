@@ -57,7 +57,6 @@ int executeCommand(Game* game, char* command) {
     // we will search for the first occurrence of a command
     char* ttt = strstr((char*)command, "tt");
     char* sanity = strstr((char*)command, "sanity");
-	char* openingTT = strstr((char*)command, "openingTT");
     char* isReady = strstr((char*)command, "isready");
     char* uci = strstr((char*)command, "uci");
     char* setOption = strstr((char*)command, "setoption name");
