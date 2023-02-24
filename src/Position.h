@@ -11,9 +11,9 @@ struct Position{
     U8 fiftyMove;
     U8 castle;
     HashKey hashKey;
-    HashKey pawnHash;
     Move lastMove = 0;
     U8 gamePhase = 0;
+    Score psqtScore[2] = {0,0}; // PSQT score, incrementally updated
 
     // The default constructor instantiates the position with the standard chess starting position.
     Position();
@@ -131,5 +131,4 @@ struct Position{
 	bool insufficientMaterial();
 
     void reflect();
-
 };

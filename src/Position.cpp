@@ -99,7 +99,48 @@ void Position::wipe(){
     fiftyMove = 0;
     castle = 0;
     hashKey = 0;
+    psqtScore[0] = 0;
+    psqtScore[1] = 0;
 }
+
+/**
+ * @brief The removePiece function removes a piece from the board.
+ * 
+ * @param square The square where the piece is.
+ * @param piece The piece to remove.
+ * @param hashKey The hash key of the position, to update.
+ * @param psqt The psqt score of the position, to update.
+ */
+static inline void removePiece(BitBoard* bbs, Piece piece, Square square, U64& hashKey, Score (&psqt)[2]){
+    // Remove the piece from the bitboard
+    clearBit(bbs[piece], square);
+    // Update the hash key
+    hashKey ^= pieceKeys[piece][square];
+    Score sign = (piece < 6) ? 1 : -1;
+    // Update the psqt score
+    psqt[0] -= sign * mgTables[piece][square];
+    psqt[1] -= sign * egTables[piece][square];
+}
+
+/**
+ * @brief The addPiece function adds a piece to the board.
+ *
+ * @param square The square where the piece is.
+ * @param piece The piece to add.
+ * @param hashKey The hash key of the position, to update.
+ * @param psqt The psqt score of the position, to update.
+ */
+static inline void addPiece(BitBoard* bbs, Piece piece, Square square, U64& hashKey, Score (&psqt)[2]){
+    // Add the piece to the bitboard
+    setBit(bbs[piece], square);
+    // Update the hash key
+    hashKey ^= pieceKeys[piece][square];
+    Score sign = (piece < 6) ? 1 : -1;
+    // Update the psqt score
+    psqt[0] += sign * mgTables[piece][square];
+    psqt[1] += sign * egTables[piece][square];
+}
+
 
 bool Position::parseFEN(char *fen) {
 
@@ -117,6 +158,7 @@ bool Position::parseFEN(char *fen) {
     // 1. Piece placement
     Square square = a8;
     int pieceCount = 0;
+    
     while(*fen != ' ') {
         if (*fen == '/') {
             if (pieceCount != 8) {
@@ -139,7 +181,7 @@ bool Position::parseFEN(char *fen) {
                 std::cout << "Error: Invalid character in Piece Placement '" << fen[0] << "'. Can't parse FEN string" << std::endl;
                 return false;
             }
-            setBit(bitboards[piece], square);
+            addPiece(bitboards, piece, square, hashKey, psqtScore);
             fen++;
             square++;
             pieceCount++;
@@ -200,6 +242,16 @@ bool Position::parseFEN(char *fen) {
         }
     }
 
+    int fullMoveNumber = 0;
+
+    // Some fens don't have the halfmove clock and fullmove number, so we need to check for that.
+    while (*fen == ' ') {
+        fen++;
+    }
+    if (*fen == '\0') {
+        // If there's no more data, we're done.
+        goto FENkeyEval;
+    }
     // 5. Halfmove clock
     fen++;
     fiftyMove = 0;
@@ -210,7 +262,6 @@ bool Position::parseFEN(char *fen) {
 
     // 6. Fullmove number (not used)
     fen++;
-    int fullMoveNumber = 0;
     while (*fen >= '0' && *fen <= '9') {
         fullMoveNumber = fullMoveNumber * 10 + *fen - '0';
         fen++;
@@ -221,10 +272,9 @@ bool Position::parseFEN(char *fen) {
         // Since the position is already set, we won't return false, but we will print a warning.
         //std::cout << "Warning: FEN string contains more data than expected : \""<< fen <<"\". Ignoring it.\n";
     }
-
+FENkeyEval:
     // If everything is alright, generate the hash key for the current position
     hashKey = generateHashKey();
-    pawnHash = generatePawnHashKey();
 
 	// Setup the game phase
 	gamePhase = gamephaseInc[P] * popcount(bitboards[P] | bitboards[p]) +
@@ -326,13 +376,20 @@ inline bool Position::isSquareAttackedPre(U8 square, U8 side, BitBoard occupancy
     }
 }
 
+
+
+
 /**
  * @brief The makeMove function makes a move on the board.
  * @param move The move to make.
  * @return True if the move was made, false otherwise (state of the position is undefined).
  */
 bool Position::makeMove(Move move) {
+
+    // If the move is invalid, we return false
     if (!move) return false;
+
+    // Get useful information about the move
     Square from = moveSource(move);
     Square to = moveTarget(move);
     Piece piece = movePiece(move);
@@ -345,102 +402,64 @@ bool Position::makeMove(Move move) {
     bool isCastle = isCastling(move) > 0;
 
     // First, we remove the piece from the source square
-    clearBit(bitboards[piece], from);
-    hashKey ^= pieceKeys[piece][from];
+    removePiece(bitboards, piece, from, hashKey, psqtScore);
     
-
-    // Then, we move the piece to the target square
-    setBit(bitboards[piece], to);
-    hashKey ^= pieceKeys[piece][to];
-
-    if (piece % 6 == 0){
-        pawnHash ^= pieceKeys[piece][from];
-        pawnHash ^= pieceKeys[piece][to];
-    }
-
     // If the move is a capture, we remove the captured piece from the target square
-    if (captures) {
-        clearBit(bitboards[captured], to);
-        hashKey ^= pieceKeys[captured][to];
-        if (captured % 6 == 0) pawnHash ^= pieceKeys[captured][to];
-    }
+    if (captures && !isEnPass) removePiece(bitboards, captured, to, hashKey, psqtScore);
+    // The reason why we don't remove the captured piece if it is an en passant is because the captured piece is not on the target square, so we will be handling this case later
 
     // If the move is a promotion, we replace the piece with the promoted piece
-    if (promotes) {
-        clearBit(bitboards[piece], to);
-        hashKey ^= pieceKeys[piece][to];
-        pawnHash ^= pieceKeys[piece][to];
-        setBit(bitboards[promotion], to);
-        hashKey ^= pieceKeys[promotion][to];
-		
-    }
-
+    if (promotes) addPiece(bitboards, promotion, to, hashKey, psqtScore);
+    // Otherwise, we move the piece to the target square
+    else addPiece(bitboards, piece, to, hashKey, psqtScore);
+    
+    // Remove the current en passant square from the hash key, as it is no longer valid
     hashKey ^= enPassantKeys[enPassant];
-
-    // If the move is a enpassant, we remove the captured pawn from the enPassant square
-    if (isEnPass) {
-        clearBit(bitboards[captured], enPassant + 8 * (1 - 2 * side));
-        hashKey ^= pieceKeys[captured][enPassant + 8 * (1 - 2 * side)];
-        hashKey ^= pieceKeys[captured][to];
-        if (captured % 6 == 0) {
-            pawnHash ^= pieceKeys[captured][to];
-            pawnHash ^= pieceKeys[captured][enPassant + 8 * (1 - 2 * side)];
-        }
-
-    }
-
     enPassant = noSquare;
 
-    // If the move is a double pawn push, we set the en passant square
-    if (doublePawnPush) {
-        enPassant = to + 8 * (side == Side::WHITE ? 1 : -1);
-    }
+    // If the move is a enpassant, we remove the captured pawn from the enPassant square
+    if (isEnPass) removePiece(bitboards, captured, (side == WHITE ? to + 8 : to - 8), hashKey, psqtScore);
 
+    // If the move is a double pawn push, we set the en passant square and hash it back in. If not, we don't need to do anything, since the noSquare hash is 0
+    if (doublePawnPush) enPassant = to + 8 * (1 - 2 * side);
     hashKey ^= enPassantKeys[enPassant];
+
     // If the move is a castle, we move the rook
     if (isCastle) {  
-        BitBoard occupancy = bitboards[0] | bitboards[1] | bitboards[2] | bitboards[3] | bitboards[4] | bitboards[5] | bitboards[6] | bitboards[7] | bitboards[8] | bitboards[9] | bitboards[10] | bitboards[11];
+        BitBoard occupancy = (bitboards[0] | bitboards[1]) | (bitboards[2] | bitboards[3]) | (bitboards[4] | bitboards[5]) | (bitboards[6] | bitboards[7]) | (bitboards[8] | bitboards[9]) | (bitboards[10] | bitboards[11]);
         switch (to) {
-        case g1: {
-            // Check if squares between the king and the rook are attacked
-            if (isSquareAttackedPre(e1, BLACK, occupancy) || isSquareAttackedPre(f1, BLACK, occupancy) || isSquareAttackedPre(g1, BLACK, occupancy))
-                return false;
-            clearBit(bitboards[R], h1);
-            setBit(bitboards[R], f1);
-            hashKey ^= pieceKeys[R][f1];
-            hashKey ^= pieceKeys[R][h1];
-            break;
-        }
-        case c1: {
-            // Check if squares between the king and the rook are attacked
-            if (isSquareAttackedPre(e1, BLACK, occupancy) || isSquareAttackedPre(d1, BLACK, occupancy) || isSquareAttackedPre(c1, BLACK, occupancy))
-                return false;
-            clearBit(bitboards[R], a1);
-            setBit(bitboards[R], d1);
-            hashKey ^= pieceKeys[R][d1];
-            hashKey ^= pieceKeys[R][a1];
-            break;
-        }
-        case g8: {
-            // Check if squares between the king and the rook are attacked
-            if (isSquareAttackedPre(e8, WHITE, occupancy) || isSquareAttackedPre(f8, WHITE, occupancy) || isSquareAttackedPre(g8, WHITE, occupancy))
-                return false;
-            clearBit(bitboards[r], h8);
-            setBit(bitboards[r], f8);
-            hashKey ^= pieceKeys[r][f8];
-            hashKey ^= pieceKeys[r][h8];
-            break;
-        }
-        case c8: {
-            // Check if squares between the king and the rook are attacked
-            if (isSquareAttackedPre(e8, WHITE, occupancy) || isSquareAttackedPre(d8, WHITE, occupancy) || isSquareAttackedPre(c8, WHITE, occupancy))
-                return false;
-            clearBit(bitboards[r], a8);
-            setBit(bitboards[r], d8);
-            hashKey ^= pieceKeys[r][d8];
-            hashKey ^= pieceKeys[r][a8];
-            break;
-        }
+            case g1: {
+                // Check if squares between the king and the rook are attacked
+                if (isSquareAttackedPre(e1, BLACK, occupancy) || isSquareAttackedPre(f1, BLACK, occupancy) || isSquareAttackedPre(g1, BLACK, occupancy))
+                    return false;
+                removePiece(bitboards, R, h1, hashKey, psqtScore);
+                addPiece(bitboards, R, f1, hashKey, psqtScore);
+                break;
+            }
+            case c1: {
+                // Check if squares between the king and the rook are attacked
+                if (isSquareAttackedPre(e1, BLACK, occupancy) || isSquareAttackedPre(d1, BLACK, occupancy) || isSquareAttackedPre(c1, BLACK, occupancy))
+                    return false;
+                removePiece(bitboards, R, a1, hashKey, psqtScore);
+                addPiece(bitboards, R, d1, hashKey, psqtScore);
+                break;
+            }
+            case g8: {
+                // Check if squares between the king and the rook are attacked
+                if (isSquareAttackedPre(e8, WHITE, occupancy) || isSquareAttackedPre(f8, WHITE, occupancy) || isSquareAttackedPre(g8, WHITE, occupancy))
+                    return false;
+                removePiece(bitboards, r, h8, hashKey, psqtScore);
+                addPiece(bitboards, r, f8, hashKey, psqtScore);
+                break;
+            }
+            case c8: {
+                // Check if squares between the king and the rook are attacked
+                if (isSquareAttackedPre(e8, WHITE, occupancy) || isSquareAttackedPre(d8, WHITE, occupancy) || isSquareAttackedPre(c8, WHITE, occupancy))
+                    return false;
+                removePiece(bitboards, r, a8, hashKey, psqtScore);
+                addPiece(bitboards, r, d8, hashKey, psqtScore);
+                break;
+            }
         }
     }
 
@@ -461,16 +480,16 @@ bool Position::makeMove(Move move) {
     side ^= 1;
     lastMove = onlyMove(move);
 
-    fiftyMove++;
     if (isCapture(lastMove) || isPromotion(lastMove) || ((movePiece(lastMove) % 6) == 0)) fiftyMove = 0;
+    else fiftyMove++; 
 
     // Setup the game phase
     gamePhase = gamephaseInc[P] * popcount(bitboards[P] | bitboards[p]) +
-        gamephaseInc[N] * popcount(bitboards[N] | bitboards[n]) +
-        gamephaseInc[B] * popcount(bitboards[B] | bitboards[b]) +
-        gamephaseInc[R] * popcount(bitboards[R] | bitboards[r]) +
-        gamephaseInc[Q] * popcount(bitboards[Q] | bitboards[q]) +
-        gamephaseInc[K] * popcount(bitboards[K] | bitboards[k]);
+                gamephaseInc[N] * popcount(bitboards[N] | bitboards[n]) +
+                gamephaseInc[B] * popcount(bitboards[B] | bitboards[b]) +
+                gamephaseInc[R] * popcount(bitboards[R] | bitboards[r]) +
+                gamephaseInc[Q] * popcount(bitboards[Q] | bitboards[q]) +
+                gamephaseInc[K] * popcount(bitboards[K] | bitboards[k]);
     gamePhase = std::min(gamePhase, (U8)24); // If we have a lot of pieces, we don't want to go over 24
 	
     return true;
