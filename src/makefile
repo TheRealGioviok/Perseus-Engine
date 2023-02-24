@@ -7,7 +7,7 @@ THIS := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 ROOT := $(realpath $(THIS)/..)
 CXX := g++
 TARGET:= Perseus
-CXXFLAGS := -Wall -std=c++17 -O3 -flto -DNDEBUG -lm
+CXXFLAGS := -Wall -std=c++17
 NATIVE := -march=native
 
 NAME := $(TARGET)
@@ -30,7 +30,7 @@ EXECUTABLE := $(NAME)$(SUFFIX)
 all: release
 
 # Debug target
-debug: CXXFLAGS += -g -O0 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer
+debug: CXXFLAGS += -g -O0
 debug: $(EXECUTABLE)
 
 # Release target
