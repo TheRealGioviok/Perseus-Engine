@@ -29,9 +29,9 @@ void uciStr() {
     std::cout << "option name Hash type spin default 16 min 8 max 1024" << std::endl;
     std::cout << "option name hhthresh type spin default 3562 min 0 max 16383" << std::endl;
     std::cout << "option name lmrDepthValue type spin default 1000 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrMoveValue type spin default 1000 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrA type spin default 1000 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrC type spin default 0 min -1000 max 1000" << std::endl;
+    std::cout << "option name lmrMoveValue type spin default 828 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrA type spin default 750 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrC type spin default 500 min -1000 max 1000" << std::endl;
     std::cout << "uciok" << std::endl;
 }
 
