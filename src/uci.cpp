@@ -27,11 +27,26 @@ void uciStr() {
     std::cout << "id name " << "Perseus" << std::endl;
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     std::cout << "option name Hash type spin default 16 min 8 max 1024" << std::endl;
-    std::cout << "option name hhthresh type spin default 3562 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrDepthValue type spin default 1000 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrMoveValue type spin default 828 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrA type spin default 750 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrC type spin default 500 min -1000 max 1000" << std::endl;
+    std::cout << "option name hhthresh type spin default 3640 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrDepthValue type spin default 1004 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrMoveValue type spin default 808 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrA type spin default 763 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrC type spin default 492 min -1000 max 1000" << std::endl;
+    std::cout << "option name BADCAPTURESCORE type spin default 16380 min 0 max 32768" << std::endl;
+    std::cout << "option name futilityMarginDelta type spin default 82 min 55 max 125" << std::endl;
+    std::cout << "option name nmpBias type spin default 15 min 0 max 30" << std::endl;
+    std::cout << "option name nmpDepthDivisor type spin default 3 min 2 max 6" << std::endl;
+    std::cout << "option name nmpScoreDivisor type spin default 229 min 100 max 300" << std::endl;
+    std::cout << "option name nmpQ1 type spin default 3 min 1 max 4" << std::endl;
+    std::cout << "option name nmpQ2 type spin default 3 min 0 max 4" << std::endl;
+    std::cout << "option name razorQ1 type spin default 116 min 50 max 200" << std::endl;
+    std::cout << "option name razorQ2 type spin default 178 min 100 max 300" << std::endl;
+    std::cout << "option name singularDepthMultiplier type spin default 3 min 1 max 6" << std::endl;
+    std::cout << "option name IIRdepth type spin default 4 min 3 max 7" << std::endl;
+    std::cout << "option name razorDepth type spin default 3 min 2 max 5" << std::endl;
+    std::cout << "option name singularDepth type spin default 5 min 4 max 8" << std::endl;
+    std::cout << "option name RFPDepth type spin default 7 min 5 max 10" << std::endl;
+
     std::cout << "uciok" << std::endl;
 }
 
@@ -260,6 +275,24 @@ int setOptionCommand(Game* game, char* command) {
         lmrC = double(atoi(arg.c_str()));
         initLMRTable();
     }
+    else if (optionName == "BADCAPTURESCORE")
+        BADCAPTURESCORE = atoi(arg.c_str());
+    else if (optionName == "futilityMarginDelta")
+        futilityMarginDelta = atoi(arg.c_str());
+    else if (optionName == "nmpBias")
+        nmpBias = atoi(arg.c_str());
+    else if (optionName == "nmpDepthDivisor")
+        nmpDepthDivisor = atoi(arg.c_str());
+    else if (optionName == "nmpScoreDivisor")
+        nmpScoreDivisor = atoi(arg.c_str());
+    else if (optionName == "nmpQ1")
+        nmpQ1 = atoi(arg.c_str());
+    else if (optionName == "nmpQ2")
+        nmpQ2 = atoi(arg.c_str());
+    else if (optionName == "razorQ1")
+        razorQ1 = atoi(arg.c_str());
+    else if (optionName == "razorQ2")
+        razorQ2 = atoi(arg.c_str());
     return 0;
 }
 
@@ -384,8 +417,8 @@ void execCommand(Game* game, char* command){
         else if (strstr((char *)command, "pinned")){
             std::cout << "pinned pieces: \n";
             bool side = game->pos.side;
-            BitBoard whitePieces = game->pos.bitboards[0] | game->pos.bitboards[1] | game->pos.bitboards[2] | game->pos.bitboards[3] | game->pos.bitboards[4] | game->pos.bitboards[5];
-            BitBoard blackPieces = game->pos.bitboards[6] | game->pos.bitboards[7] | game->pos.bitboards[8] | game->pos.bitboards[9] | game->pos.bitboards[10] | game->pos.bitboards[11];
+            BitBoard whitePieces = game->pos.occupancies[WHITE];
+            BitBoard blackPieces = game->pos.occupancies[BLACK];
             BitBoard pieces = whitePieces | blackPieces;
             BitBoard toPrint = 0;
             if (side == WHITE){
