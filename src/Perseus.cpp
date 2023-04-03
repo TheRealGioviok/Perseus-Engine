@@ -36,12 +36,12 @@ void perftSuite(){
         // Parse the fen
         g.parseFEN((char*)fen.c_str());
         // Run the perft tests (ONLY if target perft is less than 100000000)
-        for (int i = 0; i < perftResultsVector.size(); i++) {
+        for (size_t i = 0; i < perftResultsVector.size(); i++) {
             if (i > 5) {
                 break;
             }
-            int target = atoi(perftResultsVector[i].c_str());
-            if (target < 100000000) {
+            U64 target = U64(atoll(perftResultsVector[i].c_str()));
+            if (target < 100000000LL) {
                 std::cout << "\rPerft " << (int)cnt << " depth " << (int)i + 1 << ": " << (int)target << " nodes";
                 U64 result = g.perft(i + 1);
                 totNodes += result;
@@ -60,7 +60,7 @@ void perftSuite(){
     }
 
     std::ofstream failedFile("failed.txt");
-    for (int i = 0; i < failed.size(); i++) {
+    for (size_t i = 0; i < failed.size(); i++) {
         failedFile << failed[i] << "\n";
     }
     failedFile.close();
