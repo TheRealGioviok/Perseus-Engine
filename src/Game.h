@@ -1,6 +1,24 @@
 #pragma once
 #include "Position.h"
 
+struct SStack {
+    Move excludedMove = 0;
+    Score staticEval = 0;
+    Move move = 0;
+
+    SStack() {
+        excludedMove = 0;
+        staticEval = 0;
+        move = 0;
+    }
+
+    void wipe() {
+        excludedMove = 0;
+        staticEval = 0;
+        move = 0;
+    }
+};
+
 class Game {
 public:
     U64 nodes = 0;
@@ -115,7 +133,7 @@ public:
      * @param depth The depth to the quiescence drop
      * @return The score of the position
      */
-    Score search(Score alpha, Score beta, Depth depth);
+    Score search(Score alpha, Score beta, Depth depth, SStack* ss);
 
     /**
      * @brief The makeNullMove function makes a null move on the board.
@@ -124,10 +142,19 @@ public:
     void makeNullMove();
 
     /**
-     * @brief The restore function restores the position after a null move.
-     * @note This function effectively copies the previous position to the current position, but it will also decrement the repetition counter, as well as the ply.
+     * @brief The undo function undoes a move on the board.
+     * @param undoer The UndoInfo object to store the information in.
+     * @param move The move to undo.
+     * @note Do not use this function to undo a null move. 
      */
-    void restore(Position pos);
+    void undo(UndoInfo &undoer, Move move);
+
+    /**
+     * @brief The undoNullMove function undoes a null move on the board.
+     * @param undoer The UndoInfo object to store the information in.
+     * @note This function is a call to the internal Position::undoNullMove function, but it will update repetition information, as well as the ply.
+     */
+    void undoNullMove(UndoInfo &undoer);
 
     /**
      * @brief The quiescence function takes the leaves of the negamax tree and expands them up until no immediate tactical moves are available.
@@ -155,3 +182,4 @@ public:
      */
     void communicate();
 };
+

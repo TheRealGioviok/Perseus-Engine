@@ -34,20 +34,20 @@ U64 Game::divide(Depth depth) {
     nodes = 0;
     MoveList moveList;
     pos.generateMoves(moveList, ply);
-    Position save = pos;
+    UndoInfo undoer = UndoInfo(pos);
 
     for (int i = 0; i < moveList.count; i++) {
         if (pos.makeMove(moveList.moves[i])) {
             printMove(moveList.moves[i]);
-            std::cout << ": " << std::flush;
+            std::cout << moveList.moves[i] << "\t" << ": " << std::flush;
             U64 res = _perft(depth - 1);
             nodes += res;
             std::cout << res;
             std::cout << std::endl;
-            pos = save;
+            undoer.undoMove(pos, moveList.moves[i]);
         }
         else {
-            pos = save;
+            undoer.undoMove(pos, moveList.moves[i]);
         }
     }
     std::cout << "Divide results: " << nodes << "\n";
@@ -71,15 +71,15 @@ U64 Game::_perft(Depth depth) {
     U64 n = 0;
     MoveList moveList;
     pos.generateMoves(moveList, ply);
-    Position save = pos;
+    UndoInfo undoer = UndoInfo(pos);
     ++ply;
     for (int i = 0; i < moveList.count; i++) {
         if (pos.makeMove(moveList.moves[i])) {
             n += _perft(depth - 1);
-            pos = save;
+            undoer.undoMove(pos, moveList.moves[i]);
         }
         else {
-            pos = save;
+            undoer.undoMove(pos, moveList.moves[i]);
         }
     }
     --ply;
@@ -205,6 +205,8 @@ void Game::print(){
  */
 void Game::generateMoves(MoveList &moves, Ply ply){
     pos.generateMoves(moves, ply);
+    // We will sort the moves
+    std::sort(std::begin(moves.moves) + 1, std::begin(moves.moves) + moves.count, std::greater<ScoredMove>());
 }
 
 /**
@@ -213,6 +215,8 @@ void Game::generateMoves(MoveList &moves, Ply ply){
  */
 void Game::generateCaptures(MoveList &moves, Ply ply){
     pos.generateCaptures(moves, ply);
+    // We will sort the moves
+    std::sort(std::begin(moves.moves) + 1, std::begin(moves.moves) + moves.count, std::greater<ScoredMove>());
 }
 
 /**
@@ -278,10 +282,9 @@ Score Game::evaluate(){
     BitBoard theirKings = *(theirPiecesp + 5);
     Square ourKing = lsb(ourKings);
     Square theirKing = lsb(theirKings);
-    BitBoard ourPieces = ourPawns | ourKnights | ourBishops | ourRooks | ourQueens | ourKings;
-    BitBoard theirPieces = theirPawns | theirKnights | theirBishops | theirRooks | theirQueens | theirKings;
-    BitBoard pieces = ourPieces | theirPieces;
-
+    BitBoard ourPieces = pos.occupancies[side];
+    BitBoard theirPieces = pos.occupancies[!side];
+    BitBoard pieces = pos.occupancies[BOTH];
     Score score = 0;
     switch (popcount(pieces)) {
     case 2:
@@ -475,18 +478,22 @@ void Game::makeNullMove() {
     assert(repetitionCount <= std::numeric_limits<Ply>::max());
     assert(repetitionCount >= 0);
     ++ply;
-#if DETECTREPETITION
     repetitionTable[++repetitionCount] = pos.hashKey;
-#endif
     pos.makeNullMove();
 }
 
-void Game::restore(Position save) {
+void Game::undo(UndoInfo& undoer, Move move) {
     assert(repetitionCount <= std::numeric_limits<Ply>::max());
     assert(repetitionCount > 0);
     --ply;
-#if DETECTREPETITION
     --repetitionCount;
-#endif
-    pos = save;
+    undoer.undoMove(pos, move);
+}
+
+void Game::undoNullMove(UndoInfo& undoer) {
+    assert(repetitionCount <= std::numeric_limits<Ply>::max());
+    assert(repetitionCount > 0);
+    --ply;
+    --repetitionCount;
+    undoer.undoNullMove(pos);
 }
