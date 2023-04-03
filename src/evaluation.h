@@ -152,20 +152,20 @@ constexpr Score gamephaseInc[12] = { 0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0 };
 extern Score mgTables[12][64];
 extern Score egTables[12][64];
 
-constexpr Score knightMobMg[9]  = { -39, -34,  -8,  -2,   2,   8,  13,  18,  24 };
-constexpr Score bishopMobMg[14] = { -30, -13,   9,  18,  25,  34,  34,  38,  39,  44,  50,  53,  58,  61, };
-constexpr Score rookMobMg[15]   = { -38, -15,   0,   2,   3,   9,  13,  19,  26,  26,  26,  29,  36,  37,  43 };
-constexpr Score queenMobMg[28]  = { -18, -10,  -5,  -5,  11,  16,  15,  24,  26,  34,  41,  43,  44,  45,  45,  45,  45,  46,  47,  48,  57,  66,  67,  67,  71,  73,  73,  76 };
+constexpr Score knightMobMg[9]  = {-22, -19, -4, -1, 1, 5, 8, 10, 12};
+constexpr Score bishopMobMg[14] = {-17, -7, 6, 9, 14, 18, 20, 23, 23, 25, 29, 29, 33, 35};
+constexpr Score rookMobMg[15]   = {-21, -7, 1, 1, 1, 4, 8, 11, 14, 14, 14, 16, 20, 20, 21};
+constexpr Score queenMobMg[28]  = {-11, -4, -3, -3, 7, 8, 8, 12, 13, 19, 22, 23, 23, 23, 24, 24, 25, 25, 27, 28, 33, 38, 38, 38, 39, 40, 40, 41};
 
-constexpr Score knightMobEg[9]  = { -50, -36, -20, -11,   4,   8,  10,  13,  17 };
-constexpr Score bishopMobEg[14] = { -38, -16,  -5,   8,  13,  25,  36,  37,  41,  46,  50,  55,  56,  62 };
-constexpr Score rookMobEg[15]   = { -52, -10,  11,  27,  46,  64,  65,  78,  85,  88,  97, 102, 105, 108, 111 };
-constexpr Score queenMobEg[28]  = { -31, -18,  -5,  11,  25,  34,  38,  46,  48,  60,  60,  64,  79,  81,  84,  85,  87,  89,  94,  95,  97, 108, 109, 109, 113, 118, 119, 141 };
+constexpr Score knightMobEg[9] = {-27, -19, -10, -5, 2, 4, 6, 7, 8};
+constexpr Score bishopMobEg[14] = {-20, -8, -1, 4, 8, 14, 18, 19, 22, 24, 26, 28, 29, 32};
+constexpr Score rookMobEg[15] = {-27, -6, 8, 13, 24, 34, 35, 41, 46, 48, 54, 56, 58, 58, 59};
+constexpr Score queenMobEg[28] = {-16, -10, -2, 6, 13, 19, 20, 25, 26, 32, 32, 34, 41, 43, 44, 45, 46, 48, 50, 51, 51, 57, 57, 58, 61, 61, 65, 74};
 
 /**
- * @brief The initTables function initializes the material - positional tables
- * @note This function is called once at the beginning of the program
- */
+* @brief The initTables function initializes the material - positional tables
+* @note This function is called once at the beginning of the program
+*/
 void initTables();
 
 /**
