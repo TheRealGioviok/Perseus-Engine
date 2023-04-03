@@ -111,3 +111,16 @@ extern double lmrDepthValue;
 extern double lmrMoveValue;
 extern double lmrC;
 extern double lmrA;
+extern int futilityMarginDelta;
+extern int nmpBias;
+extern int nmpDepthDivisor;
+extern int nmpScoreDivisor;
+extern int nmpQ1;
+extern int nmpQ2;
+extern int razorQ1;
+extern int razorQ2;
+extern int singularDepthMultiplier;	 // [1, 6]
+extern Depth IIRdepth;				 // [3, 7]
+extern Depth razorDepth;			 // [2, 5]
+extern Depth singularDepth;			 // [4, 8]
+extern Depth RFPDepth;
