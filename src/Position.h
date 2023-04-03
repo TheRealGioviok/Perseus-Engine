@@ -3,16 +3,25 @@
 #include <algorithm>
 #include "BBmacros.h"
 
+#define KILLER1SCORE 9999999ULL
+#define KILLER2SCORE 9999998ULL
+#define COUNTERSCORE 9999997ULL
+#define LASTMOVEKILLERSCORE 9999996ULL
+#define PROMOTIONBONUS 2000000000ULL
+#define GOODCAPTURESCORE 1000000000ULL
+extern unsigned long long BADCAPTURESCORE;
+
+
 struct Position{
     
     BitBoard bitboards[12];
+    BitBoard occupancies[3];
     U8 side;
     U8 enPassant;
     U8 fiftyMove;
     U8 castle;
     HashKey hashKey;
     Move lastMove = 0;
-    U8 gamePhase = 0;
     Score psqtScore[2] = {0,0}; // PSQT score, incrementally updated
 
     // The default constructor instantiates the position with the standard chess starting position.
@@ -67,13 +76,15 @@ struct Position{
     bool isSquareAttacked(U8 square, U8 side);
 
     /**
-     * @brief The isSquareAttackedPre function returns true if the given square is attacked by the given side.
+     * @brief The attacksToPre function returns a bitboard with all the attackers to a square.
      * @param square The square to check.
-     * @param side The side to check.
-     * @param occupancy An already calculated occupancy.
-     * @return True if the square is attacked, false otherwise.
+     * @param occupancy an already calculated occupancy
+     * @param diagonalAttackers an already calculated diagonal attackers
+     * @param orthogonalAttackers an already calculated orthogonal attackers
+     * @return A bitboard with all the attackers to the square.
+     * @TODO: diagonal and orthogonal attackers can be passed as parameters as they are already calculated
      */
-    bool isSquareAttackedPre(U8 square, U8 side, BitBoard occupancy);
+    inline BitBoard attacksToPre(Square square, BitBoard occupancy, BitBoard diagonalAttackers, BitBoard orthogonalAttackers);
 
     /**
      * @brief The makeMove function makes a move on the board.
@@ -125,10 +136,58 @@ struct Position{
 	* @return The FEN string of the current position
     */
 	std::string getFEN();
+    
+    /**
+     * @brief The SEE function returns whether the move is a good capture or not.
+     * @tparam threshold The threshold to check against.
+     * @param move The move to check.
+     * @return true if the move is a good capture, false otherwise.
+     */
+    template <Score threshold>
+    bool SEE(Move move);
 
     bool inCheck();
 
 	bool insufficientMaterial();
 
     void reflect();
+};
+
+/**
+ * @brief The UndoInfo class contains all the information needed to undo a move.
+ * @note This class is used by the search to store the information needed to undo a move.
+ */
+struct UndoInfo {
+    // Irreversible information
+    HashKey hashKey;
+    // HashKey pawnHashKey;
+    Square enPassant;
+    U8 castle;
+    U8 fiftyMove;
+    Move lastMove;
+    Score psqtScore[2];
+    U8 side;
+    // Reversible information
+    BitBoard bitboards[12];
+    BitBoard occupancies[3];
+
+    /**
+     * @brief The constructor of the UndoInfo class.
+     * @param position The position to store the information from.
+     */
+    UndoInfo(Position& position);
+
+    /**
+     * @brief The undoMove function undoes a move.
+     * @param position The position to undo the move on.
+     * @param move The move to undo.
+     */
+    void undoMove(Position& position, Move move);
+
+    /**
+     * @brief The undoNullMove function undoes a null move.
+     * @param position The position to undo the null move on.
+     */
+    void undoNullMove(Position& position);
+
 };

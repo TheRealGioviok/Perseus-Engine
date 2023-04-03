@@ -6,6 +6,8 @@
 #include "zobrist.h"
 #include <iostream>
 
+unsigned long long BADCAPTURESCORE = 16380ULL;
+
 // The default constructor instantiates the position with the standard chess starting position.
 Position::Position(){
     parseFEN((char*)std::string(startPosition).c_str());
@@ -94,6 +96,7 @@ void Position::wipe(){
     for(int piece = Pieces::P; piece <= Pieces::k; piece++){
         bitboards[piece] = 0;
     }
+    occupancies[WHITE] = occupancies[BLACK] = occupancies[BOTH] = 0;
     side = Side::WHITE;
     enPassant = 0;
     fiftyMove = 0;
@@ -111,9 +114,12 @@ void Position::wipe(){
  * @param hashKey The hash key of the position, to update.
  * @param psqt The psqt score of the position, to update.
  */
-static inline void removePiece(BitBoard* bbs, Piece piece, Square square, U64& hashKey, Score (&psqt)[2]){
+static inline void removePiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, U64& hashKey, Score (&psqt)[2]){
     // Remove the piece from the bitboard
     clearBit(bbs[piece], square);
+    // Remove it also from the side and both bitboard
+    clearBit(occ[piece >= 6], square);
+    clearBit(occ[BOTH], square);
     // Update the hash key
     hashKey ^= pieceKeys[piece][square];
     Score sign = (piece < 6) ? 1 : -1;
@@ -122,7 +128,7 @@ static inline void removePiece(BitBoard* bbs, Piece piece, Square square, U64& h
     psqt[1] -= sign * egTables[piece][square];
 }
 
-/**
+/**l
  * @brief The addPiece function adds a piece to the board.
  *
  * @param square The square where the piece is.
@@ -130,9 +136,12 @@ static inline void removePiece(BitBoard* bbs, Piece piece, Square square, U64& h
  * @param hashKey The hash key of the position, to update.
  * @param psqt The psqt score of the position, to update.
  */
-static inline void addPiece(BitBoard* bbs, Piece piece, Square square, U64& hashKey, Score (&psqt)[2]){
+static inline void addPiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, U64& hashKey, Score (&psqt)[2]){
     // Add the piece to the bitboard
     setBit(bbs[piece], square);
+    // Add it also to the side and both bitboard
+    setBit(occ[piece >= 6], square);
+    setBit(occ[BOTH], square);
     // Update the hash key
     hashKey ^= pieceKeys[piece][square];
     Score sign = (piece < 6) ? 1 : -1;
@@ -181,7 +190,7 @@ bool Position::parseFEN(char *fen) {
                 std::cout << "Error: Invalid character in Piece Placement '" << fen[0] << "'. Can't parse FEN string" << std::endl;
                 return false;
             }
-            addPiece(bitboards, piece, square, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, piece, square, hashKey, psqtScore);
             fen++;
             square++;
             pieceCount++;
@@ -275,15 +284,6 @@ bool Position::parseFEN(char *fen) {
 FENkeyEval:
     // If everything is alright, generate the hash key for the current position
     hashKey = generateHashKey();
-
-	// Setup the game phase
-	gamePhase = gamephaseInc[P] * popcount(bitboards[P] | bitboards[p]) +
-		        gamephaseInc[N] * popcount(bitboards[N] | bitboards[n]) +
-		        gamephaseInc[B] * popcount(bitboards[B] | bitboards[b]) +
-		        gamephaseInc[R] * popcount(bitboards[R] | bitboards[r]) +
-		        gamephaseInc[Q] * popcount(bitboards[Q] | bitboards[q]) +
-	            gamephaseInc[K] * popcount(bitboards[K] | bitboards[k]) ;
-	gamePhase = std::min(gamePhase, (U8)24); // If we have a lot of pieces, we don't want to go over 24
     return true;
 }
 
@@ -327,14 +327,13 @@ bool Position::mayBeZugzwang(){
  * @return True if the square is attacked, false otherwise.
  */
 inline bool Position::isSquareAttacked(U8 square, U8 side){
-    BitBoard occupancy = ((bitboards[0] | bitboards[1]) | (bitboards[2] | bitboards[3])) | ((bitboards[4] | bitboards[5]) | (bitboards[6] | bitboards[7])) | ((bitboards[8] | bitboards[9]) | (bitboards[10] | bitboards[11]));
     if (side == WHITE) {
         return (bool)(
             (pawnAttacks[BLACK][square] & bitboards[Pieces::P]) ||
             (knightAttacks[square] & bitboards[Pieces::N]) ||
             (kingAttacks[square] & bitboards[Pieces::K]) ||
-            (getBishopAttack(square, occupancy) & (bitboards[Pieces::B] | bitboards[Pieces::Q])) ||
-            (getRookAttack(square, occupancy) & (bitboards[Pieces::R] | bitboards[Pieces::Q]))
+            (getBishopAttack(square, occupancies[BOTH]) & (bitboards[Pieces::B] | bitboards[Pieces::Q])) ||
+            (getRookAttack(square, occupancies[BOTH]) & (bitboards[Pieces::R] | bitboards[Pieces::Q]))
         );
     }
     else {
@@ -342,42 +341,32 @@ inline bool Position::isSquareAttacked(U8 square, U8 side){
             (pawnAttacks[WHITE][square] & bitboards[Pieces::p]) ||
             (knightAttacks[square] & bitboards[Pieces::n]) ||
             (kingAttacks[square] & bitboards[Pieces::k]) ||
-            (getBishopAttack(square, occupancy) & (bitboards[Pieces::b] | bitboards[Pieces::q])) ||
-            (getRookAttack(square, occupancy) & (bitboards[Pieces::r] | bitboards[Pieces::q]))
+            (getBishopAttack(square, occupancies[BOTH]) & (bitboards[Pieces::b] | bitboards[Pieces::q])) ||
+            (getRookAttack(square, occupancies[BOTH]) & (bitboards[Pieces::r] | bitboards[Pieces::q]))
         );
     }
 }
 
 /**
- * @brief The isSquareAttacked function returns true if the given square is attacked by the given side.
+ * @brief The attacksToPre function returns a bitboard with all the attackers to a square.
  * @param square The square to check.
- * @param side The side to check.
  * @param occupancy an already calculated occupancy
- * @return True if the square is attacked, false otherwise.
+ * @param diagonalAttackers an already calculated diagonal attackers
+ * @param orthogonalAttackers an already calculated orthogonal attackers
+ * @return A bitboard with all the attackers to the square.
+ * @TODO: diagonal and orthogonal attackers can be passed as parameters as they are already calculated
  */
-inline bool Position::isSquareAttackedPre(U8 square, U8 side, BitBoard occupancy) {
-    if (side == WHITE) {
-        return (bool)(
-            (pawnAttacks[BLACK][square] & bitboards[Pieces::P]) ||
-            (knightAttacks[square] & bitboards[Pieces::N]) ||
-            (kingAttacks[square] & bitboards[Pieces::K]) ||
-            (getBishopAttack(square, occupancy) & (bitboards[Pieces::B] | bitboards[Pieces::Q])) ||
-            (getRookAttack(square, occupancy) & (bitboards[Pieces::R] | bitboards[Pieces::Q]))
-            );
-    }
-    else {
-        return (bool)(
-            (pawnAttacks[WHITE][square] & bitboards[Pieces::p]) ||
-            (knightAttacks[square] & bitboards[Pieces::n]) ||
-            (kingAttacks[square] & bitboards[Pieces::k]) ||
-            (getBishopAttack(square, occupancy) & (bitboards[Pieces::b] | bitboards[Pieces::q])) ||
-            (getRookAttack(square, occupancy) & (bitboards[Pieces::r] | bitboards[Pieces::q]))
-            );
-    }
+inline BitBoard Position::attacksToPre(Square square, BitBoard occupancy, BitBoard diagonalAttackers, BitBoard orthogonalAttackers) {
+    return (
+        (pawnAttacks[WHITE][square] & bitboards[p]) |
+        (pawnAttacks[BLACK][square] & bitboards[P]) |
+        (knightAttacks[square] & (bitboards[N] | bitboards[n])) |
+        (kingAttacks[square] & (bitboards[K] | bitboards[k])) |
+        (getBishopAttack(square, occupancy) & diagonalAttackers) |
+        (getRookAttack(square, occupancy) & orthogonalAttackers)
+    );
+    
 }
-
-
-
 
 /**
  * @brief The makeMove function makes a move on the board.
@@ -402,62 +391,61 @@ bool Position::makeMove(Move move) {
     bool isCastle = isCastling(move) > 0;
 
     // First, we remove the piece from the source square
-    removePiece(bitboards, piece, from, hashKey, psqtScore);
-    
+    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+
     // If the move is a capture, we remove the captured piece from the target square
-    if (captures && !isEnPass) removePiece(bitboards, captured, to, hashKey, psqtScore);
+    if (captures && !isEnPass) removePiece(bitboards, occupancies, captured, to, hashKey, psqtScore);
     // The reason why we don't remove the captured piece if it is an en passant is because the captured piece is not on the target square, so we will be handling this case later
 
     // If the move is a promotion, we replace the piece with the promoted piece
-    if (promotes) addPiece(bitboards, promotion, to, hashKey, psqtScore);
+    if (promotes) addPiece(bitboards, occupancies, promotion, to, hashKey, psqtScore);
     // Otherwise, we move the piece to the target square
-    else addPiece(bitboards, piece, to, hashKey, psqtScore);
-    
+    else  addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+
     // Remove the current en passant square from the hash key, as it is no longer valid
     hashKey ^= enPassantKeys[enPassant];
     enPassant = noSquare;
 
     // If the move is a enpassant, we remove the captured pawn from the enPassant square
-    if (isEnPass) removePiece(bitboards, captured, (side == WHITE ? to + 8 : to - 8), hashKey, psqtScore);
+    if (isEnPass) removePiece(bitboards, occupancies, captured, (side == WHITE ? to + 8 : to - 8), hashKey, psqtScore);
 
     // If the move is a double pawn push, we set the en passant square and hash it back in. If not, we don't need to do anything, since the noSquare hash is 0
     if (doublePawnPush) enPassant = to + 8 * (1 - 2 * side);
     hashKey ^= enPassantKeys[enPassant];
 
     // If the move is a castle, we move the rook
-    if (isCastle) {  
-        BitBoard occupancy = (bitboards[0] | bitboards[1]) | (bitboards[2] | bitboards[3]) | (bitboards[4] | bitboards[5]) | (bitboards[6] | bitboards[7]) | (bitboards[8] | bitboards[9]) | (bitboards[10] | bitboards[11]);
+    if (isCastle) { 
         switch (to) {
             case g1: {
                 // Check if squares between the king and the rook are attacked
-                if (isSquareAttackedPre(e1, BLACK, occupancy) || isSquareAttackedPre(f1, BLACK, occupancy) || isSquareAttackedPre(g1, BLACK, occupancy))
+                if (isSquareAttacked(e1, BLACK) || isSquareAttacked(f1, BLACK) || isSquareAttacked(g1, BLACK))
                     return false;
-                removePiece(bitboards, R, h1, hashKey, psqtScore);
-                addPiece(bitboards, R, f1, hashKey, psqtScore);
+                removePiece(bitboards, occupancies, R, h1, hashKey, psqtScore);
+                addPiece(bitboards, occupancies, R, f1, hashKey, psqtScore);
                 break;
             }
             case c1: {
                 // Check if squares between the king and the rook are attacked
-                if (isSquareAttackedPre(e1, BLACK, occupancy) || isSquareAttackedPre(d1, BLACK, occupancy) || isSquareAttackedPre(c1, BLACK, occupancy))
+                if (isSquareAttacked(e1, BLACK) || isSquareAttacked(d1, BLACK) || isSquareAttacked(c1, BLACK))
                     return false;
-                removePiece(bitboards, R, a1, hashKey, psqtScore);
-                addPiece(bitboards, R, d1, hashKey, psqtScore);
+                removePiece(bitboards, occupancies, R, a1, hashKey, psqtScore);
+                addPiece(bitboards, occupancies, R, d1, hashKey, psqtScore);
                 break;
             }
             case g8: {
                 // Check if squares between the king and the rook are attacked
-                if (isSquareAttackedPre(e8, WHITE, occupancy) || isSquareAttackedPre(f8, WHITE, occupancy) || isSquareAttackedPre(g8, WHITE, occupancy))
+                if (isSquareAttacked(e8, WHITE) || isSquareAttacked(f8, WHITE) || isSquareAttacked(g8, WHITE))
                     return false;
-                removePiece(bitboards, r, h8, hashKey, psqtScore);
-                addPiece(bitboards, r, f8, hashKey, psqtScore);
+                removePiece(bitboards, occupancies, r, h8, hashKey, psqtScore);
+                addPiece(bitboards, occupancies, r, f8, hashKey, psqtScore);
                 break;
             }
             case c8: {
                 // Check if squares between the king and the rook are attacked
-                if (isSquareAttackedPre(e8, WHITE, occupancy) || isSquareAttackedPre(d8, WHITE, occupancy) || isSquareAttackedPre(c8, WHITE, occupancy))
+                if (isSquareAttacked(e8, WHITE) || isSquareAttacked(d8, WHITE) || isSquareAttacked(c8, WHITE))
                     return false;
-                removePiece(bitboards, r, a8, hashKey, psqtScore);
-                addPiece(bitboards, r, d8, hashKey, psqtScore);
+                removePiece(bitboards, occupancies, r, a8, hashKey, psqtScore);
+                addPiece(bitboards, occupancies, r, d8, hashKey, psqtScore);
                 break;
             }
         }
@@ -482,27 +470,9 @@ bool Position::makeMove(Move move) {
 
     if (isCapture(lastMove) || isPromotion(lastMove) || ((movePiece(lastMove) % 6) == 0)) fiftyMove = 0;
     else fiftyMove++; 
-
-    // Setup the game phase
-    gamePhase = gamephaseInc[P] * popcount(bitboards[P] | bitboards[p]) +
-                gamephaseInc[N] * popcount(bitboards[N] | bitboards[n]) +
-                gamephaseInc[B] * popcount(bitboards[B] | bitboards[b]) +
-                gamephaseInc[R] * popcount(bitboards[R] | bitboards[r]) +
-                gamephaseInc[Q] * popcount(bitboards[Q] | bitboards[q]) +
-                gamephaseInc[K] * popcount(bitboards[K] | bitboards[k]);
-    gamePhase = std::min(gamePhase, (U8)24); // If we have a lot of pieces, we don't want to go over 24
 	
     return true;
 }
-
-static inline constexpr U64 getMvvLvaScore(U64 p1, U64 p2) {
-    return (500000LL - (p1 % 6) * 100000LL + 10000000LL * (1 + (p2 % 6))) << 32;
-};
-
-#define KILLER1SCORE (9999999ULL)
-#define KILLER2SCORE (9999998ULL)
-#define COUNTERSCORE (9999997ULL)
-#define LASTMOVEKILERSCORE (9999996ULL)
 
 /**
  * @brief The addMove function adds a move to the move list.
@@ -516,21 +486,40 @@ inline void Position::addMove(MoveList* ml, ScoredMove move, Ply ply) {
     Square to = moveTarget(move);
 
     Move oMove = onlyMove(move);
+    if (isEnPassant(move)){
+        ml->moves[ml->count++] = ((105ULL + GOODCAPTURESCORE) << 32) | move;
+        return;
+    }
     if (isCapture(oMove)) {
-        ml->moves[ml->count++] = (getMvvLvaScore(movedPiece, capturedPiece)) | move;
+        ml->moves[ml->count++] = (
+            (
+                MvvLva[movedPiece][capturedPiece] +
+                GOODCAPTURESCORE * SEE<-107>(move) + BADCAPTURESCORE
+            ) 
+        << 32) | move;
         return;
     }
     else if (isPromotion(oMove)){
-        ml->moves[ml->count++] = (((U64)promotionBonus[movePromotion(oMove)] * 1000) << 32) | move;
+        // TODO: check if putting knight promotions immediately after queen promotions is better
+        ml->moves[ml->count++] = ((PROMOTIONBONUS + movePromotion(move)) << 32) | move;
         return;
     }
-    S32 hScore = (((S64)historyTable[side][from][to])); // *22 + ((S64)pieceFromHistoryTable[movedPiece][from]) + ((S64)pieceToHistoryTable[movedPiece][to]) * 2) / 25;
-    S64 score = ((mgTables[movedPiece][to] - mgTables[movedPiece][from]) * gamePhase + (egTables[movedPiece][to] - egTables[movedPiece][from]) * (24 - gamePhase)) / 24;
+    else if (sameMovePos(oMove, killerTable[0][ply])){
+        ml->moves[ml->count++] = (KILLER1SCORE << 32) | move;
+        return;
+    }
+    else if (sameMovePos(oMove, killerTable[1][ply])){
+        ml->moves[ml->count++] = (KILLER2SCORE << 32) | move;
+        return;
+    }
+    else if (sameMovePos(oMove, counterMoveTable[movePiece(lastMove)][moveTarget(lastMove)])){
+        ml->moves[ml->count++] = (COUNTERSCORE << 32) | move;
+        return;
+    }
     
-    score += 16384 + hScore;
-	score = std::max(0LL, score);
-    ml->moves[ml->count++] = (score << 32) | move; // 
-    
+    S64 score = (S64)(historyTable[side][from][to]); // *22 + ((S64)pieceFromHistoryTable[movedPiece][from]) + ((S64)pieceToHistoryTable[movedPiece][to]) * 2) / 25;
+    score += 16384;
+    ml->moves[ml->count++] = (score << 32) | move; //
 }
 
 bool Position::inCheck() {
@@ -586,6 +575,74 @@ inline Piece Position::pieceOn(Square square) {
     return result; // If no piece was found, the result will remain NOPIECE
 }
 
+constexpr Score pieceValues[15] = {
+    100, 300, 300, 500, 900, 0, // White pieces
+    100, 300, 300, 500, 900, 0, // Black pieces
+    0,   0,   0 // Padding for special cases
+};
+
+// Thanks to Weiss chess engine for a clean implementation of this function
+template <Score threshold>
+bool Position::SEE(Move move){
+    Square from = moveSource(move);
+    Square to = moveTarget(move);
+
+    Piece attacker = movePiece(move);
+    Piece captured = moveCapture(move);
+
+    // Of course the move should be a capture
+    //assert(captured != NOPIECE);
+
+    Score value = pieceValues[captured] - threshold;
+
+    if (value < 0) return false;
+    value -= pieceValues[attacker];
+    if (value >= 0) return true;
+
+    BitBoard occupancy = occupancies[BOTH] ^ squareBB(from) ^ squareBB(to);
+
+    BitBoard diagonalAttackers = bitboards[Q] | bitboards[q];
+    BitBoard orthogonalAttackers = diagonalAttackers | bitboards[R] | bitboards[r];
+    diagonalAttackers |= bitboards[B] | bitboards[b];
+
+    BitBoard attackers = attacksToPre(to, occupancy, diagonalAttackers, orthogonalAttackers);
+
+    U8 side = attacker < p;
+
+    while (true) {
+        attackers &= occupancy;
+
+        BitBoard myAttackers = attackers & occupancies[side];
+        if (!myAttackers) break;
+
+        Piece pt;
+        for (pt = P; pt <= K; pt++) { // Capture with the lowest value piece (which makes the strongest attack)
+            if (myAttackers & (bitboards[pt] | bitboards[pt + 6])) break;
+        }
+
+        // Swap side
+        side = !side;
+        value = -value - 1 - pieceValues[pt];
+
+        // Check for threshold
+        if (value >= 0){
+            if (pt == K && (attackers & occupancies[side])) side = !side;
+            break;
+        }
+
+        // Remove the used piece from occupancy
+        clearBit(occupancy, lsb(myAttackers & (bitboards[pt] | bitboards[pt + 6])));
+
+        if (pt == P || pt == B || pt == Q)
+            attackers |= getBishopAttack(to, occupancy) & diagonalAttackers;
+
+        if (pt == R || pt == Q)
+            attackers |= getRookAttack(to, occupancy) & orthogonalAttackers;
+    }
+    
+    return side != (attacker >= p);
+
+}
 
 
 
@@ -616,229 +673,6 @@ void Position::reflect() {
 	// Recalculate hash
     hashKey = generateHashKey();
 }
-
-/**
-* @brief The legalizeTTMove function verifies if the TT move is Legal
-* @param move The move to check
-* @returns 0 if move wasnt legal, a legal move otherwise
-*/
-/*
-Move Position::legalizeTTMove(Move move){
-    Piece pieceMoved = pieceOn(moveSource(move));
-    BitBoard moves;
-    if (pieceMoved == NOPIECE) return 0; // No piece on start square
-    if (pieceMoved != movePiece(move)) return 0; // Different move piece
-    if (testBit(occupancies[side], moveTarget(move))) return 0; // Our piece already on the target square
-    BitBoard toSquareBB = squareBB(moveTarget(move));
-    switch (pieceMoved) {
-    case P:
-        if (isCapture(move)) {
-            if (!isEnPassant(move)) {
-                if (toSquareBB & occupancies[BLACK]) return move;
-            }
-            else {
-                if ((toSquareBB & ~occupancies[BOTH]) && ((toSquareBB << 8) & bitboards[p])) return move;
-            }
-            return 0;
-        }
-        else {
-            if (toSquareBB & ~occupancies[BOTH]) {
-                if (!isDoublePush(move)) return move;
-                else return (toSquareBB << 8) & ~occupancies[BOTH] ? move : 0;
-            }
-        }
-        return 0;
-    case N:
-        if (knightAttacks[moveSource(move)] & toSquareBB)
-            return encodeMove(
-                moveSource(move),
-                moveTarget(move),
-                N,
-                pieceOn(moveTarget(move)),
-                NOPIECE,
-                false,
-                false,
-                false,
-                false
-            );
-        return 0;
-    case K:
-        if (kingAttacks[moveSource(move)] & toSquareBB) {
-            return encodeMove(
-                moveSource(move),
-                moveTarget(move),
-                K,
-                pieceOn(moveTarget(move)),
-                NOPIECE,
-                false,
-                false,
-                false,
-                false
-            );
-        }
-        else if (isCastling(move)) {
-            if (moveTarget(move) == g1 && (castle & CastleRights::WK)) {
-                if (testBit(occupancies[BOTH], f1) && testBit(occupancies[BOTH], g1)) return encodeMove(e1, g1, K, NOPIECE, NOPIECE, false, false, true, false), ply;
-                return 0;
-            }
-            if (moveTarget(move) == c1 && (castle & CastleRights::WQ)) {
-                if (testBit(occupancies[BOTH], d1) && testBit(occupancies[BOTH], c1)) return encodeMove(e1, c1, K, NOPIECE, NOPIECE, false, false, true, false), ply;
-                return 0;
-            }
-        }
-        return 0;
-    case B:
-        moves = getBishopAttack(moveSource(move), occupancies[BOTH]) & (~occupancies[WHITE]);
-        if (moves & toSquareBB)
-            return encodeMove(
-                moveSource(move),
-                moveTarget(move),
-                B,
-                pieceOn(moveTarget(move)),
-                NOPIECE,
-                false,
-                false,
-                false,
-                false
-            );
-        return 0;
-    case R:
-        moves = getRookAttack(moveSource(move), occupancies[BOTH]) & (~occupancies[WHITE]);
-        if (moves & toSquareBB)
-            return encodeMove(
-                moveSource(move),
-                moveTarget(move),
-                R,
-                pieceOn(moveTarget(move)),
-                NOPIECE,
-                false,
-                false,
-                false,
-                false
-            );
-        return 0;
-    case Q:
-        moves = getQueenAttack(moveSource(move), occupancies[BOTH]) & (~occupancies[WHITE]);
-        if (moves & toSquareBB)
-            return encodeMove(
-                moveSource(move),
-                moveTarget(move),
-                Q,
-                pieceOn(moveTarget(move)),
-                NOPIECE,
-                false,
-                false,
-                false,
-                false
-            );
-        return 0;
-    case p:
-        if (isCapture(move)) {
-            if (!isEnPassant(move)) {
-                if (toSquareBB & occupancies[WHITE]) return move;
-            }
-            else {
-                if ((toSquareBB & ~occupancies[BOTH]) && ((toSquareBB >> 8) & bitboards[P])) return move;
-            }
-            return 0;
-        }
-        else {
-            if (toSquareBB & ~occupancies[BOTH]) {
-                if (!isDoublePush(move)) return move;
-                else return (toSquareBB >> 8) & ~occupancies[BOTH] ? move : 0;
-            }
-        }
-        return 0;
-    case n:
-        if (knightAttacks[moveSource(move)] & toSquareBB)
-            return encodeMove(
-                moveSource(move),
-                moveTarget(move),
-                n,
-                pieceOn(moveTarget(move)),
-                NOPIECE,
-                false,
-                false,
-                false,
-                false
-            );
-        return 0;
-    case k:
-        if (kingAttacks[moveSource(move)] & toSquareBB) {
-            return encodeMove(
-                moveSource(move),
-                moveTarget(move),
-                k,
-                pieceOn(moveTarget(move)),
-                NOPIECE,
-                false,
-                false,
-                false,
-                false
-            );
-        }
-        else if (isCastling(move)) {
-            if (moveTarget(move) == g8 && (castle & CastleRights::BK)) {
-                if (testBit(occupancies[BOTH], f8) && testBit(occupancies[BOTH], g8)) return encodeMove(e8, g8, k, NOPIECE, NOPIECE, false, false, true, false), ply;
-                return 0;
-            }
-            if (moveTarget(move) == c8 && (castle & CastleRights::BQ)) {
-                if (testBit(occupancies[BOTH], d8) && testBit(occupancies[BOTH], c8)) return encodeMove(e8, c8, k, NOPIECE, NOPIECE, false, false, true, false), ply;
-                return 0;
-            }
-        }
-        return 0;
-    case b:
-        moves = getBishopAttack(moveSource(move), occupancies[BOTH]) & (~occupancies[BLACK]);
-        if (moves & toSquareBB)
-            return encodeMove(
-                moveSource(move),
-                moveTarget(move),
-                b,
-                pieceOn(moveTarget(move)),
-                NOPIECE,
-                false,
-                false,
-                false,
-                false
-            );
-        return 0;
-    case r:
-        moves = getRookAttack(moveSource(move), occupancies[BOTH]) & (~occupancies[BLACK]);
-        if (moves & toSquareBB)
-            return encodeMove(
-                moveSource(move),
-                moveTarget(move),
-                r,
-                pieceOn(moveTarget(move)),
-                NOPIECE,
-                false,
-                false,
-                false,
-                false
-            );
-        return 0;
-    case q:
-        moves = getQueenAttack(moveSource(move), occupancies[BOTH]) & (~occupancies[BLACK]);
-        if (moves & toSquareBB)
-            return encodeMove(
-                moveSource(move),
-                moveTarget(move),
-                q,
-                pieceOn(moveTarget(move)),
-                NOPIECE,
-                false,
-                false,
-                false,
-                false
-            );
-        return 0;
-    default:
-        std::cout << "Tf?!\n";
-
-    }
-}
-*/
 
 std::string Position::getFEN() {
 	std::string fen = "";
@@ -892,16 +726,11 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
     BitBoard ourQueens  = bitboards[Q + 6 * side];
     BitBoard ourKing    = bitboards[K + 6 * side];
 
-    BitBoard theirPawns     = bitboards[P + 6 * (side ^ 1)];
-    BitBoard theirKnights   = bitboards[N + 6 * (side ^ 1)];
-    BitBoard theirBishops   = bitboards[B + 6 * (side ^ 1)];
-    BitBoard theirRooks     = bitboards[R + 6 * (side ^ 1)];
-    BitBoard theirQueens    = bitboards[Q + 6 * (side ^ 1)];
     BitBoard theirKing      = bitboards[K + 6 * (side ^ 1)];
 
-    BitBoard ourPieces      = (ourPawns | ourKnights) | (ourBishops | ourRooks) | (ourQueens | ourKing);
-    BitBoard theirPieces    = (theirPawns | theirKnights) | (theirBishops | theirRooks) | (theirQueens | theirKing);
-    BitBoard occupancy      = ourPieces | theirPieces;
+    BitBoard theirPieces    = occupancies[side ^ 1];
+    BitBoard occupancy      = occupancies[BOTH];
+
 
     Square theirKingPos     = lsb(theirKing);
 
@@ -1196,10 +1025,6 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
             addMove(&moveList, encodeMove(e8, c8, k, NOPIECE, NOPIECE, false, false, true, false), ply);
         }
     }
-
-    // We will sort the moves
-    if (moveList.count >= 2)
-        std::sort(std::begin(moveList.moves) + 1, std::begin(moveList.moves) + moveList.count, std::greater<ScoredMove>());
 }
 
 void Position::generateCaptures(MoveList &moveList, Ply ply){
@@ -1211,16 +1036,10 @@ void Position::generateCaptures(MoveList &moveList, Ply ply){
     BitBoard ourQueens  = bitboards[Q + 6 * side];
     BitBoard ourKing    = bitboards[K + 6 * side];
     
-    BitBoard theirPawns     = bitboards[P + 6 * (side ^ 1)];
-    BitBoard theirKnights   = bitboards[N + 6 * (side ^ 1)];
-    BitBoard theirBishops   = bitboards[B + 6 * (side ^ 1)];
-    BitBoard theirRooks     = bitboards[R + 6 * (side ^ 1)];
-    BitBoard theirQueens    = bitboards[Q + 6 * (side ^ 1)];
     BitBoard theirKing      = bitboards[K + 6 * (side ^ 1)];
 
-    BitBoard ourPieces = ourPawns | ourKnights | ourBishops | ourRooks | ourQueens | ourKing;
-    BitBoard theirPieces = theirPawns | theirKnights | theirBishops | theirRooks | theirQueens | theirKing;
-    BitBoard occupancy = ourPieces | theirPieces;
+    BitBoard theirPieces = occupancies[side ^ 1];
+    BitBoard occupancy = occupancies[BOTH];
 
     Square theirKingPos = lsb(theirKing);
     
@@ -1411,11 +1230,8 @@ void Position::generateCaptures(MoveList &moveList, Ply ply){
         Piece captured = pieceOn(to);
         addMove(&moveList, encodeMove(king, to, K + 6 * side, captured, NOPIECE, false, false, false, false), ply);
     }
-    // We will sort the moves
-    if (moveList.count >= 2)
-        std::sort(std::begin(moveList.moves) + 1, std::begin(moveList.moves) + moveList.count, std::greater<ScoredMove>());
+    
 }
-
 /**
  * @brief The makeNullMove function makes a null move on the board.
  */
@@ -1428,3 +1244,52 @@ void Position::makeNullMove(){
     fiftyMove = 0;
 }
 
+UndoInfo::UndoInfo(Position& position){
+    hashKey = position.hashKey;
+    enPassant = position.enPassant;
+    castle = position.castle;
+    fiftyMove = position.fiftyMove;
+    side = position.side;
+    lastMove = position.lastMove;
+    psqtScore[0] = position.psqtScore[0];
+    psqtScore[1] = position.psqtScore[1];
+    memcpy(bitboards, position.bitboards, sizeof(BitBoard) * 12);
+    memcpy(occupancies, position.occupancies, sizeof(BitBoard) * 3);
+}
+
+void UndoInfo::undoMove(Position& position, Move move){
+    position.hashKey = hashKey;
+    position.enPassant = enPassant;
+    position.castle = castle;
+    position.fiftyMove = fiftyMove;
+    position.lastMove = lastMove;
+    position.psqtScore[0] = psqtScore[0];
+    position.psqtScore[1] = psqtScore[1];
+    position.side = side;
+    
+    Piece piece = movePiece(move);
+    Piece captured = moveCapture(move);
+    Piece aux = isCastling(move) ? (R + 6 * position.side) : movePromotion(move);
+    // We will now regenerate the bitboards. One thing to note is that captured and aux may be NOPIECE (12)
+    // In that case, we will not change the bitboard. We will do this in a fast and branchless way.
+    captured *= captured != NOPIECE;
+    aux *= aux != NOPIECE;
+    // So that we don't have to do a lot of if statements. Instead, if the piece is NOPIECE, it will become 0 (P) which means we will just make two extra copies,
+    // which won't in fact change anything.
+    position.bitboards[piece] = bitboards[piece];
+    position.bitboards[captured] = bitboards[captured];
+    position.bitboards[aux] = bitboards[aux];
+
+    memcpy(position.occupancies, occupancies, sizeof(BitBoard) * 3);
+}
+
+void UndoInfo::undoNullMove(Position& position){
+    position.hashKey = hashKey;
+    position.enPassant = enPassant;
+    position.castle = castle;
+    position.fiftyMove = fiftyMove;
+    position.lastMove = lastMove;
+    position.psqtScore[0] = psqtScore[0];
+    position.psqtScore[1] = psqtScore[1];
+    position.side = side;
+}
