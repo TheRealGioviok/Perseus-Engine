@@ -6,7 +6,7 @@
 #include "zobrist.h"
 #include <iostream>
 
-unsigned long long BADCAPTURESCORE = 16380ULL;
+unsigned long long BADCAPTURESCORE = 16389ULL;
 
 // The default constructor instantiates the position with the standard chess starting position.
 Position::Position(){
