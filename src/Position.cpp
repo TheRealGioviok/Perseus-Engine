@@ -5,6 +5,7 @@
 #include "evaluation.h"
 #include "zobrist.h"
 #include <iostream>
+#include <cstring>
 
 unsigned long long BADCAPTURESCORE = 16380ULL;
 
