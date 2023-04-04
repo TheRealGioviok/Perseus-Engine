@@ -418,7 +418,7 @@ void Game::startSearch(bool halveTT = true)
     for (int i = 0; i < maxPly; i++)
         ss[i].wipe();
 
-    Score delta = ASPIRATIONWINDOW;
+    int delta = ASPIRATIONWINDOW;
     nodes = 0ULL;
     stopped = false;
     ply = 0;
@@ -493,8 +493,10 @@ void Game::startSearch(bool halveTT = true)
     {
         if (currSearch >= 4)
         {
-            alpha = std::max(S32(-infinity), score - delta);
-            beta = std::min(S32(infinity), score + delta);
+            if (S32(score) - delta > -KNOWNWIN) alpha = std::max(S32(-infinity), S32(score) - delta);
+            else alpha = -infinity;
+            if (S32(score) + delta < KNOWNWIN) beta = std::min(S32(infinity), S32(score) + delta);
+            else beta = infinity;
         }
         while (true)
         {
@@ -505,7 +507,6 @@ void Game::startSearch(bool halveTT = true)
             score = search(alpha, beta, currSearch, ss); // Search at depth currSearch
             if (stopped)
                 goto bmove;
-            bestMove = pvTable[0][0];
             U64 timer2 = getTime64();
 
             if (score <= alpha)
@@ -551,6 +552,8 @@ void Game::startSearch(bool halveTT = true)
                     std::cout << " ";
                 }
                 std::cout << " nps " << ((nodes - locNodes) / (timer2 - timer1 + 1)) * 1000 << std::endl;
+                // Update best move only when score is not a bound
+                bestMove = pvTable[0][0];
                 break;
             }
         }
