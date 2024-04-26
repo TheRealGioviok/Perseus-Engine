@@ -128,7 +128,7 @@ int executeCommand(Game* game, char* command) {
         int cnt = 0;
         for (U64 i = 0; i < ttEntryCount; i++) {
             ttEntry entry = tt[i];
-            if ((entry.eval != -infinity) && (entry.eval != entry.score)) {
+            if ((entry.eval != noScore) && (entry.eval != entry.score)) {
                 Depth depth;
                 Score score, eval;
                 HashKey hash;

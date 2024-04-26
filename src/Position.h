@@ -54,6 +54,12 @@ struct Position{
     void wipe();
 
     /**
+     * @brief The hasNonPawns function checks if the current side to move has non-pawn material.
+     * @return true if the position has non-pawn material, false otherwise.
+     */
+    bool hasNonPawns();
+
+    /**
      * @brief The mayBeZugzwang function tries to detect positions where reductions may be unsafe.
      * @return True if the position is not to prune, false otherwise.
      */

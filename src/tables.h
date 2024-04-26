@@ -27,6 +27,7 @@ extern HashKey repetitionTable[512];
 extern Ply repetitionCount;
 // The LMR reduction table
 extern Ply reductionTable[128][128];
+extern S16 lmpMargin[128][2];
 
 /**
  * @brief The initLMRTable function initializes the LMR reduction table

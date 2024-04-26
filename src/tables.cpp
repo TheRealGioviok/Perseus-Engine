@@ -52,6 +52,7 @@ BitBoard fiveSquare[64]; // The 5x5 square
 
 // The LMR reduction table
 Ply reductionTable[128][128]= {{0}};
+S16 lmpMargin[128][2] = {{0}};
 #define RESOLUTION 1000
 double lmrDepthValue = 1004;
 double lmrMoveValue = 808;
@@ -71,6 +72,13 @@ void initLMRTable(){
                     lmrC / RESOLUTION
                 )
             );
+        }
+    }
+    // Init lmpMargin
+    for (int depth = 0; depth < 128; depth++) {
+        for (int improving = 0; improving < 2; improving++) {
+            lmpMargin[depth][0] = 1.5 + 0.5 * std::pow(depth, 2.0); // Not improving
+            lmpMargin[depth][1] = 3.0 + 1.0 * std::pow(depth, 2.0); // improving
         }
     }
 }

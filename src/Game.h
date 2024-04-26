@@ -5,17 +5,20 @@ struct SStack {
     Move excludedMove = 0;
     Score staticEval = 0;
     Move move = 0;
+    S16 doubleExtensions = 0;
 
     SStack() {
         excludedMove = 0;
         staticEval = 0;
         move = 0;
+        doubleExtensions = 0;
     }
 
     void wipe() {
         excludedMove = 0;
         staticEval = 0;
         move = 0;
+        doubleExtensions = 0;
     }
 };
 
@@ -35,6 +38,7 @@ public:
     U32 binc;
     S32 rootDelta = infinity;
     Score lastScore = 0;
+    S16 nmpPlies = 0;
     bool stopped = false;
 
     /**

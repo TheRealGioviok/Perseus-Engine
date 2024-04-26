@@ -289,6 +289,14 @@ FENkeyEval:
 }
 
 /**
+ * @brief The hasNonPawns function checks if the current side to move has non-pawn material.
+ * @return true if the position has non-pawn material, false otherwise.
+ */
+bool Position::hasNonPawns(){
+    return occupancies[side] ^ bitboards[P + 6 * side] ^ bitboards[K + 6 * side];
+}
+
+/**
  * @brief The mayBeZugzwang function tries to detect positions where reductions may be unsafe.
  * @return True if the position is not to prune, false otherwise.
  */
