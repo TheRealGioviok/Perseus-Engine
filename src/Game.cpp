@@ -248,12 +248,15 @@ bool Game::makeMove(Move move){
 bool Game::isRepetition() {
     // Get the hash key of the current position
     HashKey hashKey = pos.hashKey;
-    // Iterate over the repetition table
-    for (int i = std::max(0,repetitionCount - pos.fiftyMove - 1); i < repetitionCount - 2; i++) {
-        // If the hash key is found, return true
-        if (repetitionTable[i] == hashKey) return true;
+    S32 dist = pos.fiftyMove;
+    S32 counter = 0;
+    for (int idx = 4; idx < dist; idx += 2){
+        if (repetitionTable[repetitionCount - idx] == hashKey) {
+            if (idx < ply) return true;
+            counter++;
+            if (counter >= 2) return true;
+        }
     }
-    // If the hash key is not found, return false
     return false;
 }
 

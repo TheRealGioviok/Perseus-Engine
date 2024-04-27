@@ -126,3 +126,5 @@ extern Depth IIRdepth;				 // [3, 7]
 extern Depth razorDepth;			 // [2, 5]
 extern Depth singularDepth;			 // [4, 8]
 extern Depth RFPDepth;
+extern int futPruningMultiplier; // [50, 300]
+extern int futPruningAdd;		 // [50, 300]

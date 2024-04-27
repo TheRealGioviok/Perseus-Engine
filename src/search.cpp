@@ -64,7 +64,7 @@ static inline void clearNextPlyKillers(Ply ply, Depth depth)
     }
 }
 
-static inline void clearExcludedMove(SStack* stack, Ply ply, Depth depth)
+static inline void clearExcludedMove(SStack *stack, Ply ply, Depth depth)
 {
     if (ply < maxPly - depth)
     {
@@ -74,10 +74,6 @@ static inline void clearExcludedMove(SStack* stack, Ply ply, Depth depth)
 
 Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
 {
-    std::cout << "search alpha: " << alpha << " beta: " << beta << " depth: " << (int)depth << std::endl;
-    // Print nodecount each 1000000 nodes
-    if (nodes % 1000000 == 0)
-        std::cout << "info nodes " << nodes << std::endl;
     // Comms
     if (stopped)
         return 0;
@@ -100,7 +96,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     bool improving = true;
 
     // Guard from pvlen editing when in singular extension
-    if (!excludedMove) {
+    if (!excludedMove)
+    {
         pvLen[ply] = ply;
     }
 
@@ -113,7 +110,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     if (!RootNode)
     {
         if (isRepetition() || pos.fiftyMove >= 100)
-            return 8 - (nodes & 7); // Randomize draw score so that we try to explore different lines
+            return 4 - (nodes & 7); // Randomize draw score so that we try to explore different lines
 
         // Mate distance pruning
         alpha = std::max(alpha, matedIn(ply));
@@ -154,14 +151,14 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     if (depth <= 0)
         return quiescence(alpha, beta);
 
-    // IIR by Ed Schröder
+    // IIR by Ed SchrÃ¶der
     // http://talkchess.com/forum3/viewtopic.php?f=7&t=74769&sid=64085e3396554f0fba414404445b3120
     if (depth >= IIRdepth && ttBound == hashNONE)
         depth--;
 
     // Clear killers and exclude move
     clearNextPlyKillers(ply, 1);
-    clearExcludedMove(ss,ply,1);
+    clearExcludedMove(ss, ply, 1);
 
     // Initialize the undoer
     UndoInfo undoer = UndoInfo(pos);
@@ -174,17 +171,16 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     }
 
     // Get static eval of the position
-    if (ttHit){
+    if (ttHit)
+    {
         // Check if the eval is stored in the TT
         eval = ss->staticEval = tte->eval != noScore ? tte->eval : evaluate();
         // Also, we might be able to use the score as a better eval
-        if ( ttScore != noScore
-            && (ttBound == hashEXACT
-                || (ttBound == hashUPPER && ttScore < eval)
-                || (ttBound == hashLOWER && ttScore > eval)))
+        if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
             eval = ttScore;
     }
-    else{
+    else
+    {
         eval = ss->staticEval = evaluate();
         // Store the eval in the TT if not in exclusion mode (in which we might already have the entry)
         if (!excludedMove)
@@ -198,11 +194,11 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
         improving = ss->staticEval > (ss - 4)->staticEval;
     else
         improving = true; // Since improving makes the pruning more conservative, we default to true
-    
+
     // Pruning time
-    if (false && !PVNode)
+    if (!PVNode)
     {
-    
+
         // RFP
         if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, improving) >= beta)
             return eval;
@@ -210,24 +206,25 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
         // Null move pruning
         if (ss->staticEval >= beta + nmpBias &&
             eval >= beta &&
-            (ss-1)->move != noMove &&
+            (ss - 1)->move != noMove &&
             depth >= 3 &&
             isOk(pos.lastMove) &&
             okToReduce(pos.lastMove) && pos.hasNonPawns() &&
-            ply >= nmpPlies ) {
-            
+            ply >= nmpPlies)
+        {
+
             // make null move
             makeNullMove();
             ss->move = noMove;
-            
+
             Depth R = nmpQ1 + (depth / nmpDepthDivisor) + std::min((eval - beta) / nmpScoreDivisor, nmpQ2);
             Score nullScore = -search(-beta, -beta + 1, depth - R, ss + 1);
-            
+
             undoNullMove(undoer);
 
             if (stopped)
                 return 0;
-            
+
             if (nullScore >= beta)
             {
                 if (nullScore >= mateValue)
@@ -246,7 +243,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
         }
 
         // TODO: Razoring
-        if (depth <= razorDepth && eval + razorQ1 + razorQ2 * (depth - 1) <= alpha){
+        if (depth <= razorDepth && eval + razorQ1 + razorQ2 * (depth - 1) <= alpha)
+        {
             const Score razorScore = quiescence(alpha, beta);
             if (razorScore <= alpha)
                 return razorScore;
@@ -263,15 +261,12 @@ skipPruning:
     bool skipQuiets = false;
 
     pvLen[ply] = ply;
-    
+
     Move quiets[256];
     U16 quietsCount = 0;
 
     MoveList moveList;
     generateMoves(moveList, ply); // Already sorted, except for ttMove
-    if (ply > 20){
-        std::cout << "Warning: ply > 20" << std::endl;
-    }
     //// Sort ttMove
     if (ttMove)
         sortTTUp(moveList, ttMove);
@@ -281,28 +276,34 @@ skipPruning:
     for (int i = 0; i < moveList.count; i++)
     {
         Move currMove = onlyMove(moveList.moves[i]);
-        if (!currMove || currMove == excludedMove) continue;
-        
+        if (!currMove || currMove == excludedMove)
+            continue;
+
         const bool isQuiet = okToReduce(currMove);
+
+        if (skipQuiets && isQuiet)
+            continue;
 
         S32 currMoveScore = getScore(moveList.moves[i]) - 16384;
 
-        if (false && ply && pos.hasNonPawns() && bestScore > noScore){
-            std::cout << "a";
+        if (ply && pos.hasNonPawns() && bestScore > noScore)
+        {
             const Depth lmrDepth = Depth(std::max(0, depth - reduction(depth, moveSearched, PVNode, improving) + std::clamp((currMoveScore / 16384), -1, 1)));
 
-            if (!skipQuiets && !inCheck){
+            if (!skipQuiets && !inCheck && !PVNode)
+            {
                 // Movecount pruning
-                if (!PVNode  && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
+                if (moveSearched >= lmpMargin[depth][improving])
+                    skipQuiets = true;
                 // Futility pruning
-                if (lmrDepth < 11 && ss->staticEval + 250 + 150*lmrDepth <= alpha) skipQuiets = true;
+                if (moveSearched && lmrDepth < 11 && ss->staticEval + 250 + 150 * lmrDepth <= alpha)
+                    skipQuiets = true;
             }
         }
 
         Depth extension = 0;
-        if (false && ply < currSearch * 2 && depth >= 6 && currMove == unpackedTTMove && !excludedMove && (ttBound & hashLOWER) && abs(ttScore) < mateScore && tte->depth >= depth -3)
+        if (ply < currSearch * 2 && depth >= 6 && currMove == unpackedTTMove && !excludedMove && (ttBound & hashLOWER) && abs(ttScore) < mateScore && tte->depth >= depth - 3)
         {
-            std::cout << "b";
             const Score singularBeta = ttScore - singularDepthMultiplier * depth;
             const Depth singularDepth = (depth - 1) / 2;
 
@@ -310,12 +311,14 @@ skipPruning:
             const Score singularScore = search(singularBeta - 1, singularBeta, singularDepth, ss);
             ss->excludedMove = noMove;
 
-            if (singularScore < singularBeta){
+            if (singularScore < singularBeta)
+            {
                 extension = 1;
                 // Limit search explosion
-                if (!PVNode && singularScore < singularBeta - 15 && ss->doubleExtensions <= 11){
+                if (!PVNode && singularScore < singularBeta - 15 && ss->doubleExtensions <= 11)
+                {
                     extension = 2 + (okToReduce(ttMove) && singularScore < singularBeta - 100);
-                    ss->doubleExtensions = (ss-1)->doubleExtensions + 1;
+                    ss->doubleExtensions = (ss - 1)->doubleExtensions + 1;
                     depth += depth < 10; // ?????
                 }
             }
@@ -323,7 +326,6 @@ skipPruning:
                 return singularBeta;
             else if (ttScore >= beta)
                 extension = -2; // Negative extension (apparently good)
-            
         }
 
         Depth newDepth = depth - 1 + extension;
@@ -340,30 +342,26 @@ skipPruning:
                 quiets[quietsCount++] = currMove;
             if (RootNode && depth >= LOGROOTMOVEDEPTH)
                 std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
-            
-            if (false && moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv)){
+
+            if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
+            {
                 Depth R = reduction(depth, moveSearched, PVNode, improving);
-                std::cout << "c";
                 // If move is highly tactical, reduce it less
                 if (sameMovePos(currMove, killerTable[0][ply]) || sameMovePos(currMove, killerTable[1][ply]) || sameMovePos(currMove, counterMoveTable[movePiece(ss->move)][moveTarget(ss->move)]))
                     R -= 1;
-                
+
                 if (ttPv)
                     R -= 1;
-                
+
                 if (givesCheck)
                     R -= 1;
-                
+
                 R -= std::clamp((currMoveScore / 16384), -1, 1);
 
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
 
                 Depth reducedDepth = newDepth - R;
-                if (reducedDepth > newDepth){
-                    reducedDepth = newDepth;
-                    std::cout << "Warning: Reduced depth is higher than new depth" << std::endl;
-                }
                 // Search at reduced depth
                 score = -search(-alpha - 1, -alpha, reducedDepth, ss + 1);
                 // If failed high on reduced search, research at full depth
@@ -372,12 +370,13 @@ skipPruning:
             }
             else if (!PVNode || moveSearched)
                 score = -search(-alpha - 1, -alpha, newDepth, ss + 1);
-            
+
             // Pvsearch
-            if (PVNode && (moveSearched || score > alpha)){
+            if (PVNode && (!moveSearched || score > alpha))
+            {
                 score = -search(-beta, -alpha, newDepth, ss + 1);
             }
-            
+
             undo(undoer, currMove);
 
             ++moveSearched;
@@ -391,7 +390,9 @@ skipPruning:
                     pvTable[ply][ply] = currMove;
                     if (ply + 1 < maxPly)
                     {
-                        memcpy(&(pvTable[ply][ply + 1]), &(pvTable[ply + 1][ply + 1]), sizeof(Move) * (static_cast<unsigned long long>(pvLen[ply + 1]) - ply - 1));
+                        // Copy the pv from the next ply
+                        for (int j = ply + 1; j < pvLen[ply + 1]; j++)
+                            pvTable[ply][j] = pvTable[ply + 1][j];
                         pvLen[ply] = pvLen[ply + 1];
                     }
                 }
@@ -442,11 +443,10 @@ skipPruning:
 
 Score Game::quiescence(Score alpha, Score beta)
 {
-    std::cout << "quiescence alpha: " << alpha << " beta: " << beta << std::endl;
     bool inCheck = pos.inCheck();
     if (inCheck)
         if (isRepetition())
-            return 8 - (nodes & 7); // Randomize draw score so that we try to explore different lines
+            return 4 - (nodes & 7); // Randomize draw score so that we try to explore different lines
 
     Score standPat = evaluate();
 
