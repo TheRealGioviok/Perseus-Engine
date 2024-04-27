@@ -109,7 +109,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     // Draws - mate distance
     if (!RootNode)
     {
-        if (isRepetition() || pos.fiftyMove >= 100)
+        if (isRepetition() || pos.fiftyMove >= 100 || pos.insufficientMaterial())
             return 4 - (nodes & 7); // Randomize draw score so that we try to explore different lines
 
         // Mate distance pruning
@@ -296,13 +296,13 @@ skipPruning:
                 if (moveSearched >= lmpMargin[depth][improving])
                     skipQuiets = true;
                 // Futility pruning
-                if (moveSearched && lmrDepth < 11 && ss->staticEval + 250 + 150 * lmrDepth <= alpha)
+                if (moveSearched && lmrDepth < 11 && ss->staticEval + futPruningMultiplier + futPruningAdd * lmrDepth <= alpha)
                     skipQuiets = true;
             }
         }
 
         Depth extension = 0;
-        if (ply < currSearch * 2 && depth >= 6 && currMove == unpackedTTMove && !excludedMove && (ttBound & hashLOWER) && abs(ttScore) < mateScore && tte->depth >= depth - 3)
+        if (ply < currSearch * 2 && depth >= 6 && currMove == unpackedTTMove && !excludedMove && (ttBound & hashLOWER) && abs(ttScore) < mateScore && tte->depth >= depth - 3 && !RootNode)
         {
             const Score singularBeta = ttScore - singularDepthMultiplier * depth;
             const Depth singularDepth = (depth - 1) / 2;

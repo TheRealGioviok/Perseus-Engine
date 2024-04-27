@@ -108,7 +108,6 @@ enum Squares {
 #define ASSERTS                         true // If true the asserts are used. The asserts are automatically implemented in the code if this is true.
 #define LOGROOTMOVEDEPTH                12 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
 
-extern S32 goodHistoryThreshold;
 extern double lmrDepthValue;
 extern double lmrMoveValue;
 extern double lmrC;
