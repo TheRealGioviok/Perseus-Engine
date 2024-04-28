@@ -347,7 +347,7 @@ skipPruning:
             {
                 Depth R = reduction(depth, moveSearched, PVNode, improving);
                 // If move is highly tactical, reduce it less
-                if (currMoveScore >= COUNTERSCORE - 16384)
+                if (currMoveScore >= (int)(COUNTERSCORE - 16384))
                     R -= 1;
 
                 if (ttPv)

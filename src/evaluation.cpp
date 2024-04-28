@@ -228,8 +228,8 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
     }
 }
 
-#define TEMPOMG 14
-#define TEMPOEG 3
+#define TEMPOMG 16 // We calculate tempomg as the eval @30 of startpos. We repeat this to convergence (0 -> 16 -> 16)
+#define TEMPOEG 4  // We calculate tempoeg as the eval @30 of startpos without pieces (0 -> 4 -> 4)
     Score pestoEval(Position *pos){
     auto const& bb = pos->bitboards;
     auto const& occ = pos->occupancies;
@@ -303,10 +303,11 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
     egScore[BLACK] += mobilityScore[1][BLACK];
 
     // Calculate mg and eg scores
-    Score mg = mgScore[WHITE] - mgScore[BLACK];
-    Score eg = egScore[WHITE] - egScore[BLACK];
+    Score sign = 1 - 2 * pos->side;
+    Score mg = mgScore[WHITE] - mgScore[BLACK] + sign * TEMPOMG;
+    Score eg = egScore[WHITE] - egScore[BLACK] + sign * TEMPOEG;
 
-    Score sign = 1 - 2*pos->side;
+    
     return sign * 
         (
             (pos->psqtScore[0] + mg) * gamePhase +
