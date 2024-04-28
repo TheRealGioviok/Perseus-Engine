@@ -6,7 +6,7 @@ Perseus is a UCI-compliant chess engine written in [language or framework]. It's
 
 - UCI Protocol: Perseus fully supports the Universal Chess Interface (UCI) protocol, allowing it to seamlessly integrate with various chess GUIs (Graphical User Interfaces).
 - Search Algorithms: The engine implements advanced search algorithms such as Alpha-Beta pruning with various enhancements like Transposition Tables, Iterative Deepening, and Quiescence Search. Refer to `search.cpp` for the code.
-- Evaluation Function: Perseus incorporates a sophisticated evaluation function that assesses the strength of a given chess position based on factors like piece values, pawn structure, mobility, and more.
+- Evaluation Function: Perseus incorporates an evaluation function that assesses the strength of a given chess position based on factors like piece values, mobility, and more.
 - Bitboard Representation: Utilizing efficient bitboard representation, Perseus achieves fast move generation and evaluation.
 
 ## Usage
