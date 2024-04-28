@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cstring>
 
-unsigned long long BADCAPTURESCORE = 16069ULL;
+unsigned long long BADCAPTURESCORE = 15728ULL;
 
 // The default constructor instantiates the position with the standard chess starting position.
 Position::Position(){

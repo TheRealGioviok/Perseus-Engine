@@ -153,7 +153,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
 
     // IIR by Ed SchrÃ¶der
     // http://talkchess.com/forum3/viewtopic.php?f=7&t=74769&sid=64085e3396554f0fba414404445b3120
-    if (depth >= IIRdepth && ttBound == hashNONE)
+    if (depth >= IIRdepth && ttBound == hashNONE && !PVNode)
         depth--;
 
     // Clear killers and exclude move

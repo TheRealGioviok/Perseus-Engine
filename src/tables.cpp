@@ -54,10 +54,10 @@ BitBoard fiveSquare[64]; // The 5x5 square
 Ply reductionTable[128][128]= {{0}};
 S16 lmpMargin[128][2] = {{0}};
 #define RESOLUTION 1000
-double lmrDepthValue = 910;
-double lmrMoveValue = 843;
-double lmrC = 595;
-double lmrA = 808;
+double lmrDepthValue = 918;
+double lmrMoveValue = 874;
+double lmrC = 553;
+double lmrA = 819;
 /**
  * @brief The initLMRTable function initializes the LMR reduction table
  */
