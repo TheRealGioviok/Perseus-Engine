@@ -27,6 +27,8 @@ For a comprehensive list of available options and their descriptions, refer to t
 
 Contributions to Perseus are welcome! Whether it's bug fixes, performance improvements, or new features, feel free to fork the repository, make your changes, and submit a pull request.
 
+In the pull request, make sure to include the bench of the submitted version, and the SPRT result of the main vs submitted engine. SPRT results are not needed if the change doesn't impact the engine playing itself (e.g. correcting a string, formatting, adding comments etc...).
+
 ## License
 
 Perseus is distributed under the GNU General Public License. See the LICENSE file for details.
