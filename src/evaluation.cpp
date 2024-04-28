@@ -179,19 +179,23 @@ template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
 static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], Score (&mobilityScore)[2][2]) {
     constexpr Side us = pt < p ? WHITE : BLACK;
-    constexpr Side them = us ? BLACK : WHITE;
+    // constexpr Side them = us ? BLACK : WHITE;
     BitBoard mob;
     BitBoard pieces = bb[pt] & ~pinned[us];
     BitBoard occCheck = occ[BOTH];
 
-    // Queen squares are already excluded from the mobility area calculation
+    // Consider diagonal xrays through our queens
+    if constexpr (pt == B || pt == Q)                   occCheck ^= bb[Q];
+    else if constexpr (pt == b || pt == q)              occCheck ^= bb[q];
+
+    // Consider cross xrays through our rooks
     if constexpr (pt == R || pt == Q)                   occCheck ^= bb[R];
     else if constexpr (pt == r || pt == q)              occCheck ^= bb[r];
     
     // Iterate over all pieces of the given type
+    
     while (pieces) {
         Square sq = popLsb(pieces);
-        // Get the moves, according to the piece type
         mob = mobilityArea[us];
         if constexpr (pt == N || pt == n) {
             mob &= knightAttacks[sq];
@@ -200,53 +204,32 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
             mobilityScore[0][us] += knightMobMg[moveCount];
             mobilityScore[1][us] += knightMobEg[moveCount];
         }
-        else if constexpr (pt == B) {
+        else if constexpr (pt == B || pt == b) {
             mob &= getBishopAttack(sq, occCheck); // X-ray through our queens
             U8 moveCount = popcount(mob);
             // Add the mobility score
             mobilityScore[0][us] += bishopMobMg[moveCount];
             mobilityScore[1][us] += bishopMobEg[moveCount];
         }
-        else if constexpr (pt == R) {
+        else if constexpr (pt == R || pt == r) {
             mob &= getRookAttack(sq, occCheck); // X-ray through our queens and rooks
             U8 moveCount = popcount(mob);
             // Add the mobility score
             mobilityScore[0][us] += rookMobMg[moveCount];
             mobilityScore[1][us] += rookMobEg[moveCount];
         }
-        else if constexpr (pt == Q) {
+        else if constexpr (pt == Q || pt == q) {
             mob &= getQueenAttack(sq, occCheck); // X-ray through our queens
             U8 moveCount = popcount(mob);
             // Add the mobility score
             mobilityScore[0][us] += queenMobMg[moveCount];
             mobilityScore[1][us] += queenMobEg[moveCount];
         }
-        else if constexpr (pt == b) {
-            mob &= getBishopAttack(sq, occCheck); // X-ray through our queens
-            U8 moveCount = popcount(mob);
-            // Add the mobility score
-            mobilityScore[0][them] += bishopMobMg[moveCount];
-            mobilityScore[1][them] += bishopMobEg[moveCount];
-        }
-        else if constexpr (pt == r) {
-            mob &= getRookAttack(sq, occCheck); // X-ray through our queens and rooks
-            U8 moveCount = popcount(mob);
-            // Add the mobility score
-            mobilityScore[0][them] += rookMobMg[moveCount];
-            mobilityScore[1][them] += rookMobEg[moveCount];
-        }
-        else if constexpr (pt == q) {
-            mob &= getQueenAttack(sq, occCheck); // X-ray through our queens
-            U8 moveCount = popcount(mob);
-            // Add the mobility score
-            mobilityScore[0][them] += queenMobMg[moveCount];
-            mobilityScore[1][them] += queenMobEg[moveCount];
-        }
     }
 }
 
-#define TEMPOMG 14
-#define TEMPOEG 3
+#define TEMPOMG 16 // We calculate tempomg as the eval @30 of startpos. We repeat this to convergence (0 -> 16 -> 16)
+#define TEMPOEG 4  // We calculate tempoeg as the eval @30 of startpos without pieces (0 -> 4 -> 4)
     Score pestoEval(Position *pos){
     auto const& bb = pos->bitboards;
     auto const& occ = pos->occupancies;
@@ -263,8 +246,7 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
     Square whiteKing = lsb(bb[K]);
     Square blackKing = lsb(bb[k]);
 
-    // Mobility calculation
-
+    // Mobility calculations
     BitBoard pawnAttackedSquares[2] = {
         ((bb[P] & notFile(0)) >> 9) | ((bb[P] & notFile(7)) >> 7),
         ((bb[p] & notFile(0)) << 7) | ((bb[p] & notFile(7)) << 9)
@@ -286,14 +268,14 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
     };
 
     BitBoard mobilityArea[2] = {
-        // Mobility area. 
+        // Mobility area.
         // Squares in the mobility area are:
         // 1. Free of our pieces
         // 2. Not defended by enemy pawns
-        
+
         // Calculate a negative mask for the mobility area, and then invert it
-        (occ[WHITE] | pawnAttackedSquares[BLACK]) ^ 0xFFFFFFFFFFFFFFFF,
-        (occ[BLACK] | pawnAttackedSquares[WHITE]) ^ 0xFFFFFFFFFFFFFFFF
+        (occ[WHITE] | pawnAttackedSquares[BLACK] | pinned[WHITE] | bb[K] | bb[Q]) ^ 0xFFFFFFFFFFFFFFFF,
+        (occ[BLACK] | pawnAttackedSquares[WHITE] | pinned[BLACK] | bb[k] | bb[q]) ^ 0xFFFFFFFFFFFFFFFF
     };
 
     // Calculate the mobility scores (index by phase and color)
@@ -319,11 +301,13 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
     mgScore[BLACK] += mobilityScore[0][BLACK];
     egScore[WHITE] += mobilityScore[1][WHITE];
     egScore[BLACK] += mobilityScore[1][BLACK];
-    // Calculate mg and eg scores
-    Score mg = mgScore[WHITE] - mgScore[BLACK];
-    Score eg = egScore[WHITE] - egScore[BLACK];
 
-    Score sign = 1 - 2*pos->side;
+    // Calculate mg and eg scores
+    Score sign = 1 - 2 * pos->side;
+    Score mg = mgScore[WHITE] - mgScore[BLACK] + sign * TEMPOMG;
+    Score eg = egScore[WHITE] - egScore[BLACK] + sign * TEMPOEG;
+
+    
     return sign * 
         (
             (pos->psqtScore[0] + mg) * gamePhase +
@@ -335,7 +319,7 @@ Score pestoEval2(Position* pos) {
 
 #if USINGEVALCACHE
     Score cachedEval = getCachedEval(pos->hashKey);
-    if (cachedEval != -infinity) {
+    if (cachedEval != noScore) {
         int fCs = std::min(60, std::max(0, pos->fiftyMove - 12));
         return cachedEval * (100 - fCs) / 100;
     }

@@ -61,7 +61,7 @@ S32 benchmark(){
     U64 totalTime = 0;
     Game game;
     game.searchMode = 1;
-    game.depth = 8;
+    game.depth = 12;
     for(int i = 0; i < 50; i++){
         std::cout << "Benchmarking position " << i << std::endl;
         U64 currTime = getTime64();

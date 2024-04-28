@@ -30,7 +30,7 @@ EXECUTABLE := $(NAME)$(SUFFIX)
 all: release
 
 # Debug target
-debug: CXXFLAGS += -g -O0
+debug: CXXFLAGS += -g -O0 -fsanitize=address -fno-omit-frame-pointer -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC
 debug: $(EXECUTABLE)
 
 # Release target

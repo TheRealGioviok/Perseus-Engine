@@ -9,6 +9,8 @@ constexpr U64 comfrequency = 2047LL; // The search-uci communication frequency i
 constexpr Score infinity  = 32500;   // The score considered infinite.
 constexpr Score mateScore = 32000;   // The score of mate in 0 ply.
 constexpr Score mateValue = 31500;   // The score above which a score is to be considered a mate.
+constexpr Score noScore  = -32500;   // The score considered no score.
+constexpr Move  noMove   = 0;        // The move considered no move.
 
 // The draw scores are used to recognize if a score is a draw or not.
 constexpr Score drawScore = 0;       // The score of a draw.
@@ -99,14 +101,13 @@ enum Squares {
 #define DODELTAPRUNING                  true // If true the delta pruning is used. Quiescence search must be enabled for this to work.
 
 // EVALUATION TECHNIQUES
-#define USINGEVALCACHE                  true // If true the evaluation cache is used. The evaluation cache is automatically implemented in the evaluation function if this is true.
+#define USINGEVALCACHE                  false // If true the evaluation cache is used. The evaluation cache is automatically implemented in the evaluation function if this is true.
 
 // DEBUGGING SYMBOL DEFINITIONS
 #define DEBUG                           false // If true the debugging is used. The debugging is automatically implemented in the code if this is true.
 #define ASSERTS                         true // If true the asserts are used. The asserts are automatically implemented in the code if this is true.
 #define LOGROOTMOVEDEPTH                12 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
 
-extern S32 goodHistoryThreshold;
 extern double lmrDepthValue;
 extern double lmrMoveValue;
 extern double lmrC;
@@ -124,3 +125,5 @@ extern Depth IIRdepth;				 // [3, 7]
 extern Depth razorDepth;			 // [2, 5]
 extern Depth singularDepth;			 // [4, 8]
 extern Depth RFPDepth;
+extern int futPruningMultiplier; // [50, 300]
+extern int futPruningAdd;		 // [50, 300]

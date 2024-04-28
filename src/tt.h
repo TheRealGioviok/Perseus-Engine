@@ -12,12 +12,15 @@ constexpr U64 evalHashSize = 1048576;                      // 2^20
 // The enum of hashFlags
 enum HashFlag
 {
+    hashNONE = 0,
     hashUPPER = 1,
     hashLOWER = 2,
-    hashEXACT = 4,
+    hashEXACT = 3,
     hashINVALID = 8,
     hashOLD = 16,
-    hashSINGULAR = 32
+    hashSINGULAR = 32,
+    hashEVALONLY = 64,
+    hashPVMove = 128
 };
 
 struct evalHashEntry {
@@ -38,8 +41,17 @@ __declspec(align(16)) struct ttEntry {
     PackedMove bestMove;     // 2
     Depth depth;             // 1
     U8 flags = hashINVALID;  // 1
-    Score score = -infinity; // 2
-    Score eval = -infinity;  // 2
+    Score score = noScore; // 2
+    Score eval = noScore;  // 2
+
+    ttEntry () {
+        hashKey = 0;
+        bestMove = 0;
+        depth = 0;
+        flags = hashINVALID;
+        score = noScore;
+        eval = noScore;
+    }
 };
 
 __declspec(align(64))struct ttBucket {
@@ -47,7 +59,7 @@ __declspec(align(64))struct ttBucket {
     ttBucket(){
 		for (U64 i = 0; i < ttBucketSize; i++){
 			entries[i] = ttEntry(0, 0, 0, hashINVALID, 0);
-			entries[i].eval = -infinity;
+			entries[i].eval = noScore;
 		}
 	}
 };
@@ -59,8 +71,8 @@ struct ttEntry {
     PackedMove bestMove;     // 2
     Depth depth;             // 1
     U8 flags = hashINVALID;  // 1
-    Score score = -infinity; // 2
-    Score eval = -infinity;  // 2
+    Score score = noScore; // 2
+    Score eval = noScore;  // 2
 } __attribute__((aligned(16)));
 
 struct ttBucket {
@@ -68,7 +80,7 @@ struct ttBucket {
     ttBucket(){
         for (U64 i = 0; i < ttBucketSize; i++){
             entries[i] = ttEntry(0, 0, 0, hashINVALID, 0);
-            entries[i].eval = -infinity;
+            entries[i].eval = noScore;
         }
     }
 } __attribute__((aligned(64)));
@@ -88,6 +100,8 @@ static inline void resizeTT(S32 mbSize){
     S32 ttEntryCount = 1024 * 1024 * mbSize / sizeof(ttEntry);
     // allocate the memory on the tt vector
     tt.resize(ttEntryCount);
+    // clear the memory
+    for (ttEntry &e : tt) e = ttEntry();
 }
 
 /**
@@ -115,7 +129,7 @@ ttEntry *probeTT(HashKey key);
 void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply);
 
 /**
- * The getCachedEval function looks up for evaluation of position and returns it if found, else -infinity
+ * The getCachedEval function looks up for evaluation of position and returns it if found, else noScore
  * @param hash the hash to look for
  */
 Score getCachedEval(HashKey h);

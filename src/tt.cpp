@@ -17,8 +17,8 @@ ttEntry::ttEntry() {
     bestMove = 0;
     depth = 0;
     flags = hashINVALID;
-    score = -infinity;
-    eval = -infinity;
+    score = noScore;
+    eval = noScore;
 }
 
 // Transposition table and evaluation hash table
@@ -62,7 +62,7 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
 Score getCachedEval(HashKey h){
     evalHashEntry &e = evalHash[h % (evalHashSize)];
     if (e.hashKey == h) return e.score;
-    return -infinity;
+    return noScore;
 }
 
 void cacheEval(HashKey h, Score s){

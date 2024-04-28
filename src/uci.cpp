@@ -27,25 +27,26 @@ void uciStr() {
     std::cout << "id name " << "Perseus" << std::endl;
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     std::cout << "option name Hash type spin default 16 min 8 max 1024" << std::endl;
-    std::cout << "option name hhthresh type spin default 3640 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrDepthValue type spin default 1004 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrMoveValue type spin default 808 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrA type spin default 763 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrC type spin default 492 min -1000 max 1000" << std::endl;
-    std::cout << "option name BADCAPTURESCORE type spin default 16380 min 0 max 32768" << std::endl;
-    std::cout << "option name futilityMarginDelta type spin default 82 min 55 max 125" << std::endl;
-    std::cout << "option name nmpBias type spin default 15 min 0 max 30" << std::endl;
+    std::cout << "option name lmrDepthValue type spin default 918 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrMoveValue type spin default 874 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrA type spin default 819 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrC type spin default 553 min -1000 max 1000" << std::endl;
+    std::cout << "option name BADCAPTURESCORE type spin default 15728 min 0 max 32768" << std::endl;
+    std::cout << "option name futilityMarginDelta type spin default 87 min 55 max 125" << std::endl;
+    std::cout << "option name nmpBias type spin default 12 min 0 max 30" << std::endl;
     std::cout << "option name nmpDepthDivisor type spin default 3 min 2 max 6" << std::endl;
-    std::cout << "option name nmpScoreDivisor type spin default 229 min 100 max 300" << std::endl;
+    std::cout << "option name nmpScoreDivisor type spin default 243 min 100 max 300" << std::endl;
     std::cout << "option name nmpQ1 type spin default 3 min 1 max 4" << std::endl;
     std::cout << "option name nmpQ2 type spin default 3 min 0 max 4" << std::endl;
-    std::cout << "option name razorQ1 type spin default 116 min 50 max 200" << std::endl;
-    std::cout << "option name razorQ2 type spin default 178 min 100 max 300" << std::endl;
-    std::cout << "option name singularDepthMultiplier type spin default 3 min 1 max 6" << std::endl;
-    std::cout << "option name IIRdepth type spin default 4 min 3 max 7" << std::endl;
+    std::cout << "option name razorQ1 type spin default 241 min 50 max 400" << std::endl;
+    std::cout << "option name razorQ2 type spin default 207 min 50 max 400" << std::endl;
+    std::cout << "option name singularDepthMultiplier type spin default 4 min 1 max 6" << std::endl;
+    std::cout << "option name IIRdepth type spin default 5 min 3 max 7" << std::endl;
     std::cout << "option name razorDepth type spin default 3 min 2 max 5" << std::endl;
-    std::cout << "option name singularDepth type spin default 5 min 4 max 8" << std::endl;
+    std::cout << "option name singularDepth type spin default 6 min 4 max 8" << std::endl;
     std::cout << "option name RFPDepth type spin default 7 min 5 max 10" << std::endl;
+    std::cout << "option name futPruningMultiplier type spin default 168 min 50 max 300" << std::endl;
+    std::cout << "option name futPruningAdd type spin default 239 min 50 max 300" << std::endl;
 
     std::cout << "uciok" << std::endl;
 }
@@ -128,7 +129,7 @@ int executeCommand(Game* game, char* command) {
         int cnt = 0;
         for (U64 i = 0; i < ttEntryCount; i++) {
             ttEntry entry = tt[i];
-            if ((entry.eval != -infinity) && (entry.eval != entry.score)) {
+            if ((entry.eval != noScore) && (entry.eval != entry.score)) {
                 Depth depth;
                 Score score, eval;
                 HashKey hash;
@@ -255,10 +256,6 @@ int setOptionCommand(Game* game, char* command) {
         }
         resizeTT(hashSize);
     }
-    else if (optionName == "hhthresh"){
-        // set goodHistoryThreshold to arg
-        goodHistoryThreshold = atoi(arg.c_str());
-    }
     else if (optionName == "lmrDepthValue"){
         lmrDepthValue = double(atoi(arg.c_str()));
         initLMRTable();
@@ -293,6 +290,23 @@ int setOptionCommand(Game* game, char* command) {
         razorQ1 = atoi(arg.c_str());
     else if (optionName == "razorQ2")
         razorQ2 = atoi(arg.c_str());
+    else if (optionName == "singularDepthMultiplier")
+        singularDepthMultiplier = atoi(arg.c_str());
+    else if (optionName == "IIRdepth")
+        IIRdepth = atoi(arg.c_str());
+    else if (optionName == "razorDepth")
+        razorDepth = atoi(arg.c_str());
+    else if (optionName == "singularDepth")
+        singularDepth = atoi(arg.c_str());
+    else if (optionName == "RFPDepth")
+        RFPDepth = atoi(arg.c_str());
+    else if (optionName == "futPruningMultiplier")
+        futPruningMultiplier = atoi(arg.c_str());
+    else if (optionName == "futPruningAdd")
+        futPruningAdd = atoi(arg.c_str());
+    else {
+        std::cout << "Option " << optionName << " not recognized!\n";
+    }
     return 0;
 }
 

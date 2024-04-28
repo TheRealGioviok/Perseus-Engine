@@ -101,6 +101,9 @@ void Game::reset(){
     lastScore = 0;
     ply = 0;
     repetitionCount = 0;
+    seldepth = 0;
+    rootDelta = infinity;
+    nmpPlies = 0;
 
     // Clear history, killer and counter move tables
 #if ENABLEHISTORYHEURISTIC
@@ -124,12 +127,12 @@ void Game::reset(){
     // Clear hashTable
 #if ENABLETTSCORING
     // tt is a vector, so we can't use memset. We have to clear it manually.
-    for (int i = 0; i < tt.size(); i++) {
+    for (size_t i = 0; i < tt.size(); i++) {
         tt[i].hashKey = 0;
         tt[i].bestMove = 0;
         tt[i].depth = 0;
-        tt[i].score = -infinity;
-        tt[i].eval = -infinity;
+        tt[i].score = noScore;
+        tt[i].eval = noScore;
         tt[i].flags = hashINVALID;
     }
 #endif
@@ -245,12 +248,15 @@ bool Game::makeMove(Move move){
 bool Game::isRepetition() {
     // Get the hash key of the current position
     HashKey hashKey = pos.hashKey;
-    // Iterate over the repetition table
-    for (int i = std::max(0,repetitionCount - pos.fiftyMove - 1); i < repetitionCount - 2; i++) {
-        // If the hash key is found, return true
-        if (repetitionTable[i] == hashKey) return true;
+    S32 dist = pos.fiftyMove;
+    S32 counter = 0;
+    for (int idx = 4; idx < dist; idx += 2){
+        if (repetitionTable[repetitionCount - idx] == hashKey) {
+            if (idx < ply) return true;
+            counter++;
+            if (counter >= 2) return true;
+        }
     }
-    // If the hash key is not found, return false
     return false;
 }
 

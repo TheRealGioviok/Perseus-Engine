@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cstring>
 
-unsigned long long BADCAPTURESCORE = 16380ULL;
+unsigned long long BADCAPTURESCORE = 15728ULL;
 
 // The default constructor instantiates the position with the standard chess starting position.
 Position::Position(){
@@ -286,6 +286,14 @@ FENkeyEval:
     // If everything is alright, generate the hash key for the current position
     hashKey = generateHashKey();
     return true;
+}
+
+/**
+ * @brief The hasNonPawns function checks if the current side to move has non-pawn material.
+ * @return true if the position has non-pawn material, false otherwise.
+ */
+bool Position::hasNonPawns(){
+    return occupancies[side] ^ bitboards[P + 6 * side] ^ bitboards[K + 6 * side];
 }
 
 /**
