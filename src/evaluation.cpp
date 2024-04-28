@@ -184,14 +184,18 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
     BitBoard pieces = bb[pt] & ~pinned[us];
     BitBoard occCheck = occ[BOTH];
 
-    // Queen squares are already excluded from the mobility area calculation
+    // Consider diagonal xrays through our queens
+    if constexpr (pt == B || pt == Q)                   occCheck ^= bb[Q];
+    else if constexpr (pt == b || pt == q)              occCheck ^= bb[q];
+
+    // Consider cross xrays through our rooks
     if constexpr (pt == R || pt == Q)                   occCheck ^= bb[R];
     else if constexpr (pt == r || pt == q)              occCheck ^= bb[r];
     
     // Iterate over all pieces of the given type
+    
     while (pieces) {
         Square sq = popLsb(pieces);
-        // Get the moves, according to the piece type
         mob = mobilityArea[us];
         if constexpr (pt == N || pt == n) {
             mob &= knightAttacks[sq];
@@ -264,14 +268,14 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
     };
 
     BitBoard mobilityArea[2] = {
-        // Mobility area. 
+        // Mobility area.
         // Squares in the mobility area are:
         // 1. Free of our pieces
         // 2. Not defended by enemy pawns
-        
+
         // Calculate a negative mask for the mobility area, and then invert it
-        (occ[WHITE] | pawnAttackedSquares[BLACK] | pinned[WHITE]) ^ 0xFFFFFFFFFFFFFFFF,
-        (occ[BLACK] | pawnAttackedSquares[WHITE] | pinned[BLACK]) ^ 0xFFFFFFFFFFFFFFFF
+        (occ[WHITE] | pawnAttackedSquares[BLACK] | pinned[WHITE] | bb[K] | bb[Q]) ^ 0xFFFFFFFFFFFFFFFF,
+        (occ[BLACK] | pawnAttackedSquares[WHITE] | pinned[BLACK] | bb[k] | bb[q]) ^ 0xFFFFFFFFFFFFFFFF
     };
 
     // Calculate the mobility scores (index by phase and color)

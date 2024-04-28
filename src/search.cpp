@@ -347,7 +347,7 @@ skipPruning:
             {
                 Depth R = reduction(depth, moveSearched, PVNode, improving);
                 // If move is highly tactical, reduce it less
-                if (sameMovePos(currMove, killerTable[0][ply]) || sameMovePos(currMove, killerTable[1][ply]) || sameMovePos(currMove, counterMoveTable[movePiece(ss->move)][moveTarget(ss->move)]))
+                if (currMoveScore >= COUNTERSCORE - 16384)
                     R -= 1;
 
                 if (ttPv)
