@@ -6,12 +6,14 @@ struct SStack {
     Score staticEval = 0;
     Move move = 0;
     S16 doubleExtensions = 0;
+    Move killers[2] = {0, 0};
 
     SStack() {
         excludedMove = 0;
         staticEval = 0;
         move = 0;
         doubleExtensions = 0;
+        killers[0] = killers[1] = 0;
     }
 
     void wipe() {
@@ -19,6 +21,7 @@ struct SStack {
         staticEval = 0;
         move = 0;
         doubleExtensions = 0;
+        killers[0] = killers[1] = 0;
     }
 };
 
@@ -100,16 +103,17 @@ public:
     /**
      * @brief The generateMoves function generates all pseudo legal moves for the current position. It is a call to the internal Position::generateMoves function.
      * @param moves The MoveList object to store the moves in.
-     * @param ply The ply of the current position.
+     * @param killer1 The first killer move.
+     * @param killer2 The second killer move.
+     * @param counterMove The counter move.
      */
-    void generateMoves(MoveList& moves, Ply ply);
+    void generateMoves(MoveList& moves, Move killer1, Move killer2, Move counterMove);
 
     /**
      * @brief The generateCaptures function generates all pseud legal captures for the current position. It is a call to the internal Position::generateCaptures function.
      * @param moves The MoveList object to store the moves in.
-     * @param ply The ply of the current position.
      */
-    void generateCaptures(MoveList &move, Ply ply);
+    void generateCaptures(MoveList &move);
 
     /**
      * @brief The makeMove function makes a move on the board. It is a call to the internal Position::makeMove function, but it also updates the repetition table, as well as the ply.

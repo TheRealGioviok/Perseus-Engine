@@ -38,8 +38,6 @@ Move pvTable[maxPly][maxPly] = { {0} };
 Ply pvLen[maxPly] = { 0 };
 // Repetition Table
 HashKey repetitionTable[512] = { 0ULL };
-// Repetition counter
-Ply repetitionCount = 0;
 
 BitBoard squaresToRight[64];
 BitBoard squaresToLeft[64];
@@ -54,10 +52,10 @@ BitBoard fiveSquare[64]; // The 5x5 square
 Ply reductionTable[128][128]= {{0}};
 S16 lmpMargin[128][2] = {{0}};
 #define RESOLUTION 1000
-double lmrDepthValue = 918;
-double lmrMoveValue = 874;
-double lmrC = 553;
-double lmrA = 819;
+double lmrDepthValue = 880;
+double lmrMoveValue = 917;
+double lmrC = 558;
+double lmrA = 788;
 /**
  * @brief The initLMRTable function initializes the LMR reduction table
  */

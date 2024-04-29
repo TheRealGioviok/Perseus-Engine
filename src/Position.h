@@ -18,7 +18,9 @@ struct Position{
     BitBoard occupancies[3];
     U8 side;
     U8 enPassant;
-    U8 fiftyMove;
+    U8 fiftyMove; // 50 move rule counter, number of plies since the last irreversible move
+    Ply totalPly; // Total number of plies since the start of the game
+    Ply plyFromNull; // Ply from the last null move (see Null Move Pruning for more information)
     U8 castle;
     HashKey hashKey;
     Move lastMove = 0;
@@ -107,14 +109,23 @@ struct Position{
     /**
      * @brief The generateMoves function generates all pseudo legal moves for the current side.
      * @param moveList The moveList to fill with the generated moves.
+     * @param killer1 The first killer move.
+     * @param killer2 The second killer move.
+     * @param counterMove The counter move.
      */
-    void generateMoves(MoveList& moveList, Ply ply);
+    void generateMoves(MoveList& moveList, Move killer1, Move killer2, Move counterMove);
 
     /**
      * @brief The generateCaptures function generates all pseud legal captures for the current side.
      * @param moveList The moveList to fill with the generated moves.
      */
-    void generateCaptures(MoveList &moveList, Ply ply);
+    void generateCaptures(MoveList &moveList);
+
+    /**
+     * @brief The generateUnsortedMoves function generates all pseudo legal moves for the current side. Used for perft testing (when we don't care about the move ordering).
+     * @param moveList The moveList to fill with the generated moves.
+     */
+    void generateUnsortedMoves(MoveList &moveList);
 
     /**
      * @brief The pieceOn function returns the piece on the given square.
@@ -129,13 +140,18 @@ struct Position{
     * @returns 0 if move wasnt legal, a legal move otherwise
     */
     Move legalizeTTMove(Move move);
-    /**
-     * @brief The addMove function adds a move to the move list.
-     * @param ml The move list to add the move to.
-     * @param move The move to add.
-     * @param ply The current ply.
-     */
-    inline void addMove(MoveList *ml, ScoredMove move, Ply ply);
+
+    inline void addEp(MoveList *ml, ScoredMove move);
+
+    inline void addPromoCapture(MoveList *ml, ScoredMove move, Piece movedPiece, Piece capturedPiece, Piece promotion);
+
+    inline void addCapture(MoveList *ml, ScoredMove move, Piece movedPiece, Piece capturedPiece);
+
+    inline void addPromotion(MoveList *ml, ScoredMove move, Piece piece);
+
+    inline void addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove);
+
+    inline void addUnsorted(MoveList *ml, ScoredMove move);
 
     /**
 	* @brief The getFEN function returns the FEN string of the current position
@@ -170,6 +186,8 @@ struct UndoInfo {
     Square enPassant;
     U8 castle;
     U8 fiftyMove;
+    Ply totalPly;
+    Ply plyFromNull;
     Move lastMove;
     Score psqtScore[2];
     U8 side;

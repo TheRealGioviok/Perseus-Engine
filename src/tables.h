@@ -23,8 +23,6 @@ extern Move pvTable[maxPly][maxPly];
 extern Ply pvLen[maxPly];
 // Repetition Table
 extern HashKey repetitionTable[512];
-// Repetition counter
-extern Ply repetitionCount;
 // The LMR reduction table
 extern Ply reductionTable[128][128];
 extern S16 lmpMargin[128][2];

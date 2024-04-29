@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cstring>
 
-unsigned long long BADCAPTURESCORE = 15728ULL;
+unsigned long long BADCAPTURESCORE = 15960ULL;
 
 // The default constructor instantiates the position with the standard chess starting position.
 Position::Position(){
@@ -101,6 +101,8 @@ void Position::wipe(){
     side = Side::WHITE;
     enPassant = 0;
     fiftyMove = 0;
+    totalPly = 0;
+    plyFromNull = 0;
     castle = 0;
     hashKey = 0;
     psqtScore[0] = 0;
@@ -252,8 +254,6 @@ bool Position::parseFEN(char *fen) {
         }
     }
 
-    int fullMoveNumber = 0;
-
     // Some fens don't have the halfmove clock and fullmove number, so we need to check for that.
     while (*fen == ' ') {
         fen++;
@@ -272,10 +272,16 @@ bool Position::parseFEN(char *fen) {
 
     // 6. Fullmove number (not used)
     fen++;
+    totalPly = 0;
     while (*fen >= '0' && *fen <= '9') {
-        fullMoveNumber = fullMoveNumber * 10 + *fen - '0';
+        totalPly = totalPly * 10 + *fen - '0';
         fen++;
     }
+
+    assert(totalPly >= 0);
+
+    // If not given, the fullmove is at least equal to the fifty move counter
+    if (totalPly == 0) totalPly = fiftyMove;
 
     if (*fen != '\0') {
         // If there's still data left in the string, it's invalid.
@@ -382,10 +388,12 @@ inline BitBoard Position::attacksToPre(Square square, BitBoard occupancy, BitBoa
  * @param move The move to make.
  * @return True if the move was made, false otherwise (state of the position is undefined).
  */
-bool Position::makeMove(Move move) {
+bool Position::makeMove(Move move)
+{
 
     // If the move is invalid, we return false
-    if (!move) return false;
+    if (!move)
+        return false;
 
     // Get useful information about the move
     Square from = moveSource(move);
@@ -403,71 +411,89 @@ bool Position::makeMove(Move move) {
     removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
 
     // If the move is a capture, we remove the captured piece from the target square
-    if (captures && !isEnPass) removePiece(bitboards, occupancies, captured, to, hashKey, psqtScore);
-    // The reason why we don't remove the captured piece if it is an en passant is because the captured piece is not on the target square, so we will be handling this case later
+    // If the move is a enpassant, we remove the captured pawn from the enPassant square
+    if (isEnPass){
+        removePiece(bitboards, occupancies, captured, (side == WHITE ? to + 8 : to - 8), hashKey, psqtScore);
+        addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+    }
+    else {
+        if (captures)
+            removePiece(bitboards, occupancies, captured, to, hashKey, psqtScore);
 
-    // If the move is a promotion, we replace the piece with the promoted piece
-    if (promotes) addPiece(bitboards, occupancies, promotion, to, hashKey, psqtScore);
-    // Otherwise, we move the piece to the target square
-    else  addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+        // If the move is a promotion, we replace the piece with the promoted piece
+        if (promotes)
+            addPiece(bitboards, occupancies, promotion, to, hashKey, psqtScore);
+        // Otherwise, we move the piece to the target square
+        else
+            addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+    }
 
     // Remove the current en passant square from the hash key, as it is no longer valid
     hashKey ^= enPassantKeys[enPassant];
     enPassant = noSquare;
 
-    // If the move is a enpassant, we remove the captured pawn from the enPassant square
-    if (isEnPass) removePiece(bitboards, occupancies, captured, (side == WHITE ? to + 8 : to - 8), hashKey, psqtScore);
-
+    
     // If the move is a double pawn push, we set the en passant square and hash it back in. If not, we don't need to do anything, since the noSquare hash is 0
-    if (doublePawnPush) enPassant = to + 8 * (1 - 2 * side);
+    if (doublePawnPush)
+        enPassant = to + 8 * (1 - 2 * side);
     hashKey ^= enPassantKeys[enPassant];
 
     // If the move is a castle, we move the rook
-    if (isCastle) { 
-        switch (to) {
-            case g1: {
-                // Check if squares between the king and the rook are attacked
-                if (isSquareAttacked(e1, BLACK) || isSquareAttacked(f1, BLACK) || isSquareAttacked(g1, BLACK))
-                    return false;
-                removePiece(bitboards, occupancies, R, h1, hashKey, psqtScore);
-                addPiece(bitboards, occupancies, R, f1, hashKey, psqtScore);
-                break;
-            }
-            case c1: {
-                // Check if squares between the king and the rook are attacked
-                if (isSquareAttacked(e1, BLACK) || isSquareAttacked(d1, BLACK) || isSquareAttacked(c1, BLACK))
-                    return false;
-                removePiece(bitboards, occupancies, R, a1, hashKey, psqtScore);
-                addPiece(bitboards, occupancies, R, d1, hashKey, psqtScore);
-                break;
-            }
-            case g8: {
-                // Check if squares between the king and the rook are attacked
-                if (isSquareAttacked(e8, WHITE) || isSquareAttacked(f8, WHITE) || isSquareAttacked(g8, WHITE))
-                    return false;
-                removePiece(bitboards, occupancies, r, h8, hashKey, psqtScore);
-                addPiece(bitboards, occupancies, r, f8, hashKey, psqtScore);
-                break;
-            }
-            case c8: {
-                // Check if squares between the king and the rook are attacked
-                if (isSquareAttacked(e8, WHITE) || isSquareAttacked(d8, WHITE) || isSquareAttacked(c8, WHITE))
-                    return false;
-                removePiece(bitboards, occupancies, r, a8, hashKey, psqtScore);
-                addPiece(bitboards, occupancies, r, d8, hashKey, psqtScore);
-                break;
-            }
+    if (isCastle)
+    {
+        switch (to)
+        {
+        case g1:
+        {
+            // Check if squares between the king and the rook are attacked
+            if (isSquareAttacked(e1, BLACK) || isSquareAttacked(f1, BLACK) || isSquareAttacked(g1, BLACK))
+                return false;
+            removePiece(bitboards, occupancies, R, h1, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, R, f1, hashKey, psqtScore);
+            break;
+        }
+        case c1:
+        {
+            // Check if squares between the king and the rook are attacked
+            if (isSquareAttacked(e1, BLACK) || isSquareAttacked(d1, BLACK) || isSquareAttacked(c1, BLACK))
+                return false;
+            removePiece(bitboards, occupancies, R, a1, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, R, d1, hashKey, psqtScore);
+            break;
+        }
+        case g8:
+        {
+            // Check if squares between the king and the rook are attacked
+            if (isSquareAttacked(e8, WHITE) || isSquareAttacked(f8, WHITE) || isSquareAttacked(g8, WHITE))
+                return false;
+            removePiece(bitboards, occupancies, r, h8, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, r, f8, hashKey, psqtScore);
+            break;
+        }
+        case c8:
+        {
+            // Check if squares between the king and the rook are attacked
+            if (isSquareAttacked(e8, WHITE) || isSquareAttacked(d8, WHITE) || isSquareAttacked(c8, WHITE))
+                return false;
+            removePiece(bitboards, occupancies, r, a8, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, r, d8, hashKey, psqtScore);
+            break;
+        }
         }
     }
-
-    // Now we verify if the move is legal
-    Square ourKing = lsb(bitboards[K + 6 * side]);
-    if (isSquareAttacked(ourKing, side ^ 1)) return false;
+    else{
+        // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
+        Square ourKing = lsb(bitboards[K + 6 * side]);
+        if (isSquareAttacked(ourKing, side ^ 1))
+            return false;
+    }
 
     // Now we update the hash for en passant, castle rights and side to move
     hashKey ^= sideKey;
+
     // Remove previous castle rights
     hashKey ^= castleKeys[castle];
+    
     // Add new castle rights
     castle &= castlingRights[from];
     castle &= castlingRights[to];
@@ -477,58 +503,66 @@ bool Position::makeMove(Move move) {
     side ^= 1;
     lastMove = onlyMove(move);
 
-    if (isCapture(lastMove) || isPromotion(lastMove) || ((movePiece(lastMove) % 6) == 0)) fiftyMove = 0;
-    else fiftyMove++; 
-	
+    totalPly++;
+    plyFromNull++;
+
+    if (isCapture(lastMove) || isPromotion(lastMove) || ((movePiece(lastMove) % 6) == 0))
+        fiftyMove = 0;
+    else
+        fiftyMove++;
+
     return true;
 }
 
-/**
- * @brief The addMove function adds a move to the move list.
- * @param ml The move list to add the move to.
- * @param move The move to add.
- */
-inline void Position::addMove(MoveList* ml, ScoredMove move, Ply ply) {
-    Piece movedPiece = movePiece(move);
-    Piece capturedPiece = moveCapture(move);
-    Square from = moveSource(move);
-    Square to = moveTarget(move);
+inline void Position::addEp(MoveList* ml, ScoredMove move){
+    ml->moves[ml->count++] = ((GOODCAPTURESCORE + 100) << 32) | move;
+}
 
-    Move oMove = onlyMove(move);
-    if (isEnPassant(move)){
-        ml->moves[ml->count++] = ((105ULL + GOODCAPTURESCORE) << 32) | move;
-        return;
-    }
-    if (isCapture(oMove)) {
-        ml->moves[ml->count++] = (
+inline void Position::addPromoCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece, Piece promotion){
+    ml->moves[ml->count++] = (
+            (
+                MvvLva[movedPiece][capturedPiece] +
+                GOODCAPTURESCORE * SEE<-107>(move) + BADCAPTURESCORE +
+                PROMOTIONBONUS
+            ) 
+        << 32) | move;
+}
+
+inline void Position::addCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece){
+    ml->moves[ml->count++] = (
             (
                 MvvLva[movedPiece][capturedPiece] +
                 GOODCAPTURESCORE * SEE<-107>(move) + BADCAPTURESCORE
             ) 
         << 32) | move;
-        return;
-    }
-    else if (isPromotion(oMove)){
-        // TODO: check if putting knight promotions immediately after queen promotions is better
-        ml->moves[ml->count++] = ((PROMOTIONBONUS + movePromotion(move)) << 32) | move;
-        return;
-    }
-    else if (sameMovePos(oMove, killerTable[0][ply])){
+    return;
+}
+
+inline void Position::addPromotion(MoveList* ml, ScoredMove move, Piece promotion){
+    ml->moves[ml->count++] = ((PROMOTIONBONUS + promotion) << 32) | move;
+    return;
+}
+
+inline void Position::addQuiet(MoveList* ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove){
+    if (sameMovePos(move, killer1)){
         ml->moves[ml->count++] = (KILLER1SCORE << 32) | move;
         return;
     }
-    else if (sameMovePos(oMove, killerTable[1][ply])){
+    else if (sameMovePos(move, killer2)){
         ml->moves[ml->count++] = (KILLER2SCORE << 32) | move;
         return;
     }
-    else if (sameMovePos(oMove, counterMoveTable[movePiece(lastMove)][moveTarget(lastMove)])){
+    else if (sameMovePos(move, counterMove)){
         ml->moves[ml->count++] = (COUNTERSCORE << 32) | move;
         return;
     }
-    
-    S64 score = (S64)(historyTable[side][from][to]); // *22 + ((S64)pieceFromHistoryTable[movedPiece][from]) + ((S64)pieceToHistoryTable[movedPiece][to]) * 2) / 25;
+    S64 score = (S64)(historyTable[side][source][target]); // *22 + ((S64)pieceFromHistoryTable[movedPiece][from]) + ((S64)pieceToHistoryTable[movedPiece][to]) * 2) / 25;
     score += 16384;
     ml->moves[ml->count++] = (score << 32) | move; //
+}
+
+inline void Position::addUnsorted(MoveList* ml, ScoredMove move){
+    ml->moves[ml->count++] = move;
 }
 
 bool Position::inCheck() {
@@ -553,9 +587,6 @@ bool Position::insufficientMaterial() {
     }
 	return true; // Means K v K
 }
-	
-	
-
 
 /**
  * @brief The pieceOn function returns the piece on a square. If the square is empty, NOPIECE is returned.
@@ -650,10 +681,7 @@ bool Position::SEE(Move move){
     }
     
     return side != (attacker >= p);
-
 }
-
-
 
 void Position::reflect() {
     // First, swap white with black
@@ -727,7 +755,8 @@ std::string Position::getFEN() {
  * @brief The generateMoves function generates all pseudo legal moves for the current side.
  * @param moveList The moveList to fill with the generated moves.
  */
-void Position::generateMoves(MoveList& moveList, Ply ply) {
+void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Move counterMove) {
+
     BitBoard ourPawns   = bitboards[P + 6 * side];
     BitBoard ourKnights = bitboards[N + 6 * side];
     BitBoard ourBishops = bitboards[B + 6 * side];
@@ -783,40 +812,37 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
         while (dxPawnCaptures) {
             Square to = popLsb(dxPawnCaptures);
             Piece captured = pieceOn(to);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             if (to <= h8) {
                 // We have a promotion
-                addMove(&moveList, encodeMove(to + 7, to, P, captured, Q, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 7, to, P, captured, R, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 7, to, P, captured, B, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 7, to, P, captured, N, false, false, false, isCheck), ply);
+                addPromoCapture(&moveList, encodeMove(to + 7, to, P, captured, Q, false, false, false, (queenCheckers & squareBB(to)) > 0) , P, captured, Q);
+                addPromoCapture(&moveList, encodeMove(to + 7, to, P, captured, R, false, false, false, (rookCheckers & squareBB(to)) > 0) , P, captured, R);
+                addPromoCapture(&moveList, encodeMove(to + 7, to, P, captured, B, false, false, false, (bishopCheckers & squareBB(to)) > 0) , P, captured, B);
+                addPromoCapture(&moveList, encodeMove(to + 7, to, P, captured, N, false, false, false, (knightCheckers & squareBB(to)) > 0) , P, captured, N);
             }
             else
-                addMove(&moveList, encodeMove(to + 7, to, P, captured, NOPIECE, false, false, false, isCheck), ply);
+                addCapture(&moveList, encodeMove(to + 7, to, P, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), P, captured);
         }
         // Left captures
         while (sxPawnCaptures) {
             Square to = popLsb(sxPawnCaptures);
             Piece captured = pieceOn(to);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             if (to <= h8) {
                 // We have a promotion
-                addMove(&moveList, encodeMove(to + 9, to, P, captured, Q, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 9, to, P, captured, R, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 9, to, P, captured, B, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 9, to, P, captured, N, false, false, false, isCheck), ply);
+                addPromoCapture(&moveList, encodeMove(to + 9, to, P, captured, Q, false, false, false, (queenCheckers & squareBB(to)) > 0), P, captured, Q);
+                addPromoCapture(&moveList, encodeMove(to + 9, to, P, captured, R, false, false, false, (rookCheckers & squareBB(to)) > 0), P, captured, R);
+                addPromoCapture(&moveList, encodeMove(to + 9, to, P, captured, B, false, false, false, (bishopCheckers & squareBB(to)) > 0), P, captured, B);
+                addPromoCapture(&moveList, encodeMove(to + 9, to, P, captured, N, false, false, false, (knightCheckers & squareBB(to)) > 0), P, captured, N);
             }
             else
-                addMove(&moveList, encodeMove(to + 9, to, P, captured, NOPIECE, false, false, false, isCheck), ply);
+                addCapture(&moveList, encodeMove(to + 9, to, P, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), P, captured);
         }
         // En passant capture (if there is one)
         if (enPassant != noSquare) {
             Square to = enPassant;
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             BitBoard epPawns = pawnAttacks[side ^ 1][to] & ourPawns;
             while (epPawns) {
                 Square from = popLsb(epPawns);
-                addMove(&moveList, encodeMove(from, to, P, p, NOPIECE, false, true, false, isCheck), ply);
+                addEp(&moveList, encodeMove(from, to, P, p, NOPIECE, false, true, false, (pawnCheckers & squareBB(to)) > 0));
             }
         }
     }
@@ -832,40 +858,37 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
         while (dxPawnCaptures) {
             Square to = popLsb(dxPawnCaptures);
             Piece captured = pieceOn(to);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             if (to >= a1) {
                 // We have a promotion
-                addMove(&moveList, encodeMove(to - 9, to, p, captured, q, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 9, to, p, captured, r, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 9, to, p, captured, b, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 9, to, p, captured, n, false, false, false, isCheck), ply);
+                addPromoCapture(&moveList, encodeMove(to - 9, to, p, captured, q, false, false, false, (queenCheckers & squareBB(to)) > 0), p, captured, q);
+                addPromoCapture(&moveList, encodeMove(to - 9, to, p, captured, r, false, false, false, (rookCheckers & squareBB(to)) > 0), p, captured, r);
+                addPromoCapture(&moveList, encodeMove(to - 9, to, p, captured, b, false, false, false, (bishopCheckers & squareBB(to)) > 0), p, captured, b);
+                addPromoCapture(&moveList, encodeMove(to - 9, to, p, captured, n, false, false, false, (knightCheckers & squareBB(to)) > 0), p, captured, n);
             }
             else
-                addMove(&moveList, encodeMove(to - 9, to, p, captured, NOPIECE, false, false, false, isCheck), ply);
+                addCapture(&moveList, encodeMove(to - 9, to, p, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), p, captured);
         }
         // Left captures
         while (sxPawnCaptures) {
             Square to = popLsb(sxPawnCaptures);
             Piece captured = pieceOn(to);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             if (to >= a1) {
                 // We have a promotion
-                addMove(&moveList, encodeMove(to - 7, to, p, captured, q, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 7, to, p, captured, r, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 7, to, p, captured, b, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 7, to, p, captured, n, false, false, false, isCheck), ply);
+                addPromoCapture(&moveList, encodeMove(to - 7, to, p, captured, q, false, false, false, (queenCheckers & squareBB(to)) > 0), p, captured, q);
+                addPromoCapture(&moveList, encodeMove(to - 7, to, p, captured, r, false, false, false, (rookCheckers & squareBB(to)) > 0), p, captured, r);
+                addPromoCapture(&moveList, encodeMove(to - 7, to, p, captured, b, false, false, false, (bishopCheckers & squareBB(to)) > 0), p, captured, b);
+                addPromoCapture(&moveList, encodeMove(to - 7, to, p, captured, n, false, false, false, (knightCheckers & squareBB(to)) > 0), p, captured, n);
             }
             else
-                addMove(&moveList, encodeMove(to - 7, to, p, captured, NOPIECE, false, false, false, isCheck), ply);
+                addCapture(&moveList, encodeMove(to - 7, to, p, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), p, captured);
         }
         // En passant capture (if there is one)
         if (enPassant != noSquare) {
             Square to = enPassant;
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             BitBoard epPawns = pawnAttacks[side ^ 1][to] & ourPawns;
             while (epPawns) {
                 Square from = popLsb(epPawns);
-                addMove(&moveList, encodeMove(from, to, p, P, NOPIECE, false, true, false, isCheck), ply);
+                addEp(&moveList, encodeMove(from, to, p, P, NOPIECE, false, true, false, (pawnCheckers & squareBB(to)) > 0));
             }
         }
     }
@@ -880,12 +903,12 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
             Square to = popLsb(attacks);
             Piece captured = pieceOn(to);
             bool isCheck = (knightCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, N + 6 * side, captured, NOPIECE, false, false, false, isCheck), ply);
+            addCapture(&moveList, encodeMove(from, to, N + 6 * side, captured, NOPIECE, false, false, false, isCheck), N + 6 * side, captured);
         }
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (knightCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, N + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), ply);
+            addQuiet(&moveList, encodeMove(from, to, N + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove);
         }
     }
     // We will generate the bishop moves
@@ -899,12 +922,12 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
             Square to = popLsb(attacks);
             Piece captured = pieceOn(to);
             bool isCheck = (bishopCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, B + 6 * side, captured, NOPIECE, false, false, false, isCheck), ply);
+            addCapture(&moveList, encodeMove(from, to, B + 6 * side, captured, NOPIECE, false, false, false, isCheck), B + 6 * side, captured);
         }
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (bishopCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, B + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), ply);
+            addQuiet(&moveList, encodeMove(from, to, B + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove);
         }
     }
     // We will generate the rook moves
@@ -918,12 +941,12 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
             Square to = popLsb(attacks);
             Piece captured = pieceOn(to);
             bool isCheck = (rookCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, R + 6 * side, captured, NOPIECE, false, false, false, isCheck), ply);
+            addCapture(&moveList, encodeMove(from, to, R + 6 * side, captured, NOPIECE, false, false, false, isCheck), R + 6 * side, captured);
         }
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (rookCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, R + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), ply);
+            addQuiet(&moveList, encodeMove(from, to, R + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove);
         }
     }
     // We will generate the queen moves
@@ -937,12 +960,12 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
             Square to = popLsb(attacks);
             Piece captured = pieceOn(to);
             bool isCheck = (queenCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, Q + 6 * side, captured, NOPIECE, false, false, false, isCheck), ply);
+            addCapture(&moveList, encodeMove(from, to, Q + 6 * side, captured, NOPIECE, false, false, false, isCheck), Q + 6 * side, captured);
         }
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (queenCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, Q + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), ply);
+            addQuiet(&moveList, encodeMove(from, to, Q + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove);
         }
     }
     // We will generate the pawn pushes
@@ -952,17 +975,15 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
 
         while (pawnPushes) {
             Square to = popLsb(pawnPushes);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             if (to <= h8) {
                 // We will generate the promotion moves
-                addMove(&moveList, encodeMove(to + 8, to, P, NOPIECE, Q, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 8, to, P, NOPIECE, R, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 8, to, P, NOPIECE, B, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 8, to, P, NOPIECE, N, false, false, false, isCheck), ply);
-
+                addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, Q, false, false, false, (queenCheckers & squareBB(to)) > 0), Q);
+                addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, R, false, false, false, (rookCheckers & squareBB(to)) > 0), R);
+                addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, B, false, false, false, (bishopCheckers & squareBB(to)) > 0), B);
+                addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, N, false, false, false, (knightCheckers & squareBB(to)) > 0), N);
             }
             else
-                addMove(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, isCheck), ply);
+                addQuiet(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to + 8, to, killer1, killer2, counterMove);
         }
 
         BitBoard pawnDoublePushes = ourPawns & ranks(6);
@@ -972,8 +993,7 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
         pawnDoublePushes &= ~occupancy;
         while (pawnDoublePushes) {
             Square to = popLsb(pawnDoublePushes);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, isCheck), ply);
+            addQuiet(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to + 16, to, killer1, killer2, counterMove);
         }
     }
     else {
@@ -981,16 +1001,15 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
         pawnPushes &= ~occupancy;
         while (pawnPushes) {
             Square to = popLsb(pawnPushes);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             if (to >= a1) {
                 // We will generate the promotion moves
-                addMove(&moveList, encodeMove(to - 8, to, p, NOPIECE, q, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 8, to, p, NOPIECE, r, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 8, to, p, NOPIECE, b, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 8, to, p, NOPIECE, n, false, false, false, isCheck), ply);
+                addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, q, false, false, false, (queenCheckers & squareBB(to)) > 0), q); 
+                addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, r, false, false, false, (rookCheckers & squareBB(to)) > 0), r);
+                addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, b, false, false, false, (bishopCheckers & squareBB(to)) > 0), b);
+                addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, n, false, false, false, (knightCheckers & squareBB(to)) > 0), n);
             }
             else
-                addMove(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, isCheck), ply);
+                addQuiet(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to - 8, to, killer1, killer2, counterMove);
         }
         BitBoard pawnDoublePushes = ourPawns & ranks(1);
         pawnDoublePushes <<= 8;
@@ -999,8 +1018,7 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
         pawnDoublePushes &= ~occupancy;
         while (pawnDoublePushes) {
             Square to = popLsb(pawnDoublePushes);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, isCheck), ply);
+            addQuiet(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to - 16, to, killer1, killer2, counterMove);
         }
     }
     // We will generate the king moves, including castling
@@ -1011,32 +1029,32 @@ void Position::generateMoves(MoveList& moveList, Ply ply) {
     while (kAttacks) {
         Square to = popLsb(kAttacks);
         Piece captured = pieceOn(to);
-        addMove(&moveList, encodeMove(king, to, K + 6 * side, captured, NOPIECE, false, false, false, false), ply);
+        addCapture(&moveList, encodeMove(king, to, K + 6 * side, captured, NOPIECE, false, false, false, false), K + 6 * side, captured);
     }
     while (kMoves) {
         Square to = popLsb(kMoves);
-        addMove(&moveList, encodeMove(king, to, K + 6 * side, NOPIECE, NOPIECE, false, false, false, false), ply);
+        addQuiet(&moveList, encodeMove(king, to, K + 6 * side, NOPIECE, NOPIECE, false, false, false, false), king, to, killer1, killer2, counterMove);
     }
     // We will generate the castling moves
     if (side == WHITE) {
         if (castle & CastleRights::WK && !(occupancy & wKCastleMask)) {
-            addMove(&moveList, encodeMove(e1, g1, K, NOPIECE, NOPIECE, false, false, true, false), ply);
+            addQuiet(&moveList, encodeMove(e1, g1, K, NOPIECE, NOPIECE, false, false, true, false), e1, g1, killer1, killer2, counterMove);
         }
         if (castle & CastleRights::WQ && !(occupancy & wQCastleMask)) {
-            addMove(&moveList, encodeMove(e1, c1, K, NOPIECE, NOPIECE, false, false, true, false), ply);
+            addQuiet(&moveList, encodeMove(e1, c1, K, NOPIECE, NOPIECE, false, false, true, false), e1, c1, killer1, killer2, counterMove);
         }
     }
     else {
         if (castle & CastleRights::BK && !(occupancy & bKCastleMask)) {
-            addMove(&moveList, encodeMove(e8, g8, k, NOPIECE, NOPIECE, false, false, true, false), ply);
+            addQuiet(&moveList, encodeMove(e8, g8, k, NOPIECE, NOPIECE, false, false, true, false), e8, g8, killer1, killer2, counterMove);
         }
         if (castle & CastleRights::BQ && !(occupancy & bQCastleMask)) {
-            addMove(&moveList, encodeMove(e8, c8, k, NOPIECE, NOPIECE, false, false, true, false), ply);
+            addQuiet(&moveList, encodeMove(e8, c8, k, NOPIECE, NOPIECE, false, false, true, false), e8, c8, killer1, killer2, counterMove);
         }
     }
 }
 
-void Position::generateCaptures(MoveList &moveList, Ply ply){
+void Position::generateCaptures(MoveList &moveList){
     moveList.clear();
     BitBoard ourPawns   = bitboards[P + 6 * side];
     BitBoard ourKnights = bitboards[N + 6 * side];
@@ -1092,40 +1110,37 @@ void Position::generateCaptures(MoveList &moveList, Ply ply){
         while (dxPawnCaptures){
             Square to = popLsb(dxPawnCaptures);
             Piece captured = pieceOn(to);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             if (to <= h8) {
                 // We have a promotion
-                addMove(&moveList, encodeMove(to + 7, to, P, captured, Q, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 7, to, P, captured, R, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 7, to, P, captured, B, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 7, to, P, captured, N, false, false, false, isCheck), ply);    
+                addPromoCapture(&moveList, encodeMove(to + 7, to, P, captured, Q, false, false, false, (queenCheckers & squareBB(to)) > 0), P, captured, Q);
+                addPromoCapture(&moveList, encodeMove(to + 7, to, P, captured, R, false, false, false, (rookCheckers & squareBB(to)) > 0), P, captured, R);
+                addPromoCapture(&moveList, encodeMove(to + 7, to, P, captured, B, false, false, false, (bishopCheckers & squareBB(to)) > 0), P, captured, B);
+                addPromoCapture(&moveList, encodeMove(to + 7, to, P, captured, N, false, false, false, (knightCheckers & squareBB(to)) > 0), P, captured, N);
             }
             else
-                addMove(&moveList, encodeMove(to+7, to, P, captured, NOPIECE, false, false, false, isCheck), ply);
+                addCapture(&moveList, encodeMove(to + 7, to, P, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), P, captured);
         }
         // Left captures
         while (sxPawnCaptures){
             Square to = popLsb(sxPawnCaptures);
             Piece captured = pieceOn(to);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             if (to <= h8) {
                 // We have a promotion
-                addMove(&moveList, encodeMove(to + 9, to, P, captured, Q, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 9, to, P, captured, R, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 9, to, P, captured, B, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to + 9, to, P, captured, N, false, false, false, isCheck), ply);
+                addPromoCapture(&moveList, encodeMove(to + 9, to, P, captured, Q, false, false, false, (queenCheckers & squareBB(to)) > 0), P, captured, Q);
+                addPromoCapture(&moveList, encodeMove(to + 9, to, P, captured, R, false, false, false, (rookCheckers & squareBB(to)) > 0), P, captured, R);
+                addPromoCapture(&moveList, encodeMove(to + 9, to, P, captured, B, false, false, false, (bishopCheckers & squareBB(to)) > 0), P, captured, B);
+                addPromoCapture(&moveList, encodeMove(to + 9, to, P, captured, N, false, false, false, (knightCheckers & squareBB(to)) > 0), P, captured, N);
             }
             else
-                addMove(&moveList, encodeMove(to+9, to, P, captured, NOPIECE, false, false, false, isCheck), ply);
+                addCapture(&moveList, encodeMove(to + 9, to, P, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), P, captured);
         }
         // En passant capture (if there is one)
         if (enPassant != noSquare){
             Square to = enPassant;
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             BitBoard epPawns = pawnAttacks[side^1][to] & ourPawns;
             while (epPawns){
                 Square from = popLsb(epPawns);
-                addMove(&moveList, encodeMove(from, to, P, p, NOPIECE, false, true, false, isCheck), ply);
+                addEp(&moveList, encodeMove(from, to, P, p, NOPIECE, false, true, false, (pawnCheckers & squareBB(to)) > 0));
             }
         }
     }
@@ -1141,40 +1156,37 @@ void Position::generateCaptures(MoveList &moveList, Ply ply){
         while (dxPawnCaptures){
             Square to = popLsb(dxPawnCaptures);
             Piece captured = pieceOn(to);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             if (to >= a1) {
                 // We have a promotion
-                addMove(&moveList, encodeMove(to - 9, to, p, captured, q, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 9, to, p, captured, r, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 9, to, p, captured, b, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 9, to, p, captured, n, false, false, false, isCheck), ply);
+                addPromoCapture(&moveList, encodeMove(to - 9, to, p, captured, q, false, false, false, (queenCheckers & squareBB(to)) > 0), p, captured, q);
+                addPromoCapture(&moveList, encodeMove(to - 9, to, p, captured, r, false, false, false, (rookCheckers & squareBB(to)) > 0), p, captured, r);
+                addPromoCapture(&moveList, encodeMove(to - 9, to, p, captured, b, false, false, false, (bishopCheckers & squareBB(to)) > 0), p, captured, b);
+                addPromoCapture(&moveList, encodeMove(to - 9, to, p, captured, n, false, false, false, (knightCheckers & squareBB(to)) > 0), p, captured, n);
             }
             else
-                addMove(&moveList, encodeMove(to-9, to, p, captured, NOPIECE, false, false, false, isCheck), ply);
+                addCapture(&moveList, encodeMove(to - 9, to, p, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), p, captured);
         }
         // Left captures
         while (sxPawnCaptures){
             Square to = popLsb(sxPawnCaptures);
             Piece captured = pieceOn(to);
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             if (to >= a1) {
                 // We have a promotion
-                addMove(&moveList, encodeMove(to - 7, to, p, captured, q, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 7, to, p, captured, r, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 7, to, p, captured, b, false, false, false, isCheck), ply);
-                addMove(&moveList, encodeMove(to - 7, to, p, captured, n, false, false, false, isCheck), ply);
+                addPromoCapture(&moveList, encodeMove(to - 7, to, p, captured, q, false, false, false, (queenCheckers & squareBB(to)) > 0), p, captured, q);
+                addPromoCapture(&moveList, encodeMove(to - 7, to, p, captured, r, false, false, false, (rookCheckers & squareBB(to)) > 0), p, captured, r);
+                addPromoCapture(&moveList, encodeMove(to - 7, to, p, captured, b, false, false, false, (bishopCheckers & squareBB(to)) > 0), p, captured, b);
+                addPromoCapture(&moveList, encodeMove(to - 7, to, p, captured, n, false, false, false, (knightCheckers & squareBB(to)) > 0), p, captured, n);
             }
             else
-                addMove(&moveList, encodeMove(to-7, to, p, captured, NOPIECE, false, false, false, isCheck), ply);
+                addCapture(&moveList, encodeMove(to - 7, to, p, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), p, captured);
         }
         // En passant capture (if there is one)
         if (enPassant != noSquare){
             Square to = enPassant;
-            bool isCheck = (pawnCheckers & squareBB(to)) > 0;
             BitBoard epPawns = pawnAttacks[side^1][to] & ourPawns;
             while (epPawns){
                 Square from = popLsb(epPawns);
-                addMove(&moveList, encodeMove(from, to, p, P, NOPIECE, false, true, false, isCheck), ply);
+                addEp(&moveList, encodeMove(from, to, p, P, NOPIECE, false, true, false, (pawnCheckers & squareBB(to)) > 0));
             }
         }
     }
@@ -1188,7 +1200,7 @@ void Position::generateCaptures(MoveList &moveList, Ply ply){
             Square to = popLsb(attacks);
             Piece captured = pieceOn(to);
             bool isCheck = (knightCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, N + 6 * side, captured, NOPIECE, false, false, false, isCheck), ply);
+            addCapture(&moveList, encodeMove(from, to, N + 6 * side, captured, NOPIECE, false, false, false, isCheck), N + 6 * side, captured);
         }
     }
     // We will generate the bishop moves
@@ -1201,7 +1213,7 @@ void Position::generateCaptures(MoveList &moveList, Ply ply){
             Square to = popLsb(attacks);
             Piece captured = pieceOn(to);
             bool isCheck = (bishopCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, B + 6 * side, captured, NOPIECE, false, false, false, isCheck), ply);
+            addCapture(&moveList, encodeMove(from, to, B + 6 * side, captured, NOPIECE, false, false, false, isCheck), B + 6 * side, captured);
         }
     }
     // We will generate the rook moves
@@ -1214,7 +1226,7 @@ void Position::generateCaptures(MoveList &moveList, Ply ply){
             Square to = popLsb(attacks);
             Piece captured = pieceOn(to);
             bool isCheck = (rookCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, R + 6 * side, captured, NOPIECE, false, false, false, isCheck), ply);
+            addCapture(&moveList, encodeMove(from, to, R + 6 * side, captured, NOPIECE, false, false, false, isCheck), R + 6 * side, captured);
         }
     }
     // We will generate the queen moves
@@ -1227,7 +1239,7 @@ void Position::generateCaptures(MoveList &moveList, Ply ply){
             Square to = popLsb(attacks);
             Piece captured = pieceOn(to);
             bool isCheck = (queenCheckers & squareBB(to)) > 0;
-            addMove(&moveList, encodeMove(from, to, Q + 6 * side, captured, NOPIECE, false, false, false, isCheck), ply);
+            addCapture(&moveList, encodeMove(from, to, Q + 6 * side, captured, NOPIECE, false, false, false, isCheck), Q + 6 * side, captured);
         }
     }
     // We will generate the king moves, including castling
@@ -1237,10 +1249,292 @@ void Position::generateCaptures(MoveList &moveList, Ply ply){
     while(kAttacks){
         Square to = popLsb(kAttacks);
         Piece captured = pieceOn(to);
-        addMove(&moveList, encodeMove(king, to, K + 6 * side, captured, NOPIECE, false, false, false, false), ply);
+        addCapture(&moveList, encodeMove(king, to, K + 6 * side, captured, NOPIECE, false, false, false, false), K + 6 * side, captured);
     }
-    
 }
+
+/**
+ * @brief The generateUnsortedMoves function generates all pseudo legal moves for the current side. Used for perft testing (when we don't care about the move ordering).
+ * @param moveList The moveList to fill with the generated moves.
+ */
+void Position::generateUnsortedMoves(MoveList& moveList) {
+
+    BitBoard ourPawns   = bitboards[P + 6 * side];
+    BitBoard ourKnights = bitboards[N + 6 * side];
+    BitBoard ourBishops = bitboards[B + 6 * side];
+    BitBoard ourRooks   = bitboards[R + 6 * side];
+    BitBoard ourQueens  = bitboards[Q + 6 * side];
+    BitBoard ourKing    = bitboards[K + 6 * side];
+
+    BitBoard theirKing      = bitboards[K + 6 * (side ^ 1)];
+
+    BitBoard theirPieces    = occupancies[side ^ 1];
+    BitBoard occupancy      = occupancies[BOTH];
+
+
+    Square theirKingPos     = lsb(theirKing);
+
+    BitBoard pawnCheckers   = pawnAttacks[side ^ 1][theirKingPos];
+    BitBoard knightCheckers = knightAttacks[theirKingPos];
+    BitBoard bishopCheckers = getBishopAttack(theirKingPos, occupancy);
+    BitBoard rookCheckers   = getRookAttack(theirKingPos, occupancy);
+    BitBoard queenCheckers  = bishopCheckers | rookCheckers;
+
+    // We will generate moves for the pawns first
+    if (side == WHITE) {
+        // We generate the pawn captures. Pawn captures are generated by shifting by 7 or 9 squares
+        BitBoard nonAPawns = ourPawns & ~files(0);
+        BitBoard nonHPawns = ourPawns & ~files(7);
+        BitBoard dxPawnCaptures = nonHPawns >> 7;
+        BitBoard sxPawnCaptures = nonAPawns >> 9;
+        dxPawnCaptures &= theirPieces;
+        sxPawnCaptures &= theirPieces;
+        // Right captures
+        while (dxPawnCaptures) {
+            Square to = popLsb(dxPawnCaptures);
+            Piece captured = pieceOn(to);
+            if (to <= h8) {
+                // We have a promotion
+                addUnsorted(&moveList, encodeMove(to + 7, to, P, captured, Q, false, false, false, (queenCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to + 7, to, P, captured, R, false, false, false, (rookCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to + 7, to, P, captured, B, false, false, false, (bishopCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to + 7, to, P, captured, N, false, false, false, (knightCheckers & squareBB(to)) > 0));
+            }
+            else
+                addUnsorted(&moveList, encodeMove(to + 7, to, P, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0));
+        }
+        // Left captures
+        while (sxPawnCaptures) {
+            Square to = popLsb(sxPawnCaptures);
+            Piece captured = pieceOn(to);
+            if (to <= h8) {
+                // We have a promotion
+                addUnsorted(&moveList, encodeMove(to + 9, to, P, captured, Q, false, false, false, (queenCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to + 9, to, P, captured, R, false, false, false, (rookCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to + 9, to, P, captured, B, false, false, false, (bishopCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to + 9, to, P, captured, N, false, false, false, (knightCheckers & squareBB(to)) > 0));
+            }
+            else
+                addUnsorted(&moveList, encodeMove(to + 9, to, P, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0));
+        }
+        // En passant capture (if there is one)
+        if (enPassant != noSquare) {
+            Square to = enPassant;
+            BitBoard epPawns = pawnAttacks[side ^ 1][to] & ourPawns;
+            while (epPawns) {
+                Square from = popLsb(epPawns);
+                addUnsorted(&moveList, encodeMove(from, to, P, p, NOPIECE, false, true, false, (pawnCheckers & squareBB(to)) > 0));
+            }
+        }
+    }
+    else {
+        // We generate the pawn captures. Pawn captures are generated by shifting by 7 or 9 squares
+        BitBoard nonAPawns = ourPawns & ~files(0);
+        BitBoard nonHPawns = ourPawns & ~files(7);
+        BitBoard dxPawnCaptures = nonHPawns << 9;
+        BitBoard sxPawnCaptures = nonAPawns << 7;
+        dxPawnCaptures &= theirPieces;
+        sxPawnCaptures &= theirPieces;
+        // Right captures
+        while (dxPawnCaptures) {
+            Square to = popLsb(dxPawnCaptures);
+            Piece captured = pieceOn(to);
+            if (to >= a1) {
+                // We have a promotion
+                addUnsorted(&moveList, encodeMove(to - 9, to, p, captured, q, false, false, false, (queenCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to - 9, to, p, captured, r, false, false, false, (rookCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to - 9, to, p, captured, b, false, false, false, (bishopCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to - 9, to, p, captured, n, false, false, false, (knightCheckers & squareBB(to)) > 0));
+            }
+            else
+                addUnsorted(&moveList, encodeMove(to - 9, to, p, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0));
+        }
+        // Left captures
+        while (sxPawnCaptures) {
+            Square to = popLsb(sxPawnCaptures);
+            Piece captured = pieceOn(to);
+            if (to >= a1) {
+                // We have a promotion
+                addUnsorted(&moveList, encodeMove(to - 7, to, p, captured, q, false, false, false, (queenCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to - 7, to, p, captured, r, false, false, false, (rookCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to - 7, to, p, captured, b, false, false, false, (bishopCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to - 7, to, p, captured, n, false, false, false, (knightCheckers & squareBB(to)) > 0));
+            }
+            else
+                addUnsorted(&moveList, encodeMove(to - 7, to, p, captured, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0));
+        }
+        // En passant capture (if there is one)
+        if (enPassant != noSquare) {
+            Square to = enPassant;
+            BitBoard epPawns = pawnAttacks[side ^ 1][to] & ourPawns;
+            while (epPawns) {
+                Square from = popLsb(epPawns);
+                addUnsorted(&moveList, encodeMove(from, to, p, P, NOPIECE, false, true, false, (pawnCheckers & squareBB(to)) > 0));
+            }
+        }
+    }
+    // We will generate the knight moves
+    BitBoard knights = ourKnights;
+    while (knights) {
+        Square from = popLsb(knights);
+        BitBoard attacks = knightAttacks[from];
+        BitBoard quiets = attacks & ~occupancy;
+        attacks &= theirPieces;
+        while (attacks) {
+            Square to = popLsb(attacks);
+            Piece captured = pieceOn(to);
+            bool isCheck = (knightCheckers & squareBB(to)) > 0;
+            addUnsorted(&moveList, encodeMove(from, to, N + 6 * side, captured, NOPIECE, false, false, false, isCheck));
+        }
+        while (quiets) {
+            Square to = popLsb(quiets);
+            bool isCheck = (knightCheckers & squareBB(to)) > 0;
+            addUnsorted(&moveList, encodeMove(from, to, N + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck));
+        }
+    }
+    // We will generate the bishop moves
+    BitBoard bishops = ourBishops;
+    while (bishops) {
+        Square from = popLsb(bishops);
+        BitBoard attacks = getBishopAttack(from, occupancy);
+        BitBoard quiets = attacks & ~occupancy;
+        attacks &= theirPieces;
+        while (attacks) {
+            Square to = popLsb(attacks);
+            Piece captured = pieceOn(to);
+            bool isCheck = (bishopCheckers & squareBB(to)) > 0;
+            addUnsorted(&moveList, encodeMove(from, to, B + 6 * side, captured, NOPIECE, false, false, false, isCheck));
+        }
+        while (quiets) {
+            Square to = popLsb(quiets);
+            bool isCheck = (bishopCheckers & squareBB(to)) > 0;
+            addUnsorted(&moveList, encodeMove(from, to, B + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck));
+        }
+    }
+    // We will generate the rook moves
+    BitBoard rooks = ourRooks;
+    while (rooks) {
+        Square from = popLsb(rooks);
+        BitBoard attacks = getRookAttack(from, occupancy);
+        BitBoard quiets = attacks & ~occupancy;
+        attacks &= theirPieces;
+        while (attacks) {
+            Square to = popLsb(attacks);
+            Piece captured = pieceOn(to);
+            bool isCheck = (rookCheckers & squareBB(to)) > 0;
+            addUnsorted(&moveList, encodeMove(from, to, R + 6 * side, captured, NOPIECE, false, false, false, isCheck));
+        }
+        while (quiets) {
+            Square to = popLsb(quiets);
+            bool isCheck = (rookCheckers & squareBB(to)) > 0;
+            addUnsorted(&moveList, encodeMove(from, to, R + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck));
+        }
+    }
+    // We will generate the queen moves
+    BitBoard queens = ourQueens;
+    while (queens) {
+        Square from = popLsb(queens);
+        BitBoard attacks = getQueenAttack(from, occupancy);
+        BitBoard quiets = attacks & ~occupancy;
+        attacks &= theirPieces;
+        while (attacks) {
+            Square to = popLsb(attacks);
+            Piece captured = pieceOn(to);
+            bool isCheck = (queenCheckers & squareBB(to)) > 0;
+            addUnsorted(&moveList, encodeMove(from, to, Q + 6 * side, captured, NOPIECE, false, false, false, isCheck));
+        }
+        while (quiets) {
+            Square to = popLsb(quiets);
+            bool isCheck = (queenCheckers & squareBB(to)) > 0;
+            addUnsorted(&moveList, encodeMove(from, to, Q + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck));
+        }
+    }
+    // We will generate the pawn pushes
+    if (side == WHITE) {
+        BitBoard pawnPushes = ourPawns >> 8;
+        pawnPushes &= ~occupancy;
+
+        while (pawnPushes) {
+            Square to = popLsb(pawnPushes);
+            if (to <= h8) {
+                // We will generate the promotion moves
+                addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, Q, false, false, false, (queenCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, R, false, false, false, (rookCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, B, false, false, false, (bishopCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, N, false, false, false, (knightCheckers & squareBB(to)) > 0));
+            }
+            else
+                addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0));
+        }
+
+        BitBoard pawnDoublePushes = ourPawns & ranks(6);
+        pawnDoublePushes >>= 8;
+        pawnDoublePushes &= ~occupancy;
+        pawnDoublePushes >>= 8;
+        pawnDoublePushes &= ~occupancy;
+        while (pawnDoublePushes) {
+            Square to = popLsb(pawnDoublePushes);
+            addUnsorted(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0));
+        }
+    }
+    else {
+        BitBoard pawnPushes = ourPawns << 8;
+        pawnPushes &= ~occupancy;
+        while (pawnPushes) {
+            Square to = popLsb(pawnPushes);
+            if (to >= a1) {
+                // We will generate the promotion moves
+                addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, q, false, false, false, (queenCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, r, false, false, false, (rookCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, b, false, false, false, (bishopCheckers & squareBB(to)) > 0));
+                addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, n, false, false, false, (knightCheckers & squareBB(to)) > 0));
+            }
+            else
+                addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0));
+        }
+        BitBoard pawnDoublePushes = ourPawns & ranks(1);
+        pawnDoublePushes <<= 8;
+        pawnDoublePushes &= ~occupancy;
+        pawnDoublePushes <<= 8;
+        pawnDoublePushes &= ~occupancy;
+        while (pawnDoublePushes) {
+            Square to = popLsb(pawnDoublePushes);
+            addUnsorted(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0));
+        }
+    }
+    // We will generate the king moves, including castling
+    Square king = lsb(ourKing);
+    BitBoard kAttacks = kingAttacks[king];
+    BitBoard kMoves = kAttacks & ~occupancy;
+    kAttacks &= theirPieces;
+    while (kAttacks) {
+        Square to = popLsb(kAttacks);
+        Piece captured = pieceOn(to);
+        addUnsorted(&moveList, encodeMove(king, to, K + 6 * side, captured, NOPIECE, false, false, false, false));
+    }
+    while (kMoves) {
+        Square to = popLsb(kMoves);
+        addUnsorted(&moveList, encodeMove(king, to, K + 6 * side, NOPIECE, NOPIECE, false, false, false, false));
+    }
+    // We will generate the castling moves
+    if (side == WHITE) {
+        if (castle & CastleRights::WK && !(occupancy & wKCastleMask)) {
+            addUnsorted(&moveList, encodeMove(e1, g1, K, NOPIECE, NOPIECE, false, false, true, false));
+        }
+        if (castle & CastleRights::WQ && !(occupancy & wQCastleMask)) {
+            addUnsorted(&moveList, encodeMove(e1, c1, K, NOPIECE, NOPIECE, false, false, true, false));
+        }
+    }
+    else {
+        if (castle & CastleRights::BK && !(occupancy & bKCastleMask)) {
+            addUnsorted(&moveList, encodeMove(e8, g8, k, NOPIECE, NOPIECE, false, false, true, false));
+        }
+        if (castle & CastleRights::BQ && !(occupancy & bQCastleMask)) {
+            addUnsorted(&moveList, encodeMove(e8, c8, k, NOPIECE, NOPIECE, false, false, true, false));
+        }
+    }
+}
+
 /**
  * @brief The makeNullMove function makes a null move on the board.
  */
@@ -1250,7 +1544,9 @@ void Position::makeNullMove(){
     hashKey ^= enPassantKeys[enPassant];
     enPassant = noSquare;
     lastMove = 0;
-    fiftyMove = 0;
+    fiftyMove++;
+    totalPly++;
+    plyFromNull = 0;
 }
 
 UndoInfo::UndoInfo(Position& position){
@@ -1258,6 +1554,8 @@ UndoInfo::UndoInfo(Position& position){
     enPassant = position.enPassant;
     castle = position.castle;
     fiftyMove = position.fiftyMove;
+    totalPly = position.totalPly;
+    plyFromNull = position.plyFromNull;
     side = position.side;
     lastMove = position.lastMove;
     psqtScore[0] = position.psqtScore[0];
@@ -1271,6 +1569,8 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.enPassant = enPassant;
     position.castle = castle;
     position.fiftyMove = fiftyMove;
+    position.totalPly = totalPly;
+    position.plyFromNull = plyFromNull;
     position.lastMove = lastMove;
     position.psqtScore[0] = psqtScore[0];
     position.psqtScore[1] = psqtScore[1];
@@ -1297,6 +1597,8 @@ void UndoInfo::undoNullMove(Position& position){
     position.enPassant = enPassant;
     position.castle = castle;
     position.fiftyMove = fiftyMove;
+    position.totalPly = totalPly;
+    position.plyFromNull = plyFromNull;
     position.lastMove = lastMove;
     position.psqtScore[0] = psqtScore[0];
     position.psqtScore[1] = psqtScore[1];

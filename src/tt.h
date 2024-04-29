@@ -125,8 +125,9 @@ ttEntry *probeTT(HashKey key);
  * @param flags The flags.
  * @param move The move.
  * @param ply The ply.
+ * @param isPv The isPv flag.
  */
-void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply);
+void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv);
 
 /**
  * The getCachedEval function looks up for evaluation of position and returns it if found, else noScore
