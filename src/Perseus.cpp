@@ -70,7 +70,7 @@ void perftSuite(){
 
 int main(){
     initAll();
-    //perftSuite();
+    // perftSuite();
     Game game;
     uciLoop(&game);
     return 0;

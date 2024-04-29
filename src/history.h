@@ -8,9 +8,6 @@ extern S32 historyTable[2][64][64];
 extern S32 pieceToHistoryTable[12][64];		// Indexed by Piece - To
 extern S32 pieceFromHistoryTable[12][64];	// Indexed by Piece - From
 
-// killer table
-extern Move killerTable[2][maxPly];
-
 // counter move table
 extern Move counterMoveTable[NUM_PIECES][NUM_SQUARES];
 

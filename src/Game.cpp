@@ -31,9 +31,11 @@ U64 Game::perft(Depth depth){
  */
 U64 Game::divide(Depth depth) {
     std::cout << "Starting divide at depth " << (int)depth << std::endl;
+    // Get time
+    auto start = getTime64();
     nodes = 0;
     MoveList moveList;
-    pos.generateMoves(moveList, ply);
+    pos.generateUnsortedMoves(moveList);
     UndoInfo undoer = UndoInfo(pos);
 
     for (int i = 0; i < moveList.count; i++) {
@@ -50,7 +52,11 @@ U64 Game::divide(Depth depth) {
             undoer.undoMove(pos, moveList.moves[i]);
         }
     }
-    std::cout << "Divide results: " << nodes << "\n";
+    auto end = getTime64();
+
+    std::cout << "Divide results: " << nodes << "\n"
+        << "Time: " << (end - start) << " ms\n"
+        << "nps: " << std::to_string((nodes * 1000) / (end - start)) << std::endl;
     return nodes;
 }
 
@@ -70,7 +76,7 @@ U64 Game::_perft(Depth depth) {
     }
     U64 n = 0;
     MoveList moveList;
-    pos.generateMoves(moveList, ply);
+    pos.generateUnsortedMoves(moveList);
     UndoInfo undoer = UndoInfo(pos);
     ++ply;
     for (int i = 0; i < moveList.count; i++) {
@@ -100,7 +106,6 @@ void Game::reset(){
     stopped = false;
     lastScore = 0;
     ply = 0;
-    repetitionCount = 0;
     seldepth = 0;
     rootDelta = infinity;
     nmpPlies = 0;
@@ -110,10 +115,6 @@ void Game::reset(){
     memset(historyTable, 0, sizeof(historyTable));
     // memset(pieceFromHistoryTable, 0, sizeof(pieceFromHistoryTable));
     // memset(pieceToHistoryTable, 0, sizeof(pieceToHistoryTable));
-#endif
-
-#if ENABLEKILLERHEURISTIC
-    memset(killerTable, 0, sizeof(killerTable));
 #endif
 
 #if ENABLECOUNTERMOVEHEURISTIC
@@ -161,17 +162,14 @@ bool Game::parseFEN(char *FEN){
  * @return True if the move list was executed successfully, false otherwise (state of the position is undefined).
  */
 bool Game::executeMoveList(char *moveList){
-    repetitionCount = 0;
-    pos.fiftyMove = 0;
 
     std::stringstream ss(moveList);
     std::string move;
     
     while (ss >> move) {
         Move parsedMove = getLegal(move.c_str());
-        repetitionTable[repetitionCount++] = pos.hashKey;
+        repetitionTable[pos.totalPly] = pos.hashKey;
         if (!pos.makeMove(parsedMove)) return false;
-        if (!isReversible(parsedMove))repetitionCount = 0;
     }
 
     return true;
@@ -184,7 +182,7 @@ bool Game::executeMoveList(char *moveList){
  */
 Move Game::getLegal(std::string move){
     MoveList moveList;
-    pos.generateMoves(moveList, ply);
+    pos.generateUnsortedMoves(moveList);
     for (int i = 0; i < moveList.count; i++) {
         if (move == getMoveString(moveList.moves[i])) {
             return (Move)moveList.moves[i];
@@ -205,9 +203,12 @@ void Game::print(){
 /**
  * @brief The generateMoves function generates all pseudo legal moves for the current position. It is a call to the internal Position::generateMoves function.
  * @param moves The MoveList object to store the moves in.
+ * @param killer1 The first killer move.
+ * @param killer2 The second killer move.
+ * @param counterMove The counter move.
  */
-void Game::generateMoves(MoveList &moves, Ply ply){
-    pos.generateMoves(moves, ply);
+void Game::generateMoves(MoveList &moves, Move killer1, Move killer2, Move counterMove){
+    pos.generateMoves(moves, killer1, killer2, counterMove);
     // We will sort the moves
     std::sort(std::begin(moves.moves) + 1, std::begin(moves.moves) + moves.count, std::greater<ScoredMove>());
 }
@@ -216,8 +217,8 @@ void Game::generateMoves(MoveList &moves, Ply ply){
  * @brief The generateCaptures function generates all pseud legal captures for the current position. It is a call to the internal Position::generateCaptures function.
  * @param moves The MoveList object to store the moves in.
  */
-void Game::generateCaptures(MoveList &moves, Ply ply){
-    pos.generateCaptures(moves, ply);
+void Game::generateCaptures(MoveList &moves){
+    pos.generateCaptures(moves);
     // We will sort the moves
     std::sort(std::begin(moves.moves) + 1, std::begin(moves.moves) + moves.count, std::greater<ScoredMove>());
 }
@@ -228,11 +229,12 @@ void Game::generateCaptures(MoveList &moves, Ply ply){
  * @return True if the move was made, false otherwise (state of the position is undefined).
  */
 bool Game::makeMove(Move move){
-    assert(repetitionCount <= std::numeric_limits<Ply>::max());
-    assert(repetitionCount >= 0);
+    assert(pos.totalPly >= 0);
+    assert(pos.totalPly >= pos.fiftyMove);
+    assert(pos.totalPly <= std::numeric_limits<U16>::max());
     ++ply;
 #if DETECTREPETITION
-    repetitionTable[repetitionCount++] = pos.hashKey;
+    repetitionTable[pos.totalPly] = pos.hashKey;
 #endif
     bool k = pos.makeMove(move);
 #if ENABLEPREFETCHING && ENABLETTSCORING
@@ -246,12 +248,14 @@ bool Game::makeMove(Move move){
  * @return True if the current position is a repetition, false otherwise.
  */
 bool Game::isRepetition() {
+    assert(pos.totalPly >= pos.fiftyMove);
     // Get the hash key of the current position
+    S32 dist = std::min((S32)pos.fiftyMove, (S32)pos.plyFromNull);
     HashKey hashKey = pos.hashKey;
-    S32 dist = pos.fiftyMove;
+    S32 startPoint = pos.totalPly;
     S32 counter = 0;
     for (int idx = 4; idx < dist; idx += 2){
-        if (repetitionTable[repetitionCount - idx] == hashKey) {
+        if (repetitionTable[startPoint - idx] == hashKey) {
             if (idx < ply) return true;
             counter++;
             if (counter >= 2) return true;
@@ -481,25 +485,17 @@ Score Game::evaluate(){
 }
 
 void Game::makeNullMove() {
-    assert(repetitionCount <= std::numeric_limits<Ply>::max());
-    assert(repetitionCount >= 0);
     ++ply;
-    repetitionTable[++repetitionCount] = pos.hashKey;
+    repetitionTable[pos.totalPly] = pos.hashKey;
     pos.makeNullMove();
 }
 
 void Game::undo(UndoInfo& undoer, Move move) {
-    assert(repetitionCount <= std::numeric_limits<Ply>::max());
-    assert(repetitionCount > 0);
     --ply;
-    --repetitionCount;
     undoer.undoMove(pos, move);
 }
 
 void Game::undoNullMove(UndoInfo& undoer) {
-    assert(repetitionCount <= std::numeric_limits<Ply>::max());
-    assert(repetitionCount > 0);
     --ply;
-    --repetitionCount;
     undoer.undoNullMove(pos);
 }

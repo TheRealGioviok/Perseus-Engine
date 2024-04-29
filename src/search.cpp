@@ -40,12 +40,12 @@ static inline void sortTTUp(MoveList &ml, PackedMove ttMove)
     }
 }
 
-static inline void updateKillers(Move killerMove, Ply ply)
+static inline void updateKillers(SStack* ss, Move killerMove)
 {
-    if (killerTable[0][ply] != killerMove)
+    if (ss->killers[0] != killerMove)
     {
-        killerTable[1][ply] = killerTable[0][ply];
-        killerTable[0][ply] = killerMove;
+        ss->killers[1] = ss->killers[0];
+        ss->killers[0] = killerMove;
     }
 }
 
@@ -55,21 +55,15 @@ static inline void updateCounters(Move counter, Move lastMove)
         counterMoveTable[movePiece(lastMove)][moveTarget(lastMove)] = counter;
 }
 
-static inline void clearNextPlyKillers(Ply ply, Depth depth)
+static inline void clearKillers(SStack *ss)
 {
-    if (ply < maxPly - depth)
-    {
-        killerTable[0][ply + depth] = 0;
-        killerTable[1][ply + depth] = 0;
-    }
+    ss->killers[0] = noMove;
+    ss->killers[1] = noMove;
 }
 
-static inline void clearExcludedMove(SStack *stack, Ply ply, Depth depth)
+static inline void clearExcludedMove(SStack *ss)
 {
-    if (ply < maxPly - depth)
-    {
-        stack[ply + depth].excludedMove = 0;
-    }
+    ss->excludedMove = noMove;
 }
 
 Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
@@ -157,8 +151,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
         depth--;
 
     // Clear killers and exclude move
-    clearNextPlyKillers(ply, 1);
-    clearExcludedMove(ss, ply, 1);
+    clearKillers(ss+1);
+    clearExcludedMove(ss+1);
 
     // Initialize the undoer
     UndoInfo undoer = UndoInfo(pos);
@@ -184,13 +178,13 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
         eval = ss->staticEval = evaluate();
         // Store the eval in the TT if not in exclusion mode (in which we might already have the entry)
         if (!excludedMove)
-            writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply);
+            writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, ttPv);
     }
 
     // Calculate the improving flag
-    if (ply >= 2 && (ss - 2)->staticEval != noScore)
+    if ((ss - 2)->staticEval != noScore)
         improving = ss->staticEval > (ss - 2)->staticEval;
-    else if (ply >= 4 && (ss - 4)->staticEval != noScore)
+    else if ((ss - 4)->staticEval != noScore)
         improving = ss->staticEval > (ss - 4)->staticEval;
     else
         improving = true; // Since improving makes the pruning more conservative, we default to true
@@ -198,7 +192,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     // Pruning time
     if (!PVNode)
     {
-
         // RFP
         if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, improving) >= beta)
             return eval;
@@ -266,7 +259,11 @@ skipPruning:
     U16 quietsCount = 0;
 
     MoveList moveList;
-    generateMoves(moveList, ply); // Already sorted, except for ttMove
+    Move killer1 = ss->killers[0];
+    Move killer2 = ss->killers[1];
+    Move counterMove = isOk((ss - 1)->move) ? counterMoveTable[movePiece((ss - 1)->move)][moveTarget((ss - 1)->move)] : 0;
+    generateMoves(moveList, killer1, killer2, counterMove);
+
     //// Sort ttMove
     if (ttMove)
         sortTTUp(moveList, ttMove);
@@ -379,6 +376,8 @@ skipPruning:
 
             undo(undoer, currMove);
 
+            // Add to nodesearch
+
             ++moveSearched;
 
             if (score > bestScore)
@@ -405,7 +404,7 @@ skipPruning:
                 {
                     if (okToReduce(currMove))
                     {
-                        updateKillers(currMove, ply);
+                        updateKillers(ss, currMove);
                         Move lastMove = pos.lastMove;
                         // Move lastLastMove = ply > 1 ? (ss - 2)->move : 0;
                         updateCounters(currMove, lastMove);
@@ -436,7 +435,7 @@ skipPruning:
     if (ttPv)
         ttStoreFlag |= hashPVMove;
     if (!stopped && !excludedMove)
-        writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply);
+        writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, ttPv);
 
     return bestScore;
 }
@@ -467,7 +466,7 @@ Score Game::quiescence(Score alpha, Score beta)
     // Generate moves
     MoveList moveList;
 
-    inCheck ? generateMoves(moveList, ply) : generateCaptures(moveList, ply);
+    inCheck ? generateMoves(moveList, noMove, noMove, noMove) : generateCaptures(moveList);
 
     UndoInfo undoer = UndoInfo(pos);
     U16 moveCount = 0;
@@ -500,9 +499,10 @@ Score Game::quiescence(Score alpha, Score beta)
 void Game::startSearch(bool halveTT = true)
 {
 
-    SStack ss[maxPly];
-    for (int i = 0; i < maxPly; i++)
-        ss[i].wipe();
+    SStack stack[4 + maxPly + 1]; // 4 is the max ply that we look back, 1 is the max ply that we look forward
+    SStack* ss = stack + 4;
+
+    for (int i = -4; i < maxPly + 1; i++) (ss+i)->wipe();
 
     Score delta = ASPIRATIONWINDOW;
     nodes = 0ULL;
@@ -546,7 +546,6 @@ void Game::startSearch(bool halveTT = true)
 
     // Clear history, killer and counter move tables
     memset(historyTable, 0, sizeof(historyTable));
-    memset(killerTable, 0, sizeof(killerTable));
     memset(counterMoveTable, 0, sizeof(counterMoveTable));
 
     // Clear pv len and pv table
