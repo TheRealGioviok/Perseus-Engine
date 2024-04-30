@@ -101,6 +101,15 @@ struct Position{
      */
     bool makeMove(Move move);
 
+    bool makeEp(Move move);
+    // For non capture promotions
+    bool makePromotion(Move move);
+    // For non promo, non ep captures
+    bool makeCapture(Move move);
+    bool makePromoCapture(Move move);
+    bool makeCastle(Move move);
+    bool makeQuiet(Move move);
+
     /**
      * @brief The makeNullMove function makes a null move on the board.
      */

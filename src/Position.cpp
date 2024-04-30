@@ -383,117 +383,160 @@ inline BitBoard Position::attacksToPre(Square square, BitBoard occupancy, BitBoa
     
 }
 
-/**
- * @brief The makeMove function makes a move on the board.
- * @param move The move to make.
- * @return True if the move was made, false otherwise (state of the position is undefined).
- */
-bool Position::makeMove(Move move)
-{
-
-    // If the move is invalid, we return false
-    if (!move)
-        return false;
+bool Position::makeEp(Move move){
 
     // Get useful information about the move
     Square from = moveSource(move);
     Square to = moveTarget(move);
     Piece piece = movePiece(move);
     Piece captured = moveCapture(move);
-    Piece promotion = movePromotion(move);
-    bool captures = captured != NOPIECE;
-    bool promotes = promotion != NOPIECE;
-    bool doublePawnPush = isDoublePush(move) > 0;
-    bool isEnPass = isEnPassant(move) > 0;
-    bool isCastle = isCastling(move) > 0;
 
     // First, we remove the piece from the source square
     removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+    // Then, we remove the captured pawn from the en passant square
+    removePiece(bitboards, occupancies, captured, (side == WHITE ? to + 8 : to - 8), hashKey, psqtScore);
+    // Finally, we add the piece to the target square
+    addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
 
-    // If the move is a capture, we remove the captured piece from the target square
-    // If the move is a enpassant, we remove the captured pawn from the enPassant square
-    if (isEnPass){
-        removePiece(bitboards, occupancies, captured, (side == WHITE ? to + 8 : to - 8), hashKey, psqtScore);
-        addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
-    }
-    else {
-        if (captures)
-            removePiece(bitboards, occupancies, captured, to, hashKey, psqtScore);
-
-        // If the move is a promotion, we replace the piece with the promoted piece
-        if (promotes)
-            addPiece(bitboards, occupancies, promotion, to, hashKey, psqtScore);
-        // Otherwise, we move the piece to the target square
-        else
-            addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
-    }
+    // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
+    Square ourKing = lsb(bitboards[K + 6 * side]);
+    if (isSquareAttacked(ourKing, side ^ 1))
+        return false;
 
     // Remove the current en passant square from the hash key, as it is no longer valid
     hashKey ^= enPassantKeys[enPassant];
     enPassant = noSquare;
-
     
-    // If the move is a double pawn push, we set the en passant square and hash it back in. If not, we don't need to do anything, since the noSquare hash is 0
-    if (doublePawnPush)
-        enPassant = to + 8 * (1 - 2 * side);
-    hashKey ^= enPassantKeys[enPassant];
+    // Now we update the hash for en passant, castle rights and side to move
+    hashKey ^= sideKey;
 
-    // If the move is a castle, we move the rook
-    if (isCastle)
-    {
-        switch (to)
-        {
-        case g1:
-        {
-            // Check if squares between the king and the rook are attacked
-            if (isSquareAttacked(e1, BLACK) || isSquareAttacked(f1, BLACK) || isSquareAttacked(g1, BLACK))
-                return false;
-            removePiece(bitboards, occupancies, R, h1, hashKey, psqtScore);
-            addPiece(bitboards, occupancies, R, f1, hashKey, psqtScore);
-            break;
-        }
-        case c1:
-        {
-            // Check if squares between the king and the rook are attacked
-            if (isSquareAttacked(e1, BLACK) || isSquareAttacked(d1, BLACK) || isSquareAttacked(c1, BLACK))
-                return false;
-            removePiece(bitboards, occupancies, R, a1, hashKey, psqtScore);
-            addPiece(bitboards, occupancies, R, d1, hashKey, psqtScore);
-            break;
-        }
-        case g8:
-        {
-            // Check if squares between the king and the rook are attacked
-            if (isSquareAttacked(e8, WHITE) || isSquareAttacked(f8, WHITE) || isSquareAttacked(g8, WHITE))
-                return false;
-            removePiece(bitboards, occupancies, r, h8, hashKey, psqtScore);
-            addPiece(bitboards, occupancies, r, f8, hashKey, psqtScore);
-            break;
-        }
-        case c8:
-        {
-            // Check if squares between the king and the rook are attacked
-            if (isSquareAttacked(e8, WHITE) || isSquareAttacked(d8, WHITE) || isSquareAttacked(c8, WHITE))
-                return false;
-            removePiece(bitboards, occupancies, r, a8, hashKey, psqtScore);
-            addPiece(bitboards, occupancies, r, d8, hashKey, psqtScore);
-            break;
-        }
-        }
-    }
-    else{
-        // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
-        Square ourKing = lsb(bitboards[K + 6 * side]);
-        if (isSquareAttacked(ourKing, side ^ 1))
-            return false;
-    }
+    // Change side to move
+    side ^= 1;
+    lastMove = onlyMove(move);
+    totalPly++;
+    plyFromNull++;
+    fiftyMove = 0;
+
+    return true;
+}
+
+bool Position::makePromotion(Move move){
+    // Get useful information about the move
+    Square from = moveSource(move);
+    Square to = moveTarget(move);
+    Piece piece = movePiece(move);
+    Piece promotion = movePromotion(move);
+
+    // First, we remove the piece from the source square
+    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+    // Then, we add the promoted piece to the target square
+    addPiece(bitboards, occupancies, promotion, to, hashKey, psqtScore);
+   
+    // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
+    Square ourKing = lsb(bitboards[K + 6 * side]);
+    if (isSquareAttacked(ourKing, side ^ 1))
+        return false;
+
+    // Remove the current en passant square from the hash key, as it is no longer valid
+    hashKey ^= enPassantKeys[enPassant];
+    enPassant = noSquare;
 
     // Now we update the hash for en passant, castle rights and side to move
     hashKey ^= sideKey;
 
     // Remove previous castle rights
     hashKey ^= castleKeys[castle];
+
+    // Add new castle rights
+    castle &= castlingRights[from];
+    castle &= castlingRights[to];
+    hashKey ^= castleKeys[castle];
+
+    // Change side to move
+    side ^= 1;
+    lastMove = onlyMove(move);
+    totalPly++;
+    plyFromNull++;
+    fiftyMove = 0;
+
+    return true;
+}
+
+bool Position::makeCapture(Move move)
+{
+    // Get useful information about the move
+    Square from = moveSource(move);
+    Square to = moveTarget(move);
+    Piece piece = movePiece(move);
+    Piece captured = moveCapture(move);
+
+    // First, we remove the piece from the source square
+    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+    // Then, we remove the captured piece from the target square
+    removePiece(bitboards, occupancies, captured, to, hashKey, psqtScore);
+    // Finally, we add the capturing piece to the target square
+    addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
     
+    // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
+    Square ourKing = lsb(bitboards[K + 6 * side]);
+    if (isSquareAttacked(ourKing, side ^ 1))
+        return false;
+
+    // Remove the current en passant square from the hash key, as it is no longer valid
+    hashKey ^= enPassantKeys[enPassant];
+    enPassant = noSquare;
+
+    // Now we update the hash for en passant, castle rights and side to move
+    hashKey ^= sideKey;
+
+    // Remove previous castle rights
+    hashKey ^= castleKeys[castle];
+
+    // Add new castle rights
+    castle &= castlingRights[from];
+    castle &= castlingRights[to];
+    hashKey ^= castleKeys[castle];
+
+    // Change side to move
+    side ^= 1;
+    lastMove = onlyMove(move);
+    totalPly++;
+    plyFromNull++;
+    fiftyMove = 0;
+
+    return true;
+}
+
+bool Position::makePromoCapture(Move move){
+    // Get useful information about the move
+    Square from = moveSource(move);
+    Square to = moveTarget(move);
+    Piece piece = movePiece(move);
+    Piece captured = moveCapture(move);
+    Piece promotion = movePromotion(move);
+
+    // First, we remove the piece from the source square
+    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+    // Then, we remove the captured piece from the target square
+    removePiece(bitboards, occupancies, captured, to, hashKey, psqtScore);
+    // Finally, we add the promoted piece to the target square
+    addPiece(bitboards, occupancies, promotion, to, hashKey, psqtScore);
+
+    // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
+    Square ourKing = lsb(bitboards[K + 6 * side]);
+    if (isSquareAttacked(ourKing, side ^ 1))
+        return false;
+
+    // Remove the current en passant square from the hash key, as it is no longer valid
+    hashKey ^= enPassantKeys[enPassant];
+    enPassant = noSquare;
+
+    // Now we update the hash for en passant, castle rights and side to move
+    hashKey ^= sideKey;
+
+    // Remove previous castle rights
+    hashKey ^= castleKeys[castle];
+
     // Add new castle rights
     castle &= castlingRights[from];
     castle &= castlingRights[to];
@@ -505,14 +548,151 @@ bool Position::makeMove(Move move)
 
     totalPly++;
     plyFromNull++;
-
-    if (isCapture(lastMove) || isPromotion(lastMove) || ((movePiece(lastMove) % 6) == 0))
-        fiftyMove = 0;
-    else
-        fiftyMove++;
+    fiftyMove = 0;
 
     return true;
 }
+
+bool Position::makeCastle(Move move){
+    // Get useful information about the move
+    Square from = moveSource(move);
+    Square to = moveTarget(move);
+    Piece piece = movePiece(move);
+
+    // First, we remove the piece from the source square
+    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+    // Then, we add the piece to the target square
+    addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+
+    // If the move is a castle, we move the rook
+    switch (to){
+        case g1:
+            // Check if squares between the king and the rook are attacked
+            if (isSquareAttacked(e1, BLACK) || isSquareAttacked(f1, BLACK) || isSquareAttacked(g1, BLACK))
+                return false;
+            removePiece(bitboards, occupancies, R, h1, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, R, f1, hashKey, psqtScore);
+            break;
+        
+        case c1:
+            // Check if squares between the king and the rook are attacked
+            if (isSquareAttacked(e1, BLACK) || isSquareAttacked(d1, BLACK) || isSquareAttacked(c1, BLACK))
+                return false;
+            removePiece(bitboards, occupancies, R, a1, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, R, d1, hashKey, psqtScore);
+            break;
+        
+        case g8:
+            // Check if squares between the king and the rook are attacked
+            if (isSquareAttacked(e8, WHITE) || isSquareAttacked(f8, WHITE) || isSquareAttacked(g8, WHITE))
+                return false;
+            removePiece(bitboards, occupancies, r, h8, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, r, f8, hashKey, psqtScore);
+            break;
+        case c8:
+            // Check if squares between the king and the rook are attacked
+            if (isSquareAttacked(e8, WHITE) || isSquareAttacked(d8, WHITE) || isSquareAttacked(c8, WHITE))
+                return false;
+            removePiece(bitboards, occupancies, r, a8, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, r, d8, hashKey, psqtScore);
+            break;
+    }
+
+    // Remove the current en passant square from the hash key, as it is no longer valid
+    hashKey ^= enPassantKeys[enPassant];
+    enPassant = noSquare;
+
+    // Now we update the hash for en passant, castle rights and side to move
+    hashKey ^= sideKey;
+
+    // Remove previous castle rights
+    hashKey ^= castleKeys[castle];
+
+    // Add new castle rights
+    castle &= castlingRights[from];
+    castle &= castlingRights[to];
+    hashKey ^= castleKeys[castle];
+
+    // Change side to move
+    side ^= 1;
+    lastMove = onlyMove(move);
+    totalPly++;
+    plyFromNull++;
+    fiftyMove++;
+
+    return true;
+}
+
+bool Position::makeQuiet(Move move){
+    // Get useful information about the move
+    Square from = moveSource(move);
+    Square to = moveTarget(move);
+    Piece piece = movePiece(move);
+    
+    // First, we remove the piece from the source square
+    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+    // Then, we add the piece to the target square
+    addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+    
+    // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
+    Square ourKing = lsb(bitboards[K + 6 * side]);
+    if (isSquareAttacked(ourKing, side ^ 1))
+        return false;
+    
+    // Remove the current en passant square from the hash key, as it is no longer valid
+    hashKey ^= enPassantKeys[enPassant];
+
+    // If the move is a double pawn push, we set the en passant square and hash it back in. If not, we don't need to do anything, since the noSquare hash is 0
+    if (isDoublePush(move)) {
+        enPassant = to + 8 * (1 - 2 * side);
+        hashKey ^= enPassantKeys[enPassant];
+    }
+    else {
+        enPassant = noSquare;
+    }
+    
+    // Now we update the hash for en passant, castle rights and side to move
+    hashKey ^= sideKey;
+
+    // Remove previous castle rights
+    hashKey ^= castleKeys[castle];
+
+    // Add new castle rights
+    castle &= castlingRights[from];
+    castle &= castlingRights[to];
+    hashKey ^= castleKeys[castle];
+
+    // Change side to move
+    side ^= 1;
+    lastMove = onlyMove(move);
+    totalPly++;
+    plyFromNull++;
+    fiftyMove = (piece == P || piece == p) ? 0 : fiftyMove + 1;
+
+    return true;
+}
+
+bool Position::makeMove(Move move){
+    if (!move) return false;
+    S16 mask = (
+        isEnPassant(move) << 0 |
+        isPromotion(move) << 1 |
+        isCapture(move)   << 2 |
+        isCastling(move)  << 3 
+    );
+
+    switch (mask){
+        case 0b0000: return makeQuiet(move);
+        case 0b0010: return makePromotion(move);
+        case 0b0100: return makeCapture(move);
+        case 0b0101: return makeEp(move);
+        case 0b0110: return makePromoCapture(move);
+        case 0b1000: return makeCastle(move);
+    }
+    assert(false); // This should never happen
+    return false;
+}
+
 
 inline void Position::addEp(MoveList* ml, ScoredMove move){
     ml->moves[ml->count++] = ((GOODCAPTURESCORE + 100) << 32) | move;
