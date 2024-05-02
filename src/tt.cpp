@@ -32,7 +32,7 @@ void initTT(){
 }
 
 ttEntry* probeTT(HashKey key) {
-    ttEntry *entry = &tt[key % (tt.size())];
+    ttEntry *entry = &tt[hashEntryFor(key)];
     // Iterate through the entries.
     if (entry->hashKey == key) {
         entry->flags &= ~hashOLD;
@@ -43,7 +43,7 @@ ttEntry* probeTT(HashKey key) {
 
 void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv) {
 
-    ttEntry *entry = &tt[key % (tt.size())];
+    ttEntry *entry = &tt[hashEntryFor(key)];
     move = move ? packMove(move) : entry->bestMove; // pack to 2 bytes
     if (entry->hashKey == key) {
         if (depth + isPv >= entry->depth + !!(entry->flags & hashPVMove)) {

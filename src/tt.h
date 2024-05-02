@@ -95,6 +95,14 @@ struct ttBucket {
 extern std::vector<ttEntry> tt;
 extern evalHashEntry* evalHash;
 
+inline U64 hashEntryFor(HashKey key) {
+    return static_cast<U64>(
+        (
+            (static_cast<U128>(key) * static_cast<U128>(tt.size())) >> 64
+        )
+    );
+}
+
 static inline void resizeTT(S32 mbSize){
     // calculate the number of entries
     S32 ttEntryCount = 1024 * 1024 * mbSize / sizeof(ttEntry);

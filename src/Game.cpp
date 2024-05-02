@@ -238,7 +238,7 @@ bool Game::makeMove(Move move){
 #endif
     bool k = pos.makeMove(move);
 #if ENABLEPREFETCHING && ENABLETTSCORING
-    prefetch(&evalHash[pos.hashKey % evalHashSize]);
+    prefetch(&evalHash[hashEntryFor(pos.hashKey)]);
 #endif
     return k;
 }
@@ -269,11 +269,6 @@ bool Game::isRepetition() {
  * @return The static evaluation of the current position.
  */
 Score Game::evaluate(){
-
-#if USINGEVALCACHE && ENABLEPREFETCHING
-    prefetch(&evalHash[pos.hashKey % (evalHashSize)]);
-#endif
-
    // Before calling the static score evaluation, we must check for the interior node recognizer ( known endgames )
     bool side = pos.side;
     BitBoard* ourPiecesp = pos.bitboards + side * 6;

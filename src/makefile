@@ -34,7 +34,7 @@ debug: CXXFLAGS += -g -O0 -fsanitize=address -fno-omit-frame-pointer -D_GLIBCXX_
 debug: $(EXECUTABLE)
 
 # Release target
-release: CXXFLAGS += -O3 -flto -DNDEBUG -lm
+release: CXXFLAGS += -funroll-loops -O3 -flto -fno-exceptions -DNDEBUG -lm
 release: $(EXECUTABLE)
 
 

@@ -1,5 +1,5 @@
 #include "random.h"
-U32 state = 123456789;
+U64 state = 123456789;
 
 /**
  * @brief The getRandom32 function returns a random 32 bit integer.
@@ -21,8 +21,10 @@ U32 getRandom32() {
  * @note This function updates the internal state of the random number generator.
  */
 U64 getRandom64(){
-    U64 number = getRandom32();
-    number <<= 32;
-    number |= getRandom32();
+    U64 number = state;
+    number ^= number << 13;
+    number ^= number >> 7;
+    number ^= number << 17;
+    state = number;
     return number;
 }
