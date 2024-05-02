@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include "bench.h"
 #include <fstream>
 
 void split(std::string s, std::string delim, std::vector<std::string> & v){
@@ -68,8 +69,20 @@ void perftSuite(){
     std::cout << "Perft suite completed.\n";
 }
 
-int main(){
+int main(int argc, char *argv[]){
     initAll();
+    // Check if we are running perft tests or benches
+    if (argc > 1) {
+        if (std::string(argv[1]) == "perft") {
+            perftSuite();
+            return 0;
+        }
+        else if (std::string(argv[1]) == "bench") {
+            benchmark();
+            return 0;
+        }
+    }
+        
     // perftSuite();
     Game game;
     uciLoop(&game);

@@ -383,7 +383,8 @@ inline BitBoard Position::attacksToPre(Square square, BitBoard occupancy, BitBoa
     
 }
 
-bool Position::makeEp(Move move){
+inline bool Position::makeEp(Move move)
+{
 
     // Get useful information about the move
     Square from = moveSource(move);
@@ -399,7 +400,7 @@ bool Position::makeEp(Move move){
     addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
 
     // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
-    Square ourKing = lsb(bitboards[K + 6 * side]);
+    const Square ourKing = lsb(bitboards[K + 6 * side]);
     if (isSquareAttacked(ourKing, side ^ 1))
         return false;
 
@@ -420,7 +421,7 @@ bool Position::makeEp(Move move){
     return true;
 }
 
-bool Position::makePromotion(Move move){
+inline bool Position::makePromotion(Move move){
     // Get useful information about the move
     Square from = moveSource(move);
     Square to = moveTarget(move);
@@ -433,7 +434,7 @@ bool Position::makePromotion(Move move){
     addPiece(bitboards, occupancies, promotion, to, hashKey, psqtScore);
    
     // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
-    Square ourKing = lsb(bitboards[K + 6 * side]);
+    const Square ourKing = lsb(bitboards[K + 6 * side]);
     if (isSquareAttacked(ourKing, side ^ 1))
         return false;
 
@@ -462,107 +463,87 @@ bool Position::makePromotion(Move move){
     return true;
 }
 
-bool Position::makeCapture(Move move)
+inline bool Position::makeCapture(Move move)
 {
     // Get useful information about the move
-    Square from = moveSource(move);
-    Square to = moveTarget(move);
-    Piece piece = movePiece(move);
-    Piece captured = moveCapture(move);
+    const Square from = moveSource(move);
+    const Square to = moveTarget(move);
+    const Piece piece = movePiece(move);
 
     // First, we remove the piece from the source square
     removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
     // Then, we remove the captured piece from the target square
-    removePiece(bitboards, occupancies, captured, to, hashKey, psqtScore);
+    removePiece(bitboards, occupancies, moveCapture(move), to, hashKey, psqtScore);
     // Finally, we add the capturing piece to the target square
     addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
     
     // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
-    Square ourKing = lsb(bitboards[K + 6 * side]);
+    const Square ourKing = lsb(bitboards[K + 6 * side]);
     if (isSquareAttacked(ourKing, side ^ 1))
         return false;
 
-    // Remove the current en passant square from the hash key, as it is no longer valid
-    hashKey ^= enPassantKeys[enPassant];
+    // Remove the old keys for enpassant, side and castling.
+    hashKey ^= enPassantKeys[enPassant] ^ sideKey ^ castleKeys[castle];
+    // Reset enpassant square
     enPassant = noSquare;
-
-    // Now we update the hash for en passant, castle rights and side to move
-    hashKey ^= sideKey;
-
-    // Remove previous castle rights
-    hashKey ^= castleKeys[castle];
-
-    // Add new castle rights
-    castle &= castlingRights[from];
-    castle &= castlingRights[to];
-    hashKey ^= castleKeys[castle];
-
     // Change side to move
     side ^= 1;
+
+    // Add new castle rights
+    castle &= castlingRights[from] & castlingRights[to];
+    // Add new castle key
+    hashKey ^= castleKeys[castle];
+
     lastMove = onlyMove(move);
-    totalPly++;
-    plyFromNull++;
+    ++totalPly;
+    ++plyFromNull;
     fiftyMove = 0;
 
     return true;
 }
 
-bool Position::makePromoCapture(Move move){
+inline bool Position::makePromoCapture(Move move)
+{
     // Get useful information about the move
-    Square from = moveSource(move);
-    Square to = moveTarget(move);
-    Piece piece = movePiece(move);
-    Piece captured = moveCapture(move);
-    Piece promotion = movePromotion(move);
+    const Square from = moveSource(move);
+    const Square to = moveTarget(move);
 
     // First, we remove the piece from the source square
-    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+    removePiece(bitboards, occupancies, movePiece(move), from, hashKey, psqtScore);
     // Then, we remove the captured piece from the target square
-    removePiece(bitboards, occupancies, captured, to, hashKey, psqtScore);
+    removePiece(bitboards, occupancies, moveCapture(move), to, hashKey, psqtScore);
     // Finally, we add the promoted piece to the target square
-    addPiece(bitboards, occupancies, promotion, to, hashKey, psqtScore);
+    addPiece(bitboards, occupancies, movePromotion(move), to, hashKey, psqtScore);
 
     // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
-    Square ourKing = lsb(bitboards[K + 6 * side]);
+    const Square ourKing = lsb(bitboards[K + 6 * side]);
     if (isSquareAttacked(ourKing, side ^ 1))
         return false;
 
-    // Remove the current en passant square from the hash key, as it is no longer valid
-    hashKey ^= enPassantKeys[enPassant];
+    // Remove the old keys for enpassant, side and castling.
+    hashKey ^= enPassantKeys[enPassant] ^ sideKey ^ castleKeys[castle];
+    // Reset enpassant square
     enPassant = noSquare;
-
-    // Now we update the hash for en passant, castle rights and side to move
-    hashKey ^= sideKey;
-
-    // Remove previous castle rights
-    hashKey ^= castleKeys[castle];
-
-    // Add new castle rights
-    castle &= castlingRights[from];
-    castle &= castlingRights[to];
-    hashKey ^= castleKeys[castle];
-
     // Change side to move
     side ^= 1;
-    lastMove = onlyMove(move);
 
-    totalPly++;
-    plyFromNull++;
+    // Add new castle rights
+    castle &= castlingRights[from] & castlingRights[to];
+    // Add new castle key
+    hashKey ^= castleKeys[castle];
+
+    lastMove = onlyMove(move);
+    ++totalPly;
+    ++plyFromNull;
     fiftyMove = 0;
 
     return true;
 }
 
-bool Position::makeCastle(Move move){
+inline bool Position::makeCastle(Move move)
+{
     // Get useful information about the move
-    Square from = moveSource(move);
-    Square to = moveTarget(move);
-    Piece piece = movePiece(move);
-
-    // First, we remove the piece from the source square
-    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
-    // Then, we add the piece to the target square
-    addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+    const Square to = moveTarget(move);
 
     // If the move is a castle, we move the rook
     switch (to){
@@ -598,36 +579,40 @@ bool Position::makeCastle(Move move){
             break;
     }
 
-    // Remove the current en passant square from the hash key, as it is no longer valid
-    hashKey ^= enPassantKeys[enPassant];
+    const Square from = moveSource(move);
+    const Piece piece = movePiece(move);
+
+    // First, we remove the piece from the source square
+    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+    // Then, we add the piece to the target square
+    addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+
+    // Remove the old keys for enpassant, side and castling.
+    hashKey ^= enPassantKeys[enPassant] ^ sideKey ^ castleKeys[castle];
+    // Reset enpassant square
     enPassant = noSquare;
-
-    // Now we update the hash for en passant, castle rights and side to move
-    hashKey ^= sideKey;
-
-    // Remove previous castle rights
-    hashKey ^= castleKeys[castle];
-
-    // Add new castle rights
-    castle &= castlingRights[from];
-    castle &= castlingRights[to];
-    hashKey ^= castleKeys[castle];
-
     // Change side to move
     side ^= 1;
+
+    // Add new castle rights
+    castle &= castlingRights[from] & castlingRights[to];
+    // Add new castle key
+    hashKey ^= castleKeys[castle];
+
     lastMove = onlyMove(move);
-    totalPly++;
-    plyFromNull++;
-    fiftyMove++;
+    ++totalPly;
+    ++plyFromNull;
+    ++fiftyMove;
 
     return true;
 }
 
-bool Position::makeQuiet(Move move){
+inline bool Position::makeQuiet(Move move)
+{
     // Get useful information about the move
-    Square from = moveSource(move);
-    Square to = moveTarget(move);
-    Piece piece = movePiece(move);
+    const Square from = moveSource(move);
+    const Square to = moveTarget(move);
+    const Piece piece = movePiece(move);
     
     // First, we remove the piece from the source square
     removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
@@ -635,62 +620,88 @@ bool Position::makeQuiet(Move move){
     addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
     
     // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
-    Square ourKing = lsb(bitboards[K + 6 * side]);
+    const Square ourKing = lsb(bitboards[K + 6 * side]);
     if (isSquareAttacked(ourKing, side ^ 1))
         return false;
-    
-    // Remove the current en passant square from the hash key, as it is no longer valid
-    hashKey ^= enPassantKeys[enPassant];
 
-    // If the move is a double pawn push, we set the en passant square and hash it back in. If not, we don't need to do anything, since the noSquare hash is 0
-    if (isDoublePush(move)) {
-        enPassant = to + 8 * (1 - 2 * side);
-        hashKey ^= enPassantKeys[enPassant];
-    }
-    else {
-        enPassant = noSquare;
-    }
-    
-    // Now we update the hash for en passant, castle rights and side to move
-    hashKey ^= sideKey;
-
-    // Remove previous castle rights
-    hashKey ^= castleKeys[castle];
-
-    // Add new castle rights
-    castle &= castlingRights[from];
-    castle &= castlingRights[to];
-    hashKey ^= castleKeys[castle];
-
+    // Remove the old keys for enpassant, side and castling.
+    hashKey ^= enPassantKeys[enPassant] ^ sideKey ^ castleKeys[castle];
+    // Reset enpassant square
+    enPassant = noSquare;
     // Change side to move
     side ^= 1;
+
+    // Add new castle rights
+    castle &= castlingRights[from] & castlingRights[to];
+    // Add new castle key
+    hashKey ^= castleKeys[castle];
+
     lastMove = onlyMove(move);
-    totalPly++;
-    plyFromNull++;
+    ++totalPly;
+    ++plyFromNull;
     fiftyMove = (piece == P || piece == p) ? 0 : fiftyMove + 1;
+
+    return true;
+}
+
+inline bool Position::makeDoublePawnPush(Move move)
+{
+    // Get useful information about the move
+    const Square from = moveSource(move);
+    const Square to = moveTarget(move);
+    const Piece piece = movePiece(move);
+    
+    // First, we remove the piece from the source square
+    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+    // Then, we add the piece to the target square
+    addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+    
+    // Now we verify if the move is legal. We don't check for legality in the case of a castle, since we already checked for that when we generated the move (castling rights and squares between king and rook are not attacked)
+    const Square ourKing = lsb(bitboards[K + 6 * side]);
+    if (isSquareAttacked(ourKing, side ^ 1))
+        return false;
+
+    // Remove the old keys for enpassant, side and castling.
+    hashKey ^= enPassantKeys[enPassant] ^ sideKey ^ castleKeys[castle];
+    // Reset enpassant square and add new enpassant key
+    enPassant = to + 8 * (1 - 2 * side);
+    hashKey ^= enPassantKeys[enPassant];
+    // Change side to move
+    side ^= 1;
+
+    // Add new castle rights
+    castle &= castlingRights[from] & castlingRights[to];
+    // Add new castle key
+    hashKey ^= castleKeys[castle];
+
+    lastMove = onlyMove(move);
+    ++totalPly;
+    ++plyFromNull;
+    fiftyMove = 0;
 
     return true;
 }
 
 bool Position::makeMove(Move move){
     if (!move) return false;
-    S16 mask = (
-        isEnPassant(move) << 0 |
-        isPromotion(move) << 1 |
-        isCapture(move)   << 2 |
-        isCastling(move)  << 3 
+    const S16 mask = (
+        isPromotion(move)      +
+        isCapture(move)   * 2  +
+        isEnPassant(move) * 2  +
+        isCastling(move)  * 5  + 
+        isDoublePush(move) * 6
     );
 
     switch (mask){
-        case 0b0000: return makeQuiet(move);
-        case 0b0010: return makePromotion(move);
-        case 0b0100: return makeCapture(move);
-        case 0b0101: return makeEp(move);
-        case 0b0110: return makePromoCapture(move);
-        case 0b1000: return makeCastle(move);
+        case 0b000: return makeQuiet(move);
+        case 0b001: return makePromotion(move);
+        case 0b010: return makeCapture(move);
+        case 0b011: return makePromoCapture(move);
+        case 0b100: return makeEp(move);
+        case 0b101: return makeCastle(move);
+        case 0b110: return makeDoublePawnPush(move);
+        default: return false;
     }
-    assert(false); // This should never happen
-    return false;
 }
 
 
@@ -736,8 +747,7 @@ inline void Position::addQuiet(MoveList* ml, ScoredMove move, Square source, Squ
         ml->moves[ml->count++] = (COUNTERSCORE << 32) | move;
         return;
     }
-    S64 score = (S64)(historyTable[side][source][target]); // *22 + ((S64)pieceFromHistoryTable[movedPiece][from]) + ((S64)pieceToHistoryTable[movedPiece][to]) * 2) / 25;
-    score += 16384;
+    S64 score = (S64)(historyTable[side][source][target]) + 16384;
     ml->moves[ml->count++] = (score << 32) | move; //
 }
 
@@ -1150,55 +1160,59 @@ void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Mov
     }
     // We will generate the pawn pushes
     if (side == WHITE) {
-        BitBoard pawnPushes = ourPawns >> 8;
-        pawnPushes &= ~occupancy;
+        // Single push 
+        BitBoard pawnPushes = (ourPawns >> 8) & (~occupancy);
+        if (pawnPushes){
 
-        while (pawnPushes) {
-            Square to = popLsb(pawnPushes);
-            if (to <= h8) {
-                // We will generate the promotion moves
-                addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, Q, false, false, false, (queenCheckers & squareBB(to)) > 0), Q);
-                addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, R, false, false, false, (rookCheckers & squareBB(to)) > 0), R);
-                addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, B, false, false, false, (bishopCheckers & squareBB(to)) > 0), B);
-                addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, N, false, false, false, (knightCheckers & squareBB(to)) > 0), N);
+            // Double push
+            BitBoard pawnDoublePushes = ((pawnPushes >> 8) & (~occupancy)) & ranks(4);
+        
+            // We know there is at least one pawn push since pawnPushes is not empty
+            do  { 
+                Square to = popLsb(pawnPushes);
+                if (to <= h8) {
+                    // We will generate the promotion moves
+                    addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, Q, false, false, false, (queenCheckers  & squareBB(to)) > 0), Q);
+                    addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, R, false, false, false, (rookCheckers   & squareBB(to)) > 0), R);
+                    addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, B, false, false, false, (bishopCheckers & squareBB(to)) > 0), B);
+                    addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, N, false, false, false, (knightCheckers & squareBB(to)) > 0), N);
+                }
+                else
+                    addQuiet(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to + 8, to, killer1, killer2, counterMove);
+            } while (pawnPushes);
+
+            while (pawnDoublePushes) {
+                Square to = popLsb(pawnDoublePushes);
+                addQuiet(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to + 16, to, killer1, killer2, counterMove);
             }
-            else
-                addQuiet(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to + 8, to, killer1, killer2, counterMove);
-        }
-
-        BitBoard pawnDoublePushes = ourPawns & ranks(6);
-        pawnDoublePushes >>= 8;
-        pawnDoublePushes &= ~occupancy;
-        pawnDoublePushes >>= 8;
-        pawnDoublePushes &= ~occupancy;
-        while (pawnDoublePushes) {
-            Square to = popLsb(pawnDoublePushes);
-            addQuiet(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to + 16, to, killer1, killer2, counterMove);
         }
     }
     else {
-        BitBoard pawnPushes = ourPawns << 8;
-        pawnPushes &= ~occupancy;
-        while (pawnPushes) {
-            Square to = popLsb(pawnPushes);
-            if (to >= a1) {
-                // We will generate the promotion moves
-                addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, q, false, false, false, (queenCheckers & squareBB(to)) > 0), q); 
-                addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, r, false, false, false, (rookCheckers & squareBB(to)) > 0), r);
-                addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, b, false, false, false, (bishopCheckers & squareBB(to)) > 0), b);
-                addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, n, false, false, false, (knightCheckers & squareBB(to)) > 0), n);
+        // Single push
+        BitBoard pawnPushes = (ourPawns << 8) & (~occupancy);
+        if (pawnPushes){
+
+            // Double push, generate them first
+            BitBoard pawnDoublePushes = ((pawnPushes << 8) & (~occupancy)) & ranks(3);
+            
+            // We know there is at least one pawn push since pawnPushes is not empty
+            do {
+                Square to = popLsb(pawnPushes);
+                if (to >= a1){
+                    // We will generate the promotion moves
+                    addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, q, false, false, false, (queenCheckers  & squareBB(to)) > 0), q);
+                    addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, r, false, false, false, (rookCheckers   & squareBB(to)) > 0), r);
+                    addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, b, false, false, false, (bishopCheckers & squareBB(to)) > 0), b);
+                    addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, n, false, false, false, (knightCheckers & squareBB(to)) > 0), n);
+                }
+                else
+                    addQuiet(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to - 8, to, killer1, killer2, counterMove);
+            } while (pawnPushes);   
+
+            while(pawnDoublePushes) {
+                Square to = popLsb(pawnDoublePushes);
+                addQuiet(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to - 16, to, killer1, killer2, counterMove);
             }
-            else
-                addQuiet(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to - 8, to, killer1, killer2, counterMove);
-        }
-        BitBoard pawnDoublePushes = ourPawns & ranks(1);
-        pawnDoublePushes <<= 8;
-        pawnDoublePushes &= ~occupancy;
-        pawnDoublePushes <<= 8;
-        pawnDoublePushes &= ~occupancy;
-        while (pawnDoublePushes) {
-            Square to = popLsb(pawnDoublePushes);
-            addQuiet(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to - 16, to, killer1, killer2, counterMove);
         }
     }
     // We will generate the king moves, including castling
@@ -1630,56 +1644,61 @@ void Position::generateUnsortedMoves(MoveList& moveList) {
         }
     }
     // We will generate the pawn pushes
+    // We will generate the pawn pushes
     if (side == WHITE) {
-        BitBoard pawnPushes = ourPawns >> 8;
-        pawnPushes &= ~occupancy;
+        // Single push 
+        BitBoard pawnPushes = (ourPawns >> 8) & (~occupancy);
+        if (pawnPushes){
 
-        while (pawnPushes) {
-            Square to = popLsb(pawnPushes);
-            if (to <= h8) {
-                // We will generate the promotion moves
-                addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, Q, false, false, false, (queenCheckers & squareBB(to)) > 0));
-                addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, R, false, false, false, (rookCheckers & squareBB(to)) > 0));
-                addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, B, false, false, false, (bishopCheckers & squareBB(to)) > 0));
-                addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, N, false, false, false, (knightCheckers & squareBB(to)) > 0));
+            // Double push, generate them first
+            BitBoard pawnDoublePushes = ((pawnPushes >> 8) & (~occupancy)) & ranks(4);
+
+            // We know there is at least one pawn push since pawnPushes is not empty
+            do  { 
+                Square to = popLsb(pawnPushes);
+                if (to <= h8) {
+                    // We will generate the promotion moves
+                    addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, Q, false, false, false, (queenCheckers  & squareBB(to)) > 0));
+                    addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, R, false, false, false, (rookCheckers   & squareBB(to)) > 0));
+                    addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, B, false, false, false, (bishopCheckers & squareBB(to)) > 0));
+                    addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, N, false, false, false, (knightCheckers & squareBB(to)) > 0));
+                }
+                else
+                    addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0));
+            } while (pawnPushes);
+
+            while (pawnDoublePushes) {
+                Square to = popLsb(pawnDoublePushes);
+                addUnsorted(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0));
             }
-            else
-                addUnsorted(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0));
-        }
-
-        BitBoard pawnDoublePushes = ourPawns & ranks(6);
-        pawnDoublePushes >>= 8;
-        pawnDoublePushes &= ~occupancy;
-        pawnDoublePushes >>= 8;
-        pawnDoublePushes &= ~occupancy;
-        while (pawnDoublePushes) {
-            Square to = popLsb(pawnDoublePushes);
-            addUnsorted(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0));
         }
     }
     else {
-        BitBoard pawnPushes = ourPawns << 8;
-        pawnPushes &= ~occupancy;
-        while (pawnPushes) {
-            Square to = popLsb(pawnPushes);
-            if (to >= a1) {
-                // We will generate the promotion moves
-                addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, q, false, false, false, (queenCheckers & squareBB(to)) > 0));
-                addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, r, false, false, false, (rookCheckers & squareBB(to)) > 0));
-                addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, b, false, false, false, (bishopCheckers & squareBB(to)) > 0));
-                addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, n, false, false, false, (knightCheckers & squareBB(to)) > 0));
+        // Single push
+        BitBoard pawnPushes = (ourPawns << 8) & (~occupancy);
+        if (pawnPushes){
+
+            // Double push
+            BitBoard pawnDoublePushes = ((pawnPushes << 8) & (~occupancy)) & ranks(3);
+            
+            // We know there is at least one pawn push since pawnPushes is not empty
+            do {
+                Square to = popLsb(pawnPushes);
+                if (to >= a1){
+                    // We will generate the promotion moves
+                    addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, q, false, false, false, (queenCheckers  & squareBB(to)) > 0));
+                    addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, r, false, false, false, (rookCheckers   & squareBB(to)) > 0));
+                    addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, b, false, false, false, (bishopCheckers & squareBB(to)) > 0));
+                    addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, n, false, false, false, (knightCheckers & squareBB(to)) > 0));
+                }
+                else
+                    addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0));
+            } while (pawnPushes);   
+
+            while(pawnDoublePushes) {
+                Square to = popLsb(pawnDoublePushes);
+                addUnsorted(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0));
             }
-            else
-                addUnsorted(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0));
-        }
-        BitBoard pawnDoublePushes = ourPawns & ranks(1);
-        pawnDoublePushes <<= 8;
-        pawnDoublePushes &= ~occupancy;
-        pawnDoublePushes <<= 8;
-        pawnDoublePushes &= ~occupancy;
-        while (pawnDoublePushes) {
-            Square to = popLsb(pawnDoublePushes);
-            addUnsorted(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0));
         }
     }
     // We will generate the king moves, including castling

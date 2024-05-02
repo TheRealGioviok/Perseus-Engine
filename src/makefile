@@ -30,11 +30,11 @@ EXECUTABLE := $(NAME)$(SUFFIX)
 all: release
 
 # Debug target
-debug: CXXFLAGS += -g -O0 -fsanitize=address -fno-omit-frame-pointer -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC
+debug: CXXFLAGS += -g -O0 -fsanitize=address -fno-omit-frame-pointer -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.5
 debug: $(EXECUTABLE)
 
 # Release target
-release: CXXFLAGS += -O3 -flto -DNDEBUG -lm
+release: CXXFLAGS += -funroll-loops -O3 -flto -fno-exceptions -DNDEBUG -lm
 release: $(EXECUTABLE)
 
 

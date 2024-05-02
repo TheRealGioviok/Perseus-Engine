@@ -39,11 +39,11 @@ void initTables() {
     }
 }
 
-constexpr Score DOUBLEDPENMG = 7;
-constexpr Score DOUBLEDPENEG = 33;
+constexpr Score DOUBLEDPENMG = 35;
+constexpr Score DOUBLEDPENEG = 25;
 
-constexpr Score DOUBLEDEARLYMG = 11;
-constexpr Score DOUBLEDEARLYEG = 4;
+constexpr Score DOUBLEDEARLYMG = 15;
+constexpr Score DOUBLEDEARLYEG = 10;
 
 constexpr Score DOUBLEISOLATEDPENMG = 7;
 constexpr Score DOUBLEISOLATEDPENEG = 33;
@@ -51,8 +51,8 @@ constexpr Score DOUBLEISOLATEDPENEG = 33;
 constexpr Score OWNPIECEBLOCKEDPAWNMG = 0;
 constexpr Score OWNPIECEBLOCKEDPAWNEG = 8;
 
-constexpr Score ISOLATEDPENMG = 1;
-constexpr Score ISOLATEDPENEG = 13;
+constexpr Score ISOLATEDPENMG = 15;
+constexpr Score ISOLATEDPENEG = 10;
 
 constexpr Score BACKWARDPENMG = 7;
 constexpr Score BACKWARDPENEG = 17;
@@ -296,6 +296,46 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
     mobility<r>(bb, occ, pinned, mobilityArea, mobilityScore);
     mobility<q>(bb, occ, pinned, mobilityArea, mobilityScore);
 
+    // // Doubled pawns
+    // BitBoard doubledPawns[2] = {
+    //     bb[P] & (bb[P] >> 8),
+    //     bb[p] & (bb[p] << 8)
+    // };
+
+    // // Unsupported doubled pawns
+    // BitBoard unsupportedDoubledPawns[2] = {
+    //     doubledPawns[WHITE] & ~pawnAttackedSquares[WHITE],
+    //     doubledPawns[BLACK] & ~pawnAttackedSquares[BLACK]
+    // };
+
+    // // Files occupied by pawn mask
+    // BitBoard pawnFiles[2] = {
+    //     bb[P] | (bb[P]<<8) | (bb[P]>>8),
+    //     bb[p] | (bb[p]<<8) | (bb[p]>>8)
+    // };
+
+    // pawnFiles[WHITE] |= (pawnFiles[WHITE] << 16)  | (pawnFiles[WHITE] >> 16) ;
+    // pawnFiles[WHITE] |= (pawnFiles[WHITE] << 40) | (pawnFiles[WHITE] >> 40);
+    // pawnFiles[BLACK] |= (pawnFiles[BLACK] << 16)  | (pawnFiles[BLACK] >> 16) ;
+    // pawnFiles[BLACK] |= (pawnFiles[BLACK] << 40) | (pawnFiles[BLACK] >> 40);
+
+    // // Isolated pawns
+    // BitBoard isolatedPawns[2] = {
+    //     (((pawnFiles[WHITE] & notFile(0)) >> 1) | ((pawnFiles[WHITE] & notFile(7)) << 1)) & bb[P],
+    //     (((pawnFiles[BLACK] & notFile(0)) >> 1) | ((pawnFiles[BLACK] & notFile(7)) << 1)) & bb[p]
+    // };
+
+    // // Add penalties for doubled pawns. We take inspiration by sf, which only penalizes pawns that are both undefended by a pawn and have an own pawn directly behind.
+    // mgScore[WHITE] -= popcount(unsupportedDoubledPawns[WHITE]) * DOUBLEDPENMG;
+    // mgScore[BLACK] -= popcount(unsupportedDoubledPawns[BLACK]) * DOUBLEDPENMG;
+    // egScore[WHITE] -= popcount(unsupportedDoubledPawns[WHITE]) * DOUBLEDPENEG;
+    // egScore[BLACK] -= popcount(unsupportedDoubledPawns[BLACK]) * DOUBLEDPENEG;
+
+    // mgScore[WHITE] -= popcount(isolatedPawns[WHITE]) * ISOLATEDPENMG;
+    // mgScore[BLACK] -= popcount(isolatedPawns[BLACK]) * ISOLATEDPENMG;
+    // egScore[WHITE] -= popcount(isolatedPawns[WHITE]) * ISOLATEDPENEG;
+    // egScore[BLACK] -= popcount(isolatedPawns[BLACK]) * ISOLATEDPENEG;
+
     // Calculate the total score
     mgScore[WHITE] += mobilityScore[0][WHITE];
     mgScore[BLACK] += mobilityScore[0][BLACK];
@@ -316,14 +356,6 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
 }
 
 Score pestoEval2(Position* pos) {
-
-#if USINGEVALCACHE
-    Score cachedEval = getCachedEval(pos->hashKey);
-    if (cachedEval != noScore) {
-        int fCs = std::min(60, std::max(0, pos->fiftyMove - 12));
-        return cachedEval * (100 - fCs) / 100;
-    }
-#endif
 
     auto const& bb = pos->bitboards;
     Score mg[2] = { 0,0 }, eg[2] = { 0,0 };
@@ -1186,11 +1218,7 @@ Score pestoEval2(Position* pos) {
     Score res = (Score)(((int)mgScore * (int)mgPhase + (int)egScore * (int)egPhase) / 24);
     //if (res >= egValues[Q] + egValues[N]) res += (KNOWNWIN/2) - ((res) * abs(KNOWNWIN/2))/mateScore;
 	//if (res <= egValues[Q] + egValues[N]) res += (-KNOWNWIN / 2) - ((res) * abs(-KNOWNWIN / 2)) / mateScore;
-    
-#if USINGEVALCACHE
-    // Cache res before scaling
-    cacheEval(pos->hashKey, res);
-#endif
+
     return res * (100 - fC) / 100;
 
 }

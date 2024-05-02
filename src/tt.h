@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "constants.h"
+#include <cstddef>
 #include <vector>
 
 // Table sizes (TODO: Make these configurable at runtime)
@@ -95,7 +96,16 @@ struct ttBucket {
 extern std::vector<ttEntry> tt;
 extern evalHashEntry* evalHash;
 
-static inline void resizeTT(S32 mbSize){
+inline size_t hashEntryFor(HashKey key) {
+    return static_cast<size_t>(
+        (
+            (static_cast<U128>(key) * static_cast<U128>(tt.size())) >> 64
+        )
+    );
+}
+
+static inline void resizeTT(S32 mbSize)
+{
     // calculate the number of entries
     S32 ttEntryCount = 1024 * 1024 * mbSize / sizeof(ttEntry);
     // allocate the memory on the tt vector
@@ -129,17 +139,5 @@ ttEntry *probeTT(HashKey key);
  */
 void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv);
 
-/**
- * The getCachedEval function looks up for evaluation of position and returns it if found, else noScore
- * @param hash the hash to look for
- */
-Score getCachedEval(HashKey h);
-
-/**
- * The cacheEval function caches an evaluation. Uses an always replace scheme
- * @param hash the hash to look for
- * @param score the score to store
- */
-void cacheEval(HashKey h, Score s);
 
 U16 hashfull();

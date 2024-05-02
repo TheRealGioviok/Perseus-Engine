@@ -41,7 +41,6 @@
 
 #define isCapture(move)		((((move) & 0xf0000) >> 16) != NOPIECE)
 #define isPromotion(move)	((((move) & 0xf00000) >> 20) != NOPIECE)
-#define isReversible(move)	((((move) & 0x20ff0000) == 0xcc0000) && (((move) & 0xf000) % 6 != 0)) // This means captures, promotions, castlings, pawn moves
 #define okToReduce(move)	(! (isCapture(move) || isPromotion(move)))
 #define onlyMove(move)		((move) & 0x2fffffff)
 #define getScore(move)		((move) >> 32)

@@ -1,7 +1,7 @@
 #pragma once
 #include "types.h"
 
-extern U32 state;
+extern U64 state;
 
 /**
  * @brief The getRandom32 function returns a random 32 bit integer.

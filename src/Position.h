@@ -101,19 +101,20 @@ struct Position{
      */
     bool makeMove(Move move);
 
-    bool makeEp(Move move);
+    inline bool makeEp(Move move);
     // For non capture promotions
-    bool makePromotion(Move move);
+    inline bool makePromotion(Move move);
     // For non promo, non ep captures
-    bool makeCapture(Move move);
-    bool makePromoCapture(Move move);
-    bool makeCastle(Move move);
-    bool makeQuiet(Move move);
+    inline bool makeCapture(Move move);
+    inline bool makePromoCapture(Move move);
+    inline bool makeCastle(Move move);
+    inline bool makeQuiet(Move move);
+    inline bool makeDoublePawnPush(Move move);
 
-    /**
-     * @brief The makeNullMove function makes a null move on the board.
-     */
-    void makeNullMove();
+        /**
+         * @brief The makeNullMove function makes a null move on the board.
+         */
+        void makeNullMove();
 
     /**
      * @brief The generateMoves function generates all pseudo legal moves for the current side.
