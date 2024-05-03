@@ -188,7 +188,7 @@ Move Game::getLegal(std::string move){
             return (Move)moveList.moves[i];
         }
     }
-    std::cout << "Not found!\n";
+    std::cout << "Move " << move << " is not legal!" << std::endl;
     return 0;
 }
 
@@ -254,11 +254,10 @@ bool Game::isRepetition() {
     HashKey hashKey = pos.hashKey;
     S32 startPoint = pos.totalPly;
     S32 counter = 0;
-    for (int idx = 4; idx < dist; idx += 2){
+    for (int idx = 4; idx <= dist; idx += 2){
         if (repetitionTable[startPoint - idx] == hashKey) {
             if (idx < ply) return true;
-            counter++;
-            if (counter >= 2) return true;
+            if (counter++ >= 1) return true;
         }
     }
     return false;

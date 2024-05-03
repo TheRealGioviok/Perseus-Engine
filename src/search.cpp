@@ -11,6 +11,8 @@
 
 static inline Score mateIn(Ply ply) { return ((mateScore) - (ply)); }
 static inline Score matedIn(Ply ply) { return ((-mateScore) + (ply)); }
+static inline Score randomizedDrawScore(U64 nodes) { return 4 - (nodes & 8); }
+static inline Score adjustScoreFromTT(Score score, Ply ply) { return score + ply * (score < -mateValue) - ply * (score > mateValue); }
 
 inline bool okToReducePacked(Position &pos, PackedMove move)
 {
@@ -104,7 +106,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     if (!RootNode)
     {
         if (isRepetition() || pos.fiftyMove >= 100 || pos.insufficientMaterial())
-            return 4 - (nodes & 7); // Randomize draw score so that we try to explore different lines
+            return randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
         // Mate distance pruning
         alpha = std::max(alpha, matedIn(ply));
@@ -112,6 +114,10 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
         if (alpha >= beta)
             return alpha;
     }
+
+    // Quiescence drop
+    if (depth <= 0)
+        return quiescence(alpha, beta);
 
     //// TT probe
     ttEntry *tte = probeTT(pos.hashKey);
@@ -124,8 +130,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     if (ttScore != noScore)
     {
         // Account for mate values
-        ttScore += ply * (ttScore < -mateValue);
-        ttScore -= ply * (ttScore > mateValue);
+        ttScore = adjustScoreFromTT(ttScore, ply);
         if (!PVNode && tte->depth >= depth)
         {
             if (ttBound == hashEXACT)
@@ -141,10 +146,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
 
     const bool ttPv = PVNode || (ttHit && (ttFlags & hashPVMove));
 
-    // Quiescence drop
-    if (depth <= 0)
-        return quiescence(alpha, beta);
-
+    
     // IIR by Ed SchrÃ¶der
     // http://talkchess.com/forum3/viewtopic.php?f=7&t=74769&sid=64085e3396554f0fba414404445b3120
     if (depth >= IIRdepth && ttBound == hashNONE && !PVNode)
@@ -420,7 +422,7 @@ skipPruning:
 
     //// Check for checkmate /
     if (moveSearched == 0)
-        return inCheck ? matedIn(ply) : 4 - (nodes & 7); // Randomize draw score so that we try to explore different lines
+        return inCheck ? matedIn(ply) : randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
     U8 ttStoreFlag = hashNONE;
     if (bestScore >= beta)
         ttStoreFlag = hashLOWER;
@@ -442,57 +444,104 @@ skipPruning:
 
 Score Game::quiescence(Score alpha, Score beta)
 {
-    bool inCheck = pos.inCheck();
-    if (inCheck)
-        if (isRepetition())
-            return 4 - (nodes & 7); // Randomize draw score so that we try to explore different lines
+    
+    if (isRepetition() || pos.fiftyMove >= 100 || pos.insufficientMaterial())
+        return randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
-    Score standPat = evaluate();
+    bool inCheck = isCheck(pos.lastMove) || pos.inCheck();
 
     if (ply >= maxPly - 1)
-        return standPat;
+        return inCheck ? 0 : matedIn(ply); // Randomize draw score so that we try to explore different lines
 
-    if (!inCheck)
+    Score bestScore, eval;
+
+    const ttEntry *tte = probeTT(pos.hashKey);
+    const bool ttHit = tte;
+    Score ttScore = ttHit ? tte->score : noScore; // search score
+    const Score ttEval = ttHit ? tte->eval : noScore; // static eval
+    const U8 ttBound = ttHit ? tte->flags & 3 : hashNONE;
+
+    const bool PVNode = (beta - alpha) > 1;
+
+    if (ttScore != noScore)
     {
-        if (standPat >= beta)
-            return beta;
-        Score bigDelta = (egValues[R] + egValues[N]) * isPromotion(pos.lastMove) + egValues[Q];
-        if (standPat < alpha - bigDelta)
-            return alpha;
-        if (alpha < standPat)
-            alpha = standPat;
+        // Account for mate values
+        ttScore = adjustScoreFromTT(ttScore, ply);
+        if (!PVNode && ((ttBound == hashUPPER && ttScore <= alpha) || (ttBound == hashLOWER && ttScore >= beta) || ttBound == hashEXACT))
+        {
+            return ttScore;
+        }
     }
+
+    const bool ttPv = PVNode || (ttHit && (tte->flags & hashPVMove));
+
+    if (inCheck){
+        eval = noScore;
+        bestScore = noScore;
+    }
+    else if (ttHit)
+    {
+        eval = bestScore = (ttEval != noScore) ? ttEval : evaluate();
+        if (ttScore != noScore && 
+            (ttBound == hashEXACT || 
+            (ttBound == hashUPPER && ttScore < bestScore) || 
+            (ttBound == hashLOWER && ttScore > bestScore))
+        )
+            bestScore = ttScore;
+    }
+    else eval = bestScore = evaluate();
+
+    if (bestScore >= beta)
+        return bestScore;
+    
+    alpha = std::max(alpha, bestScore);
 
     // Generate moves
     MoveList moveList;
 
     inCheck ? generateMoves(moveList, noMove, noMove, noMove) : generateCaptures(moveList);
 
+    // Sort ttMove
+    if (ttHit)
+        sortTTUp(moveList, tte->bestMove);
+
     UndoInfo undoer = UndoInfo(pos);
     U16 moveCount = 0;
+    Move bestMove = noMove;
     for (int i = 0; i < moveList.count; i++)
     {
         Move move = onlyMove(moveList.moves[i]);
         // SEE pruning
-        if (moveCount && getScore(moveList.moves[i]) < GOODCAPTURESCORE)
+        if (moveCount && getScore(moveList.moves[i]) - 16384 < GOODCAPTURESCORE) 
             break;
         if (makeMove(move))
         {
             moveCount++;
             Score score = -quiescence(-beta, -alpha);
             undo(undoer, move);
-            if (score > alpha)
-            {
-                alpha = score;
-                if (alpha >= beta)
-                    return beta;
+            if (score > bestScore) {
+                bestScore = score;
+                if (score > alpha) {
+                    bestMove = move;
+                    if (score >= beta)
+                        break;
+                    alpha = score;
+                }
             }
         }
         else
             undo(undoer, move);
     }
 
-    return alpha;
+    if (!moveCount && inCheck)
+        return matedIn(ply);
+    
+    U8 flags = bestScore >= beta ? hashLOWER : hashUPPER;
+
+    writeTT(pos.hashKey, bestScore, eval, 0, flags, bestMove, ply, ttPv);
+
+    return bestScore;
+
 }
 
 #define ASPIRATIONWINDOW 25
