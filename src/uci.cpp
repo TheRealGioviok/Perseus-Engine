@@ -469,7 +469,7 @@ void execCommand(Game* game, char* command){
     }
 }
 
-#define MAX_INPUT_LENGTH 2000
+#define MAX_INPUT_LENGTH 8192
 void uciLoop(Game* game){
     // The uciLoop is implemented in a way that it can be interrupted by the user, even if the engine is searching
     // The user can type "quit" to exit the engine
