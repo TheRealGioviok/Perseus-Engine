@@ -317,14 +317,6 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
 
 Score pestoEval2(Position* pos) {
 
-#if USINGEVALCACHE
-    Score cachedEval = getCachedEval(pos->hashKey);
-    if (cachedEval != noScore) {
-        int fCs = std::min(60, std::max(0, pos->fiftyMove - 12));
-        return cachedEval * (100 - fCs) / 100;
-    }
-#endif
-
     auto const& bb = pos->bitboards;
     Score mg[2] = { 0,0 }, eg[2] = { 0,0 };
     Score whiteMaterial, blackMaterial;
@@ -1186,11 +1178,7 @@ Score pestoEval2(Position* pos) {
     Score res = (Score)(((int)mgScore * (int)mgPhase + (int)egScore * (int)egPhase) / 24);
     //if (res >= egValues[Q] + egValues[N]) res += (KNOWNWIN/2) - ((res) * abs(KNOWNWIN/2))/mateScore;
 	//if (res <= egValues[Q] + egValues[N]) res += (-KNOWNWIN / 2) - ((res) * abs(-KNOWNWIN / 2)) / mateScore;
-    
-#if USINGEVALCACHE
-    // Cache res before scaling
-    cacheEval(pos->hashKey, res);
-#endif
+
     return res * (100 - fC) / 100;
 
 }

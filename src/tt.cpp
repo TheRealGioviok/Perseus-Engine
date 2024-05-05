@@ -23,12 +23,9 @@ ttEntry::ttEntry() {
 
 // Transposition table and evaluation hash table
 std::vector<ttEntry> tt;
-evalHashEntry* evalHash;
 
 void initTT(){
     resizeTT(hashSize);
-    if(evalHash != nullptr) delete[] evalHash;
-    evalHash = new evalHashEntry[evalHashSize];
 }
 
 ttEntry* probeTT(HashKey key) {
@@ -76,18 +73,6 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
         entry->flags = flags;
     }
     entry->bestMove = move;
-}
-
-Score getCachedEval(HashKey h){
-    evalHashEntry &e = evalHash[h % (evalHashSize)];
-    if (e.hashKey == h) return e.score;
-    return noScore;
-}
-
-void cacheEval(HashKey h, Score s){
-    evalHashEntry* e = &evalHash[h % (evalHashSize)];
-    e->hashKey = h;
-    e->score = s;
 }
 
 U16 hashfull() {
