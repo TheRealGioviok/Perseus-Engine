@@ -7,7 +7,6 @@
 constexpr U64 ttEntryCount = 1048576;                      // 2^20
 constexpr U64 ttBucketSize = 4;                            // 2^2
 constexpr U64 ttBucketCount = ttEntryCount / ttBucketSize; // 2^18
-constexpr U64 evalHashSize = 1048576;                      // 2^20
 
 // The enum of hashFlags
 enum HashFlag
@@ -21,16 +20,6 @@ enum HashFlag
     hashSINGULAR = 32,
     hashEVALONLY = 64,
     hashPVMove = 128
-};
-
-struct evalHashEntry {
-    evalHashEntry(HashKey h, Score score);
-    evalHashEntry() {
-        hashKey = 0;
-        score = 0;
-    }
-    HashKey hashKey = 0;
-    Score score = 0;
 };
 
 #ifdef _MSC_VER
@@ -93,7 +82,6 @@ struct ttBucket {
 
 // Transposition table and evaluation hash table
 extern std::vector<ttEntry> tt;
-extern evalHashEntry* evalHash;
 
 inline U64 hashEntryFor(HashKey key) {
     return static_cast<U64>(
@@ -136,18 +124,5 @@ ttEntry *probeTT(HashKey key);
  * @param isPv The isPv flag.
  */
 void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv);
-
-/**
- * The getCachedEval function looks up for evaluation of position and returns it if found, else noScore
- * @param hash the hash to look for
- */
-Score getCachedEval(HashKey h);
-
-/**
- * The cacheEval function caches an evaluation. Uses an always replace scheme
- * @param hash the hash to look for
- * @param score the score to store
- */
-void cacheEval(HashKey h, Score s);
 
 U16 hashfull();

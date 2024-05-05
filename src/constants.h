@@ -100,9 +100,6 @@ enum Squares {
 #define EVASIONSINQUIESCENCE            true // If true the search function will search for evasions in quiescence search. Quiescence search must be enabled for this to work.
 #define DODELTAPRUNING                  true // If true the delta pruning is used. Quiescence search must be enabled for this to work.
 
-// EVALUATION TECHNIQUES
-#define USINGEVALCACHE                  false // If true the evaluation cache is used. The evaluation cache is automatically implemented in the evaluation function if this is true.
-
 // DEBUGGING SYMBOL DEFINITIONS
 #define DEBUG                           false // If true the debugging is used. The debugging is automatically implemented in the code if this is true.
 #define ASSERTS                         true // If true the asserts are used. The asserts are automatically implemented in the code if this is true.

@@ -138,11 +138,6 @@ void Game::reset(){
     }
 #endif
 
-    // Clear eval cache
-#if USINGEVALCACHE
-    memset(evalHash, 0, evalHashSize * sizeof(evalHashEntry));
-#endif
-
 }
 
 /**
@@ -237,9 +232,6 @@ bool Game::makeMove(Move move){
     repetitionTable[pos.totalPly] = pos.hashKey;
 #endif
     bool k = pos.makeMove(move);
-#if ENABLEPREFETCHING && ENABLETTSCORING
-    prefetch(&evalHash[hashEntryFor(pos.hashKey)]);
-#endif
     return k;
 }
 
@@ -257,8 +249,7 @@ bool Game::isRepetition() {
     for (int idx = 4; idx < dist; idx += 2){
         if (repetitionTable[startPoint - idx] == hashKey) {
             if (idx < ply) return true;
-            counter++;
-            if (counter >= 2) return true;
+            if (++counter >= 2) return true;
         }
     }
     return false;

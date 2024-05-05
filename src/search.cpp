@@ -11,6 +11,8 @@
 
 static inline Score mateIn(Ply ply) { return ((mateScore) - (ply)); }
 static inline Score matedIn(Ply ply) { return ((-mateScore) + (ply)); }
+static inline Score randomizedDrawScore(U64 nodes) { return 4 - (nodes & 7); }
+static inline Score adjustMateScore(Score score, Ply ply) { return score + ply * (score < -mateValue) - ply * (score > mateValue); }
 
 inline bool okToReducePacked(Position &pos, PackedMove move)
 {
@@ -86,7 +88,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     const bool PVNode = (beta - alpha) > 1;
 
     Score eval;
-    Move excludedMove = ss->excludedMove;
+    const Move excludedMove = ss->excludedMove;
     bool improving = true;
 
     // Guard from pvlen editing when in singular extension
@@ -104,7 +106,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     if (!RootNode)
     {
         if (isRepetition() || pos.fiftyMove >= 100 || pos.insufficientMaterial())
-            return 4 - (nodes & 7); // Randomize draw score so that we try to explore different lines
+            return randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
         // Mate distance pruning
         alpha = std::max(alpha, matedIn(ply));
@@ -116,16 +118,13 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     //// TT probe
     ttEntry *tte = probeTT(pos.hashKey);
     const bool ttHit = !excludedMove && tte;
-    Score ttScore = ttHit ? tte->score : noScore;
+    const Score ttScore = ttHit ? adjustMateScore(tte->score, ply) : noScore;
     const PackedMove ttMove = ttHit ? tte->bestMove : 0;
     const U8 ttFlags = ttHit ? tte->flags : hashNONE;
     const U8 ttBound = ttFlags & 3;
 
     if (ttScore != noScore)
     {
-        // Account for mate values
-        ttScore += ply * (ttScore < -mateValue);
-        ttScore -= ply * (ttScore > mateValue);
         if (!PVNode && tte->depth >= depth)
         {
             if (ttBound == hashEXACT)
@@ -247,7 +246,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
 skipPruning:
 
     // Search
-    Score origAlpha = alpha;
+    const Score origAlpha = alpha;
     Score bestScore = noScore;
     Move bestMove = noMove;
     U16 moveSearched = 0;
@@ -259,10 +258,8 @@ skipPruning:
     U16 quietsCount = 0;
 
     MoveList moveList;
-    Move killer1 = ss->killers[0];
-    Move killer2 = ss->killers[1];
     Move counterMove = isOk((ss - 1)->move) ? counterMoveTable[movePiece((ss - 1)->move)][moveTarget((ss - 1)->move)] : 0;
-    generateMoves(moveList, killer1, killer2, counterMove);
+    generateMoves(moveList, ss->killers[0], ss->killers[1], counterMove);
 
     //// Sort ttMove
     if (ttMove)
@@ -285,7 +282,7 @@ skipPruning:
 
         if (ply && pos.hasNonPawns() && bestScore > noScore)
         {
-            const Depth lmrDepth = Depth(std::max(0, depth - reduction(depth, moveSearched, PVNode, improving) + std::clamp((currMoveScore / 16384), -1, 1)));
+            const Depth lmrDepth = Depth(std::max(0, depth - reduction(depth, moveSearched, PVNode, improving) + std::clamp((currMoveScore / 8192), -1, 1)));
 
             if (!skipQuiets && !inCheck && !PVNode)
             {
@@ -343,17 +340,9 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 Depth R = reduction(depth, moveSearched, PVNode, improving);
-                // If move is highly tactical, reduce it less
-                if (currMoveScore >= (int)(COUNTERSCORE - 16384))
-                    R -= 1;
+                R -= ttPv + givesCheck;
 
-                if (ttPv)
-                    R -= 1;
-
-                if (givesCheck)
-                    R -= 1;
-
-                R -= std::clamp((currMoveScore / 16384), -1, 1);
+                R -= std::clamp((currMoveScore / 8192), -1, 2);
 
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
@@ -405,9 +394,7 @@ skipPruning:
                     if (okToReduce(currMove))
                     {
                         updateKillers(ss, currMove);
-                        Move lastMove = pos.lastMove;
-                        // Move lastLastMove = ply > 1 ? (ss - 2)->move : 0;
-                        updateCounters(currMove, lastMove);
+                        updateCounters(currMove, (ss - 1)->move);
                         updateHH(pos.side, depth, currMove, quiets, quietsCount);
                     }
                     break;
@@ -420,22 +407,16 @@ skipPruning:
 
     //// Check for checkmate /
     if (moveSearched == 0)
-        return inCheck ? matedIn(ply) : 4 - (nodes & 7); // Randomize draw score so that we try to explore different lines
-    U8 ttStoreFlag = hashNONE;
-    if (bestScore >= beta)
-        ttStoreFlag = hashLOWER;
-    else
-    {
-        if (alpha != origAlpha)
-            ttStoreFlag = hashEXACT;
+        return inCheck ? matedIn(ply) : randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
+    
+    if (!stopped && !excludedMove){
+        U8 ttStoreFlag = hashPVMove * ttPv;
+        if (bestScore >= beta)
+            ttStoreFlag = hashLOWER;
         else
-            ttStoreFlag = hashUPPER;
-    }
-    // If pv, add the ttPv flag
-    if (ttPv)
-        ttStoreFlag |= hashPVMove;
-    if (!stopped && !excludedMove)
+            ttStoreFlag = hashUPPER + (alpha != origAlpha) * hashLOWER;
         writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, ttPv);
+    }
 
     return bestScore;
 }
@@ -445,7 +426,7 @@ Score Game::quiescence(Score alpha, Score beta)
     bool inCheck = pos.inCheck();
     if (inCheck)
         if (isRepetition())
-            return 4 - (nodes & 7); // Randomize draw score so that we try to explore different lines
+            return randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
     Score standPat = evaluate();
 
@@ -456,9 +437,6 @@ Score Game::quiescence(Score alpha, Score beta)
     {
         if (standPat >= beta)
             return beta;
-        Score bigDelta = (egValues[R] + egValues[N]) * isPromotion(pos.lastMove) + egValues[Q];
-        if (standPat < alpha - bigDelta)
-            return alpha;
         if (alpha < standPat)
             alpha = standPat;
     }
@@ -554,10 +532,6 @@ void Game::startSearch(bool halveTT = true)
 
     Score alpha = noScore;
     Score beta = infinity;
-
-    // Clear evaluation hash table
-    for (U64 i = 0; i < (evalHashSize); i++)
-        evalHash[i].score = noScore;
 
     // Always compute a depth 1 search
     rootDelta = 2 * infinity;
