@@ -111,9 +111,11 @@ struct Position{
      * @param moveList The moveList to fill with the generated moves.
      * @param killer1 The first killer move.
      * @param killer2 The second killer move.
+     * @param prev1 The move from the previous ply.
+     * @param prev2 The move from two plies ago.
      * @param counterMove The counter move.
      */
-    void generateMoves(MoveList& moveList, Move killer1, Move killer2, Move counterMove);
+    void generateMoves(MoveList &moveList, Move killer1, Move killer2, Move prev1, Move prev2, Move counterMove);
 
     /**
      * @brief The generateCaptures function generates all pseud legal captures for the current side.
@@ -149,7 +151,7 @@ struct Position{
 
     inline void addPromotion(MoveList *ml, ScoredMove move, Piece piece);
 
-    inline void addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove);
+    inline void addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move prev1, Move prev2, Move counterMove);
 
     inline void addUnsorted(MoveList *ml, ScoredMove move);
 

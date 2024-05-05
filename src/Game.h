@@ -105,9 +105,11 @@ public:
      * @param moves The MoveList object to store the moves in.
      * @param killer1 The first killer move.
      * @param killer2 The second killer move.
+     * @param prev1 The move from the previous ply.
+     * @param prev2 The move from two plies ago.
      * @param counterMove The counter move.
      */
-    void generateMoves(MoveList& moves, Move killer1, Move killer2, Move counterMove);
+    void generateMoves(MoveList &moves, Move killer1, Move killer2, Move prev1, Move prev2, Move counterMove);
 
     /**
      * @brief The generateCaptures function generates all pseud legal captures for the current position. It is a call to the internal Position::generateCaptures function.

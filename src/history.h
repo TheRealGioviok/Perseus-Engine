@@ -3,10 +3,13 @@
 #include "types.h"
 #include "constants.h"
 
+static inline S32 indexFromTo(Square from, Square to) { return from << 6 | to; }
+static inline S32 indexPieceTo(Piece piece, Square to) { return piece << 6 | to; }
+
 // history table
-extern S32 historyTable[2][64][64];
-extern S32 pieceToHistoryTable[12][64];		// Indexed by Piece - To
-extern S32 pieceFromHistoryTable[12][64];	// Indexed by Piece - From
+extern S32 historyTable[2][4096];
+// Countinuation history table
+extern S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
 
 // counter move table
 extern Move counterMoveTable[NUM_PIECES][NUM_SQUARES];
@@ -22,5 +25,5 @@ static inline S32 stat_bonus(int depth) {
 
 #define MAXHISTORYABS 16384
 void updateHistoryBonus(S32 *current, Depth depth, bool isBonus);
-void updateHistoryScore(S32 *current, S32 score, bool isBonus);
 void updateHH(bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount);
+void updateContHist(Depth depth, Move prev, Move bestMove, Move *quietMoves, U16 quietsCount);

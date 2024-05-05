@@ -259,7 +259,9 @@ skipPruning:
 
     MoveList moveList;
     Move counterMove = isOk((ss - 1)->move) ? counterMoveTable[movePiece((ss - 1)->move)][moveTarget((ss - 1)->move)] : 0;
-    generateMoves(moveList, ss->killers[0], ss->killers[1], counterMove);
+    Move cont1 = isOk((ss - 1)->move) ? (ss - 1)->move : 0;
+    Move cont2 = isOk((ss - 2)->move) ? (ss - 2)->move : 0;
+    generateMoves(moveList, ss->killers[0], ss->killers[1], cont1, cont2, counterMove);
 
     //// Sort ttMove
     if (ttMove)
@@ -278,7 +280,7 @@ skipPruning:
         if (skipQuiets && isQuiet)
             continue;
 
-        S32 currMoveScore = getScore(moveList.moves[i]) - 16384;
+        S32 currMoveScore = getScore(moveList.moves[i]) - MAXHISTORYABS;
 
         if (ply && pos.hasNonPawns() && bestScore > noScore)
         {
@@ -396,6 +398,8 @@ skipPruning:
                         updateKillers(ss, currMove);
                         updateCounters(currMove, (ss - 1)->move);
                         updateHH(pos.side, depth, currMove, quiets, quietsCount);
+                        if ((ss-1)->move && okToReduce((ss-1)->move))updateContHist(depth, (ss - 1)->move, currMove, quiets, quietsCount);
+                        if ((ss-2)->move && okToReduce((ss-2)->move))updateContHist(depth, (ss - 2)->move, currMove, quiets, quietsCount);
                     }
                     break;
                 }
@@ -444,7 +448,7 @@ Score Game::quiescence(Score alpha, Score beta)
     // Generate moves
     MoveList moveList;
 
-    inCheck ? generateMoves(moveList, noMove, noMove, noMove) : generateCaptures(moveList);
+    inCheck ? generateMoves(moveList, noMove, noMove, noMove, noMove, noMove) : generateCaptures(moveList);
 
     UndoInfo undoer = UndoInfo(pos);
     U16 moveCount = 0;
@@ -524,6 +528,7 @@ void Game::startSearch(bool halveTT = true)
 
     // Clear history, killer and counter move tables
     memset(historyTable, 0, sizeof(historyTable));
+    memset(continuationHistoryTable, 0, sizeof(continuationHistoryTable));
     memset(counterMoveTable, 0, sizeof(counterMoveTable));
 
     // Clear pv len and pv table

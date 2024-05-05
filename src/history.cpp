@@ -4,10 +4,8 @@
 #include "move.h"
 
 // history table
-S32 historyTable[2][64][64];
-S32 pieceToHistoryTable[12][64];   // Indexed by Piece - To
-S32 pieceFromHistoryTable[12][64]; // Indexed by Piece - From
-
+S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
+S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
 // counter move table
 Move counterMoveTable[NUM_PIECES][NUM_SQUARES];
 
@@ -16,12 +14,14 @@ void updateHistoryBonus(S32* current, Depth depth, bool isBonus) {
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
-void updateHistoryScore(S32* current, S32 score, bool isBonus) {
-    *current += score - *current * abs(score) / MAXHISTORYABS;
-}
-
 void updateHH(bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount){
     for (int i = 0; i < quietsCount; i++) {
-        updateHistoryBonus(&historyTable[side][moveSource(quietMoves[i])][moveTarget(quietMoves[i])], depth, quietMoves[i] == bestMove);
+        updateHistoryBonus(&historyTable[side][indexFromTo(moveSource(quietMoves[i]),moveTarget(quietMoves[i]))], depth, quietMoves[i] == bestMove);
+    }
+}
+
+void updateContHist(Depth depth, Move prev, Move bestMove, Move *quietMoves, U16 quietsCount){
+    for (int i = 0; i < quietsCount; i++) {
+        updateHistoryBonus(&continuationHistoryTable[indexPieceTo(movePiece(prev), moveTarget(prev))][indexPieceTo(movePiece(quietMoves[i]), moveTarget(quietMoves[i]))], depth, quietMoves[i] == bestMove);
     }
 }
