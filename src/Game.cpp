@@ -113,6 +113,7 @@ void Game::reset(){
     // Clear history, killer and counter move tables
 #if ENABLEHISTORYHEURISTIC
     memset(historyTable, 0, sizeof(historyTable));
+    memset(continuationHistoryTable, 0, sizeof(continuationHistoryTable));
 #endif
 
 #if ENABLECOUNTERMOVEHEURISTIC

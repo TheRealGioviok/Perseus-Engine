@@ -398,8 +398,8 @@ skipPruning:
                         updateKillers(ss, currMove);
                         updateCounters(currMove, (ss - 1)->move);
                         updateHH(pos.side, depth, currMove, quiets, quietsCount);
-                        if ((ss-1)->move && okToReduce((ss-1)->move))updateContHist(depth, (ss - 1)->move, currMove, quiets, quietsCount);
-                        if ((ss-2)->move && okToReduce((ss-2)->move))updateContHist(depth, (ss - 2)->move, currMove, quiets, quietsCount);
+                        if ((ss-1)->move) updateContHist(depth, (ss - 1)->move, currMove, quiets, quietsCount);
+                        if ((ss-2)->move) updateContHist(depth, (ss - 2)->move, currMove, quiets, quietsCount);
                     }
                     break;
                 }

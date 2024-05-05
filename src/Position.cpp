@@ -556,10 +556,27 @@ inline void Position::addQuiet(MoveList* ml, ScoredMove move, Square source, Squ
         ml->moves[ml->count++] = (COUNTERSCORE << 32) | move;
         return;
     }
-    S64 score = MAXHISTORYABS + (historyTable[side][indexFromTo(source, target)]
-              + continuationHistoryTable[indexPieceTo(movePiece(prev1), moveTarget(prev1))][indexPieceTo(movePiece(move), target)]
-              + continuationHistoryTable[indexPieceTo(movePiece(prev2), moveTarget(prev2))][indexPieceTo(movePiece(move), target)]) / 3;
-              
+    U8 mask = 0 + !!(prev1) + (!!(prev2)) * 2;
+    S64 score;
+    switch (mask)
+    {
+    case 0:
+        score = MAXHISTORYABS + historyTable[side][indexFromTo(source, target)];
+        break;
+    case 1:
+        score = MAXHISTORYABS + (historyTable[side][indexFromTo(source, target)] + continuationHistoryTable[indexPieceTo(movePiece(prev1), moveTarget(prev1))][indexPieceTo(movePiece(move), target)]) / 2;
+        break;
+    case 2:
+        score = MAXHISTORYABS + (historyTable[side][indexFromTo(source, target)] + continuationHistoryTable[indexPieceTo(movePiece(prev2), moveTarget(prev2))][indexPieceTo(movePiece(move), target)]) / 2;
+        break;
+    case 3:
+        score = MAXHISTORYABS + (historyTable[side][indexFromTo(source, target)] + continuationHistoryTable[indexPieceTo(movePiece(prev1), moveTarget(prev1))][indexPieceTo(movePiece(move), target)] + continuationHistoryTable[indexPieceTo(movePiece(prev2), moveTarget(prev2))][indexPieceTo(movePiece(move), target)]) / 3;
+        break;
+    default:
+        std::cout << "Error: Invalid mask in addQuiet (" << (int)mask << "). Can't add move to move list." << std::endl;
+        assert(false);
+        break;
+    }
     ml->moves[ml->count++] = (score << 32) | move; //
 }
 
