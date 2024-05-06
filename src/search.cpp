@@ -258,9 +258,9 @@ skipPruning:
     U16 quietsCount = 0;
 
     MoveList moveList;
-    Move counterMove = isOk((ss - 1)->move) ? counterMoveTable[movePiece((ss - 1)->move)][moveTarget((ss - 1)->move)] : 0;
-    Move cont1 = isOk((ss - 1)->move) ? (ss - 1)->move : 0;
-    Move cont2 = isOk((ss - 2)->move) ? (ss - 2)->move : 0;
+    Move counterMove = counterMoveTable[movePiece((ss - 1)->move)][moveTarget((ss - 1)->move)];
+    Move cont1 = (ss - 1)->move;
+    Move cont2 = (ss - 2)->move;
     generateMoves(moveList, ss->killers[0], ss->killers[1], cont1, cont2, counterMove);
 
     //// Sort ttMove
@@ -284,7 +284,7 @@ skipPruning:
 
         if (ply && pos.hasNonPawns() && bestScore > noScore)
         {
-            const Depth lmrDepth = Depth(std::max(0, depth - reduction(depth, moveSearched, PVNode, improving) + std::clamp((currMoveScore / 8192), -1, 1)));
+            const Depth lmrDepth = Depth(std::max(0, depth - reduction(depth, moveSearched, PVNode, improving) + std::clamp((currMoveScore / 8192), -1, 2)));
 
             if (!skipQuiets && !inCheck && !PVNode)
             {
@@ -396,10 +396,10 @@ skipPruning:
                     if (okToReduce(currMove))
                     {
                         updateKillers(ss, currMove);
-                        updateCounters(currMove, (ss - 1)->move);
+                        updateCounters(currMove, cont1);
                         updateHH(pos.side, depth, currMove, quiets, quietsCount);
-                        if ((ss-1)->move) updateContHist(depth, (ss - 1)->move, currMove, quiets, quietsCount);
-                        if ((ss-2)->move) updateContHist(depth, (ss - 2)->move, currMove, quiets, quietsCount);
+                        if (cont1) updateContHist(depth, cont1, currMove, quiets, quietsCount);
+                        if (cont2) updateContHist(depth, cont2, currMove, quiets, quietsCount);
                     }
                     break;
                 }

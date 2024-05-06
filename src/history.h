@@ -7,7 +7,7 @@ static inline S32 indexFromTo(Square from, Square to) { return from << 6 | to; }
 static inline S32 indexPieceTo(Piece piece, Square to) { return piece << 6 | to; }
 
 // history table
-extern S32 historyTable[2][4096];
+extern S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
 // Countinuation history table
 extern S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
 

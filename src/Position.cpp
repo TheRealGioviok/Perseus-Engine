@@ -564,10 +564,10 @@ inline void Position::addQuiet(MoveList* ml, ScoredMove move, Square source, Squ
         score = MAXHISTORYABS + historyTable[side][indexFromTo(source, target)];
         break;
     case 1:
-        score = MAXHISTORYABS + (historyTable[side][indexFromTo(source, target)] + continuationHistoryTable[indexPieceTo(movePiece(prev1), moveTarget(prev1))][indexPieceTo(movePiece(move), target)]) / 2;
+        score = MAXHISTORYABS + (historyTable[side][indexFromTo(source, target)] + 2 * continuationHistoryTable[indexPieceTo(movePiece(prev1), moveTarget(prev1))][indexPieceTo(movePiece(move), target)]) / 3;
         break;
     case 2:
-        score = MAXHISTORYABS + (historyTable[side][indexFromTo(source, target)] + continuationHistoryTable[indexPieceTo(movePiece(prev2), moveTarget(prev2))][indexPieceTo(movePiece(move), target)]) / 2;
+        score = MAXHISTORYABS + (historyTable[side][indexFromTo(source, target)] + 2 * continuationHistoryTable[indexPieceTo(movePiece(prev2), moveTarget(prev2))][indexPieceTo(movePiece(move), target)]) / 3;
         break;
     case 3:
         score = MAXHISTORYABS + (historyTable[side][indexFromTo(source, target)] + continuationHistoryTable[indexPieceTo(movePiece(prev1), moveTarget(prev1))][indexPieceTo(movePiece(move), target)] + continuationHistoryTable[indexPieceTo(movePiece(prev2), moveTarget(prev2))][indexPieceTo(movePiece(move), target)]) / 3;
