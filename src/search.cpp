@@ -254,7 +254,7 @@ skipPruning:
     U16 quietsCount = 0;
 
     MoveList moveList;
-    Move counterMove = (ss - 1)->move ? counterMoveTable[movePiece((ss - 1)->move)][moveTarget((ss - 1)->move)] : noMove;
+    // Move counterMove = (ss - 1)->move ? counterMoveTable[movePiece((ss - 1)->move)][moveTarget((ss - 1)->move)] : noMove;
     generateMoves(moveList, noMove, noMove, noMove);// counterMove);
     // generateMoves(moveList, noMove, noMove, noMove);
 
@@ -392,7 +392,7 @@ skipPruning:
                     if (isQuiet)
                     {
                         // updateKillers(ss, currMove);
-                        updateCounters(currMove, (ss - 1)->move);
+                        // updateCounters(currMove, (ss - 1)->move);
                         updateHH(pos.side, depth, currMove, quiets, quietsCount);
                     }
                     break;
