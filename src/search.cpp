@@ -193,44 +193,45 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
         // if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, improving) >= beta)
         //     return eval;
 
-        // // Null move pruning
-        // if (ss->staticEval >= beta + nmpBias &&
-        //     eval >= beta &&
-        //     (ss - 1)->move != noMove &&
-        //     depth >= 3 &&
-        //     isOk(pos.lastMove) &&
-        //     okToReduce(pos.lastMove) && pos.hasNonPawns() &&
-        //     ply >= nmpPlies)
-        // {
+        // Null move pruning
+        if (ss->staticEval >= beta + nmpBias &&
+            eval >= beta &&
+            (ss - 1)->move != noMove &&
+            depth >= 3 &&
+            isOk(pos.lastMove) &&
+            okToReduce(pos.lastMove) && pos.hasNonPawns() &&
+            ply >= nmpPlies)
+        {
 
-        //     // make null move
-        //     makeNullMove();
-        //     ss->move = noMove;
+            // make null move
+            makeNullMove();
+            ss->move = noMove;
 
-        //     Depth R = nmpQ1 + (depth / nmpDepthDivisor) + std::min((eval - beta) / nmpScoreDivisor, nmpQ2);
-        //     Score nullScore = -search(-beta, -beta + 1, depth - R, ss + 1);
+            Depth R = nmpQ1 + (depth / nmpDepthDivisor) + std::min((eval - beta) / nmpScoreDivisor, nmpQ2);
+            Score nullScore = -search(-beta, -beta + 1, depth - R, ss + 1);
 
-        //     undoNullMove(undoer);
+            undoNullMove(undoer);
 
-        //     if (stopped)
-        //         return 0;
+            if (stopped)
+                return 0;
 
-        //     if (nullScore >= beta)
-        //     {
-        //         if (nullScore >= mateValue)
-        //             nullScore = beta;
-        //         if (depth < 15)
-        //             return nullScore;
+            if (nullScore >= beta)
+            {
+                return beta;
+                // if (nullScore >= mateValue)
+                //     nullScore = beta;
+                // if (depth < 15)
+                //     return nullScore;
 
-        //         // If the null move failed high, we can try a reduced search when depth is high. This is to avoid zugzwang positions
-        //         nmpPlies = ply + (depth - R) * 2 / 3;
-        //         Score verification = search(beta - 1, beta, depth - R, ss);
-        //         nmpPlies = 0;
+                // // If the null move failed high, we can try a reduced search when depth is high. This is to avoid zugzwang positions
+                // nmpPlies = ply + (depth - R) * 2 / 3;
+                // Score verification = search(beta - 1, beta, depth - R, ss);
+                // nmpPlies = 0;
 
-        //         if (verification >= beta)
-        //             return nullScore;
-        //     }
-        // }
+                // if (verification >= beta)
+                //     return nullScore;
+            }
+        }
 
         // TODO: Razoring
         // if (depth <= razorDepth && eval + razorQ1 + razorQ2 * (depth - 1) <= alpha)
