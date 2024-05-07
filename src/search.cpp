@@ -198,7 +198,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
             eval >= beta &&
             (ss - 1)->move != noMove &&
             depth >= 3 &&
-            isOk(pos.lastMove) &&
             okToReduce(pos.lastMove) && pos.hasNonPawns() &&
             ply >= nmpPlies)
         {
@@ -271,7 +270,7 @@ skipPruning:
         if (!currMove)// || currMove == excludedMove)
             continue;
 
-        // const bool isQuiet = okToReduce(currMove);
+        const bool isQuiet = okToReduce(currMove);
 
         // if (skipQuiets && isQuiet)
         //     continue;
@@ -330,29 +329,29 @@ skipPruning:
 
             ++nodes;
 
-            if (okToReduce(currMove))
+            if (isQuiet)
                 quiets[quietsCount++] = currMove;
             if (RootNode && depth >= LOGROOTMOVEDEPTH)
                 std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
 
-            // if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
-            // {
-            //     Depth R = reduction(depth, moveSearched, PVNode, improving);
-            //     R -= ttPv + givesCheck;
+            if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet)) // || !ttPv))
+            {
+                Depth R = reduction(depth, moveSearched, PVNode, false); // improving);
+                // R -= ttPv + givesCheck;
 
-            //     R -= std::clamp((currMoveScore / 8192), -1, 2);
+                // R -= std::clamp((currMoveScore / 8192), -1, 2);
 
-            //     R = std::max(Depth(0), R);
-            //     R = std::min(Depth(newDepth - Depth(1)), R);
+                R = std::max(Depth(0), R);
+                R = std::min(Depth(newDepth - Depth(1)), R);
 
-            //     Depth reducedDepth = newDepth - R;
-            //     // Search at reduced depth
-            //     score = -search(-alpha - 1, -alpha, reducedDepth, ss + 1);
-            //     // If failed high on reduced search, research at full depth
-            //     if (score > alpha && R)
-            //         score = -search(-alpha - 1, -alpha, newDepth, ss + 1);
-            // }
-            // else 
+                Depth reducedDepth = newDepth - R;
+                // Search at reduced depth
+                score = -search(-alpha - 1, -alpha, reducedDepth, ss + 1);
+                // If failed high on reduced search, research at full depth
+                if (score > alpha && R)
+                    score = -search(-alpha - 1, -alpha, newDepth, ss + 1);
+            }
+            else 
                 if (!PVNode || moveSearched)
                     score = -search(-alpha - 1, -alpha, newDepth, ss + 1);
 
