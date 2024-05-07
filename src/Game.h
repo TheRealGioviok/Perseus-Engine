@@ -9,19 +9,19 @@ struct SStack {
     Move killers[2] = {0, 0};
 
     SStack() {
-        excludedMove = 0;
+        excludedMove = noMove;
         staticEval = 0;
-        move = 0;
+        move = noMove;
         doubleExtensions = 0;
-        killers[0] = killers[1] = 0;
+        killers[0] = killers[1] = noMove;
     }
 
     void wipe() {
-        excludedMove = 0;
+        excludedMove = noMove;
         staticEval = 0;
-        move = 0;
+        move = noMove;
         doubleExtensions = 0;
-        killers[0] = killers[1] = 0;
+        killers[0] = killers[1] = noMove;
     }
 };
 

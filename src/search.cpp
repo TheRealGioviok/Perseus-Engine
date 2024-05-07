@@ -189,9 +189,9 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     // Pruning time
     if (!PVNode)
     {
-        // // RFP
-        // if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, improving) >= beta)
-        //     return eval;
+        // RFP
+        if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, true) >= beta)
+            return eval;
 
         // Null move pruning
         if (ss->staticEval >= beta + nmpBias &&
@@ -254,9 +254,9 @@ skipPruning:
     U16 quietsCount = 0;
 
     MoveList moveList;
-    // Move counterMove = isOk((ss - 1)->move) ? counterMoveTable[movePiece((ss - 1)->move)][moveTarget((ss - 1)->move)] : 0;
-    // generateMoves(moveList, ss->killers[0], ss->killers[1], counterMove);
-    generateMoves(moveList, noMove, noMove, noMove);
+    Move counterMove = (ss - 1)->move ? counterMoveTable[movePiece((ss - 1)->move)][moveTarget((ss - 1)->move)] : noMove;
+    generateMoves(moveList, noMove, noMove, noMove);// counterMove);
+    // generateMoves(moveList, noMove, noMove, noMove);
 
     //// Sort ttMove
     if (ttMove)
@@ -334,7 +334,7 @@ skipPruning:
             if (RootNode && depth >= LOGROOTMOVEDEPTH)
                 std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
 
-            if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet)) // || !ttPv))
+            if (moveSearched > PVNode * 3 && depth >= 3 && isQuiet) // || !ttPv))
             {
                 Depth R = reduction(depth, moveSearched, PVNode, false); // improving);
                 // R -= ttPv + givesCheck;
@@ -389,10 +389,10 @@ skipPruning:
                 alpha = score;
                 if (score >= beta)
                 {
-                    if (okToReduce(currMove))
+                    if (isQuiet)
                     {
                         // updateKillers(ss, currMove);
-                        // updateCounters(currMove, (ss - 1)->move);
+                        updateCounters(currMove, (ss - 1)->move);
                         updateHH(pos.side, depth, currMove, quiets, quietsCount);
                     }
                     break;
