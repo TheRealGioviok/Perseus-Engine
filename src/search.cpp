@@ -89,7 +89,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
 
     Score eval;
     // const Move excludedMove = ss->excludedMove;
-    // bool improving = true;
+    bool improving = true;
 
     // Guard from pvlen editing when in singular extension
     //if (!excludedMove) 
@@ -179,18 +179,16 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     }
 
     // // Calculate the improving flag
-    // if ((ss - 2)->staticEval != noScore)
-    //     improving = ss->staticEval > (ss - 2)->staticEval;
-    // else if ((ss - 4)->staticEval != noScore)
-    //     improving = ss->staticEval > (ss - 4)->staticEval;
-    // else
-    //     improving = true; // Since improving makes the pruning more conservative, we default to true
+    if ((ss - 2)->staticEval != noScore)
+        improving = ss->staticEval > (ss - 2)->staticEval;
+    else if ((ss - 4)->staticEval != noScore)
+        improving = ss->staticEval > (ss - 4)->staticEval;
 
     // Pruning time
     if (!PVNode)
     {
         // RFP
-        if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, true) >= beta)
+        if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, improving) >= beta)
             return eval;
 
         // Null move pruning
