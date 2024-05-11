@@ -214,19 +214,18 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
 
             if (nullScore >= beta)
             {
-                return beta;
-                // if (nullScore >= mateValue)
-                //     nullScore = beta;
-                // if (depth < 15)
-                //     return nullScore;
+                if (nullScore >= mateValue)
+                    nullScore = beta;
+                if (depth <= 14)
+                    return nullScore;
 
-                // // If the null move failed high, we can try a reduced search when depth is high. This is to avoid zugzwang positions
-                // nmpPlies = ply + (depth - R) * 2 / 3;
-                // Score verification = search(beta - 1, beta, depth - R, ss);
-                // nmpPlies = 0;
+                // If the null move failed high, we can try a reduced search when depth is high. This is to avoid zugzwang positions
+                nmpPlies = ply + (depth - R) * 2 / 3;
+                Score verification = search(beta - 1, beta, depth - R, ss);
+                nmpPlies = 0;
 
-                // if (verification >= beta)
-                //     return nullScore;
+                if (verification >= beta)
+                    return nullScore;
             }
         }
 
@@ -335,9 +334,9 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && isQuiet) // || !ttPv))
             {
                 Depth R = reduction(depth, moveSearched, PVNode, false); // improving);
-                // R -= ttPv + givesCheck;
+                // R -= givesCheck;
 
-                // R -= std::clamp((currMoveScore / 8192), -1, 2);
+                // R -= std::clamp((currMoveScore / 8192), -1, 1);
 
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);

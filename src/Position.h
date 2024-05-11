@@ -128,11 +128,23 @@ struct Position{
     void generateUnsortedMoves(MoveList &moveList);
 
     /**
-     * @brief The pieceOn function returns the piece on the given square.
+     * @brief The pieceOn function returns the piece on a square. If the square is empty, NOPIECE is returned.
      * @param square The square to check.
-     * @return The piece on the given square.
+     * @return The piece on the square.
      */
-    inline Piece pieceOn(Square square);
+    inline Piece pieceOn(Square square) {
+        // We will do a branchless lookup
+        // We will have a "result" variable that will contain the piece on the square
+        Piece result = p + testBit(occupancies[BLACK], square) * 6; // If the piece is black, we add 6 to the result. Also, if the square is empty, the result will be 6 which added to p is 6+6=12 (NOPIECE)
+        // We will subtract the piece code once we find it
+        result -= (p - P) * testBit(bitboards[P] | bitboards[p], square);
+        result -= (p - N) * testBit(bitboards[N] | bitboards[n], square);
+        result -= (p - B) * testBit(bitboards[B] | bitboards[b], square);
+        result -= (p - R) * testBit(bitboards[R] | bitboards[r], square);
+        result -= (p - Q) * testBit(bitboards[Q] | bitboards[q], square); 
+        result -= (p - K) * testBit(bitboards[K] | bitboards[k], square);
+        return result; // If no piece was found, the result will remain NOPIECE
+    }
 
     /**
     * @brief The legalizeTTMove function verifies if the TT move is Legal

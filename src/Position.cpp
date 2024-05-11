@@ -588,33 +588,6 @@ bool Position::insufficientMaterial() {
 	return true; // Means K v K
 }
 
-/**
- * @brief The pieceOn function returns the piece on a square. If the square is empty, NOPIECE is returned.
- * @param square The square to check.
- * @return The piece on the square.
- */
-inline Piece Position::pieceOn(Square square) {
-    // We will do a branchless lookup
-    // We will have a "result" variable that will contain the piece on the square
-    Piece result = NOPIECE;
-    // We will subtract the piece code once we find it
-    result -= (NOPIECE - P) * testBit(bitboards[P], square); // This way, if there is a white pawn, the result will be 0 (P)
-    result -= (NOPIECE - N) * testBit(bitboards[N], square); // This way, if there is a white knight, the result will be 1 (N)
-    result -= (NOPIECE - B) * testBit(bitboards[B], square); // This way, if there is a white bishop, the result will be 2 (B)
-    result -= (NOPIECE - R) * testBit(bitboards[R], square); // This way, if there is a white rook, the result will be 3 (R)
-    result -= (NOPIECE - Q) * testBit(bitboards[Q], square); // This way, if there is a white queen, the result will be 4 (Q)
-    result -= (NOPIECE - K) * testBit(bitboards[K], square); // This way, if there is a white king, the result will be 5 (K)
-
-    result -= (NOPIECE - p) * testBit(bitboards[p], square); // This way, if there is a black pawn, the result will be 6 (p)
-    result -= (NOPIECE - n) * testBit(bitboards[n], square); // This way, if there is a black knight, the result will be 7 (n)
-    result -= (NOPIECE - b) * testBit(bitboards[b], square); // This way, if there is a black bishop, the result will be 8 (b)
-    result -= (NOPIECE - r) * testBit(bitboards[r], square); // This way, if there is a black rook, the result will be 9 (r)
-    result -= (NOPIECE - q) * testBit(bitboards[q], square); // This way, if there is a black queen, the result will be 10 (q)
-    result -= (NOPIECE - k) * testBit(bitboards[k], square); // This way, if there is a black king, the result will be 11 (k)
-
-    return result; // If no piece was found, the result will remain NOPIECE
-}
-
 constexpr Score pieceValues[15] = {
     100, 300, 300, 500, 900, 0, // White pieces
     100, 300, 300, 500, 900, 0, // Black pieces
