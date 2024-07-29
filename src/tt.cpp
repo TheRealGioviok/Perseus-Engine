@@ -75,6 +75,44 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
     entry->bestMove = move;
 }
 
+// void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv) {
+
+//     ttEntry *entry = &tt[hashEntryFor(key)];
+//     move = move ? packMove(move) : entry->bestMove; // pack to 2 bytes
+//     if (
+//         (flags & hashEXACT) > (entry->flags & hashEXACT)
+//         || entry->hashKey != key
+//         || depth + isPv >= entry->depth + !!(entry->flags & hashPVMove)
+//         || (entry->flags & hashOLD)) {
+//             score -= ply * (score < -mateValue);
+//             score += ply * (score > mateValue);
+
+//             // Iterate through the entries.
+//             entry->hashKey = key;
+//             entry->score = score;
+//             entry->eval = staticEval;
+//             entry->depth = depth;
+//             entry->flags = flags;
+//     }
+//     entry->bestMove = move;
+//     // Check if the entry can be overwritten.
+//     // else if (!!(entry->flags & hashOLD) * 8 + depth + 2 * isPv + (flags & hashEXACT) >= entry->depth + !!(entry->flags & hashPVMove)) {
+
+//     //     move = move ? packMove(move) : entry->bestMove; // pack to 2 bytes
+
+//     //     score -= ply * (score < -mateValue);
+//     //     score += ply * (score > mateValue);
+        
+//     //     // Iterate through the entries.
+//     //     entry->hashKey = key;
+//     //     entry->score = score;
+//     //     entry->eval = staticEval;
+//     //     entry->depth = depth;
+//     //     entry->flags = flags;
+//     // }
+//     // entry->bestMove = move;
+// }
+
 U16 hashfull() {
     U16 cnt = 0;
 	for (int i = 0; i < 1000; i++) if (tt[i].hashKey && (!(tt[i].flags & hashOLD))) cnt++;

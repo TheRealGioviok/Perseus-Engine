@@ -4,12 +4,10 @@
 #include "move.h"
 
 // history table
-S32 historyTable[2][64][64];
-S32 pieceToHistoryTable[12][64];   // Indexed by Piece - To
-S32 pieceFromHistoryTable[12][64]; // Indexed by Piece - From
+S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
 
 // counter move table
-Move counterMoveTable[NUM_PIECES][NUM_SQUARES];
+Move counterMoveTable[NUM_PIECES * NUM_SQUARES];
 
 void updateHistoryBonus(S32* current, Depth depth, bool isBonus) {
     const S32 delta = isBonus ? stat_bonus(depth) : -stat_bonus(depth);
@@ -22,6 +20,6 @@ void updateHistoryScore(S32* current, S32 score, bool isBonus) {
 
 void updateHH(bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount){
     for (int i = 0; i < quietsCount; i++) {
-        updateHistoryBonus(&historyTable[side][moveSource(quietMoves[i])][moveTarget(quietMoves[i])], depth, quietMoves[i] == bestMove);
+        updateHistoryBonus(&historyTable[side][indexFromTo(moveSource(quietMoves[i]),moveTarget(quietMoves[i]))], depth, quietMoves[i] == bestMove);
     }
 }

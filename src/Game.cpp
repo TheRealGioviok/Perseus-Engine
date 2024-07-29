@@ -111,15 +111,8 @@ void Game::reset(){
     nmpPlies = 0;
 
     // Clear history, killer and counter move tables
-#if ENABLEHISTORYHEURISTIC
     memset(historyTable, 0, sizeof(historyTable));
-    // memset(pieceFromHistoryTable, 0, sizeof(pieceFromHistoryTable));
-    // memset(pieceToHistoryTable, 0, sizeof(pieceToHistoryTable));
-#endif
-
-#if ENABLECOUNTERMOVEHEURISTIC
     memset(counterMoveTable, 0, sizeof(counterMoveTable));
-#endif
 
     // Clear pv len and pv table
     memset(pvLen, 0, sizeof(pvLen));

@@ -172,13 +172,12 @@ struct Position{
 	std::string getFEN();
     
     /**
-     * @brief The SEE function returns whether the move is a good capture or not.
-     * @tparam threshold The threshold to check against.
-     * @param move The move to check.
-     * @return true if the move is a good capture, false otherwise.
+     * @brief The SEE function evaluates a move using the Static Exchange Evaluation algorithm.
+     * @param move The move to evaluate.
+     * @param threshold The threshold score.
+     * @return true if the move beats the threshold, false otherwise.
      */
-    template <Score threshold>
-    bool SEE(Move move);
+    bool SEE(const Move move, const Score threshold);
 
     bool inCheck();
 
