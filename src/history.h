@@ -14,19 +14,22 @@ inline S32 indexPieceTo(Piece piece, Square to) {
 // history table
 extern S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
 
+// capture history table
+extern S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES / 2]; // The color of the captured piece is always the opposite of the color of the moving piece
+
 // counter move table
-extern Move counterMoveTable[NUM_PIECES * NUM_SQUARES];
+extern Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
 
 static inline S32 stat_bonus(int depth) {
 #if ENABLEBETTERHISTORYFORMULA
 	// Approximately verbatim stat bonus formula from Stockfish // Formula from Ethereal, who took it from stockfish. I love chess programming.
     return depth > 13 ? 32 : 16 * depth * depth + 128 * std::max(depth - 1, 0);
 #else
-	return std::min(16 * depth * depth, 1200);
+	return std::min(16 * depth * depth + 32 * depth + 16, 1200);
 #endif
 }
 
 #define MAXHISTORYABS 16384ULL
 void updateHistoryBonus(S32 *current, Depth depth, bool isBonus);
 void updateHistoryScore(S32 *current, S32 score, bool isBonus);
-void updateHH(bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount);
+void updateHH(bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);

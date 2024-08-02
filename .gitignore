@@ -1,3 +1,5 @@
 # Ignore all exe files in the current directory and all subdirectories
 *.exe
 Perseus
+src/valgrind-out.txt
+src/PerseusB

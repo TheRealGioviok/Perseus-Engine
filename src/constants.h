@@ -124,3 +124,4 @@ extern Depth singularDepth;			 // [4, 8]
 extern Depth RFPDepth;
 extern int futPruningMultiplier; // [50, 300]
 extern int futPruningAdd;		 // [50, 300]
+extern int captScoreMvvMultiplier; // [8, 32]

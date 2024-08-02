@@ -3,13 +3,18 @@
 #include <algorithm>
 #include "BBmacros.h"
 
-#define KILLER1SCORE 9999999ULL
-#define KILLER2SCORE 9999998ULL
-#define COUNTERSCORE 9999997ULL
-#define LASTMOVEKILLERSCORE 9999996ULL
-#define PROMOTIONBONUS 2000000000ULL
-#define GOODCAPTURESCORE 1000000000ULL
-extern unsigned long long BADCAPTURESCORE;
+// TTmove is always first
+
+// Followed by captures / promotions / promocaptures / enpassants
+#define GOODNOISYMOVE 10000000LL
+// Followed by killers and counter moves
+#define KILLER1SCORE 8999999LL
+#define KILLER2SCORE 8999998LL
+#define COUNTERSCORE 8999997LL
+// Followed by quiet moves
+#define QUIETSCORE 1000000LL
+// Followed by bad noisy moves
+#define BADNOISYMOVE 16384LL
 
 
 struct Position{

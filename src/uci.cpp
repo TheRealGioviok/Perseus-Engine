@@ -31,7 +31,6 @@ void uciStr() {
     std::cout << "option name lmrMoveValue type spin default 917 min 0 max 16383" << std::endl;
     std::cout << "option name lmrA type spin default 788 min 0 max 16383" << std::endl;
     std::cout << "option name lmrC type spin default 558 min -1000 max 1000" << std::endl;
-    std::cout << "option name BADCAPTURESCORE type spin default 15960 min 0 max 32768" << std::endl;
     std::cout << "option name futilityMarginDelta type spin default 90 min 55 max 125" << std::endl;
     std::cout << "option name nmpBias type spin default 13 min 0 max 30" << std::endl;
     std::cout << "option name nmpDepthDivisor type spin default 3 min 2 max 6" << std::endl;
@@ -47,7 +46,8 @@ void uciStr() {
     std::cout << "option name RFPDepth type spin default 7 min 5 max 10" << std::endl;
     std::cout << "option name futPruningMultiplier type spin default 162 min 50 max 300" << std::endl;
     std::cout << "option name futPruningAdd type spin default 240 min 50 max 300" << std::endl;
-
+    std::cout << "option name captScoreMvvMultiplier type spin default 16 min 8 max 32" << std::endl;
+    
     std::cout << "uciok" << std::endl;
 }
 
@@ -272,8 +272,6 @@ int setOptionCommand(Game* game, char* command) {
         lmrC = double(atoi(arg.c_str()));
         initLMRTable();
     }
-    else if (optionName == "BADCAPTURESCORE")
-        BADCAPTURESCORE = atoi(arg.c_str());
     else if (optionName == "futilityMarginDelta")
         futilityMarginDelta = atoi(arg.c_str());
     else if (optionName == "nmpBias")
@@ -304,6 +302,8 @@ int setOptionCommand(Game* game, char* command) {
         futPruningMultiplier = atoi(arg.c_str());
     else if (optionName == "futPruningAdd")
         futPruningAdd = atoi(arg.c_str());
+    else if (optionName == "captScoreMvvMultiplier")
+        captScoreMvvMultiplier = atoi(arg.c_str());
     else {
         std::cout << "Option " << optionName << " not recognized!\n";
     }

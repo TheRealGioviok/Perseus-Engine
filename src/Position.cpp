@@ -7,6 +7,12 @@
 #include <iostream>
 #include <cstring>
 
+constexpr Score pieceValues[15] = {
+    100, 422, 422, 642, 1015, 0, // White pieces
+    100, 422, 422, 642, 1015, 0, // Black pieces
+    0, 0, 0                     // Padding for special cases
+};
+
 unsigned long long BADCAPTURESCORE = MAXHISTORYABS - 424ULL; // TODO: make this tunable
 
 // The default constructor instantiates the position with the standard chess starting position.
@@ -515,33 +521,41 @@ bool Position::makeMove(Move move)
 }
 
 inline void Position::addEp(MoveList* ml, ScoredMove move){
-    ml->moves[ml->count++] = ((GOODCAPTURESCORE + 100) << 32) | move;
+    ml->moves[ml->count++] = ((
+        GOODNOISYMOVE * SEE(move, -107) 
+        + pieceValues[P] * captScoreMvvMultiplier 
+        + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P]
+        + BADNOISYMOVE
+    ) << 32) | move;
 }
 
 inline void Position::addPromoCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece, Piece promotion){
     ml->moves[ml->count++] = ((
-                                  MvvLva[movedPiece][capturedPiece] +
-                                  (GOODCAPTURESCORE + PROMOTIONBONUS) * SEE(move, -107) + BADCAPTURESCORE + promotion)
-                              << 32) |
-                             move;
+        GOODNOISYMOVE * SEE(move, -107) 
+        + pieceValues[capturedPiece] * captScoreMvvMultiplier 
+        + pieceValues[promotion]
+        + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)] // Piece captured can't be NOPIECE (12), so this works
+        + BADNOISYMOVE
+    ) << 32) | move;
 }
 
 inline void Position::addCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece){
-    ml->moves[ml->count++] = (
-            (
-                MvvLva[movedPiece][capturedPiece] +
-                GOODCAPTURESCORE * SEE(move, -107) + BADCAPTURESCORE
-            ) 
-        << 32) | move;
+    ml->moves[ml->count++] = ((
+        GOODNOISYMOVE * SEE(move, -107) 
+        + pieceValues[capturedPiece] * captScoreMvvMultiplier 
+        + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)] // Piece captured can't be NOPIECE (12), so this works
+        + BADNOISYMOVE
+    ) << 32) | move;
     return;
 }
 
 inline void Position::addPromotion(MoveList* ml, ScoredMove move, Piece promotion){
-    ml->moves[ml->count++] = (
-            (
-                PROMOTIONBONUS * SEE(move, -107) + BADCAPTURESCORE + promotion
-            ) 
-        << 32) | move;
+    ml->moves[ml->count++] = ((
+        GOODNOISYMOVE * SEE(move, -107) 
+        + pieceValues[promotion]
+        + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P]
+        + BADNOISYMOVE
+    ) << 32) | move;
     return;
 }
 
@@ -558,9 +572,10 @@ inline void Position::addQuiet(MoveList* ml, ScoredMove move, Square source, Squ
         ml->moves[ml->count++] = (COUNTERSCORE << 32) | move;
         return;
     }
-    S64 score = (S64)(historyTable[side][indexFromTo(source, target)]); // *22 + ((S64)pieceFromHistoryTable[movedPiece][from]) + ((S64)pieceToHistoryTable[movedPiece][to]) * 2) / 25;
-    score += MAXHISTORYABS;
-    ml->moves[ml->count++] = (score << 32) | move; //
+    ml->moves[ml->count++] = ((
+        (S64)(historyTable[side][indexFromTo(source, target)]) 
+        + QUIETSCORE
+    ) << 32) | move;
 }
 
 inline void Position::addUnsorted(MoveList* ml, ScoredMove move){
@@ -589,12 +604,6 @@ bool Position::insufficientMaterial() {
     }
 	return true; // Means K v K
 }
-
-constexpr Score pieceValues[15] = {
-    100, 300, 300, 500, 900, 0, // White pieces
-    100, 300, 300, 500, 900, 0, // Black pieces
-    0,   0,   0 // Padding for special cases
-};
 
 // Thanks to Weiss chess engine for a clean implementation of this function
 bool Position::SEE(const Move move, const Score threshold) {

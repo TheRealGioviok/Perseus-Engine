@@ -113,6 +113,7 @@ void Game::reset(){
     // Clear history, killer and counter move tables
     memset(historyTable, 0, sizeof(historyTable));
     memset(counterMoveTable, 0, sizeof(counterMoveTable));
+    memset(captureHistoryTable, 0, sizeof(captureHistoryTable));
 
     // Clear pv len and pv table
     memset(pvLen, 0, sizeof(pvLen));
