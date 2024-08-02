@@ -143,14 +143,14 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     // const bool ttPv = PVNode || (ttFlags & hashPVMove);
 
     // Clear killers
-    // clearKillers(ss+1);
+    clearKillers(ss+1);
     // Clear excluded move
     // (ss+1)->excludedMove = noMove;
 
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta);
 
-    // if (depth >= IIRdepth && ttBound == hashNONE && !ttPv) --depth;
+    if (depth >= IIRdepth && ttBound == hashNONE) --depth;
 
     // Initialize the undoer
     UndoInfo undoer = UndoInfo(pos);
@@ -253,10 +253,9 @@ skipPruning:
     U16 quietsCount = 0, noisyCount = 0;
 
     MoveList moveList;
-    // const Move lastMove = (ss - 1)->move;
-    // const Move counterMove = lastMove ? counterMoveTable[indexFromTo(moveSource(lastMove), moveTarget(lastMove))] : noMove;
-    generateMoves(moveList, noMove, noMove, noMove);
-    //  ss->killers[0], ss->killers[1], counterMove);
+    const Move lastMove = (ss - 1)->move;
+    const Move counterMove = lastMove ? counterMoveTable[indexFromTo(moveSource(lastMove), moveTarget(lastMove))] : noMove;
+    generateMoves(moveList, ss->killers[0], ss->killers[1], counterMove);
 
     // Iterate through moves
     for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
@@ -295,16 +294,16 @@ skipPruning:
             
         // }
 
-        Depth newDepth = depth - 1; // + extension;
+        Depth newDepth = depth - 1;
 
         ss->move = currMove;
         if (makeMove(currMove))
         {
-            S32 currMoveScore = getScore(moveList.moves[i]) - MAXHISTORYABS;
+            S32 currMoveScore = getScore(moveList.moves[i]) - BADNOISYMOVE;
             Score score;
         
             ++nodes;
-
+            // bool givesCheck = isCheck(currMove) || pos.inCheck();
             if (isQuiet) quiets[quietsCount++] = currMove;
             else noisy[noisyCount++] = currMove;
             if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
@@ -313,7 +312,8 @@ skipPruning:
             {
                 Depth R = reduction(depth, moveSearched, PVNode, improving);
                 // R -= givesCheck;
-                // R -= std::clamp(currMoveScore / 16384, -1, 1);
+                // currMoveScore = getScore(moveList.moves[i]) - QUIETSCORE;
+                // R -= std::clamp(currMoveScore / 8192, -1, 1);
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
 
@@ -358,11 +358,11 @@ skipPruning:
                 alpha = score;
                 if (score >= beta)
                 {
-                    // if (isQuiet)
-                    // {
-                    //     updateKillers(ss, currMove);
-                    //     updateCounters(currMove, (ss - 1)->move);
-                    // }
+                    if (isQuiet)
+                    {
+                        updateKillers(ss, currMove);
+                        updateCounters(currMove, (ss - 1)->move);
+                    }
                     updateHH(pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount);
                     break;
                 }
