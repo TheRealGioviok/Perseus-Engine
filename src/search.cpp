@@ -336,35 +336,29 @@ skipPruning:
 
             ++moveSearched;
 
-            if (score > bestScore)
-            {
+            if (score > bestScore) {
                 bestScore = score;
-                bestMove = currMove;
-                if (PVNode)
-                {
-                    pvTable[ply][ply] = currMove;
-                    if (ply + 1 < maxPly)
-                    {
-                        // Copy the pv from the next ply
-                        for (int j = ply + 1; j < pvLen[ply + 1]; j++)
-                            pvTable[ply][j] = pvTable[ply + 1][j];
-                        pvLen[ply] = pvLen[ply + 1];
+                if (score > alpha) {
+                    bestMove = currMove;
+                    
+                    if (PVNode) {
+                        pvTable[ply][ply] = currMove;
+                        if (ply + 1 < maxPly) {
+                            // Copy the pv from the next ply
+                            for (int j = ply + 1; j < pvLen[ply + 1]; j++)
+                                pvTable[ply][j] = pvTable[ply + 1][j];
+                            pvLen[ply] = pvLen[ply + 1];
+                        }
                     }
-                }
-            }
-
-            if (score > alpha)
-            {
-                alpha = score;
-                if (score >= beta)
-                {
-                    if (isQuiet)
-                    {
-                        updateKillers(ss, currMove);
-                        updateCounters(currMove, (ss - 1)->move);
+                    if (score >= beta) {
+                        if (isQuiet) {
+                            updateKillers(ss, currMove);
+                            updateCounters(currMove, (ss - 1)->move);
+                        }
+                        updateHH(pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount);
+                        break;
                     }
-                    updateHH(pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount);
-                    break;
+                    alpha = score;
                 }
             }
         }
