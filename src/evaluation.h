@@ -182,3 +182,10 @@ Score pestoEval(Position* pos);
  * @note This is called at the start of the program 
  */
 void initTropism();
+
+/**
+ * @brief The convertToFeatures function converts a set of positions to a set of features
+ * @param filename The filename of the epd file
+ * @param output The output file to write the features to
+ */
+void convertToFeatures(std::string filename, std::string output);

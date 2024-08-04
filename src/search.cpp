@@ -68,7 +68,7 @@ static inline void clearExcludedMove(SStack *ss)
     ss->excludedMove = noMove;
 }
 
-Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
+Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SStack *ss)
 {
     // Comms
     if (stopped)
@@ -150,7 +150,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta);
 
-    if (depth >= IIRdepth && ttBound == hashNONE) --depth;
+    if (ply && depth >= IIRdepth && ttBound == hashNONE) --depth;
 
     // Initialize the undoer
     UndoInfo undoer = UndoInfo(pos);
@@ -208,7 +208,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
             ss->move = noMove;
 
             Depth R = nmpQ1 + (depth / nmpDepthDivisor) + std::min((eval - beta) / nmpScoreDivisor, nmpQ2);
-            Score nullScore = -search(-beta, -beta + 1, depth - R, ss + 1);
+            Score nullScore = -search(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
 
             undoNullMove(undoer);
 
@@ -224,7 +224,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, SStack *ss)
 
                 // If the null move failed high, we can try a reduced search when depth is high. This is to avoid zugzwang positions
                 nmpPlies = ply + (depth - R) * 2 / 3;
-                Score verification = search(beta - 1, beta, depth - R, ss);
+                Score verification = search(beta - 1, beta, depth - R, false, ss);
                 nmpPlies = 0;
 
                 if (verification >= beta)
@@ -299,7 +299,7 @@ skipPruning:
         ss->move = currMove;
         if (makeMove(currMove))
         {
-            S32 currMoveScore = getScore(moveList.moves[i]) - BADNOISYMOVE;
+            S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
             Score score;
         
             ++nodes;
@@ -313,24 +313,27 @@ skipPruning:
                 Depth R = reduction(depth, moveSearched, PVNode, improving);
                 // R -= givesCheck;
                 // currMoveScore = getScore(moveList.moves[i]) - QUIETSCORE;
+                if (cutNode) R += 2;
+                // if (PVNode) R -= 1 + cutNode;
                 // R -= std::clamp(currMoveScore / 8192, -1, 1);
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
+                
 
                 Depth reducedDepth = newDepth - R;
                 // Search at reduced depth
-                score = -search(-alpha - 1, -alpha, reducedDepth, ss + 1);
+                score = -search(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
                 // If failed high on reduced search, research at full depth
                 if (score > alpha && R)
-                    score = -search(-alpha - 1, -alpha, newDepth, ss + 1);
+                    score = -search(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
             }
             else 
                 if (!PVNode || moveSearched)
-                    score = -search(-alpha - 1, -alpha, newDepth, ss + 1);
+                    score = -search(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
             // Pvsearch
             if (PVNode && (!moveSearched || score > alpha))
-                score = -search(-beta, -alpha, newDepth, ss + 1);
+                score = -search(-beta, -alpha, newDepth, false, ss + 1);
             
             undo(undoer, currMove);
 
@@ -499,7 +502,7 @@ void Game::startSearch(bool halveTT = true)
     rootDelta = 2 * infinity;
     currSearch = 1;
 
-    Score score = search(noScore, infinity, 1, ss);
+    Score score = search(noScore, infinity, 1, false, ss);
     Move bestMove = pvTable[0][0];
 
     std::cout << "info score depth 1 cp " << score << " nodes " << nodes << " moves ";
@@ -526,7 +529,7 @@ void Game::startSearch(bool halveTT = true)
             U64 timer1 = getTime64();                    // Save time for nps calculation
             // Clear the first sstack entry
             ss->wipe();
-            score = search(alpha, beta, currSearch, ss); // Search at depth currSearch
+            score = search(alpha, beta, currSearch, false, ss); // Search at depth currSearch
             if (stopped)
                 goto bmove;
             bestMove = pvTable[0][0];

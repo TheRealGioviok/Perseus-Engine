@@ -139,9 +139,11 @@ public:
      * @param alpha The lower bound of the search
      * @param beta The upper bound of the search
      * @param depth The depth to the quiescence drop
+     * @param cutnode If true, the node is expected to be a cut node
+     * @param ss The SStack object to store the search information in
      * @return The score of the position
      */
-    Score search(Score alpha, Score beta, Depth depth, SStack* ss);
+    Score search(Score alpha, Score beta, Depth depth, bool cutnode, SStack* ss);
 
     /**
      * @brief The makeNullMove function makes a null move on the board.

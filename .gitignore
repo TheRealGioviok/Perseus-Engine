@@ -3,3 +3,7 @@
 Perseus
 src/valgrind-out.txt
 src/PerseusB
+src/lichess-big3-resolved.book
+.vscode/tasks.json
+src/testfens.epd
+src/out.bin

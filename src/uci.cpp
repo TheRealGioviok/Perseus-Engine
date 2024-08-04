@@ -89,24 +89,7 @@ int executeCommand(Game* game, char* command) {
     char* exec = strstr((char*)command, "exec");
     char* flip = strstr((char*)command, "flip");
     char* bench = strstr((char*)command, "bench");
-    // The order of execution is the following:
-    // - uci
-    
-    // - isready
-    // - uci
-    // - setoption
-    // - ucinewgame
-    // - position
-    // - fen
-    // - go
-    // - stop
-    // - quit
-    // - print
-    // - eval
-    // - divide
-    // - movelist
-    // - tt
-    // - bench
+    char* extract = strstr((char*)command, "extract");
 
     if (uciNewGame){
         initTT();
@@ -226,6 +209,12 @@ int executeCommand(Game* game, char* command) {
 
     if (bench){
         benchmark();
+    }
+
+    if (extract){
+        // Get the filename
+        char* filename = strstr((char*)command, "extract") + 8;
+        convertToFeatures(filename, "out.bin");
     }
 
     return 0;
