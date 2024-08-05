@@ -1,6 +1,10 @@
 #pragma once
 #include "Position.h"
 
+extern U64 seCandidates;
+extern U64 seActivations;
+extern U64 avgDist;
+
 struct SStack {
     Move excludedMove = 0;
     Score staticEval = 0;
