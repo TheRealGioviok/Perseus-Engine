@@ -7,3 +7,6 @@ src/lichess-big3-resolved.book
 .vscode/tasks.json
 src/testfens.epd
 src/out.bin
+src/filtered_chessData.csv
+src/PerseusB (2)
+src/.vscode/settings.json

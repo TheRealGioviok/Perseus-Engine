@@ -47,35 +47,42 @@ void initTables() {
 constexpr Score DOUBLEDEARLYMG = 11;
 constexpr Score DOUBLEDEARLYEG = 4;
 
-// New pawn evaluation
-constexpr Score DOUBLEISOLATEDPENMG = 9;
-constexpr Score DOUBLEISOLATEDPENEG = 33;
-constexpr Score ISOLATEDPENMG = 4;
-constexpr Score ISOLATEDPENEG = 13;
-constexpr Score BACKWARDPENMG = 7;
-constexpr Score BACKWARDPENEG = 17;
-constexpr Score DOUBLEDPENMG = -9;
-constexpr Score DOUBLEDPENEG = -33;
-constexpr Score SUPPORTEDPHALANXMG = 17;
-constexpr Score SUPPORTEDPHALANXEG = 15;
-constexpr Score ADVANCABLEPHALANXMG = 17;
-constexpr Score ADVANCABLEPHALANXEG = 15;
-constexpr Score R_SUPPORTEDPHALANXMG = 4;
-constexpr Score R_SUPPORTEDPHALANXEG = 4;
-constexpr Score R_ADVANCABLEPHALANXMG = 2;
-constexpr Score R_ADVANCABLEPHALANXEG = 2;
-constexpr Score PASSEDPATHBONUSMG = 3;
-constexpr Score PASSEDPATHBONUSEG = 6;
-constexpr Score SUPPORTEDPASSERMG = 7;
-constexpr Score SUPPORTEDPASSEREG = 9;
+// (MG)
+constexpr Score DOUBLEISOLATEDPENMG = 20;
+constexpr Score ISOLATEDPENMG = 21;
+constexpr Score BACKWARDPENMG = 14;
+constexpr Score DOUBLEDPENMG = 13;
+constexpr Score SUPPORTEDPHALANXMG = 9;
+constexpr Score ADVANCABLEPHALANXMG = 4;
+constexpr Score R_SUPPORTEDPHALANXMG = 2;
+constexpr Score R_ADVANCABLEPHALANXMG = 1;
+constexpr Score passedRankBonusMg [7] = {0, 2, -20, -20, 20, 62, 79, };
+constexpr Score PASSEDPATHBONUSMG = -4;
+constexpr Score SUPPORTEDPASSERMG = 30;
+constexpr Score BISHOPPAIRMG = 45;
+constexpr Score ROOKONOPENFILEMG = 30;
+constexpr Score ROOKONSEMIOPENFILEMG = 21;
+constexpr Score TEMPOMG = 35;
 
-constexpr Score BISHOPPAIRMG = 15;
-constexpr Score BISHOPPAIREG = 30;
+// (EG)
 
-constexpr Score ROOKONOPENFILEMG = 5;
-constexpr Score ROOKONOPENFILEEG = 11;
-constexpr Score ROOKONSEMIOPENFILEMG = 3;
-constexpr Score ROOKONSEMIOPENFILEEG = 7;
+constexpr Score DOUBLEISOLATEDPENEG = 48;
+constexpr Score ISOLATEDPENEG = 17;
+constexpr Score BACKWARDPENEG = 7;
+constexpr Score DOUBLEDPENEG = 29;
+constexpr Score SUPPORTEDPHALANXEG = 7;
+constexpr Score ADVANCABLEPHALANXEG = 21;
+constexpr Score R_SUPPORTEDPHALANXEG = 2;
+constexpr Score R_ADVANCABLEPHALANXEG = 1;
+constexpr Score passedRankBonusEg [7] = {0, -34, -21, 18, 66, 171, 263, };
+constexpr Score PASSEDPATHBONUSEG = 8;
+constexpr Score SUPPORTEDPASSEREG = -2;
+constexpr Score BISHOPPAIREG = 97;
+constexpr Score ROOKONOPENFILEEG = -8;
+constexpr Score ROOKONSEMIOPENFILEEG = 20;
+constexpr Score TEMPOEG = 30;
+
+
 
 
 constexpr Score OWNPIECEBLOCKEDPAWNMG = 0;
@@ -147,14 +154,9 @@ constexpr Score ROOKATTACKINNERRING = 15;
 constexpr Score QUEENATTACKOUTERRING = 17;
 constexpr Score QUEENATTACKINNERRING = 32;
 
-constexpr Score MG_TEMPO = 18;
-constexpr Score EG_TEMPO = 0;
-
 #define MOBILITYEVAL true
 #define PAWNEVAL true
 
-Score passedRankBonusMg[7] = { 0, 8, 14, 12, 52, 140, 229 };
-Score passedRankBonusEg[7] = { 0, 20, 24, 30, 52, 129, 189 };
 Score noutpostEg[5] = { 2, 6, 12, 14, 18 };
 Score noutpostMg[5] = { 2, 4, 8, 9, 11 };
 Score boutpostEg[5] = { 2, 5, 10, 8, 3 };
@@ -361,8 +363,6 @@ static inline BitBoard advancePathMasked(BitBoard bb, BitBoard mask){
     return bb;
 }
 
-#define TEMPOMG 16 // We calculate tempomg as the eval @24
-#define TEMPOEG 4  // We calculate tempoeg as the eval @24 of position with no pieces (king and pawns)
 Score pestoEval(Position *pos){
     auto const& bb = pos->bitboards;
     auto const& occ = pos->occupancies;
@@ -927,7 +927,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[0] += us == WHITE ? 1 : -1;
 
     // Also assert the last element we wrote is the penultimate element
-    assert(tensorStart + tensorSize - 2 == tensor);
+    // assert(tensorStart + tensorSize - 2 == tensor);
 }
 
 

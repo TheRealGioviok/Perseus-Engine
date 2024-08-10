@@ -40,9 +40,9 @@ void uciStr() {
     std::cout << "option name razorQ1 type spin default 248 min 50 max 400" << std::endl;
     std::cout << "option name razorQ2 type spin default 192 min 50 max 400" << std::endl;
     std::cout << "option name singularDepthMultiplier type spin default 4 min 1 max 6" << std::endl;
-    std::cout << "option name IIRdepth type spin default 5 min 3 max 7" << std::endl;
-    std::cout << "option name razorDepth type spin default 3 min 2 max 5" << std::endl;
-    std::cout << "option name singularDepth type spin default 6 min 4 max 8" << std::endl;
+    std::cout << "option name IIRdepth type spin default 4 min 3 max 7" << std::endl;
+    std::cout << "option name razorDepth type spin default 5 min 2 max 5" << std::endl;
+    std::cout << "option name singularSearchDepth type spin default 7 min 4 max 8" << std::endl;
     std::cout << "option name RFPDepth type spin default 7 min 5 max 10" << std::endl;
     std::cout << "option name futPruningMultiplier type spin default 162 min 50 max 300" << std::endl;
     std::cout << "option name futPruningAdd type spin default 240 min 50 max 300" << std::endl;
@@ -283,8 +283,8 @@ int setOptionCommand(Game* game, char* command) {
         IIRdepth = atoi(arg.c_str());
     else if (optionName == "razorDepth")
         razorDepth = atoi(arg.c_str());
-    else if (optionName == "singularDepth")
-        singularDepth = atoi(arg.c_str());
+    else if (optionName == "singularSearchDepth")
+        singularSearchDepth = atoi(arg.c_str());
     else if (optionName == "RFPDepth")
         RFPDepth = atoi(arg.c_str());
     else if (optionName == "futPruningMultiplier")
