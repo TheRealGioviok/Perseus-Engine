@@ -1,6 +1,6 @@
 # Perseus Chess Engine
 
-Perseus is a UCI-compliant chess engine written in [language or framework]. It's designed to play chess at a competitive level and provides a rich set of features for both developers and users.
+Perseus is a UCI-compliant chess engine written in C++. It's designed to play chess at a competitive level and provides a rich set of features for both developers and users.
 
 ## Features
 
