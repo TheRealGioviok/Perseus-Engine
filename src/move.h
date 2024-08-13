@@ -81,7 +81,7 @@ Square squareFromName(const char* squareName);
 
 struct MoveList {
 	//moves
-	ScoredMove moves[128] = { 0 };
+	ScoredMove moves[256] = { 0 };
 	//move count
 	U8 count = 1;
 	// clear function

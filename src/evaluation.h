@@ -10,8 +10,8 @@
  * @note This evaluation function is not very good, but it is a good starting point.
  */
 
-const Score mgValues [5] = {130, 432, 447, 623, 1369, };
-const Score egValues [5] = {153, 437, 452, 773, 1379, };
+const Score mgValues [6] = {130, 432, 447, 623, 1369, 0};
+const Score egValues [6] = {153, 437, 452, 773, 1379, 0};
 
 const Score mgPawnTable [64] = {
 
