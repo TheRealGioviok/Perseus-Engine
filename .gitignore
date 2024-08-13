@@ -13,3 +13,4 @@ src/.vscode/settings.json
 src/tunablep
 src/movepicker.cpp
 src/movepicker.h
+src/movepicker.cppp

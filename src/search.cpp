@@ -427,11 +427,14 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     for (int i = 0; i < moveList.count; i++)
     {
         Move move = onlyMove(moveList.moves[i]);
+        
         // SEE pruning : skip all moves that have see < -100 (We may want to do this with a threshold of 0, but we would introduce another see call. TODO: lazily evaluate the see so that we can skip moves with see < 0)
         if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
             break;
+        ss->move = move;
         if (makeMove(move))
         {
+            ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))];
             moveCount++;
             Score score = -quiescence(-beta, -alpha, ss+1);
             undo(undoer, move);
