@@ -155,7 +155,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     (ss+1)->excludedMove = noMove;
 
     // Quiescence drop
-    if (depth <= 0) return quiescence(alpha, beta);
+    if (depth <= 0) return quiescence(alpha, beta, ss);
 
     if (depth >= IIRdepth && ttBound == hashNONE) --depth; // && !excludedMove
 
@@ -213,6 +213,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             // make null move
             makeNullMove();
             ss->move = noMove;
+            ss->contHistEntry = continuationHistoryTable[0];
 
             Depth R = nmpQ1 + (depth / nmpDepthDivisor) + std::min((eval - beta) / nmpScoreDivisor, nmpQ2);
             Score nullScore = -search(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
@@ -242,7 +243,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         // Razoring
         if (depth <= razorDepth && abs(eval) < mateScore && eval + razorQ1 + depth * razorQ2 < alpha)
         {
-            const Score razorScore = quiescence(alpha, beta);
+            const Score razorScore = quiescence(alpha, beta, ss);
             if (razorScore <= alpha) return razorScore;
         }
     
@@ -260,9 +261,7 @@ skipPruning:
     U16 quietsCount = 0, noisyCount = 0;
 
     MoveList moveList;
-    const Move lastMove = (ss - 1)->move;
-    const Move counterMove = lastMove ? counterMoveTable[indexFromTo(moveSource(lastMove), moveTarget(lastMove))] : noMove;
-    generateMoves(moveList, ss->killers[0], ss->killers[1], counterMove);
+    generateMoves(moveList, ss);
 
     // Iterate through moves
     for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
@@ -314,6 +313,7 @@ skipPruning:
         ss->move = currMove;
         if (makeMove(currMove))
         {
+            ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
             S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
             Score score;
         
@@ -373,7 +373,7 @@ skipPruning:
                             updateKillers(ss, currMove);
                             updateCounters(currMove, (ss - 1)->move);
                         }
-                        updateHH(pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount);
+                        updateHH(ss, pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount);
                         break;
                     }
                     alpha = score;
@@ -399,7 +399,7 @@ skipPruning:
     return bestScore;
 }
 
-Score Game::quiescence(Score alpha, Score beta)
+Score Game::quiescence(Score alpha, Score beta, SStack *ss)
 {
     bool inCheck = pos.inCheck();
     if (inCheck)
@@ -420,7 +420,7 @@ Score Game::quiescence(Score alpha, Score beta)
     // Generate moves
     MoveList moveList;
 
-    inCheck ? generateMoves(moveList, noMove, noMove, noMove) : generateCaptures(moveList);
+    inCheck ? generateMoves(moveList, ss) : generateCaptures(moveList);
 
     UndoInfo undoer = UndoInfo(pos);
     U16 moveCount = 0;
@@ -433,7 +433,7 @@ Score Game::quiescence(Score alpha, Score beta)
         if (makeMove(move))
         {
             moveCount++;
-            Score score = -quiescence(-beta, -alpha);
+            Score score = -quiescence(-beta, -alpha, ss+1);
             undo(undoer, move);
             if (score > alpha)
             {
@@ -456,7 +456,7 @@ void Game::startSearch(bool halveTT = true)
     seCandidates = 0;
     seActivations = 0;
     avgDist = 0;
-    SStack stack[4 + maxPly + 1]; // 4 is the max ply that we look back, 1 is the max ply that we look forward
+    SStack stack[4 + maxPly + 1]; // 4 is the max ply that we look back, 1 is the max ply that we look forward (for now it is actually -2, but hopefully we extend conthist to -4)
     SStack* ss = stack + 4;
 
     for (int i = -4; i < maxPly + 1; i++) (ss+i)->wipe();

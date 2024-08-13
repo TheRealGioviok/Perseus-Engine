@@ -10,3 +10,6 @@ src/out.bin
 src/filtered_chessData.csv
 src/PerseusB (2)
 src/.vscode/settings.json
+src/tunablep
+src/movepicker.cpp
+src/movepicker.h

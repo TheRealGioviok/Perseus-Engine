@@ -8,7 +8,7 @@ ROOT := $(realpath $(THIS)/..)
 CXX := g++
 TARGET:= Perseus
 CXXFLAGS := -Wall -std=c++17
-NATIVE := -march=native
+NATIVE := -march=native -mpopcnt
 
 NAME := $(TARGET)
 
