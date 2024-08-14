@@ -59,6 +59,8 @@ constexpr Score R_ADVANCABLEPHALANXMG = 1;
 constexpr Score passedRankBonusMg [7] = {0, 2, -20, -20, 20, 62, 79, };
 constexpr Score PASSEDPATHBONUSMG = -4;
 constexpr Score SUPPORTEDPASSERMG = 30;
+constexpr Score INNERSHELTERMG = 25;
+constexpr Score OUTERSHELTERMG = 13;
 constexpr Score BISHOPPAIRMG = 45;
 constexpr Score ROOKONOPENFILEMG = 30;
 constexpr Score ROOKONSEMIOPENFILEMG = 21;
@@ -77,6 +79,8 @@ constexpr Score R_ADVANCABLEPHALANXEG = 1;
 constexpr Score passedRankBonusEg [7] = {0, -34, -21, 18, 66, 171, 263, };
 constexpr Score PASSEDPATHBONUSEG = 8;
 constexpr Score SUPPORTEDPASSEREG = -2;
+constexpr Score INNERSHELTEREG = 9;
+constexpr Score OUTERSHELTEREG = 4;
 constexpr Score BISHOPPAIREG = 97;
 constexpr Score ROOKONOPENFILEEG = -8;
 constexpr Score ROOKONSEMIOPENFILEEG = 20;
@@ -185,38 +189,6 @@ static inline constexpr Score bishopOutpostEg(BitBoard pAttacks, U8 pSupport) {
 
 static inline constexpr BitBoard centralFiles() {
     return files(2) | files(3) | files(4) | files(5);
-}
-
-static inline constexpr BitBoard ne(BitBoard bb) {
-    return (bb & notFile(7)) >> 7;
-}
-
-static inline constexpr BitBoard north(BitBoard bb) {
-    return bb >> 8;
-}
-
-static inline constexpr BitBoard nw(BitBoard bb) {
-    return (bb & notFile(0)) >> 9;
-}
-
-static inline constexpr BitBoard se(BitBoard bb) {
-    return (bb & notFile(7)) << 9;
-}
-
-static inline constexpr BitBoard south(BitBoard bb) {
-    return bb << 8;
-}
-
-static inline constexpr BitBoard sw(BitBoard bb) {
-    return (bb & notFile(0)) << 7;
-}
-
-static inline constexpr BitBoard east(BitBoard bb) {
-    return (bb & notFile(7)) >> 1;
-}
-
-static inline constexpr BitBoard west(BitBoard bb) {
-    return (bb & notFile(0)) << 1;
 }
 
 template <Piece pt>
@@ -579,6 +551,30 @@ Score pestoEval(Position *pos){
         }
     }
 
+    // Calculate king safety
+    // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
+    BitBoard innerShelters[2] = {
+        kingShelter[WHITE][whiteKing],
+        kingShelter[BLACK][blackKing]
+    };
+    // The outer shield is the squares in front of the inner shield. We only consider supported squares
+    BitBoard outerShelters[2] = {
+        north(innerShelters[WHITE]) & pawnAttackedSquares[WHITE],
+        south(innerShelters[BLACK]) & pawnAttackedSquares[BLACK]
+    };
+
+    // Get pawns
+    innerShelters[WHITE] &= bb[P];
+    innerShelters[BLACK] &= bb[p];
+    outerShelters[WHITE] &= bb[P];
+    outerShelters[BLACK] &= bb[p];
+
+    // Add the shelter bonus
+    mgScore += INNERSHELTERMG * (popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]));
+    egScore += INNERSHELTEREG * (popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]));
+    mgScore += OUTERSHELTERMG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
+    egScore += OUTERSHELTEREG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
+
     // Add bonus for bishop pairs
     mgScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIRMG;
     egScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIREG;
@@ -595,6 +591,7 @@ Score pestoEval(Position *pos){
     egScore += openDiff * ROOKONOPENFILEEG;
     mgScore += semiOpenDiff * ROOKONSEMIOPENFILEMG;
     egScore += semiOpenDiff * ROOKONSEMIOPENFILEEG;
+
 
     // Calculate the total score
     mgScore += mobilityScore[0];
@@ -652,6 +649,10 @@ std::vector<Score> getCurrentEvalWeights(){
     }
     weights.push_back(PASSEDPATHBONUSMG);
     weights.push_back(SUPPORTEDPASSERMG);
+
+    // Add the shelter weights
+    weights.push_back(INNERSHELTERMG);
+    weights.push_back(OUTERSHELTERMG);
     
     // Add the bishop pair bonus
     weights.push_back(BISHOPPAIRMG);
@@ -702,6 +703,10 @@ std::vector<Score> getCurrentEvalWeights(){
     }
     weights.push_back(PASSEDPATHBONUSEG);
     weights.push_back(SUPPORTEDPASSEREG);
+
+    // Add the shelter weights
+    weights.push_back(INNERSHELTEREG);
+    weights.push_back(OUTERSHELTEREG);
 
     // Add the bishop pair bonus
     weights.push_back(BISHOPPAIREG);
@@ -908,6 +913,29 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         }
     }
     tensor += 8 + 7 + 2;
+
+    // Calculate king safety
+    // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
+    BitBoard innerShelters[2] = {
+        kingShelter[WHITE][whiteKing],
+        kingShelter[BLACK][blackKing]
+    };
+    // The outer shield is the squares in front of the inner shield. We only consider supported squares
+    BitBoard outerShelters[2] = {
+        north(innerShelters[WHITE]) & pawnAttackedSquares[WHITE],
+        south(innerShelters[BLACK]) & pawnAttackedSquares[BLACK]
+    };
+
+    // Get pawns
+    innerShelters[WHITE] &= bb[P];
+    innerShelters[BLACK] &= bb[p];
+    outerShelters[WHITE] &= bb[P];
+    outerShelters[BLACK] &= bb[p];
+
+    // Add the shelter bonus
+    tensor[0] += popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]);
+    tensor[1] += popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]);
+    tensor += 2;
 
     // Add the bishop pairs
     tensor[0] += (popcount(bb[B])>=2) - (popcount(bb[b])>=2);

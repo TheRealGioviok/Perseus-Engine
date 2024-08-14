@@ -47,6 +47,7 @@ BitBoard backwardPawnMask[2][64];
 BitBoard phalanx[64];
 BitBoard outerRing[64];
 BitBoard fiveSquare[64]; // The 5x5 square
+BitBoard kingShelter[2][64]; // The king shelter
 
 // The LMR reduction table
 Ply reductionTable[128][128]= {{0}};
@@ -244,7 +245,12 @@ void initEvalTables() {
 			
             outerRing[sq1] = ring;
         }
-        
+        // King shelter
+        {
+            BitBoard sq = squareBB(sq1);
+            kingShelter[WHITE][sq1] = north(sq) | ne(sq) | nw(sq);
+            kingShelter[BLACK][sq1] = south(sq) | se(sq) | sw(sq);
+        }
     }
         
     
