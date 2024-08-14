@@ -48,43 +48,42 @@ constexpr Score DOUBLEDEARLYMG = 11;
 constexpr Score DOUBLEDEARLYEG = 4;
 
 // (MG)
-constexpr Score DOUBLEISOLATEDPENMG = 20;
-constexpr Score ISOLATEDPENMG = 21;
-constexpr Score BACKWARDPENMG = 14;
+constexpr Score DOUBLEISOLATEDPENMG = 12;
+constexpr Score ISOLATEDPENMG = 18;
+constexpr Score BACKWARDPENMG = 7;
 constexpr Score DOUBLEDPENMG = 13;
-constexpr Score SUPPORTEDPHALANXMG = 9;
-constexpr Score ADVANCABLEPHALANXMG = 4;
+constexpr Score SUPPORTEDPHALANXMG = 11;
+constexpr Score ADVANCABLEPHALANXMG = 8;
 constexpr Score R_SUPPORTEDPHALANXMG = 2;
 constexpr Score R_ADVANCABLEPHALANXMG = 1;
-constexpr Score passedRankBonusMg [7] = {0, 2, -20, -20, 20, 62, 79, };
-constexpr Score PASSEDPATHBONUSMG = -4;
-constexpr Score SUPPORTEDPASSERMG = 30;
-constexpr Score INNERSHELTERMG = 25;
-constexpr Score OUTERSHELTERMG = 13;
+constexpr Score passedRankBonusMg [7] = {0, -3, -22, -20, 17, 57, 72, };
+constexpr Score PASSEDPATHBONUSMG = -3;
+constexpr Score SUPPORTEDPASSERMG = 31;
+constexpr Score INNERSHELTERMG = 41;
+constexpr Score OUTERSHELTERMG = 36;
 constexpr Score BISHOPPAIRMG = 45;
-constexpr Score ROOKONOPENFILEMG = 30;
-constexpr Score ROOKONSEMIOPENFILEMG = 21;
-constexpr Score TEMPOMG = 35;
-
+constexpr Score ROOKONOPENFILEMG = 29;
+constexpr Score ROOKONSEMIOPENFILEMG = 20;
+constexpr Score TEMPOMG = 34;
 // (EG)
 
-constexpr Score DOUBLEISOLATEDPENEG = 48;
+constexpr Score DOUBLEISOLATEDPENEG = 49;
 constexpr Score ISOLATEDPENEG = 17;
-constexpr Score BACKWARDPENEG = 7;
+constexpr Score BACKWARDPENEG = 8;
 constexpr Score DOUBLEDPENEG = 29;
-constexpr Score SUPPORTEDPHALANXEG = 7;
-constexpr Score ADVANCABLEPHALANXEG = 21;
+constexpr Score SUPPORTEDPHALANXEG = 6;
+constexpr Score ADVANCABLEPHALANXEG = 20;
 constexpr Score R_SUPPORTEDPHALANXEG = 2;
 constexpr Score R_ADVANCABLEPHALANXEG = 1;
-constexpr Score passedRankBonusEg [7] = {0, -34, -21, 18, 66, 171, 263, };
-constexpr Score PASSEDPATHBONUSEG = 8;
+constexpr Score passedRankBonusEg [7] = {0, -43, -28, 11, 60, 169, 263, };
+constexpr Score PASSEDPATHBONUSEG = 9;
 constexpr Score SUPPORTEDPASSEREG = -2;
-constexpr Score INNERSHELTEREG = 9;
-constexpr Score OUTERSHELTEREG = 4;
+constexpr Score INNERSHELTEREG = -15;
+constexpr Score OUTERSHELTEREG = -5;
 constexpr Score BISHOPPAIREG = 97;
-constexpr Score ROOKONOPENFILEEG = -8;
-constexpr Score ROOKONSEMIOPENFILEEG = 20;
-constexpr Score TEMPOEG = 30;
+constexpr Score ROOKONOPENFILEEG = -9;
+constexpr Score ROOKONSEMIOPENFILEEG = 19;
+constexpr Score TEMPOEG = 31;
 
 
 
