@@ -78,11 +78,11 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
 // void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv) {
 
 //     ttEntry *entry = &tt[hashEntryFor(key)];
-//     move = move ? packMove(move) : entry->bestMove; // pack to 2 bytes
+//     if (move || key != entry->hashKey) entry->bestMove = packMove(move); // pack to 2 bytes
 //     if (
-//         (flags & hashEXACT) > (entry->flags & hashEXACT)
-//         || entry->hashKey != key
-//         || depth + isPv >= entry->depth + !!(entry->flags & hashPVMove)
+//         (flags == hashEXACT) 
+//         || key != entry->hashKey
+//         || depth + 3 >= entry->depth
 //         || (entry->flags & hashOLD)) {
 //             score -= ply * (score < -mateValue);
 //             score += ply * (score > mateValue);
@@ -93,24 +93,7 @@ void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, 
 //             entry->eval = staticEval;
 //             entry->depth = depth;
 //             entry->flags = flags;
-//     }
-//     entry->bestMove = move;
-//     // Check if the entry can be overwritten.
-//     // else if (!!(entry->flags & hashOLD) * 8 + depth + 2 * isPv + (flags & hashEXACT) >= entry->depth + !!(entry->flags & hashPVMove)) {
-
-//     //     move = move ? packMove(move) : entry->bestMove; // pack to 2 bytes
-
-//     //     score -= ply * (score < -mateValue);
-//     //     score += ply * (score > mateValue);
-        
-//     //     // Iterate through the entries.
-//     //     entry->hashKey = key;
-//     //     entry->score = score;
-//     //     entry->eval = staticEval;
-//     //     entry->depth = depth;
-//     //     entry->flags = flags;
-//     // }
-//     // entry->bestMove = move;
+//         }
 // }
 
 U16 hashfull() {

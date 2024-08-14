@@ -1,33 +1,10 @@
 #pragma once
 #include "Position.h"
+#include "history.h"
 
 extern U64 seCandidates;
 extern U64 seActivations;
 extern U64 avgDist;
-
-struct SStack {
-    Move excludedMove = 0;
-    Score staticEval = 0;
-    Move move = 0;
-    S16 doubleExtensions = 0;
-    Move killers[2] = {0, 0};
-
-    SStack() {
-        excludedMove = noMove;
-        staticEval = 0;
-        move = noMove;
-        doubleExtensions = 0;
-        killers[0] = killers[1] = noMove;
-    }
-
-    void wipe() {
-        excludedMove = noMove;
-        staticEval = 0;
-        move = noMove;
-        doubleExtensions = 0;
-        killers[0] = killers[1] = noMove;
-    }
-};
 
 class Game {
 public:
@@ -107,11 +84,9 @@ public:
     /**
      * @brief The generateMoves function generates all pseudo legal moves for the current position. It is a call to the internal Position::generateMoves function.
      * @param moves The MoveList object to store the moves in.
-     * @param killer1 The first killer move.
-     * @param killer2 The second killer move.
-     * @param counterMove The counter move.
+     * @param ss The SStack object to get the search information from (useful for move ordering heuristics).
      */
-    void generateMoves(MoveList& moves, Move killer1, Move killer2, Move counterMove);
+    void generateMoves(MoveList& moves, SStack* ss);
 
     /**
      * @brief The generateCaptures function generates all pseud legal captures for the current position. It is a call to the internal Position::generateCaptures function.
@@ -174,9 +149,10 @@ public:
      * @brief The quiescence function takes the leaves of the negamax tree and expands them up until no immediate tactical moves are available.
      * @param alpha The lower bound of the search
      * @param beta The upper bound of the search
+     * @param ss The SStack object to store the search information in
      * @return The score of the position.
      */
-    Score quiescence(Score alpha, Score beta);
+    Score quiescence(Score alpha, Score beta, SStack* ss);
 
     /**
      * @brief The startSearch function starts the search. It uses the internal parameters set by the GUI.
