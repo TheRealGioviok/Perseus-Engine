@@ -28,8 +28,6 @@ int kbdist[64][64];
 U8 manhattanDistance[64][64];
 // cbyDist
 U8 chebyshevDistance[64][64];
-// kingshelter
-BitBoard kingShelter[2][64];
 // centerDistance
 U8 centerDistance[64];
 // squaresBetween
