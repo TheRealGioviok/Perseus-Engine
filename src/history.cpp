@@ -36,10 +36,19 @@ void updateHH(bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quiet
     const S32 delta = stat_bonus(depth);
     if (okToReduce(bestMove)) {
         // If bestMove is not noisy, we reduce the bonus of all other moves and increase the bonus of the bestMove
+<<<<<<< Updated upstream
         updateHistoryMove(side, bestMove, depth, delta);
         for (int i = 0; i < quietsCount; i++) {
             if (quietMoves[i] == bestMove) continue;
             updateHistoryMove(side, quietMoves[i], depth, -delta);
+=======
+        updateHistoryMove(side, bestMove, delta);
+        // updateContHist(ss, bestMove, delta);
+        for (int i = 0; i < quietsCount; i++) {
+            if (quietMoves[i] == bestMove) continue;
+            updateHistoryMove(side, quietMoves[i], -delta);
+            // updateContHist(ss, quietMoves[i], -delta);
+>>>>>>> Stashed changes
         }
     }
     else {

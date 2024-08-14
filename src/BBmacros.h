@@ -35,6 +35,15 @@ inline constexpr BitBoard squaresAhead(Square square) 	{ return (files(7) ^ 0x80
 inline constexpr BitBoard squaresBehind(Square square) 	{ return (files(0) ^ 0x1ULL) << square; }
 constexpr BitBoard squaresOfColor[2] = 					{ 0xAA55AA55AA55AA55ULL,	0x55AA55AA55AA55AAULL };
 
+static inline constexpr BitBoard ne(BitBoard bb) 		{ return (bb & notFile(7)) >> 7; }
+static inline constexpr BitBoard north(BitBoard bb) 	{ return bb >> 8; }
+static inline constexpr BitBoard nw(BitBoard bb) 		{ return (bb & notFile(0)) >> 9; }
+static inline constexpr BitBoard se(BitBoard bb) 		{ return (bb & notFile(7)) << 9; }
+static inline constexpr BitBoard south(BitBoard bb) 	{ return bb << 8; }
+static inline constexpr BitBoard sw(BitBoard bb) 		{ return (bb & notFile(0)) << 7; }
+static inline constexpr BitBoard east(BitBoard bb) 		{ return (bb & notFile(7)) >> 1; }
+static inline constexpr BitBoard west(BitBoard bb) 		{ return (bb & notFile(0)) << 1; }
+
 #define bitScanForward _BitScanForward64 //ls1b
 #define bitScanReverse _BitScanReverse64 //ms1b
 #define makeSquareColor(color,square) (((color) * 64) + (square))

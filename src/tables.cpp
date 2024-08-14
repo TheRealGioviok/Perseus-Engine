@@ -28,6 +28,8 @@ int kbdist[64][64];
 U8 manhattanDistance[64][64];
 // cbyDist
 U8 chebyshevDistance[64][64];
+// kingshelter
+BitBoard kingShelter[2][64];
 // centerDistance
 U8 centerDistance[64];
 // squaresBetween
@@ -244,10 +246,16 @@ void initEvalTables() {
 			
             outerRing[sq1] = ring;
         }
-        
+
     }
         
-    
+    // kingShelter[2][64]
+    // The king shelter are the 3 squares in front of the king
+    for (Square square = a8; square < noSquare; square++) {
+        BitBoard sq = squareBB(square);
+        kingShelter[WHITE][square] = north(sq) | ne(sq) | nw(sq);
+        kingShelter[BLACK][square] = south(sq) | se(sq) | sw(sq);
+    }
 }
 
 void initTropism(){

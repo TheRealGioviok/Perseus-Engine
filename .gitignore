@@ -10,3 +10,12 @@ src/out.bin
 src/filtered_chessData.csv
 src/PerseusB (2)
 src/.vscode/settings.json
+<<<<<<< Updated upstream
+=======
+src/tunablep
+src/movepicker.cpp
+src/movepicker.h
+src/movepicker.cppp
+src/visualizer.ipynb
+src/chessdata.zip
+>>>>>>> Stashed changes
