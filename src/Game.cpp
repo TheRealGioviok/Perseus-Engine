@@ -111,15 +111,10 @@ void Game::reset(){
     nmpPlies = 0;
 
     // Clear history, killer and counter move tables
-#if ENABLEHISTORYHEURISTIC
     memset(historyTable, 0, sizeof(historyTable));
-    // memset(pieceFromHistoryTable, 0, sizeof(pieceFromHistoryTable));
-    // memset(pieceToHistoryTable, 0, sizeof(pieceToHistoryTable));
-#endif
-
-#if ENABLECOUNTERMOVEHEURISTIC
     memset(counterMoveTable, 0, sizeof(counterMoveTable));
-#endif
+    memset(captureHistoryTable, 0, sizeof(captureHistoryTable));
+    memset(continuationHistoryTable, 0, sizeof(continuationHistoryTable));
 
     // Clear pv len and pv table
     memset(pvLen, 0, sizeof(pvLen));
@@ -202,8 +197,8 @@ void Game::print(){
  * @param killer2 The second killer move.
  * @param counterMove The counter move.
  */
-void Game::generateMoves(MoveList &moves, Move killer1, Move killer2, Move counterMove){
-    pos.generateMoves(moves, killer1, killer2, counterMove);
+void Game::generateMoves(MoveList &moves, SStack* ss){
+    pos.generateMoves(moves, ss);
     // We will sort the moves
     std::sort(std::begin(moves.moves) + 1, std::begin(moves.moves) + moves.count, std::greater<ScoredMove>());
 }

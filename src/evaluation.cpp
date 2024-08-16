@@ -5,6 +5,9 @@
 #include "movegen.h"
 #include "types.h"
 #include <iostream>
+#include <vector>
+#include <cstring>
+#include <fstream>
 
 Score mgTables[12][64] = { {0} };
 Score egTables[12][64] = { {0} };
@@ -39,23 +42,56 @@ void initTables() {
     }
 }
 
-constexpr Score DOUBLEDPENMG = 7;
-constexpr Score DOUBLEDPENEG = 33;
+
 
 constexpr Score DOUBLEDEARLYMG = 11;
 constexpr Score DOUBLEDEARLYEG = 4;
 
-constexpr Score DOUBLEISOLATEDPENMG = 7;
-constexpr Score DOUBLEISOLATEDPENEG = 33;
+// (MG)
+constexpr Score DOUBLEISOLATEDPENMG = 12;
+constexpr Score ISOLATEDPENMG = 18;
+constexpr Score BACKWARDPENMG = 7;
+constexpr Score DOUBLEDPENMG = 13;
+constexpr Score SUPPORTEDPHALANXMG = 11;
+constexpr Score ADVANCABLEPHALANXMG = 8;
+constexpr Score R_SUPPORTEDPHALANXMG = 2;
+constexpr Score R_ADVANCABLEPHALANXMG = 1;
+constexpr Score passedRankBonusMg [7] = {0, -3, -22, -20, 17, 57, 72, };
+constexpr Score PASSEDPATHBONUSMG = -3;
+constexpr Score SUPPORTEDPASSERMG = 31;
+constexpr Score INNERSHELTERMG = 41;
+constexpr Score OUTERSHELTERMG = 36;
+constexpr Score BISHOPPAIRMG = 45;
+constexpr Score ROOKONOPENFILEMG = 29;
+constexpr Score ROOKONSEMIOPENFILEMG = 20;
+constexpr Score TEMPOMG = 34;
+// (EG)
+
+constexpr Score DOUBLEISOLATEDPENEG = 49;
+constexpr Score ISOLATEDPENEG = 17;
+constexpr Score BACKWARDPENEG = 8;
+constexpr Score DOUBLEDPENEG = 29;
+constexpr Score SUPPORTEDPHALANXEG = 6;
+constexpr Score ADVANCABLEPHALANXEG = 20;
+constexpr Score R_SUPPORTEDPHALANXEG = 2;
+constexpr Score R_ADVANCABLEPHALANXEG = 1;
+constexpr Score passedRankBonusEg [7] = {0, -43, -28, 11, 60, 169, 263, };
+constexpr Score PASSEDPATHBONUSEG = 9;
+constexpr Score SUPPORTEDPASSEREG = -2;
+constexpr Score INNERSHELTEREG = -15;
+constexpr Score OUTERSHELTEREG = -5;
+constexpr Score BISHOPPAIREG = 97;
+constexpr Score ROOKONOPENFILEEG = -9;
+constexpr Score ROOKONSEMIOPENFILEEG = 19;
+constexpr Score TEMPOEG = 31;
+
+
+
 
 constexpr Score OWNPIECEBLOCKEDPAWNMG = 0;
 constexpr Score OWNPIECEBLOCKEDPAWNEG = 8;
 
-constexpr Score ISOLATEDPENMG = 1;
-constexpr Score ISOLATEDPENEG = 13;
 
-constexpr Score BACKWARDPENMG = 7;
-constexpr Score BACKWARDPENEG = 17;
 
 constexpr Score WEAKUNOPPOSEDMG = 9;
 constexpr Score WEAKUNOPPOSEDPENEG = 11;
@@ -121,14 +157,9 @@ constexpr Score ROOKATTACKINNERRING = 15;
 constexpr Score QUEENATTACKOUTERRING = 17;
 constexpr Score QUEENATTACKINNERRING = 32;
 
-constexpr Score MG_TEMPO = 18;
-constexpr Score EG_TEMPO = 0;
-
 #define MOBILITYEVAL true
 #define PAWNEVAL true
 
-Score passedRankBonusMg[7] = { 0, 8, 14, 12, 52, 140, 229 };
-Score passedRankBonusEg[7] = { 0, 20, 24, 30, 52, 129, 189 };
 Score noutpostEg[5] = { 2, 6, 12, 14, 18 };
 Score noutpostMg[5] = { 2, 4, 8, 9, 11 };
 Score boutpostEg[5] = { 2, 5, 10, 8, 3 };
@@ -159,25 +190,54 @@ static inline constexpr BitBoard centralFiles() {
     return files(2) | files(3) | files(4) | files(5);
 }
 
-static inline constexpr BitBoard ne(BitBoard bb) {
-    return (bb & notFile(7)) << 9;
-}
+template <Piece pt>
+//(bb, occ, pinned, mobilityArea, mobilityScore);
+static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], S8 *features) {
+    constexpr Side us = pt < p ? WHITE : BLACK;
+    // constexpr Side them = us ? BLACK : WHITE;
+    BitBoard mob;
+    BitBoard pieces = bb[pt] & ~pinned[us];
+    BitBoard occCheck = occ[BOTH];
 
-static inline constexpr BitBoard nw(BitBoard bb) {
-    return (bb & notFile(0)) << 7;
-}
+    // Consider diagonal xrays through our queens
+    if constexpr (pt == B || pt == Q)                   occCheck ^= bb[Q];
+    else if constexpr (pt == b || pt == q)              occCheck ^= bb[q];
 
-static inline constexpr BitBoard se(BitBoard bb) {
-    return (bb & notFile(7)) >> 7;
-}
-
-static inline constexpr BitBoard sw(BitBoard bb) {
-    return (bb & notFile(0)) >> 9;
-}
+    // Consider cross xrays through our rooks
+    if constexpr (pt == R || pt == Q)                   occCheck ^= bb[R];
+    else if constexpr (pt == r || pt == q)              occCheck ^= bb[r];
+    
+    // Iterate over all pieces of the given type
+    
+    while (pieces) {
+        Square sq = popLsb(pieces);
+        mob = mobilityArea[us];
+        if constexpr (pt == N || pt == n) {
+            mob &= knightAttacks[sq];
+            U8 moveCount = popcount(mob);
+            features[moveCount] += us == WHITE ? 1 : -1;
+        }
+        else if constexpr (pt == B || pt == b) {
+            mob &= getBishopAttack(sq, occCheck); // X-ray through our queens
+            U8 moveCount = popcount(mob);
+            features[moveCount] += us == WHITE ? 1 : -1;
+        }
+        else if constexpr (pt == R || pt == r) {
+            mob &= getRookAttack(sq, occCheck); // X-ray through our queens and rooks
+            U8 moveCount = popcount(mob);
+            features[moveCount] += us == WHITE ? 1 : -1;
+        }
+        else if constexpr (pt == Q || pt == q) {
+            mob &= getQueenAttack(sq, occCheck); // X-ray through our queens
+            U8 moveCount = popcount(mob);
+            features[moveCount] += us == WHITE ? 1 : -1;
+        }
+    }
+} 
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], Score (&mobilityScore)[2][2]) {
+static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], Score (&mobilityScore)[2]) {
     constexpr Side us = pt < p ? WHITE : BLACK;
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard mob;
@@ -201,36 +261,80 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
             mob &= knightAttacks[sq];
             U8 moveCount = popcount(mob);
             // Add the mobility score
-            mobilityScore[0][us] += knightMobMg[moveCount];
-            mobilityScore[1][us] += knightMobEg[moveCount];
+            if constexpr (pt == N) {
+                mobilityScore[0] += knightMobMg[moveCount];
+                mobilityScore[1] += knightMobEg[moveCount];
+            }
+            else {
+                mobilityScore[0] -= knightMobMg[moveCount];
+                mobilityScore[1] -= knightMobEg[moveCount];
+            }
         }
         else if constexpr (pt == B || pt == b) {
             mob &= getBishopAttack(sq, occCheck); // X-ray through our queens
             U8 moveCount = popcount(mob);
             // Add the mobility score
-            mobilityScore[0][us] += bishopMobMg[moveCount];
-            mobilityScore[1][us] += bishopMobEg[moveCount];
+            if constexpr (pt == B) {
+                mobilityScore[0] += bishopMobMg[moveCount];
+                mobilityScore[1] += bishopMobEg[moveCount];
+            }
+            else {
+                mobilityScore[0] -= bishopMobMg[moveCount];
+                mobilityScore[1] -= bishopMobEg[moveCount];
+            }
         }
         else if constexpr (pt == R || pt == r) {
             mob &= getRookAttack(sq, occCheck); // X-ray through our queens and rooks
             U8 moveCount = popcount(mob);
             // Add the mobility score
-            mobilityScore[0][us] += rookMobMg[moveCount];
-            mobilityScore[1][us] += rookMobEg[moveCount];
+            if constexpr (pt == R) {
+                mobilityScore[0] += rookMobMg[moveCount];
+                mobilityScore[1] += rookMobEg[moveCount];
+            }
+            else {
+                mobilityScore[0] -= rookMobMg[moveCount];
+                mobilityScore[1] -= rookMobEg[moveCount];
+            }
         }
         else if constexpr (pt == Q || pt == q) {
             mob &= getQueenAttack(sq, occCheck); // X-ray through our queens
             U8 moveCount = popcount(mob);
             // Add the mobility score
-            mobilityScore[0][us] += queenMobMg[moveCount];
-            mobilityScore[1][us] += queenMobEg[moveCount];
+            if constexpr (pt == Q) {
+                mobilityScore[0] += queenMobMg[moveCount];
+                mobilityScore[1] += queenMobEg[moveCount];
+            }
+            else {
+                mobilityScore[0] -= queenMobMg[moveCount];
+                mobilityScore[1] -= queenMobEg[moveCount];
+            }
         }
     }
+} 
+
+static inline BitBoard filesFromBB(BitBoard bb){
+    bb |= bb >> 8 | bb << 8;
+    bb |= bb >> 16 | bb << 16;
+    bb |= bb >> 32 | bb << 32;
+    return bb;
 }
 
-#define TEMPOMG 16 // We calculate tempomg as the eval @30 of startpos. We repeat this to convergence (0 -> 16 -> 16)
-#define TEMPOEG 4  // We calculate tempoeg as the eval @30 of startpos without pieces (0 -> 4 -> 4)
-    Score pestoEval(Position *pos){
+template <bool side>
+static inline BitBoard advancePathMasked(BitBoard bb, BitBoard mask){
+    if constexpr (side == WHITE){
+        bb |= (bb >> 8) & mask;
+        bb |= (bb >> 16) & mask;
+        bb |= (bb >> 32) & mask;
+    }
+    else {
+        bb |= (bb << 8) & mask;
+        bb |= (bb << 16) & mask;
+        bb |= (bb << 32) & mask;
+    }
+    return bb;
+}
+
+Score pestoEval(Position *pos){
     auto const& bb = pos->bitboards;
     auto const& occ = pos->occupancies;
     // Setup the game phase
@@ -242,7 +346,7 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
                     gamephaseInc[K] * popcount(bb[K] | bb[k]);
     gamePhase = std::min(gamePhase, (S32)24); // If we have a lot of pieces, we don't want to go over 24
 
-    Score mgScore[2] = { 0,0 }, egScore[2] = { 0,0 };
+    Score mgScore = 0, egScore = 0;
     Square whiteKing = lsb(bb[K]);
     Square blackKing = lsb(bb[k]);
 
@@ -264,7 +368,17 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
 
     BitBoard pinned[2] = {
         getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
-        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
+        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE]) 
+    };
+
+    BitBoard blockedPawns[2] = {
+        ((bb[P] >> 8) & occ[BOTH]) << 8,
+        ((bb[p] << 8) & occ[BOTH]) >> 8
+    };
+
+    BitBoard underDevelopedPawns[2] = {
+        bb[P] & (ranks(6) | ranks(5)),
+        bb[p] & (ranks(1) | ranks(2))
     };
 
     BitBoard mobilityArea[2] = {
@@ -274,14 +388,13 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
         // 2. Not defended by enemy pawns
 
         // Calculate a negative mask for the mobility area, and then invert it
-        (occ[WHITE] | pawnAttackedSquares[BLACK] | pinned[WHITE] | bb[K] | bb[Q]) ^ 0xFFFFFFFFFFFFFFFF,
-        (occ[BLACK] | pawnAttackedSquares[WHITE] | pinned[BLACK] | bb[k] | bb[q]) ^ 0xFFFFFFFFFFFFFFFF
+        (blockedPawns[WHITE] | underDevelopedPawns[WHITE] | pawnAttackedSquares[BLACK] | pinned[WHITE] | bb[K] | bb[Q]) ^ 0xFFFFFFFFFFFFFFFF,
+        (blockedPawns[BLACK] | underDevelopedPawns[BLACK] | pawnAttackedSquares[WHITE] | pinned[BLACK] | bb[k] | bb[q]) ^ 0xFFFFFFFFFFFFFFFF
     };
 
     // Calculate the mobility scores (index by phase and color)
-    Score mobilityScore[2][2] = {
-        { 0,0 },
-        { 0,0 }
+    Score mobilityScore[2] = {
+        0,0 
     };
 
     // White mobility
@@ -296,889 +409,614 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
     mobility<r>(bb, occ, pinned, mobilityArea, mobilityScore);
     mobility<q>(bb, occ, pinned, mobilityArea, mobilityScore);
 
+    // Malus for directly doubled, undefended pawns
+    BitBoard protectedPawns[2] = {
+        bb[P] & pawnAttackedSquares[WHITE],
+        bb[p] & pawnAttackedSquares[BLACK]
+    };
+
+    BitBoard pawnBlockage[2] = {
+        bb[P] | pawnAttackedSquares[WHITE],
+        bb[p] | pawnAttackedSquares[BLACK]
+    };
+
+    BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
+    BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
+    // White pawns
+    BitBoard pieces = bb[P];
+    while (pieces){
+        // Evaluate isolated, backward, doubled pawns and connected pawns
+        Square sq = popLsb(pieces);
+        BitBoard sqb = squareBB(sq);
+        U8 rank = 7 - rankOf(sq);
+        bool doubled = doubledPawns[WHITE] & squareBB(sq);
+        bool isolated = !(isolatedPawnMask[sq] & bb[P]);
+        bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
+        bool supported = protectedPawns[WHITE] & sqb;
+        bool advancable = !(pawnBlockage[WHITE] & north(sqb));
+        bool phal = phalanx[sq] & bb[P];
+        bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
+        
+        bool backward = !( // If the pawn
+            (backwardPawnMask[WHITE][sq] & bb[P]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
+            || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
+        );
+        // Check if the pawn is doubled
+        if (doubled && isolated && pawnOpposed){
+            mgScore -= DOUBLEISOLATEDPENMG;
+            egScore -= DOUBLEISOLATEDPENEG;
+        }
+        else if (isolated){
+            mgScore -= ISOLATEDPENMG;
+            egScore -= ISOLATEDPENEG;
+        }
+        else if (backward){
+            mgScore -= BACKWARDPENMG;
+            egScore -= BACKWARDPENEG;
+        }
+        if (doubled && !supported){
+            mgScore -= DOUBLEDPENMG;
+            egScore -= DOUBLEDPENEG;
+        }
+        else if (supported && phal){
+            mgScore += SUPPORTEDPHALANXMG;
+            mgScore += R_SUPPORTEDPHALANXMG * (rank - 2);
+            egScore += SUPPORTEDPHALANXEG;
+            egScore += R_SUPPORTEDPHALANXEG * (rank - 2);
+        }
+        else if (advancable && phal){
+            mgScore += ADVANCABLEPHALANXMG;
+            mgScore += R_ADVANCABLEPHALANXMG * (rank - 2);
+            egScore += ADVANCABLEPHALANXEG;
+            egScore += R_ADVANCABLEPHALANXEG * (rank - 2);
+        }
+        if (candidatePassed){
+            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
+            // Give bonus for how close the pawn is to the promotion square
+            mgScore += passedRankBonusMg[rank];
+            egScore += passedRankBonusEg[rank];
+            // Give bonus for how many squares the pawn can advance
+            mgScore += popcount(passedPath) * PASSEDPATHBONUSMG;
+            egScore += popcount(passedPath) * PASSEDPATHBONUSEG;
+            // Bonus for connected or supported passed pawns
+            if (supported){
+                mgScore += SUPPORTEDPASSERMG;
+                egScore += SUPPORTEDPASSEREG;
+            }
+        }
+    }
+
+    // Black pawns
+    pieces = bb[p];
+    while (pieces){
+        // Evaluate isolated, backward, doubled pawns and connected pawns
+        Square sq = popLsb(pieces);
+        BitBoard sqb = squareBB(sq);
+        U8 rank = rankOf(sq);
+        bool doubled = doubledPawns[BLACK] & squareBB(sq);
+        bool isolated = !(isolatedPawnMask[sq] & bb[p]);
+        bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
+        bool supported = protectedPawns[BLACK] & sqb;
+        bool advancable = !(pawnBlockage[BLACK] & south(sqb));
+        bool phal = phalanx[sq] & bb[p];
+        bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
+        
+        bool backward = !( // If the pawn
+            (backwardPawnMask[BLACK][sq] & bb[p]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
+            || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
+        );
+        // Check if the pawn is doubled
+        if (doubled && isolated && pawnOpposed){
+            mgScore += DOUBLEISOLATEDPENMG;
+            egScore += DOUBLEISOLATEDPENEG;
+        }
+        else if (isolated){
+            mgScore += ISOLATEDPENMG;
+            egScore += ISOLATEDPENEG;
+        }
+        else if (backward){
+            mgScore += BACKWARDPENMG;
+            egScore += BACKWARDPENEG;
+        }
+        if (doubled && !supported){
+            mgScore += DOUBLEDPENMG;
+            egScore += DOUBLEDPENEG;
+        }
+        else if (supported && phal){
+            mgScore -= SUPPORTEDPHALANXMG;
+            mgScore -= R_SUPPORTEDPHALANXMG * (rank - 2);
+            egScore -= SUPPORTEDPHALANXEG;
+            egScore -= R_SUPPORTEDPHALANXEG * (rank - 2);
+        }
+        else if (advancable && phal){
+            mgScore -= ADVANCABLEPHALANXMG;
+            mgScore -= R_ADVANCABLEPHALANXMG * (rank - 2);
+            egScore -= ADVANCABLEPHALANXEG;
+            egScore -= R_ADVANCABLEPHALANXEG * (rank - 2);
+        }
+        if (candidatePassed){
+            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
+            // Give bonus for how close the pawn is to the promotion square
+            mgScore -= passedRankBonusMg[rank];
+            egScore -= passedRankBonusEg[rank];
+            // Give bonus for how many squares the pawn can advance
+            mgScore -= popcount(passedPath) * PASSEDPATHBONUSMG;
+            egScore -= popcount(passedPath) * PASSEDPATHBONUSEG;
+            // Bonus for connected or supported passed pawns
+            if (supported){
+                mgScore -= SUPPORTEDPASSERMG;
+                egScore -= SUPPORTEDPASSEREG;
+            }
+        }
+    }
+
+    // Calculate king safety
+    // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
+    BitBoard innerShelters[2] = {
+        kingShelter[WHITE][whiteKing],
+        kingShelter[BLACK][blackKing]
+    };
+    // The outer shield is the squares in front of the inner shield. We only consider supported squares
+    BitBoard outerShelters[2] = {
+        north(innerShelters[WHITE]) & pawnAttackedSquares[WHITE],
+        south(innerShelters[BLACK]) & pawnAttackedSquares[BLACK]
+    };
+
+    // Get pawns
+    innerShelters[WHITE] &= bb[P];
+    innerShelters[BLACK] &= bb[p];
+    outerShelters[WHITE] &= bb[P];
+    outerShelters[BLACK] &= bb[p];
+
+    // Add the shelter bonus
+    mgScore += INNERSHELTERMG * (popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]));
+    egScore += INNERSHELTEREG * (popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]));
+    mgScore += OUTERSHELTERMG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
+    egScore += OUTERSHELTEREG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
+
+    // Add bonus for bishop pairs
+    mgScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIRMG;
+    egScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIREG;
+
+    // Add bonus for rooks on open files
+    BitBoard openFiles = ~(pawnFiles[WHITE] | pawnFiles[BLACK]);
+    BitBoard semiOpenFor[2] = {
+        ~pawnFiles[WHITE],
+        ~pawnFiles[BLACK]
+    };
+    Score openDiff = popcount(bb[R] & openFiles) - popcount(bb[r] & openFiles);
+    Score semiOpenDiff = popcount(bb[R] & semiOpenFor[WHITE]) - popcount(bb[r] & semiOpenFor[BLACK]);
+    mgScore += openDiff * ROOKONOPENFILEMG;
+    egScore += openDiff * ROOKONOPENFILEEG;
+    mgScore += semiOpenDiff * ROOKONSEMIOPENFILEMG;
+    egScore += semiOpenDiff * ROOKONSEMIOPENFILEEG;
+
+
     // Calculate the total score
-    mgScore[WHITE] += mobilityScore[0][WHITE];
-    mgScore[BLACK] += mobilityScore[0][BLACK];
-    egScore[WHITE] += mobilityScore[1][WHITE];
-    egScore[BLACK] += mobilityScore[1][BLACK];
+    mgScore += mobilityScore[0];
+    egScore += mobilityScore[1];
 
     // Calculate mg and eg scores
     Score sign = 1 - 2 * pos->side;
-    Score mg = mgScore[WHITE] - mgScore[BLACK] + sign * TEMPOMG;
-    Score eg = egScore[WHITE] - egScore[BLACK] + sign * TEMPOEG;
-
+    mgScore += sign * TEMPOMG;
+    egScore += sign * TEMPOEG;
     
     return sign * 
         (
-            (pos->psqtScore[0] + mg) * gamePhase +
-            (pos->psqtScore[1] + eg) * (24 - gamePhase)
+            (pos->psqtScore[0] + mgScore) * gamePhase +
+            (pos->psqtScore[1] + egScore) * (24 - gamePhase)
         ) / 24;
 }
 
-Score pestoEval2(Position* pos) {
+std::vector<Score> getCurrentEvalWeights(){
+    std::vector<Score> weights;
+    // Add the material weights
+    for (Piece piece = P; piece <= Q; piece++){
+        weights.push_back(mgValues[piece]);
+    }
+    // Add the psqt weights
+    for (Piece piece = P; piece <= K; piece++){
+        for (Square square = a8; square < noSquare; square++){
+            weights.push_back(mgTables[piece][square]);
+        }
+    }
+    // Add the mobility weights
+    for (U8 mobcount = 0; mobcount < 9; mobcount++){
+        weights.push_back(knightMobMg[mobcount]);
+    }
+    for (U8 mobcount = 0; mobcount < 14; mobcount++){
+        weights.push_back(bishopMobMg[mobcount]);
+    }
+    for (U8 mobcount = 0; mobcount < 15; mobcount++){
+        weights.push_back(rookMobMg[mobcount]);
+    }
+    for (U8 mobcount = 0; mobcount < 28; mobcount++){
+        weights.push_back(queenMobMg[mobcount]);
+    }
+    // Add the pawn evaluation weights
+    weights.push_back(DOUBLEISOLATEDPENMG);
+    weights.push_back(ISOLATEDPENMG);
+    weights.push_back(BACKWARDPENMG);
+    weights.push_back(DOUBLEDPENMG);
+    weights.push_back(SUPPORTEDPHALANXMG);
+    weights.push_back(R_SUPPORTEDPHALANXMG);
+    weights.push_back(ADVANCABLEPHALANXMG);
+    weights.push_back(R_ADVANCABLEPHALANXMG);
+    // Add the passed pawn bonus list
+    for (U8 rank = 0; rank < 7; rank++){
+        weights.push_back(passedRankBonusMg[rank]);
+    }
+    weights.push_back(PASSEDPATHBONUSMG);
+    weights.push_back(SUPPORTEDPASSERMG);
+
+    // Add the shelter weights
+    weights.push_back(INNERSHELTERMG);
+    weights.push_back(OUTERSHELTERMG);
+    
+    // Add the bishop pair bonus
+    weights.push_back(BISHOPPAIRMG);
+
+    // Add the rook and queen on open file bonus
+    weights.push_back(ROOKONOPENFILEMG);
+    weights.push_back(ROOKONSEMIOPENFILEMG);
+
+    // Add the tempo bonus
+    weights.push_back(TEMPOMG);
+
+    // Now, EG
+    // Add the material weights
+    for (Piece piece = P; piece <= K; piece++){
+        weights.push_back(egValues[piece]);
+    }
+    // Add the psqt weights
+    for (Piece piece = P; piece <= K; piece++){
+        for (Square square = a8; square < noSquare; square++){
+            weights.push_back(egTables[piece][square]);
+        }
+    }
+    // Add the mobility weights
+    for (U8 mobcount = 0; mobcount < 9; mobcount++){
+        weights.push_back(knightMobEg[mobcount]);
+    }
+    for (U8 mobcount = 0; mobcount < 14; mobcount++){
+        weights.push_back(bishopMobEg[mobcount]);
+    }
+    for (U8 mobcount = 0; mobcount < 15; mobcount++){
+        weights.push_back(rookMobEg[mobcount]);
+    }
+    for (U8 mobcount = 0; mobcount < 28; mobcount++){
+        weights.push_back(queenMobEg[mobcount]);
+    }
+    // Add the pawn evaluation weights
+    weights.push_back(DOUBLEISOLATEDPENEG);
+    weights.push_back(ISOLATEDPENEG);
+    weights.push_back(BACKWARDPENEG);
+    weights.push_back(DOUBLEDPENEG);
+    weights.push_back(SUPPORTEDPHALANXEG);
+    weights.push_back(R_SUPPORTEDPHALANXEG);
+    weights.push_back(ADVANCABLEPHALANXEG);
+    weights.push_back(R_ADVANCABLEPHALANXEG);
+    // Add the passed pawn bonus list
+    for (U8 rank = 0; rank < 7; rank++){
+        weights.push_back(passedRankBonusEg[rank]);
+    }
+    weights.push_back(PASSEDPATHBONUSEG);
+    weights.push_back(SUPPORTEDPASSEREG);
+
+    // Add the shelter weights
+    weights.push_back(INNERSHELTEREG);
+    weights.push_back(OUTERSHELTEREG);
+
+    // Add the bishop pair bonus
+    weights.push_back(BISHOPPAIREG);
+
+    // Add the rook and queen on open file bonus
+    weights.push_back(ROOKONOPENFILEEG);
+    weights.push_back(ROOKONSEMIOPENFILEEG);
+
+    // Add the tempo bonus
+    weights.push_back(TEMPOEG);
+
+    return weights;
+}
+    
+// Returns the evaluation features tensor
+// This will be used to tune the evaluation function
+void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
 
     auto const& bb = pos->bitboards;
-    Score mg[2] = { 0,0 }, eg[2] = { 0,0 };
-    Score whiteMaterial, blackMaterial;
-    Score gamePhase;
-    BitBoard whiteOccupancy, blackOccupancy, occupancy;
-    BitBoard whiteNonPawns, blackNonPawns;
-    BitBoard attackedByWhitePawns, attackedByBlackPawns;
-    BitBoard unadvancablePawnsFor[2] = { 0,0 };
-    BitBoard whiteRearSpan, blackRearSpan;
+    auto const& occ = pos->occupancies;
+    auto us = pos->side;
+    Square whiteKing = lsb(bb[K]);
+    Square blackKing = lsb(bb[k]);
 
-    BitBoard whiteBQ, whiteRQ, whiteKQ;
-    BitBoard blackBQ, blackRQ, blackKQ;
-    Square whiteKing, blackKing;
-
-    U8 openFileFor[2] = { 0,0 };
-    U8 openFile;
-    S8 pawnStormTo[2] = { 0,0 };
-    S32 tropismToWhiteKing, tropismToBlackKing;
-
-    BitBoard pinnedWhite;
-    BitBoard pinnedBlack;
-
-    BitBoard kingShelter[2] = { 0,0 };
-
-    BitBoard blockedWhitePawns, blockedBlackPawns;
-    U8 blockedOnMiddleWhitePawns, blockedOnMiddleBlackPawns;
-    BitBoard whiteOnWhitePawns, blackOnWhitePawns, whiteOnBlackPawns, blackOnBlackPawns;
-    U8 cWW, cBW, cWB, cBB;
-
-    Score mgScore = 0;
-    Score egScore = 0;
-
-
-    gamePhase = 24;
-
-    whiteOccupancy = (bb[P] | bb[N]) | (bb[B] | bb[R]) | (bb[Q] | bb[K]);
-    blackOccupancy = (bb[p] | bb[n]) | (bb[b] | bb[r]) | (bb[q] | bb[k]);
-    occupancy = whiteOccupancy | blackOccupancy;
-
-    whiteNonPawns = whiteOccupancy ^ bb[P];
-    blackNonPawns = blackOccupancy ^ bb[p];
-
-		
-
-    attackedByWhitePawns = ((bb[P] & notFile(0)) >> 9) | ((bb[P] & notFile(7)) >> 7);
-    attackedByBlackPawns = ((bb[p] & notFile(0)) << 7) | ((bb[p] & notFile(7)) << 9);
-
-    whiteRearSpan = blackRearSpan = 0ULL;
-
-    whiteBQ = bb[B] | bb[Q];
-    whiteRQ = bb[R] | bb[Q];
-    whiteKQ = bb[K] | bb[Q];
-    blackBQ = bb[b] | bb[q];
-    blackRQ = bb[r] | bb[q];
-    blackKQ = bb[k] | bb[q];
-    whiteKing = lsb(bb[K]);
-    blackKing = lsb(bb[k]);
-
-    openFileFor[WHITE] = openFileFor[BLACK] = 0xFF;
-    pawnStormTo[WHITE] = pawnStormTo[BLACK] = 0;
-    pinnedWhite = getPinnedPieces(occupancy, whiteOccupancy, whiteKing, blackRQ, blackBQ);
-    pinnedBlack = getPinnedPieces(occupancy, blackOccupancy, blackKing, whiteRQ, whiteBQ);
-
-    // King shelter
-    kingShelter[WHITE] = rankOf(whiteKing) > 0 ? (kingAttacks[whiteKing - 8] & notRank(rankOf(whiteKing))) : 0;
-    kingShelter[BLACK] = rankOf(blackKing) < 7 ? (kingAttacks[blackKing + 8] & notRank(rankOf(blackKing))) : 0;
-
-    // TODO: https://www.talkchess.com/forum3/viewtopic.php?f=7&t=76976 (interesting king safety topics)
-
-    // Mobility area calculations
-	unadvancablePawnsFor[WHITE] = unadvancablePawnsFor[BLACK] = 0;
-    blockedWhitePawns = ((bb[P] >> 8) & occupancy) << 8;
-    blockedBlackPawns = ((bb[p] << 8) & occupancy) >> 8;
-    blockedOnMiddleWhitePawns = popcount(blockedWhitePawns & centralFiles());
-    blockedOnMiddleBlackPawns = popcount(blockedBlackPawns & centralFiles());
-    whiteOnWhitePawns = bb[P] & squaresOfColor[WHITE];
-    blackOnWhitePawns = bb[p] & squaresOfColor[WHITE];
-    whiteOnBlackPawns = bb[P] & squaresOfColor[BLACK];
-    blackOnBlackPawns = bb[p] & squaresOfColor[BLACK];
-    cWW = popcount(whiteOnWhitePawns);
-    cBW = popcount(blackOnWhitePawns);
-    cWB = popcount(whiteOnBlackPawns);
-    cBB = popcount(blackOnBlackPawns);
-
-    BitBoard whitePawnsFirstRanks = bb[P] & (ranks(6) | ranks(5) | ranks(4));
-    BitBoard blackPawnsFirstRanks = bb[p] & (ranks(1) | ranks(2) | ranks(3));
-
-    BitBoard mobilityAreaWhite = (0xFFFFFFFFFFFFFFFF ^ ((whiteKQ | attackedByBlackPawns) | (blockedWhitePawns | whitePawnsFirstRanks)));
-    BitBoard mobilityAreaBlack = (0xFFFFFFFFFFFFFFFF ^ ((blackKQ | attackedByWhitePawns) | (blockedBlackPawns | blackPawnsFirstRanks)));
-
-    U8 whitePawnCount = popcount(bb[P]);
-    U8 blackPawnCount = popcount(bb[p]);
-
-    whiteMaterial = blackMaterial = 0;
-
-    tropismToWhiteKing = tropismToBlackKing = 0;
-
-    whiteMaterial += whitePawnCount * mgValues[P];
-    blackMaterial += blackPawnCount * mgValues[P];
-
-    int side = pos->side;
-    int other = side ^ 1;
-    int whiteKingShield = (rankOf(whiteKing) > 0 ? popcount(kingAttacks[whiteKing] & notRank(rankOf(whiteKing) - 1)) : 0);
-    int blackKingShield = (rankOf(blackKing) < 7 ? popcount(kingAttacks[blackKing] & notRank(rankOf(blackKing) + 1)) : 0);
-
-	bool KPendgame = ((bb[K] | bb[k]) | (bb[P] | bb[p])) == occupancy;
-    if (KPendgame) {
-        if (!bb[p]) eg[WHITE] += egValues[Q] - egValues[P];
-        if (!bb[P]) eg[BLACK] += egValues[Q] - egValues[P];                 
-    }
-
-
-    Score whiteNonPawnMaterial = whiteMaterial - mgValues[P] * whitePawnCount;
-    Score blackNonPawnMaterial = blackMaterial - mgValues[P] * blackPawnCount;
-
-    BitBoard supportedWhitePawns = attackedByWhitePawns & bb[P];
-    BitBoard supportedBlackPawns = attackedByBlackPawns & bb[p];
-
-    BitBoard kingAsterix[2] = { getQueenAttack(whiteKing, occupancy), getQueenAttack(blackKing, occupancy) };
-    BitBoard kingKnightZone[2] = { knightAttacks[whiteKing], knightAttacks[blackKing] };
-    BitBoard kingDangerZone[2] = { kingAsterix[WHITE] & fiveSquare[whiteKing], kingAsterix[BLACK] & fiveSquare[blackKing] };
-	BitBoard kingDangerSquare[2] = { kingAttacks[whiteKing], kingAttacks[blackKing] };
-    Score kingDangerScores[2] = { 0, 0 };
+    // Calculate the game phase
+    S32 gamePhase = gamephaseInc[P] * popcount(bb[P] | bb[p]) +
+                    gamephaseInc[N] * popcount(bb[N] | bb[n]) +
+                    gamephaseInc[B] * popcount(bb[B] | bb[b]) +
+                    gamephaseInc[R] * popcount(bb[R] | bb[r]) +
+                    gamephaseInc[Q] * popcount(bb[Q] | bb[q]) +
+                    gamephaseInc[K] * popcount(bb[K] | bb[k]);
     
-    BitBoard pawns = bb[P]; // We need to use a temporary variable because we will modify it
-    // For each pawn:
-    while (pawns) {
+    gamePhase = std::min(gamePhase, (S32)24); // If we have a lot of pieces, we don't want to go over 24
+    // Add the game phase
+    tensor[0] = gamePhase;
+    ++tensor;
 
-        // Get the pawn square
-        Square pawn = popLsb(pawns);
+    // Add the material weights
+    for (Piece piece = P; piece <= Q; piece++){
+        tensor[piece] = popcount(pos->bitboards[piece]) - popcount(pos->bitboards[piece + 6]);
+    }
+    tensor += 5;
 
-        mg[WHITE] += mgTables[P][pawn];
-        eg[WHITE] += egTables[P][pawn];
 
-        // Compute the square bitboard mask
-        BitBoard pawnBB = squareBB(pawn);
 
-        // Compute the square rank
-        S8 pawnRank = 7 - rankOf(pawn);
-        U8 pawnFile = fileOf(pawn);
+    // Add the psqt weights
+    for (Square square = a8; square < noSquare; square++){
+        Piece piece = pos->pieceOn(square);
+        if (piece == NOPIECE) continue;
+        Square sq = piece < p ? square : flipSquare(square);
+        tensor[64 * (piece % 6) + sq] += piece < p ? 1 : -1;
+    }
+    tensor += 64 * 6;
 
-        // Add rearSpanOf
-        whiteRearSpan |= squaresBehind(pawn);
 
-        // Open file calculations
-        clearBit(openFileFor[BLACK], pawnFile);
 
-        // Useful bitboards
-        BitBoard forward = squaresAhead(pawn);
-        BitBoard backward = squaresBehind(pawn);
-        Square frontSquare = pawn - 8;
+    // Add the mobility weights
 
-        bool isOpposed = forward & bb[p]; // Is the pawn opposed to an enemy pawn?
-        bool isDirectlyOpposed = squareBB(frontSquare) & bb[p]; // Is the pawn directly opposed to an enemy pawn?
-        bool isBehindFriendly = forward & bb[P];      // Is the pawn behind a friendly pawn?
-        bool isDoubled = backward & bb[P]; // Is the pawn doubled?
-        bool isSupported = pawnBB & supportedWhitePawns; // Is the pawn supported?
-        bool isIsolated = !(isolatedPawnMask[pawn] & bb[P]); // Is the pawn isolated? (No friendly pawns on the flanks)
-        bool isBackward = (!(backwardPawnMask[WHITE][pawn] & bb[P])) && (isDirectlyOpposed || ((pawnBB>>8) & attackedByBlackPawns)); // Is the pawn backward? (has no friendly pawns behind on flank files and is stopped by enemy pawn from advancing)
-        bool isPhalanx = phalanx[pawn] & bb[P]; // Is the pawn a phalanx (at least one friendly pawn on adjacent file and same rank)
-        bool isConnected = isSupported || isPhalanx;
-        bool isWeakUnopposed = (!isOpposed) && (isIsolated || isBackward); // Is the pawn weak (isolated or backward), while not being opposed by enemy pawn?
-        bool isWeakLever = !isSupported && (popcount(pawnAttacks[WHITE][pawn] & bb[p]) == 2); // Is the pawn weak (lever), while not being opposed by enemy pawn?
-        bool isOwnPieceBlocked = ((pawnBB >> 8) & whiteOccupancy) && !isSupported && !isDoubled;
-        S8 r56 = std::min(2, std::max(0, pawnRank - 3)) * (isDirectlyOpposed);
-        Score blocked56mg = blockBonusMg[r56] ; // Is the pawn blocked by a pawn on the 5th or 6th rank? 
-        Score blocked56eg = blockBonusEg[r56]; // Is the pawn blocked by a pawn on the 5th or 6th rank?
-        Score connectedScore = (isConnected) ? connectedBonus(pawnRank, isOpposed, isPhalanx, isSupported) : 0; // How good is the connected pawn?
-		bool isUnadvancable = isDirectlyOpposed || (popcount(pawnAttacks[WHITE][frontSquare] & bb[p]) == 2); // Is the pawn unadvancable? (stopped by enemy pawns or directly opposed)
-        bool earlyDoubled = !(bb[P] & ((bb[p] | attackedByBlackPawns) >> 8));
-        // Update bitboard masks (TODO)
-		unadvancablePawnsFor[WHITE] |= pawnBB * isUnadvancable;
-        // Add scores
+    // Mobility calculations
+    BitBoard pawnAttackedSquares[2] = {
+        ((bb[P] & notFile(0)) >> 9) | ((bb[P] & notFile(7)) >> 7),
+        ((bb[p] & notFile(0)) << 7) | ((bb[p] & notFile(7)) << 9)};
 
-        // mg
-        mg[WHITE] -= isIsolated * ISOLATEDPENMG;
-        mg[WHITE] -= isBackward * BACKWARDPENMG;
+    // Pinned mask
+    BitBoard RQmask[2] = {
+        bb[R] | bb[Q],
+        bb[r] | bb[q]};
+    BitBoard BQmask[2] = {
+        bb[B] | bb[Q],
+        bb[b] | bb[q]};
+    BitBoard pinned[2] = {
+        getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
+        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])};
+    BitBoard blockedPawns[2] = {
+        ((bb[P] >> 8) & occ[BOTH]) << 8,
+        ((bb[p] << 8) & occ[BOTH]) >> 8};
+    BitBoard underDevelopedPawns[2] = {
+        bb[P] & (ranks(6) | ranks(5)),
+        bb[p] & (ranks(1) | ranks(2))};
+    BitBoard mobilityArea[2] = {
+        // Mobility area.
+        // Squares in the mobility area are:
+        // 1. Free of our pieces
+        // 2. Not defended by enemy pawns
+
+        // Calculate a negative mask for the mobility area, and then invert it
+        (blockedPawns[WHITE] | underDevelopedPawns[WHITE] | pawnAttackedSquares[BLACK] | pinned[WHITE] | bb[K] | bb[Q]) ^ 0xFFFFFFFFFFFFFFFF,
+        (blockedPawns[BLACK] | underDevelopedPawns[BLACK] | pawnAttackedSquares[WHITE] | pinned[BLACK] | bb[k] | bb[q]) ^ 0xFFFFFFFFFFFFFFFF
+    };
+
+    // Calculate the mobility scores (index by phase and color)
+    getMobilityFeat<N>(bb, occ, pinned, mobilityArea, tensor);
+    getMobilityFeat<n>(bb, occ, pinned, mobilityArea, tensor);
+    tensor += 9;
+    getMobilityFeat<B>(bb, occ, pinned, mobilityArea, tensor);
+    getMobilityFeat<b>(bb, occ, pinned, mobilityArea, tensor);
+    tensor += 14;
+    getMobilityFeat<R>(bb, occ, pinned, mobilityArea, tensor);
+    getMobilityFeat<r>(bb, occ, pinned, mobilityArea, tensor);
+    tensor += 15;
+    getMobilityFeat<Q>(bb, occ, pinned, mobilityArea, tensor);
+    getMobilityFeat<q>(bb, occ, pinned, mobilityArea, tensor);
+    tensor += 28;
+
+
+
+    // Add the pawn evaluation weights
+    // Malus for directly doubled, undefended pawns
+    BitBoard protectedPawns[2] = {
+        bb[P] & pawnAttackedSquares[WHITE],
+        bb[p] & pawnAttackedSquares[BLACK]
+    };
+
+    BitBoard pawnBlockage[2] = {
+        bb[P] | pawnAttackedSquares[WHITE],
+        bb[p] | pawnAttackedSquares[BLACK]
+    };
+
+    BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
+    BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
+    // White pawns
+    BitBoard pieces = bb[P];
+    while (pieces){
+        // Evaluate isolated, backward, doubled pawns and connected pawns
+        Square sq = popLsb(pieces);
+        BitBoard sqb = squareBB(sq);
+        U8 rank = 7 - rankOf(sq);
+        bool doubled = doubledPawns[WHITE] & squareBB(sq);
+        bool isolated = !(isolatedPawnMask[sq] & bb[P]);
+        bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
+        bool supported = protectedPawns[WHITE] & sqb;
+        bool advancable = !(pawnBlockage[WHITE] & north(sqb));
+        bool phal = phalanx[sq] & bb[P];
+        bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
         
+        bool backward = !( // If the pawn
+            (backwardPawnMask[WHITE][sq] & bb[P]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
+            || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
+        );
+        // Check if the pawn is doubled
+        if (doubled && isolated && pawnOpposed) tensor[0]--;
 
-		mg[WHITE] -= isDoubled * (DOUBLEDPENMG + earlyDoubled * DOUBLEDEARLYMG);
-        mg[WHITE] -= isWeakUnopposed * WEAKUNOPPOSEDMG;
-
-        mg[WHITE] += connectedScore;
-        mg[WHITE] += blocked56mg;
-        mg[WHITE] -= isOwnPieceBlocked * OWNPIECEBLOCKEDPAWNMG * (7 - pawnRank);
-
-        // mg
-        eg[WHITE] -= isIsolated * ISOLATEDPENEG;
-        eg[WHITE] -= isBackward * BACKWARDPENEG;
-
-
-        eg[WHITE] -= isDoubled * (DOUBLEDPENEG + earlyDoubled * DOUBLEDEARLYEG);
-		
-        eg[WHITE] -= isWeakUnopposed * WEAKUNOPPOSEDPENEG;
-        eg[WHITE] -= isWeakLever * WEAKLEVEREG;
-        eg[WHITE] -= isOwnPieceBlocked * OWNPIECEBLOCKEDPAWNEG * (7-pawnRank);
-
-        eg[WHITE] += connectedScore * ((pawnRank - 2) / 4);
-        eg[WHITE] += blocked56eg;
-        
-        // Passed pawns
-        // We need to identify passed pawns, as well as candidate passers.
-        // A pawn is passed if one of the three following conditions is true:
-        // (a) there is no stoppers except some levers
-        // (b) the only stoppers are the leverPush, but we outnumber them
-        // (c) there is only one front stopper which can be levered.
-        // If there is a pawn of our color in the same file in front of a current pawn it's no longer counts as passed.
-
-        bool candidate = !isBehindFriendly && (popcount((passedPawnMask[WHITE][pawn] ^ pawnAttacks[WHITE][pawn]) & bb[p]) <= popcount((pawnAttacks[BLACK][pawn]) & bb[P]) - popcount((phalanx[pawn]) & bb[p]));
-		bool passed = candidate && ((passedPawnMask[WHITE][pawn] & bb[p]) == 0) && ((passedPawnMask[WHITE][pawn] & attackedByBlackPawns) == 0);
-        
-        Score candidateScore = candidate + 3 * passed + (isConnected && candidate) + (!isUnadvancable && candidate);
-        
-        // Add scores
-        // mg
-        mg[WHITE] += (candidateScore * passedRankBonusMg[pawnRank])>>2;
-        // TODO: consider the whole path to promotion (needs  to have attack mask set)
-        mg[WHITE] -= (candidateScore * 6 * std::min(pawnFile, U8(7 - pawnFile)))>>2;
-        // eg
-        eg[WHITE] += (candidateScore * passedRankBonusEg[pawnRank])>>2;
-        // TODO: consider the whole path to promotion (needs  to have attack mask set)
-        eg[WHITE] -= (candidateScore * 4 * std::min(pawnFile, U8(7 - pawnFile))) >> 2;
-
-        Score pawnEgScore = (1 + !isOpposed + isConnected - isDoubled) * ((1 + (KPendgame && candidate)) << candidate);
-        eg[WHITE] += (7 - chebyshevDistance[pawn][whiteKing]) * pawnEgScore;
-        eg[WHITE] -= (7 - chebyshevDistance[pawn][blackKing]) * pawnEgScore;
-        if (KPendgame && passed) {
-            Square promoSquare = lsb(squaresAhead(pawn) & ranks(0));
-            eg[WHITE] += 500 * (std::min(U8(5), chebyshevDistance[pawn][promoSquare]) < (chebyshevDistance[blackKing][promoSquare] - side));
+        else if (isolated) tensor[1]--;
+        else if (backward) tensor[2]--;
+        if (doubled && !supported) tensor[3]--;
+        else if (supported && phal) {
+            tensor[4]++;
+            tensor[5] += rank - 2;
         }
-        pawnStormTo[BLACK] += std::max(0, (5 + candidate + isSupported + (passed && isSupported) - isWeakLever - isOpposed - (S8)chebyshevDistance[pawn][blackKing]));
-    }
-
-    // BLACK
-    pawns = bb[p]; // We need to use a temporary variable because we will modify it
-    // For each pawn
-    while (pawns) { 
-
-        // Get the pawn square
-        Square pawn = popLsb(pawns);
-
-        // Compute the square bitboard mask
-        BitBoard pawnBB = squareBB(pawn);
-
-        mg[BLACK] += mgTables[p][pawn];
-        eg[BLACK] += egTables[p][pawn];
-
-        // Compute the square rank
-        S8 pawnRank = rankOf(pawn);
-        U8 pawnFile = fileOf(pawn);
-
-        // Add rearSpanOf
-        blackRearSpan |= squaresAhead(pawn);
-
-        // Open file calculations
-        clearBit(openFileFor[WHITE], pawnFile);
-
-        // Useful bitboards
-        BitBoard forward = squaresBehind(pawn);
-        BitBoard backward = squaresAhead(pawn);
-        Square frontSquare = pawn + 8;
-
-        bool isOpposed = forward & bb[P]; // Is the pawn opposed to an enemy pawn?
-        bool isDirectlyOpposed = squareBB(frontSquare) & bb[P]; // Is the pawn directly opposed to an enemy pawn?
-        bool isBehindFriendly = forward & bb[p];      // Is the pawn behind a friendly pawn?
-        bool isDoubled = backward & bb[p]; // Is the pawn doubled?
-        bool isSupported = pawnBB & supportedBlackPawns; // Is the pawn supported?
-        bool isIsolated = !(isolatedPawnMask[pawn] & bb[p]); // Is the pawn isolated? (No friendly pawns on the flanks)
-        bool isBackward = (!(backwardPawnMask[BLACK][pawn] & bb[p])) && (isDirectlyOpposed || ((pawnBB << 8) & attackedByWhitePawns)); // Is the pawn backward? (has no friendly pawns behind on flank files and is stopped by enemy pawn from advancing)
-        bool isPhalanx = phalanx[pawn] & bb[p]; // Is the pawn a phalanx (at least one friendly pawn on adjacent file and same rank)
-        bool isConnected = isSupported || isPhalanx;
-        bool isWeakUnopposed = (!isOpposed) && (isIsolated || isBackward); // Is the pawn weak (isolated or backward), while not being opposed by enemy pawn?
-        bool isOwnPieceBlocked = ((pawnBB << 8) & blackOccupancy) && !isSupported && !isDoubled;
-        bool isWeakLever = !isSupported && (popcount(pawnAttacks[BLACK][pawn] & bb[P]) == 2); // Is the pawn weak (lever), while not being opposed by enemy pawn?
-        S8 r56 = std::min(2, std::max(0, pawnRank - 3)) * (isDirectlyOpposed);
-        Score blocked56mg = blockBonusMg[r56]; // Is the pawn blocked by a pawn on the 5th or 6th rank? 
-        Score blocked56eg = blockBonusEg[r56]; // Is the pawn blocked by a pawn on the 5th or 6th rank?
-		Score connectedScore = (isConnected) ? connectedBonus(pawnRank, isOpposed, isPhalanx, isSupported) : 0; // How good is the connected pawn?
-		bool isUnadvancable = isDirectlyOpposed || (popcount(pawnAttacks[BLACK][frontSquare] & bb[P]) == 2); // Is the pawn unadvancable? (stopped by enemy pawns or directly opposed)
-        bool earlyDoubled = !(bb[p] & ((bb[P] | attackedByWhitePawns) << 8));
-        // Update bitboard masks (TODO)
-        unadvancablePawnsFor[BLACK] |= pawnBB * isUnadvancable;
-
-        // Add scores
-
-        // mg
-        mg[BLACK] -= isIsolated * ISOLATEDPENMG;
-        mg[BLACK] -= isBackward * BACKWARDPENMG;
-
-
-        mg[BLACK] -= isDoubled * (DOUBLEDPENMG + earlyDoubled * DOUBLEDEARLYMG);
-		
-        mg[BLACK] -= isWeakUnopposed * WEAKUNOPPOSEDMG;
-
-        mg[BLACK] += connectedScore;
-        mg[BLACK] += blocked56mg;
-        mg[BLACK] -= isOwnPieceBlocked * OWNPIECEBLOCKEDPAWNMG * (7-pawnRank);
-
-        // mg
-        eg[BLACK] -= isIsolated * ISOLATEDPENEG;
-        eg[BLACK] -= isBackward * BACKWARDPENEG;
-
-
-        eg[BLACK] -= isDoubled * (DOUBLEDPENEG + earlyDoubled * DOUBLEDEARLYEG);
-		
-        eg[BLACK] -= isWeakUnopposed * WEAKUNOPPOSEDPENEG;
-        eg[BLACK] -= isWeakLever * WEAKLEVEREG;
-        eg[BLACK] -= isOwnPieceBlocked * OWNPIECEBLOCKEDPAWNEG * (7-pawnRank);
-
-        eg[BLACK] += connectedScore * ((pawnRank - 2) / 4);
-        eg[BLACK] += blocked56eg;
-
-        // Passed pawns
-        // We need to identify passed pawns, as well as candidate passers.
-        // A pawn is passed if one of the three following conditions is true:
-        // (a) there is no stoppers except some levers
-        // (b) the only stoppers are the leverPush, but we outnumber them
-        // (c) there is only one front stopper which can be levered.
-        // If there is a pawn of our color in the same file in front of a current pawn it's no longer counts as passed.
-
-        bool candidate = !isBehindFriendly && (popcount((passedPawnMask[BLACK][pawn] ^ pawnAttacks[BLACK][pawn]) & bb[P]) <= popcount((pawnAttacks[WHITE][pawn]) & bb[p]) - popcount((phalanx[pawn]) & bb[P]));
-        bool passed = candidate && ((passedPawnMask[BLACK][pawn] & bb[P]) == 0) && ((passedPawnMask[BLACK][pawn] & attackedByWhitePawns) == 0);
-
-        Score candidateScore = candidate + 3 * passed + (isConnected && candidate) + (!isUnadvancable && candidate);
-
-        // Add scores
-        // mg
-        mg[BLACK] += (candidateScore * passedRankBonusMg[pawnRank]) >> 2;
-        // TODO: consider the whole path to promotion (needs  to have attack mask set)
-        mg[BLACK] -= (candidateScore * 6 * std::min(pawnFile, U8(7 - pawnFile))) >> 2;
-        // eg
-        eg[BLACK] += (candidateScore * passedRankBonusEg[pawnRank]) >> 2;
-        // TODO: consider the whole path to promotion (needs  to have attack mask set)
-        eg[BLACK] -= (candidateScore * 4 * std::min(pawnFile, U8(7 - pawnFile))) >> 2;
-
-        Score pawnEgScore = (1 + !isOpposed + isConnected - isDoubled) * ((1 + (KPendgame && candidate)) << candidate);
-        eg[BLACK] += (7 - chebyshevDistance[pawn][blackKing]) * pawnEgScore;
-        eg[BLACK] -= (7 - chebyshevDistance[pawn][whiteKing]) * pawnEgScore;
-        if (KPendgame && passed) {
-            Square promoSquare = lsb(squaresBehind(pawn) & ranks(7));
-            eg[BLACK] += 500 * (std::min(U8(5), chebyshevDistance[pawn][promoSquare]) < (chebyshevDistance[whiteKing][promoSquare] - 1 + side));
+        else if (advancable && phal) {
+            tensor[6]++;
+            tensor[7] += rank - 2;
         }
-        pawnStormTo[WHITE] += std::max(0, (5 + candidate + isSupported + (passed && isSupported) - isWeakLever - isOpposed - (S8)chebyshevDistance[pawn][whiteKing]));
-    }
-
-    openFile = openFileFor[WHITE] & openFileFor[BLACK];
-
-    if (KPendgame) goto kingEval;
-
-    //std::cout << "Pawn checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";
-
-    // White knights
-    {
-        BitBoard knights = bb[N];
-        while (knights) {
-
-            whiteMaterial += mgValues[N];
-
-            Square knight = popLsb(knights);
-
-            tropismToBlackKing += nkdist[knight][blackKing];
-            bool pawnSupported = attackedByWhitePawns & squareBB(knight);
-
-            mg[WHITE] += mgTables[N][knight];
-            eg[WHITE] += egTables[N][knight];
-            
-            BitBoard sqb = squareBB(knight);
-            mg[WHITE] += MG_MINORBEHINDPAWN * ((bool)(sqb & whiteRearSpan));
-            eg[WHITE] += MG_MINORBEHINDPAWN * ((bool)(sqb & whiteRearSpan));
-            mg[WHITE] += pawnSupported * MG_PAWNMINORSUPPORTED;
-            eg[WHITE] += pawnSupported * EG_PAWNMINORSUPPORTED;
-
-            // Outpost calculations
-            Score outpostBonusMg = knightOutpostMg(passedPawnMask[WHITE][knight] & bb[p], popcount(pawnAttacks[BLACK][knight] & bb[P]) + popcount(pawnAttacks[BLACK][knight] & supportedWhitePawns));
-            Score outpostBonusEg = knightOutpostEg(passedPawnMask[WHITE][knight] & bb[p], popcount(pawnAttacks[BLACK][knight] & bb[P]) + popcount(pawnAttacks[BLACK][knight] & supportedWhitePawns));
-            
-            // Malus if on protected pawn attacked square
-            bool safePawnThreat = pawnAttacks[BLACK][knight] & supportedBlackPawns;
-            mg[WHITE] += outpostBonusMg - safePawnThreat * PAWNTHREATMG;
-            eg[WHITE] += outpostBonusEg - safePawnThreat * PAWNTHREATEG;
-			
-			// King distance penalization for std::minor pieces
-			mg[WHITE] -= (chebyshevDistance[knight][whiteKing]) * MG_KNIGHTKINGPROTECTOR;
-			eg[WHITE] -= (chebyshevDistance[knight][whiteKing]) * EG_KNIGHTKINGPROTECTOR;
-
-            // Mobility area calculations
-            if (!(sqb & pinnedWhite)) {
-                BitBoard moves = knightAttacks[knight];
-                kingDangerScores[BLACK] +=
-                    popcount(kingDangerSquare[BLACK] & moves) * KNIGHTATTACKINNERRING
-                    + popcount(kingDangerZone[BLACK] & moves) * KNIGHTATTACKOUTERRING
-                    + popcount(kingKnightZone[BLACK] & moves) * KNIGHTATTACKZONE;
-                moves &= mobilityAreaWhite;
-                U8 moveCount = popcount(moves);
-                mg[WHITE] += knightMobMg[moveCount];
-                eg[WHITE] += knightMobEg[moveCount];
-				// In the middle game, knights are more valuable the more closed a position is
-				mg[WHITE] += (whitePawnCount + blackPawnCount) + popcount(blockedBlackPawns);
-            }
-        }
-    }
-    // Black knights
-    {
-        BitBoard knights = bb[n];
-        while (knights) {
-
-            blackMaterial += mgValues[N];
-
-            Square knight = popLsb(knights);
-
-            tropismToWhiteKing += nkdist[knight][whiteKing];
-            bool pawnSupported = attackedByBlackPawns & squareBB(knight); 
-
-            mg[BLACK] += mgTables[n][knight];
-            eg[BLACK] += egTables[n][knight];
-
-            BitBoard sqb = squareBB(knight);
-
-            mg[BLACK] += MG_MINORBEHINDPAWN * ((bool)(sqb & blackRearSpan));
-            eg[BLACK] += MG_MINORBEHINDPAWN * ((bool)(sqb & blackRearSpan));
-            mg[BLACK] += pawnSupported * MG_PAWNMINORSUPPORTED;
-            eg[BLACK] += pawnSupported * EG_PAWNMINORSUPPORTED;
-
-            // Outpost calculations
-            Score outpostBonusMg = knightOutpostMg(passedPawnMask[BLACK][knight] & bb[P], popcount(pawnAttacks[WHITE][knight] & bb[p]) + popcount(pawnAttacks[WHITE][knight] & supportedBlackPawns));
-            Score outpostBonusEg = knightOutpostEg(passedPawnMask[BLACK][knight] & bb[P], popcount(pawnAttacks[WHITE][knight] & bb[p]) + popcount(pawnAttacks[WHITE][knight] & supportedBlackPawns));
-
-            // Malus if on protected pawn attacked square
-            bool safePawnThreat = pawnAttacks[WHITE][knight] & supportedWhitePawns;
-            mg[BLACK] += outpostBonusMg - safePawnThreat * PAWNTHREATMG;
-            eg[BLACK] += outpostBonusEg - safePawnThreat * PAWNTHREATEG;
-
-            // King distance penalization for std::minor pieces
-            mg[BLACK] -= (chebyshevDistance[knight][blackKing]) * MG_KNIGHTKINGPROTECTOR;
-            eg[BLACK] -= (chebyshevDistance[knight][blackKing]) * EG_KNIGHTKINGPROTECTOR;
-
-            // Mobility area calculations
-            if (!(sqb & pinnedBlack)) {
-                BitBoard moves = knightAttacks[knight];
-				kingDangerScores[WHITE] +=
-					popcount(kingDangerSquare[WHITE] & moves) * KNIGHTATTACKINNERRING
-					+ popcount(kingDangerZone[WHITE] & moves) * KNIGHTATTACKOUTERRING
-					+ popcount(kingKnightZone[WHITE] & moves) * KNIGHTATTACKZONE;
-                moves &= mobilityAreaBlack;
-                U8 moveCount = popcount(moves);
-                mg[BLACK] += knightMobMg[moveCount];
-                eg[BLACK] += knightMobEg[moveCount];
-                // In the middle game, knights are more valuable the more closed a position is
-                mg[BLACK] += (whitePawnCount + blackPawnCount) + popcount(blockedWhitePawns);
-            }
-        }
-    }
-
-    //std::cout << "Knight checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";
-    // White bishops
-    {
-        BitBoard bishops = bb[B];
-        while (bishops) {
-
-            whiteMaterial += mgValues[B];
-
-            Square bishop = popLsb(bishops);
-
-            tropismToBlackKing += kbdist[bishop][blackKing];
-
-            mg[WHITE] += mgTables[B][bishop];
-            eg[WHITE] += egTables[B][bishop];
-
-            // we also will account for the mobility of the bishop
-            // we will add the number of squares that the bishop can move to (and give them a score based on if they are attacked by an enemy pawn)
-            BitBoard sqb = squareBB(bishop);
-            bool pawnSupported = attackedByWhitePawns & sqb;
-
-            
-            mg[WHITE] += MG_MINORBEHINDPAWN * ((bool)(sqb & whiteRearSpan));
-            eg[WHITE] += MG_MINORBEHINDPAWN * ((bool)(sqb & whiteRearSpan));
-            mg[WHITE] += pawnSupported * MG_PAWNMINORSUPPORTED;
-            eg[WHITE] += pawnSupported * EG_PAWNMINORSUPPORTED;
-
-            bool bishopColor = sqb & squaresOfColor[BLACK];
-            mg[WHITE] -= BISHOPPAWNSMG * (bishopColor ? cWB : cWW) * (1 + blockedOnMiddleWhitePawns);
-            eg[WHITE] -= BISHOPPAWNSEG * (bishopColor ? cWB : cWW) * (1 + blockedOnMiddleWhitePawns);
-
-            // Outpost calculations
-            Score outpostBonusMg = bishopOutpostMg(passedPawnMask[WHITE][bishop] & bb[p], popcount(pawnAttacks[BLACK][bishop] & bb[P]));
-            Score outpostBonusEg = bishopOutpostEg(passedPawnMask[WHITE][bishop] & bb[p], popcount(pawnAttacks[BLACK][bishop] & bb[P]));
-
-            // Malus if on protected pawn attacked square
-            bool safePawnThreat = pawnAttacks[BLACK][bishop] & supportedBlackPawns;
-            mg[WHITE] += outpostBonusMg - safePawnThreat * PAWNTHREATMG;
-            eg[WHITE] += outpostBonusEg - safePawnThreat * PAWNTHREATEG;
-			
-            // King distance penalization for std::minor pieces
-            mg[WHITE] -= (chebyshevDistance[bishop][whiteKing]) * MG_BISHOPKINGPROTECTOR;
-            eg[WHITE] -= (chebyshevDistance[bishop][whiteKing]) * EG_BISHOPKINGPROTECTOR;
-
-
-            if (!(sqb & pinnedWhite)) {
-                BitBoard mob = getBishopAttack((Square)bishop, occupancy ^ bb[Q]) & ~whiteOccupancy; // To count bishop-queen batteries, we exclude white queen from occupancy
-                mob &= ~(bb[Q]); // To remove squares the queen is on
-                kingDangerScores[BLACK] += 
-                    popcount(kingDangerSquare[BLACK] & mob) * BISHOPATTACKINNERRING
-                    + popcount(kingDangerZone[BLACK] & mob) * BISHOPATTACKOUTERRING;
-                mob &= mobilityAreaWhite;
-                U8 moveCount = popcount(mob);
-
-                mg[WHITE] += bishopMobMg[moveCount];// +otherKingAttacked;
-                eg[WHITE] += bishopMobEg[moveCount];// +otherKingAttacked;
-            }
-        }
-    }
-    // Black bishops
-    {
-        BitBoard bishops = bb[b];
-        while (bishops) {
-
-            blackMaterial += mgValues[B];
-
-            Square bishop = popLsb(bishops);
-
-            tropismToWhiteKing += kbdist[bishop][whiteKing];
-
-            mg[BLACK] += mgTables[b][bishop];
-            eg[BLACK] += egTables[b][bishop];
-
-            BitBoard sqb = squareBB(bishop);
-            bool pawnSupported = attackedByBlackPawns & sqb;
-
-            mg[BLACK] += MG_MINORBEHINDPAWN * ((bool)(sqb & blackRearSpan));
-            eg[BLACK] += MG_MINORBEHINDPAWN * ((bool)(sqb & blackRearSpan));
-            mg[BLACK] += pawnSupported * MG_PAWNMINORSUPPORTED;
-            eg[BLACK] += pawnSupported * EG_PAWNMINORSUPPORTED;
-
-            bool bishopColor = sqb & squaresOfColor[BLACK];
-            mg[BLACK] -= BISHOPPAWNSMG * (bishopColor ? cBB : cBW) * (1 + blockedOnMiddleBlackPawns);
-            eg[BLACK] -= BISHOPPAWNSEG * (bishopColor ? cBB : cBW) * (1 + blockedOnMiddleBlackPawns);
-
-            // Outpost calculations
-            Score outpostBonusMg = bishopOutpostMg(passedPawnMask[BLACK][bishop] & bb[P], popcount(pawnAttacks[WHITE][bishop] & bb[p]));
-            Score outpostBonusEg = bishopOutpostEg(passedPawnMask[BLACK][bishop] & bb[P], popcount(pawnAttacks[WHITE][bishop] & bb[p]));
-
-            // Malus if on protected pawn attacked square
-            bool safePawnThreat = pawnAttacks[WHITE][bishop] & supportedWhitePawns;
-            mg[BLACK] += outpostBonusMg - safePawnThreat * PAWNTHREATMG;
-            eg[BLACK] += outpostBonusEg - safePawnThreat * PAWNTHREATEG;
-
-            // King distance penalization for std::minor pieces
-            mg[BLACK] -= (chebyshevDistance[bishop][blackKing]) * MG_BISHOPKINGPROTECTOR;
-            eg[BLACK] -= (chebyshevDistance[bishop][blackKing]) * EG_BISHOPKINGPROTECTOR;
-
-            if (!(sqb & pinnedBlack)) {
-                BitBoard mob = getBishopAttack((Square)bishop, occupancy ^ bb[q]) & ~blackOccupancy; // To count bishop-queen batteries, we exclude black queen from occupancy
-                mob &= ~(bb[q]); // To remove squares the queen is on
-				kingDangerScores[WHITE] +=
-					popcount(kingDangerSquare[WHITE] & mob) * BISHOPATTACKINNERRING
-					+ popcount(kingDangerZone[WHITE] & mob) * BISHOPATTACKOUTERRING;
-                mob &= mobilityAreaBlack;
-                U8 moveCount = popcount(mob);
-                
-                mg[BLACK] += bishopMobMg[moveCount];// +otherKingAttacked;
-                eg[BLACK] += bishopMobEg[moveCount];// +otherKingAttacked;
-            }
-        }
-    }
-    //std::cout << "Bishop checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";
-    // White rooks
-    {
-        BitBoard rooks = bb[R];
-        while (rooks) {
-
-            whiteMaterial += mgValues[R];
-
-            Square rook = popLsb(rooks);
-            U8 rookFile = fileOf(rook);
-
-            tropismToBlackKing += rkdist[rook][blackKing];
-
-            mg[WHITE] += mgTables[R][rook];
-            eg[WHITE] += egTables[R][rook];
-
-            // we also will account for the mobility of the rook
-            // we will add the number of squares that the rook can move to (and give them a score based on if they are attacked by an enemy pawn)
-            
-            // We will give a bonus to the rook if it is on a semi-open file
-            bool closed = (files(fileOf(rook)) & blockedWhitePawns);
-            bool semiOpen = testBit(openFileFor[WHITE], rookFile);
-            bool open = testBit(openFile, rookFile);
-            bool onClearFile = (files(rookFile) & blackOccupancy) == 0;
-            mg[WHITE] -= closed * MG_ROOKCLOSEDFILE;
-            eg[WHITE] -= closed * EG_ROOKCLOSEDFILE;
-            mg[WHITE] += open * MG_ROOKOPENFILE;
-            eg[WHITE] += open * EG_ROOKOPENFILE;
-            mg[WHITE] += onClearFile * MG_ROOKCLEARFILE;
-            eg[WHITE] += onClearFile * EG_ROOKCLEARFILE;
-            mg[WHITE] += semiOpen * MG_ROOKSEMIOPENFILE;
-            eg[WHITE] += semiOpen * EG_ROOKSEMIOPENFILE;
-            bool queenFile = files(rookFile) & (bb[Q] | bb[q]);
-            mg[WHITE] += queenFile * ROOKONQUEENFILEMG;
-            eg[WHITE] += queenFile * ROOKONQUEENFILEEG;
-
-            if (!(squareBB(rook) & pinnedWhite)) {
-                BitBoard mob = getRookAttack((Square)rook, occupancy ^ (whiteRQ)) & ~whiteOccupancy; // Include xray thorugh our rooks and queens
-				kingDangerScores[BLACK] +=
-					popcount(kingDangerSquare[BLACK] & (mob & ~whiteRQ)) * ROOKATTACKINNERRING
-					+ popcount(kingDangerZone[BLACK] & (mob & ~whiteRQ)) * ROOKATTACKOUTERRING;
-                mob &= mobilityAreaWhite;
-                U8 moveCount = popcount(mob);
-                //mob &= kingAttacks[blackKing];
-                //U8 otherKingAttacked = popcount(mob);
-                mg[WHITE] += rookMobMg[moveCount];// +otherKingAttacked;
-                eg[WHITE] += rookMobEg[moveCount];// +otherKingAttacked;
-
-                if (!semiOpen && moveCount <= 3) {
-                    U8 kingFile = fileOf(whiteKing);
-                    if ((kingFile < 4) == (rookFile < kingFile)) {
-                        Score malus = (1 + (!(pos->castle & 0x3)));
-                        mg[WHITE] -= malus* TRAPPEDROOKMG;
-                        eg[WHITE] -= malus* TRAPPEDROOKEG;
-                    }
-                }
-            }
-        }
-    }
-    // Black rooks
-    {
-        BitBoard rooks = bb[r];
-        while (rooks) {
-
-            blackMaterial += mgValues[R];
-
-            Square rook = popLsb(rooks);
-            U8 rookFile = fileOf(rook);
-
-            tropismToWhiteKing += rkdist[rook][whiteKing];
-
-            mg[BLACK] += mgTables[r][rook];
-            eg[BLACK] += egTables[r][rook];
-
-            // we also will account for the mobility of the rook
-            // we will add the number of squares that the rook can move to (and give them a score based on if they are attacked by an enemy pawn)   
-            
-            // We will give a bonus to the rook if it is on a semi-open file
-            bool semiOpen = testBit(openFileFor[BLACK], rookFile);
-            bool open = testBit(openFile, rookFile);
-            bool closed = (files(fileOf(rook)) & blockedBlackPawns);
-            bool onClearFile = (files(rookFile) & whiteOccupancy) == 0;
-            mg[BLACK] -= closed * MG_ROOKCLOSEDFILE;
-            eg[BLACK] -= closed * EG_ROOKCLOSEDFILE;
-            mg[BLACK] += open * MG_ROOKOPENFILE;
-            eg[BLACK] += open * EG_ROOKOPENFILE;
-            mg[BLACK] += onClearFile * MG_ROOKCLEARFILE;
-            eg[BLACK] += onClearFile * EG_ROOKCLEARFILE;
-            mg[BLACK] += semiOpen * MG_ROOKSEMIOPENFILE;
-            eg[BLACK] += semiOpen * EG_ROOKSEMIOPENFILE;
-
-            bool queenFile = files(rookFile) & (bb[Q] | bb[q]);
-            mg[BLACK] += queenFile * ROOKONQUEENFILEMG;
-            eg[BLACK] += queenFile * ROOKONQUEENFILEEG;
-
-            if (!(squareBB(rook) & pinnedBlack)) {
-                BitBoard mob = getRookAttack((Square)rook, occupancy ^ (blackRQ)) & ~blackOccupancy; // Include xray thorugh our rooks and queens
-				kingDangerScores[WHITE] +=
-					popcount(kingDangerSquare[WHITE] & (mob & ~blackRQ)) * ROOKATTACKINNERRING
-					+ popcount(kingDangerZone[WHITE] & (mob & ~blackRQ)) * ROOKATTACKOUTERRING;
-                mob &= mobilityAreaBlack;
-                U8 moveCount = popcount(mob);
-                //mob &= kingAttacks[whiteKing];
-                //U8 otherKingAttacked = popcount(mob);
-                mg[BLACK] += rookMobMg[moveCount];// +otherKingAttacked;
-                eg[BLACK] += rookMobEg[moveCount];// +otherKingAttacked;
-
-                if (!semiOpen && moveCount <= 3) {
-                    U8 kingFile = fileOf(blackKing);
-                    if ((kingFile < 4) == (rookFile < kingFile)) {
-                        Score malus = (1 + (!(pos->castle & 0xC)));
-                        mg[BLACK] -= malus* TRAPPEDROOKMG;
-                        eg[BLACK] -= malus* TRAPPEDROOKEG;
-                    }
-                }
-            }
-        }
-    }
-    //std::cout << "Rook checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";
-    // White queens
-    {
-        BitBoard queens = bb[Q];
-        while (queens) {
-
-            whiteMaterial += mgValues[Q];
-
-            Square queen = popLsb(queens);
-
-            tropismToBlackKing += qkdist[queen][blackKing];
-
-            mg[WHITE] += mgTables[Q][queen];
-            eg[WHITE] += egTables[Q][queen];
-
-            // we also will account for the mobility of the queen
-            // we will add the number of squares that the queen can move to (and give them a score based on if they are attacked by an enemy pawn)
-            if (!(squareBB(queen) & pinnedWhite)) {
-                BitBoard moves = getQueenAttack((Square)queen, occupancy) & ~whiteOccupancy;
-				kingDangerScores[BLACK] +=
-					popcount(kingDangerSquare[BLACK] & (moves & ~whiteRQ)) * QUEENATTACKINNERRING
-					+ popcount(kingDangerZone[BLACK] & (moves & ~whiteRQ)) * QUEENATTACKOUTERRING;
-                moves &= mobilityAreaWhite;
-                U8 moveCount = popcount(moves);
-                mg[WHITE] += queenMobMg[moveCount];
-                eg[WHITE] += queenMobEg[moveCount];
-            }
-        }
-    }
-    //Black queens
-    {
-        BitBoard queens = bb[q];
-        while (queens) {
-
-            blackMaterial += mgValues[Q];
-
-            Square queen = popLsb(queens);
-
-            tropismToWhiteKing += qkdist[queen][whiteKing];
-
-            mg[BLACK] += mgTables[q][queen];
-            eg[BLACK] += egTables[q][queen];
-
-            // we also will account for the mobility of the queen
-            // we will add the number of squares that the queen can move to (and give them a score based on if they are attacked by an enemy pawn)
-            if (!(squareBB(queen) & pinnedBlack)) {
-                BitBoard moves = getQueenAttack((Square)queen, occupancy) & ~blackOccupancy;
-				kingDangerScores[WHITE] +=
-					popcount(kingDangerSquare[WHITE] & (moves & ~blackRQ)) * QUEENATTACKINNERRING
-					+ popcount(kingDangerZone[WHITE] & (moves & ~blackRQ)) * QUEENATTACKOUTERRING;
-                moves &= mobilityAreaBlack;
-                U8 moveCount = popcount(moves);
-                mg[BLACK] += queenMobMg[moveCount];
-                eg[BLACK] += queenMobEg[moveCount];
-            }
-        }
-    }
-
-    //std::cout << "Queen checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";
-    
-    if ((blackMaterial <= 100) && (whiteMaterial >= 477)) {
-        eg[WHITE] += 5 * 47 * (centerDistance[blackKing]) + 5 * 16 * (14 - manhattanDistance[blackKing][whiteKing]);
-    }
-    else if ((whiteMaterial <= 100) && (blackMaterial >= 477)) {
-        eg[BLACK] += 5 * 47 * (centerDistance[whiteKing]) + 5 * 16 * (14 - manhattanDistance[whiteKing][blackKing]);
-    }
-    else {
-        kingEval:
-        // White King (no need to iterate, since there is only one king per side)
-        {
-            mg[WHITE] += mgTables[K][whiteKing];
-            eg[WHITE] += egTables[K][whiteKing];
-            mg[WHITE] += ((whiteRearSpan & bb[K]) > 0) * MG_KINGINREARSPAN;
-            eg[WHITE] += ((whiteRearSpan & bb[K]) > 0) * EG_KINGINREARSPAN;
-        }
-        // Black King (no need to iterate, since there is only one king per side)
-        {
-            mg[BLACK] += mgTables[k][blackKing];
-            eg[BLACK] += egTables[k][blackKing];
-            mg[BLACK] += ((blackRearSpan & bb[k]) > 0) * MG_KINGINREARSPAN;
-            eg[BLACK] += ((blackRearSpan & bb[k]) > 0) * EG_KINGINREARSPAN;
-        }
-    //std::cout << "King checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";
-        
-#define INITIAL_PIECE_MATERIAL 5790
-#define kingSafetyMG 2
-#define kingSafetyEG 0
-        Score matCntOnShelter[] = {
-            Score(popcount(bb[P] & kingShelter[WHITE]) * PAWNSHELTERVALUE + popcount(bb[N] & kingShelter[WHITE]) * KNIGHTSHELTERVALUE + popcount(bb[B] & kingShelter[WHITE]) * BISHOPSHELTERVALUE),
-            Score(popcount(bb[p] & kingShelter[BLACK]) * PAWNSHELTERVALUE + popcount(bb[n] & kingShelter[BLACK]) * KNIGHTSHELTERVALUE + popcount(bb[b] & kingShelter[BLACK]) * BISHOPSHELTERVALUE)
-        };
-        Score mobSquaresInKingShelter[] = {
-            (Score)popcount(mobilityAreaBlack & kingShelter[WHITE]),
-            (Score)popcount(mobilityAreaWhite & kingShelter[BLACK])
-        };
-        // Adjust the king safety score based on the number of squares that the king can move to
-        kingDangerScores[WHITE] -= (mobSquaresInKingShelter[WHITE] >> 1);
-        kingDangerScores[BLACK] -= (mobSquaresInKingShelter[BLACK] >> 1);
-        kingDangerScores[WHITE] = std::max(Score(0), kingDangerScores[WHITE]);
-        kingDangerScores[BLACK] = std::max(Score(0), kingDangerScores[BLACK]);
-
-        // If the attacking side has no queen, the kingDanger score is halved
-        if (!(bb[Q]|bb[q])) {
-            kingDangerScores[WHITE] >>= 1;
-            kingDangerScores[BLACK] >>= 1;
-        }
-
-        U8 kingFiles[] = {
-            U8((kingAttacks[whiteKing] >> (U64(rankOf(whiteKing)) * 8ULL)) & 0xFFULL),
-            U8((kingAttacks[blackKing] >> (U64(rankOf(blackKing)) * 8ULL)) & 0xFFULL),
-        };
-
-        // Divide score by 16
-        kingDangerScores[WHITE] >>= 4;
-        kingDangerScores[BLACK] >>= 4;
-		// The std::max score can only be 63
-		kingDangerScores[WHITE] = std::min(kingDangerScores[WHITE], Score(63));
-		kingDangerScores[BLACK] = std::min(kingDangerScores[BLACK], Score(63));
-        Score whiteKingSafety = ((matCntOnShelter[WHITE] - tropismToWhiteKing  + mobSquaresInKingShelter[WHITE]) * whiteMaterial) / INITIAL_PIECE_MATERIAL - kingSafety[kingDangerScores[WHITE]];
-        Score blackKingSafety = ((matCntOnShelter[BLACK] - tropismToBlackKing  + mobSquaresInKingShelter[BLACK]) * blackMaterial) / INITIAL_PIECE_MATERIAL - kingSafety[kingDangerScores[BLACK]];
-        mg[WHITE] += whiteKingSafety * kingSafetyMG;
-        mg[BLACK] += blackKingSafety * kingSafetyMG;
-        //std::cout << "kingsafety1 checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";
-        
-        mg[WHITE] += popcount(kingFiles[WHITE] & openFile) * OPENFILEONKINGMG;
-        eg[WHITE] += popcount(kingFiles[WHITE] & openFile) * OPENFILEONKINGEG;
-        mg[BLACK] += popcount(kingFiles[BLACK] & openFile) * OPENFILEONKINGMG;
-        eg[BLACK] += popcount(kingFiles[BLACK] & openFile) * OPENFILEONKINGEG;
-
-        //std::cout << "openfile checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";
-
-        mg[WHITE] += pawnStormTo[BLACK] * PAWNSTORM;
-        mg[BLACK] += pawnStormTo[WHITE] * PAWNSTORM;
-        eg[WHITE] += pawnStormTo[BLACK] * PAWNSTORM;
-        eg[BLACK] += pawnStormTo[WHITE] * PAWNSTORM;
-
-        //std::cout << "Pawnstorm checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";
-        //std::cout << "Pawnstorm valueas are:\t\t" << (int)pawnStormTo[WHITE] << " / " << (int)pawnStormTo[BLACK] << "\n";
-        
-        mg[side] += MG_TEMPO;
-        eg[side] += EG_TEMPO;
-        mgScore += (int)(kingSafetyMG * (whiteKingShield - blackKingShield) * (1 - (2 * side)));
-        egScore += (int)(kingSafetyEG * (whiteKingShield - blackKingShield) * (1 - (2 * side)));
-        if (whiteNonPawnMaterial + blackNonPawnMaterial > 6434) {
-            BitBoard safeCentralWhite = (~attackedByBlackPawns) & (files(2) | files(3) | files(4) | files(5)) & (ranks(6) | ranks(5) | ranks(4));
-            BitBoard safeCentralBlack = (~attackedByWhitePawns) & (files(2) | files(3) | files(4) | files(5)) & (ranks(1) | ranks(2) | ranks(3));
-            
-            Score cW = popcount(safeCentralWhite);
-            Score cB = popcount(safeCentralBlack);
-
-            safeCentralWhite &= whiteRearSpan;
-            safeCentralBlack &= blackRearSpan;
-            cW += popcount(safeCentralWhite);
-            cB += popcount(safeCentralBlack);
-
-            Score w = popcount(whiteNonPawns | blackNonPawns) - 3 + std::min(7, popcount(unadvancablePawnsFor[WHITE]|unadvancablePawnsFor[BLACK]));
-            mg[WHITE] += (cW * w * (w)) >> 5;
-            mg[BLACK] += (cB * w * (w)) >> 5;
-            //std::cout << "space checkpoint:\t\t" << "Mg is " << mg[0] << " / " << mg[1] << "\t-\t" << "Eg is " << eg[0] << " / " << eg[1] << "\n";
+        if (candidatePassed){
+            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
+            // Give bonus for how close the pawn is to the promotion square
+            tensor[8 + rank] += 1;
+            tensor[8 + 7] += popcount(passedPath);
+            // Bonus for connected or supported passed pawns
+            if (supported) tensor[8 + 7 + 1]++;
         }
     }
     
-    int fC = std::min(60,std::max(0, pos->fiftyMove-12));
-    mgScore += (int)(mg[side] - mg[other]);// *(100 - fC) / 100;
-    egScore += (int)(eg[side] - eg[other]);// *(100 - fC) / 100;
 
-    // phase is capped to 24, in case of early promotion
-#define midgameLimit (11444)
-#define endgameLimit (2936)
-	
-    Score mgPhase = std::min(Score(24), gamePhase);
-    Score egPhase = 24 - mgPhase;   
+    // Black pawns
+    pieces = bb[p];
+    while (pieces){
+        // Evaluate isolated, backward, doubled pawns and connected pawns
+        Square sq = popLsb(pieces);
+        BitBoard sqb = squareBB(sq);
+        U8 rank = rankOf(sq);
+        bool doubled = doubledPawns[BLACK] & squareBB(sq);
+        bool isolated = !(isolatedPawnMask[sq] & bb[p]);
+        bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
+        bool supported = protectedPawns[BLACK] & sqb;
+        bool advancable = !(pawnBlockage[BLACK] & south(sqb));
+        bool phal = phalanx[sq] & bb[p];
+        bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
+        
+        bool backward = !( // If the pawn
+            (backwardPawnMask[BLACK][sq] & bb[p]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
+            || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
+        );
+        // Check if the pawn is doubled
+        if (doubled && isolated && pawnOpposed) tensor[0]++;
+        else if (isolated) tensor[1]++;
+        else if (backward) tensor[2]++;
+        if (doubled && !supported) tensor[3]++;
+        else if (supported && phal) {
+            tensor[4]--;
+            tensor[5] -= rank - 2;
+        }
+        else if (advancable && phal) {
+            tensor[6]--;
+            tensor[7] -= rank - 2;
+        }
+        if (candidatePassed){
+            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
+            // Give bonus for how close the pawn is to the promotion square
+            tensor[8 + rank]--;
+            tensor[8 + 7] -= popcount(passedPath);
+            // Bonus for connected or supported passed pawns
+            if (supported) tensor[8 + 7 + 1]--;
+        }
+    }
+    tensor += 8 + 7 + 2;
 
-    // We add a tempo bonus to the score, meaning that we will give a bonus to the side that has to move (10 cp)
-    // Score tempoBonus = (side == WHITE) ? 10 : -10;
+    // Calculate king safety
+    // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
+    BitBoard innerShelters[2] = {
+        kingShelter[WHITE][whiteKing],
+        kingShelter[BLACK][blackKing]
+    };
+    // The outer shield is the squares in front of the inner shield. We only consider supported squares
+    BitBoard outerShelters[2] = {
+        north(innerShelters[WHITE]) & pawnAttackedSquares[WHITE],
+        south(innerShelters[BLACK]) & pawnAttackedSquares[BLACK]
+    };
 
-    Score res = (Score)(((int)mgScore * (int)mgPhase + (int)egScore * (int)egPhase) / 24);
-    //if (res >= egValues[Q] + egValues[N]) res += (KNOWNWIN/2) - ((res) * abs(KNOWNWIN/2))/mateScore;
-	//if (res <= egValues[Q] + egValues[N]) res += (-KNOWNWIN / 2) - ((res) * abs(-KNOWNWIN / 2)) / mateScore;
+    // Get pawns
+    innerShelters[WHITE] &= bb[P];
+    innerShelters[BLACK] &= bb[p];
+    outerShelters[WHITE] &= bb[P];
+    outerShelters[BLACK] &= bb[p];
 
-    return res * (100 - fC) / 100;
+    // Add the shelter bonus
+    tensor[0] += popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]);
+    tensor[1] += popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]);
+    tensor += 2;
 
+    // Add the bishop pairs
+    tensor[0] += (popcount(bb[B])>=2) - (popcount(bb[b])>=2);
+    tensor++;
+
+    // Add the rooks on open files
+    BitBoard openFiles = ~(pawnFiles[WHITE] | pawnFiles[BLACK]);
+    BitBoard semiOpenFor[2] = {
+        ~pawnFiles[WHITE],
+        ~pawnFiles[BLACK]
+    };
+    tensor[0] += (popcount(bb[R] & openFiles) - popcount(bb[r] & openFiles));
+    tensor[1] += (popcount(bb[R] & semiOpenFor[WHITE]) - popcount(bb[r] & semiOpenFor[BLACK]));
+    tensor += 2;
+
+    // Add the tempo bonus
+    tensor[0] += us == WHITE ? 1 : -1;
+
+    // Also assert the last element we wrote is the penultimate element
+    // assert(tensorStart + tensorSize - 2 == tensor);
+}
+
+
+/**
+ * @brief The convertToFeatures function converts a set of positions to a set of features
+ * @param filename The filename of the epd file
+ * @param output The output file to write the features to
+ */
+void convertToFeatures(std::string filename, std::string output) {
+    std::ifstream file(filename);
+    // Check if the file is open
+    if (!file.is_open()){
+        std::cout << "Error: Could not open file " << filename << std::endl;
+        return;
+    }
+    // Open output in binary mode
+    std::ofstream out(output, std::ios::binary);
+    // Get the count of weights by getting the current eval weights
+    auto weights = getCurrentEvalWeights();
+    U32 weightCount = weights.size();
+    std::cout << "Allocating for " << weightCount << " weights: " << 1 + weightCount / 2 + 1 << " bytes per entry" << std::endl;
+    U32 entrySize = 1 + weightCount / 2 + 1; // The entry size is the 1 (gamephase) + number of weights divided by 2 + 1, since we add the result at the end, but we don't need to write the features twice for each side
+    // Create buffer to store the features
+    S8* features = new S8[entrySize];
+    // For each line in the file
+    std::string line;
+    Position pos;
+    U64 counter = 0;
+    while (std::getline(file, line)){
+        // Clear the features
+        memset(features, 0, entrySize);
+        // Parse the line. It contains the FEN string and the result. They are separated by a ";", and the result is either w,d,b (white, draw, black)
+        std::vector<std::string> tokens;
+
+        std::string token;
+        std::istringstream tokenStream(line);
+        while (std::getline(tokenStream, token, ';')){
+            tokens.push_back(token);
+        }
+        // Parse the position
+        if (pos.parseFEN((char*)tokens[0].c_str())){
+            // Get the features
+            getEvalFeaturesTensor(&pos, features, entrySize);
+
+            // Assert we filled the features correctly. This is checked by checking the penultimate element of the features and checking if it is 1 or -1
+            assert(features[entrySize - 2] == 1 || features[entrySize - 2] == -1);
+            // Get the result
+            if (tokens[1] == "w") features[entrySize - 1] = 1;
+            else if (tokens[1] == "d") features[entrySize - 1] = 0;
+            else features[entrySize - 1] = -1;
+            // Write the features to the output file
+            out.write((char*)features, entrySize);
+        }
+        // Increment the counter and report progress each 16384 positions
+        if (++counter % 16384 == 0){
+            std::cout << "Processed " << counter << " positions...\r";
+        }
+    }
+    // Report the final progress
+    std::cout << "Processed " << counter << " positions." << std::endl;
+    // Close the file
+    out.close();
+    // Delete the features
+    delete[] features;
 }

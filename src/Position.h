@@ -2,15 +2,26 @@
 #include "move.h"
 #include <algorithm>
 #include "BBmacros.h"
+#include "history.h"
 
-#define KILLER1SCORE 9999999ULL
-#define KILLER2SCORE 9999998ULL
-#define COUNTERSCORE 9999997ULL
-#define LASTMOVEKILLERSCORE 9999996ULL
-#define PROMOTIONBONUS 2000000000ULL
-#define GOODCAPTURESCORE 1000000000ULL
-extern unsigned long long BADCAPTURESCORE;
+// TTmove is always first
 
+// Followed by captures / promotions / promocaptures / enpassants
+#define GOODNOISYMOVE 10000000LL
+// Followed by killers and counter moves
+#define KILLER1SCORE 8999999LL
+#define KILLER2SCORE 8999998LL
+#define COUNTERSCORE 8999997LL
+// Followed by quiet moves
+#define QUIETSCORE 1000000LL
+// Followed by bad noisy moves
+#define BADNOISYMOVE 16384LL
+
+constexpr Score pieceValues[15] = {
+    100, 422, 422, 642, 1015, 0, // White pieces
+    100, 422, 422, 642, 1015, 0, // Black pieces
+    0, 0, 0                      // Padding for special cases
+};
 
 struct Position{
     
@@ -109,11 +120,9 @@ struct Position{
     /**
      * @brief The generateMoves function generates all pseudo legal moves for the current side.
      * @param moveList The moveList to fill with the generated moves.
-     * @param killer1 The first killer move.
-     * @param killer2 The second killer move.
-     * @param counterMove The counter move.
+     * @param ss The SStack to get the search information from (useful for move ordering heuristics).
      */
-    void generateMoves(MoveList& moveList, Move killer1, Move killer2, Move counterMove);
+    void generateMoves(MoveList& moveList, SStack* ss);
 
     /**
      * @brief The generateCaptures function generates all pseud legal captures for the current side.
@@ -128,11 +137,23 @@ struct Position{
     void generateUnsortedMoves(MoveList &moveList);
 
     /**
-     * @brief The pieceOn function returns the piece on the given square.
+     * @brief The pieceOn function returns the piece on a square. If the square is empty, NOPIECE is returned.
      * @param square The square to check.
-     * @return The piece on the given square.
+     * @return The piece on the square.
      */
-    inline Piece pieceOn(Square square);
+    inline Piece pieceOn(Square square) {
+        // We will do a branchless lookup
+        // We will have a "result" variable that will contain the piece on the square
+        Piece result = p + testBit(occupancies[BLACK], square) * 6; // If the piece is black, we add 6 to the result. Also, if the square is empty, the result will be 6 which added to p is 6+6=12 (NOPIECE)
+        // We will subtract the piece code once we find it
+        result -= (p - P) * testBit(bitboards[P] | bitboards[p], square);
+        result -= (p - N) * testBit(bitboards[N] | bitboards[n], square);
+        result -= (p - B) * testBit(bitboards[B] | bitboards[b], square);
+        result -= (p - R) * testBit(bitboards[R] | bitboards[r], square);
+        result -= (p - Q) * testBit(bitboards[Q] | bitboards[q], square); 
+        result -= (p - K) * testBit(bitboards[K] | bitboards[k], square);
+        return result; // If no piece was found, the result will remain NOPIECE
+    }
 
     /**
     * @brief The legalizeTTMove function verifies if the TT move is Legal
@@ -149,7 +170,7 @@ struct Position{
 
     inline void addPromotion(MoveList *ml, ScoredMove move, Piece piece);
 
-    inline void addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove);
+    inline void addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S32 *ply1contHist, const S32 *ply2contHist);
 
     inline void addUnsorted(MoveList *ml, ScoredMove move);
 
@@ -160,13 +181,12 @@ struct Position{
 	std::string getFEN();
     
     /**
-     * @brief The SEE function returns whether the move is a good capture or not.
-     * @tparam threshold The threshold to check against.
-     * @param move The move to check.
-     * @return true if the move is a good capture, false otherwise.
+     * @brief The SEE function evaluates a move using the Static Exchange Evaluation algorithm.
+     * @param move The move to evaluate.
+     * @param threshold The threshold score.
+     * @return true if the move beats the threshold, false otherwise.
      */
-    template <Score threshold>
-    bool SEE(Move move);
+    bool SEE(const Move move, const Score threshold);
 
     bool inCheck();
 

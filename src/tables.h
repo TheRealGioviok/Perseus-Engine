@@ -14,6 +14,9 @@ extern int kbdist[64][64];
 extern U8 manhattanDistance[64][64];
 // cbyDist
 extern U8 chebyshevDistance[64][64];
+// kingshelter
+extern BitBoard kingShelter[2][64];
+
 // centerDistance
 extern U8 centerDistance[64];
 // squaresbetween
@@ -145,7 +148,7 @@ constexpr Score blockBonusEg[] = { 0, -3, 3 };
 
 extern BitBoard outerRing[64]; // The ring of squares in a centered 5x5 square
 extern BitBoard fiveSquare[64]; // The 5x5 square
-
+extern BitBoard kingShelter[2][64]; // The king shelter
 
 /**
  * @brief The initEvalTables function initializes the evaluation tables

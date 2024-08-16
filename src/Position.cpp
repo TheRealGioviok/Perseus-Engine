@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cstring>
 
-unsigned long long BADCAPTURESCORE = 15960ULL;
+unsigned long long BADCAPTURESCORE = MAXHISTORYABS - 424ULL; // TODO: make this tunable
 
 // The default constructor instantiates the position with the standard chess starting position.
 Position::Position(){
@@ -515,35 +515,45 @@ bool Position::makeMove(Move move)
 }
 
 inline void Position::addEp(MoveList* ml, ScoredMove move){
-    ml->moves[ml->count++] = ((GOODCAPTURESCORE + 100) << 32) | move;
+    ml->moves[ml->count++] = ((
+        GOODNOISYMOVE * SEE(move, -107) 
+        + pieceValues[P] * captScoreMvvMultiplier 
+        + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P]
+        + BADNOISYMOVE
+    ) << 32) | move;
 }
 
 inline void Position::addPromoCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece, Piece promotion){
-    ml->moves[ml->count++] = (
-            (
-                MvvLva[movedPiece][capturedPiece] +
-                GOODCAPTURESCORE * SEE<-107>(move) + BADCAPTURESCORE +
-                PROMOTIONBONUS
-            ) 
-        << 32) | move;
+    ml->moves[ml->count++] = ((
+        GOODNOISYMOVE * SEE(move, -107) 
+        + pieceValues[capturedPiece] * captScoreMvvMultiplier 
+        + pieceValues[promotion]
+        + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)] // Piece captured can't be NOPIECE (12), so this works
+        + BADNOISYMOVE
+    ) << 32) | move;
 }
 
 inline void Position::addCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece){
-    ml->moves[ml->count++] = (
-            (
-                MvvLva[movedPiece][capturedPiece] +
-                GOODCAPTURESCORE * SEE<-107>(move) + BADCAPTURESCORE
-            ) 
-        << 32) | move;
+    ml->moves[ml->count++] = ((
+        GOODNOISYMOVE * SEE(move, -107) 
+        + pieceValues[capturedPiece] * captScoreMvvMultiplier 
+        + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)] // Piece captured can't be NOPIECE (12), so this works
+        + BADNOISYMOVE
+    ) << 32) | move;
     return;
 }
 
 inline void Position::addPromotion(MoveList* ml, ScoredMove move, Piece promotion){
-    ml->moves[ml->count++] = ((PROMOTIONBONUS + promotion) << 32) | move;
+    ml->moves[ml->count++] = ((
+        GOODNOISYMOVE * SEE(move, -107) 
+        + pieceValues[promotion]
+        + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P]
+        + BADNOISYMOVE
+    ) << 32) | move;
     return;
 }
 
-inline void Position::addQuiet(MoveList* ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove){
+inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S32 *ply1contHist, const S32 *ply2contHist) {
     if (sameMovePos(move, killer1)){
         ml->moves[ml->count++] = (KILLER1SCORE << 32) | move;
         return;
@@ -556,9 +566,12 @@ inline void Position::addQuiet(MoveList* ml, ScoredMove move, Square source, Squ
         ml->moves[ml->count++] = (COUNTERSCORE << 32) | move;
         return;
     }
-    S64 score = (S64)(historyTable[side][source][target]); // *22 + ((S64)pieceFromHistoryTable[movedPiece][from]) + ((S64)pieceToHistoryTable[movedPiece][to]) * 2) / 25;
-    score += 16384;
-    ml->moves[ml->count++] = (score << 32) | move; //
+    ml->moves[ml->count++] = ((
+        (S64)(historyTable[side][indexFromTo(source, target)]) 
+        // + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
+        // + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
+        + QUIETSCORE
+    ) << 32) | move;
 }
 
 inline void Position::addUnsorted(MoveList* ml, ScoredMove move){
@@ -588,100 +601,76 @@ bool Position::insufficientMaterial() {
 	return true; // Means K v K
 }
 
-/**
- * @brief The pieceOn function returns the piece on a square. If the square is empty, NOPIECE is returned.
- * @param square The square to check.
- * @return The piece on the square.
- */
-inline Piece Position::pieceOn(Square square) {
-    // We will do a branchless lookup
-    // We will have a "result" variable that will contain the piece on the square
-    Piece result = NOPIECE;
-    // We will subtract the piece code once we find it
-    result -= (NOPIECE - P) * testBit(bitboards[P], square); // This way, if there is a white pawn, the result will be 0 (P)
-    result -= (NOPIECE - N) * testBit(bitboards[N], square); // This way, if there is a white knight, the result will be 1 (N)
-    result -= (NOPIECE - B) * testBit(bitboards[B], square); // This way, if there is a white bishop, the result will be 2 (B)
-    result -= (NOPIECE - R) * testBit(bitboards[R], square); // This way, if there is a white rook, the result will be 3 (R)
-    result -= (NOPIECE - Q) * testBit(bitboards[Q], square); // This way, if there is a white queen, the result will be 4 (Q)
-    result -= (NOPIECE - K) * testBit(bitboards[K], square); // This way, if there is a white king, the result will be 5 (K)
-
-    result -= (NOPIECE - p) * testBit(bitboards[p], square); // This way, if there is a black pawn, the result will be 6 (p)
-    result -= (NOPIECE - n) * testBit(bitboards[n], square); // This way, if there is a black knight, the result will be 7 (n)
-    result -= (NOPIECE - b) * testBit(bitboards[b], square); // This way, if there is a black bishop, the result will be 8 (b)
-    result -= (NOPIECE - r) * testBit(bitboards[r], square); // This way, if there is a black rook, the result will be 9 (r)
-    result -= (NOPIECE - q) * testBit(bitboards[q], square); // This way, if there is a black queen, the result will be 10 (q)
-    result -= (NOPIECE - k) * testBit(bitboards[k], square); // This way, if there is a black king, the result will be 11 (k)
-
-    return result; // If no piece was found, the result will remain NOPIECE
-}
-
-constexpr Score pieceValues[15] = {
-    100, 300, 300, 500, 900, 0, // White pieces
-    100, 300, 300, 500, 900, 0, // Black pieces
-    0,   0,   0 // Padding for special cases
-};
-
 // Thanks to Weiss chess engine for a clean implementation of this function
-template <Score threshold>
-bool Position::SEE(Move move){
+bool Position::SEE(const Move move, const Score threshold) {
+    if (isCastling(move)) return threshold <= 0; // Castling moves don't capture anything, and they don't put the king nor the rook in danger (because of the check rule for castling)
+
     Square from = moveSource(move);
     Square to = moveTarget(move);
 
-    Piece attacker = movePiece(move);
-    Piece captured = moveCapture(move);
+    Piece target = moveCapture(move);
+    Piece promo = movePromotion(move);
+    Score value = pieceValues[target] - threshold;
 
-    // Of course the move should be a capture
-    //assert(captured != NOPIECE);
+    // If the move is a promotion, we need to consider the value of the promoted piece (and remove the value of the pawn)
+    if (promo != NOPIECE) value += pieceValues[promo] - pieceValues[P];
 
-    Score value = pieceValues[captured] - threshold;
-
+    // Check for early SEE exit (if the threshold is still negative)
     if (value < 0) return false;
-    value -= pieceValues[attacker];
+
+    Piece attacker = movePiece(move);
+
+    // Check for another early SEE exit (if immediate recapture still beats the threshold)
+    value -= promo != NOPIECE ? pieceValues[promo] : pieceValues[attacker];
     if (value >= 0) return true;
 
-    BitBoard occupancy = occupancies[BOTH] ^ squareBB(from) ^ squareBB(to);
+    // Initialize the attackers, occupancies, vertical and horizontal sliders
+    BitBoard occupied = occupancies[BOTH] ^ squareBB(from);
+    if (isEnPassant(move)) occupied ^= squareBB(to + (side == WHITE ? 8 : -8));
 
-    BitBoard diagonalAttackers = bitboards[Q] | bitboards[q];
-    BitBoard orthogonalAttackers = diagonalAttackers | bitboards[R] | bitboards[r];
-    diagonalAttackers |= bitboards[B] | bitboards[b];
+    BitBoard diagonalSliders = bitboards[Q] | bitboards[q] | bitboards[B] | bitboards[b];
+    BitBoard orthogonalSliders = bitboards[Q] | bitboards[q] | bitboards[R] | bitboards[r];
 
-    BitBoard attackers = attacksToPre(to, occupancy, diagonalAttackers, orthogonalAttackers);
+    BitBoard attackers = attacksToPre(to, occupied, diagonalSliders, orthogonalSliders);
 
-    U8 side = attacker < p;
+    const U8 us = attacker < 6 ? WHITE : BLACK; // Side of the attacker
 
-    while (true) {
-        attackers &= occupancy;
+    U8 side = us ^ 1; // Side of the attacker, flipped (one move already executed)
 
-        BitBoard myAttackers = attackers & occupancies[side];
-        if (!myAttackers) break;
+    while (true){
+        attackers &= occupied;
+        BitBoard ourAttackers = attackers & occupancies[side];
+        if (!ourAttackers) break; // We run out of attackers
 
+        // Find the least valuable attacker
         Piece pt;
-        for (pt = P; pt <= K; pt++) { // Capture with the lowest value piece (which makes the strongest attack)
-            if (myAttackers & (bitboards[pt] | bitboards[pt + 6])) break;
-        }
+        for (pt = P; pt < K; ++pt)
+            if (ourAttackers & bitboards[pt + 6 * side]) break;
+        
+        side ^= 1;
 
-        // Swap side
-        side = !side;
-        value = -value - 1 - pieceValues[pt];
+        // Update the value
+        value = -value -1 - pieceValues[pt];
 
-        // Check for threshold
-        if (value >= 0){
-            if (pt == K && (attackers & occupancies[side])) side = !side;
+        // Check if value beats threshold
+        if (value >= 0) {
+            // Special case for king captures, as we need to check if the king is in check after the capture
+            if (pt == K && (attackers & occupancies[side])) side ^= 1; // So that if our kings ends up in check we fail, if their king ends up in check we succeed
             break;
         }
 
-        // Remove the used piece from occupancy
-        clearBit(occupancy, lsb(myAttackers & (bitboards[pt] | bitboards[pt + 6])));
+        // Remove the used piece from the board
+        clearBit(occupied, lsb(ourAttackers & (bitboards[pt] | bitboards[pt + 6])));
 
-        if (pt == P || pt == B || pt == Q)
-            attackers |= getBishopAttack(to, occupancy) & diagonalAttackers;
-
-        if (pt == R || pt == Q)
-            attackers |= getRookAttack(to, occupancy) & orthogonalAttackers;
+        // Update the attackers
+        if (pt == P || pt == B || pt == Q) attackers |= getBishopAttack(to, occupied) & diagonalSliders;
+        if (pt == R || pt == Q) attackers |= getRookAttack(to, occupied) & orthogonalSliders;
     }
-    
-    return side != (attacker >= p);
+
+    // Check who runs out of attackers
+    return side != us;
 }
+
 
 void Position::reflect() {
     // First, swap white with black
@@ -754,8 +743,15 @@ std::string Position::getFEN() {
 /**
  * @brief The generateMoves function generates all pseudo legal moves for the current side.
  * @param moveList The moveList to fill with the generated moves.
+ * @param ss The search stack, to get the killers and counter moves.
  */
-void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Move counterMove) {
+void Position::generateMoves(MoveList& moveList, SStack* ss) {
+
+    const Move killer1 = ss->killers[0];
+    const Move killer2 = ss->killers[1];
+    const Move counterMove = lastMove ? counterMoveTable[indexFromTo(moveSource(lastMove), moveTarget(lastMove))] : noMove;
+    const S32 *ply1contHist = nullptr; //(ss - 1)->move ? (ss - 1)->contHistEntry : nullptr;
+    const S32 *ply2contHist = nullptr; //(ss-2)->move ? (ss-2)->contHistEntry : nullptr;
 
     BitBoard ourPawns   = bitboards[P + 6 * side];
     BitBoard ourKnights = bitboards[N + 6 * side];
@@ -908,7 +904,7 @@ void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Mov
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (knightCheckers & squareBB(to)) > 0;
-            addQuiet(&moveList, encodeMove(from, to, N + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove);
+            addQuiet(&moveList, encodeMove(from, to, N + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
     }
     // We will generate the bishop moves
@@ -927,7 +923,7 @@ void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Mov
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (bishopCheckers & squareBB(to)) > 0;
-            addQuiet(&moveList, encodeMove(from, to, B + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove);
+            addQuiet(&moveList, encodeMove(from, to, B + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
     }
     // We will generate the rook moves
@@ -946,7 +942,7 @@ void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Mov
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (rookCheckers & squareBB(to)) > 0;
-            addQuiet(&moveList, encodeMove(from, to, R + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove);
+            addQuiet(&moveList, encodeMove(from, to, R + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
     }
     // We will generate the queen moves
@@ -965,7 +961,7 @@ void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Mov
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (queenCheckers & squareBB(to)) > 0;
-            addQuiet(&moveList, encodeMove(from, to, Q + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove);
+            addQuiet(&moveList, encodeMove(from, to, Q + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
     }
     // We will generate the pawn pushes
@@ -983,7 +979,7 @@ void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Mov
                 addPromotion(&moveList, encodeMove(to + 8, to, P, NOPIECE, N, false, false, false, (knightCheckers & squareBB(to)) > 0), N);
             }
             else
-                addQuiet(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to + 8, to, killer1, killer2, counterMove);
+                addQuiet(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to + 8, to, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
 
         BitBoard pawnDoublePushes = ourPawns & ranks(6);
@@ -993,7 +989,7 @@ void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Mov
         pawnDoublePushes &= ~occupancy;
         while (pawnDoublePushes) {
             Square to = popLsb(pawnDoublePushes);
-            addQuiet(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to + 16, to, killer1, killer2, counterMove);
+            addQuiet(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to + 16, to, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
     }
     else {
@@ -1009,7 +1005,7 @@ void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Mov
                 addPromotion(&moveList, encodeMove(to - 8, to, p, NOPIECE, n, false, false, false, (knightCheckers & squareBB(to)) > 0), n);
             }
             else
-                addQuiet(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to - 8, to, killer1, killer2, counterMove);
+                addQuiet(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to - 8, to, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
         BitBoard pawnDoublePushes = ourPawns & ranks(1);
         pawnDoublePushes <<= 8;
@@ -1018,7 +1014,7 @@ void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Mov
         pawnDoublePushes &= ~occupancy;
         while (pawnDoublePushes) {
             Square to = popLsb(pawnDoublePushes);
-            addQuiet(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to - 16, to, killer1, killer2, counterMove);
+            addQuiet(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to - 16, to, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
     }
     // We will generate the king moves, including castling
@@ -1033,23 +1029,23 @@ void Position::generateMoves(MoveList& moveList, Move killer1, Move killer2, Mov
     }
     while (kMoves) {
         Square to = popLsb(kMoves);
-        addQuiet(&moveList, encodeMove(king, to, K + 6 * side, NOPIECE, NOPIECE, false, false, false, false), king, to, killer1, killer2, counterMove);
+        addQuiet(&moveList, encodeMove(king, to, K + 6 * side, NOPIECE, NOPIECE, false, false, false, false), king, to, killer1, killer2, counterMove, ply1contHist, ply2contHist);
     }
     // We will generate the castling moves
     if (side == WHITE) {
         if (castle & CastleRights::WK && !(occupancy & wKCastleMask)) {
-            addQuiet(&moveList, encodeMove(e1, g1, K, NOPIECE, NOPIECE, false, false, true, false), e1, g1, killer1, killer2, counterMove);
+            addQuiet(&moveList, encodeMove(e1, g1, K, NOPIECE, NOPIECE, false, false, true, false), e1, g1, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
         if (castle & CastleRights::WQ && !(occupancy & wQCastleMask)) {
-            addQuiet(&moveList, encodeMove(e1, c1, K, NOPIECE, NOPIECE, false, false, true, false), e1, c1, killer1, killer2, counterMove);
+            addQuiet(&moveList, encodeMove(e1, c1, K, NOPIECE, NOPIECE, false, false, true, false), e1, c1, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
     }
     else {
         if (castle & CastleRights::BK && !(occupancy & bKCastleMask)) {
-            addQuiet(&moveList, encodeMove(e8, g8, k, NOPIECE, NOPIECE, false, false, true, false), e8, g8, killer1, killer2, counterMove);
+            addQuiet(&moveList, encodeMove(e8, g8, k, NOPIECE, NOPIECE, false, false, true, false), e8, g8, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
         if (castle & CastleRights::BQ && !(occupancy & bQCastleMask)) {
-            addQuiet(&moveList, encodeMove(e8, c8, k, NOPIECE, NOPIECE, false, false, true, false), e8, c8, killer1, killer2, counterMove);
+            addQuiet(&moveList, encodeMove(e8, c8, k, NOPIECE, NOPIECE, false, false, true, false), e8, c8, killer1, killer2, counterMove, ply1contHist, ply2contHist);
         }
     }
 }
