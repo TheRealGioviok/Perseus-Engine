@@ -155,7 +155,10 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     (ss+1)->excludedMove = noMove;
 
     // Quiescence drop
-    if (depth <= 0) return quiescence(alpha, beta, ss);
+    if (depth <= 0) {
+        if (inCheck) depth = 1;
+        else return quiescence(alpha, beta, ss);
+    }
 
     if (depth >= IIRdepth && ttBound == hashNONE) --depth; // && !excludedMove
 
