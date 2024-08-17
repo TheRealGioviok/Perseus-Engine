@@ -147,7 +147,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         }
     }
 
-    // const bool ttPv = PVNode || (ttFlags & hashPVMove);
+    const bool ttPv = PVNode || (ttFlags & hashPVMove);
 
     // Clear killers
     clearKillers(ss+1);
@@ -188,7 +188,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     else {
         eval = ss->staticEval = evaluate();
         // Store the eval in the TT if not in exclusion mode (in which we might already have the entry)
-        writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, false);
+        writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, ttPv);
     }
 
     // // Calculate the improving flag
@@ -326,13 +326,18 @@ skipPruning:
             else noisy[noisyCount++] = currMove;
             if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
 
-            if (moveSearched > PVNode * 3 && depth >= 3 && isQuiet)
+            if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
-                Depth R = reduction(depth, moveSearched, PVNode, improving);
-                // R -= givesCheck;
-                // currMoveScore = getScore(moveList.moves[i]) - QUIETSCORE;
-                if (cutNode) R += 2;
-                // if (PVNode) R -= 1 + cutNode;
+                Depth R = reduction(depth, moveSearched, ttPv, improving);
+                if (isQuiet){
+                    // R -= givesCheck;
+                    if (currMoveScore >= COUNTERSCORE) R -= 1;
+                    if (cutNode) R += 2;
+                    if (ttPv) R -= cutNode;
+                }
+                else {
+                    if (currMoveScore < GOODNOISYMOVE && cutNode) R += 1;
+                }
                 // R -= std::clamp(currMoveScore / 8192, -1, 1);
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
@@ -388,15 +393,17 @@ skipPruning:
     }
 
     //// Check for checkmate /
-    if (moveSearched == 0)
+    if (moveSearched == 0){
         return inCheck ? matedIn(ply) : randomizedDrawScore(nodes);
+    }
         // return excludedMove ? alpha : (inCheck ? matedIn(ply) : randomizedDrawScore(nodes)); // Randomize draw score so that we try to explore different lines
         // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
     if (!stopped){ // && !excludedMove){
         U8 ttStoreFlag = bestScore >= beta ? hashLOWER : alpha != origAlpha ? hashEXACT : hashUPPER;
-        //writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, ttPv);
-        writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, false);
+        ttStoreFlag |= ttPv ? hashPVMove : 0;
+        writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, ttPv);
+        // writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, false);
     }
 
     return bestScore;
