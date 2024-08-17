@@ -170,6 +170,7 @@ bool Position::parseFEN(char *fen) {
     // 1. Piece placement
     Square square = a8;
     int pieceCount = 0;
+    fiftyMove = 0;
     
     while(*fen != ' ') {
         if (*fen == '/') {
@@ -584,21 +585,22 @@ bool Position::inCheck() {
 }
 
 bool Position::insufficientMaterial() {
-    if (popcount(bitboards[P] | bitboards[p]) > 0) return false;
-    if (popcount(bitboards[R] | bitboards[r]) > 0) return false;
-    if (popcount(bitboards[Q] | bitboards[q]) > 0) return false;
-    BitBoard sideW = bitboards[N] | bitboards[B];
-    BitBoard sideB = bitboards[n] | bitboards[b];
-    BitBoard occupancy = sideW | sideB;
-    if (popcount(occupancy) > 2) return false;
-    if (popcount(occupancy) == 2) {
-        if (sideW && sideB) return true; // Means K(N/B) vs K(N/B)
-        if (sideW == bitboards[N] || sideB == bitboards[B]) return true; // Means KNN vs K or K v KNN
-        if (sideW == bitboards[B] && (popcount(bitboards[B] & squaresOfColor[WHITE]) != 1)) return true; // Means KBB v K with same color bishops
-        if (sideB == bitboards[b] && (popcount(bitboards[b] & squaresOfColor[BLACK]) != 1)) return true; // Means Kbb v K with same color bishops
-		return false; // Means either KBN v K or KBB v K with different color bishops
+    if (bitboards[P] | bitboards[p] | bitboards[R] | bitboards[r] | bitboards[Q] | bitboards[q]) return false;
+    BitBoard whiteMinors = bitboards[B] | bitboards[N];
+    BitBoard blackMinors = bitboards[b] | bitboards[n];
+    switch (popcount(whiteMinors | blackMinors)) {
+        case 0: return true; // K vs K
+        case 1: return true; // K vs K + N or K vs K + B
+        case 2: {
+            return false;
+            if (whiteMinors && blackMinors) return true; // K + minor vs K + minor is a dead draw
+            if (!blackMinors) return (whiteMinors != bitboards[N]) && // No KNN
+                        (bitboards[N] || ((bitboards[B] & squaresOfColor[WHITE]) != bitboards[B])); // KBN or KBB with different color bishops
+            if (!whiteMinors) return (blackMinors != bitboards[n]) && // No Knn
+                        (bitboards[n] || ((bitboards[b] & squaresOfColor[BLACK]) != bitboards[b])); // Kbn or Kbb with different color bishops
+        }
+        default: return false; // 5 pieces are too complex to analyze, we fall back to standard evaluation
     }
-	return true; // Means K v K
 }
 
 // Thanks to Weiss chess engine for a clean implementation of this function
