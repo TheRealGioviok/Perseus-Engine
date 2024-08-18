@@ -592,7 +592,6 @@ bool Position::insufficientMaterial() {
         case 0: return true; // K vs K
         case 1: return true; // K vs K + N or K vs K + B
         case 2: {
-            return false;
             if (whiteMinors && blackMinors) return true; // K + minor vs K + minor is a dead draw
             if (!blackMinors) return (whiteMinors != bitboards[N]) && // No KNN
                         (bitboards[N] || ((bitboards[B] & squaresOfColor[WHITE]) != bitboards[B])); // KBN or KBB with different color bishops
