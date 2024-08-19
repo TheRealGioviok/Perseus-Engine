@@ -313,9 +313,10 @@ skipPruning:
 
         Depth newDepth = depth - 1; // + extension;
 
-        ss->move = currMove;
+        
         if (makeMove(currMove))
         {
+            ss->move = currMove;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
             S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
             Score score;
@@ -421,7 +422,51 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     if (ply >= maxPly - 1)
         return bestScore;
 
-    bestScore = inCheck ? noScore : evaluate();
+    const bool PVNode = (beta - alpha) > 1; 
+    
+     //// TT probe
+    ttEntry *tte = probeTT(pos.hashKey); //excludedMove ? nullptr : probeTT(pos.hashKey);
+    const bool ttHit = tte;
+    const Score ttScore = ttHit ? adjustMateScore(tte->score, ply) : noScore;
+    const PackedMove ttMove = ttHit ? tte->bestMove : 0;
+    const U8 ttFlags = ttHit ? tte->flags : hashNONE;
+    const U8 ttBound = ttFlags & 3;
+
+    if (ttScore != noScore)
+    {
+        if (!PVNode)
+        {
+            if (ttBound == hashEXACT)
+                return ttScore;
+            if ((ttBound == hashLOWER))
+                alpha = std::max(alpha, ttScore);
+            else if ((ttBound == hashUPPER))
+                beta = std::min(beta, ttScore);
+            if (alpha >= beta) {
+                // Update best move history
+                // Square from = moveSource(ttMove);
+                // Square to = moveTarget(ttMove);
+                // updateHistoryBonus(&historyTable[pos.side][indexFromTo(from, to)], depth, true);
+                return ttScore;
+            }
+        }
+    }
+
+    const bool ttPv = PVNode || (ttFlags & hashPVMove); 
+
+    if (inCheck){
+        bestScore = noScore;
+        ss->staticEval = noScore;
+    }
+    else if (ttHit){
+        ss->staticEval = bestScore = tte->eval != noScore ? tte->eval : evaluate();
+        if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < bestScore) || (ttBound == hashLOWER && ttScore > bestScore)))
+            bestScore = ttScore;
+    }
+    else {
+        ss->staticEval = bestScore = evaluate();
+        writeTT(pos.hashKey, noScore, bestScore, 0, hashNONE, 0, ply, ttPv);
+    }
 
     if (bestScore >= beta)
         return beta;
@@ -434,7 +479,8 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
 
     UndoInfo undoer = UndoInfo(pos);
     U16 moveCount = 0;
-    for (int i = 0; i < moveList.count; i++)
+    Move bestMove = noMove;
+    for (int i = sortTTUp(moveList, ttMove); i < moveList.count; i++)
     {
         Move move = onlyMove(moveList.moves[i]);
         
@@ -448,18 +494,30 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
             moveCount++;
             Score score = -quiescence(-beta, -alpha, ss+1);
             undo(undoer, move);
-            if (score > alpha)
+            if (score > bestScore)
             {
-                alpha = score;
-                if (alpha >= beta)
-                    return beta;
+                bestScore = score;
+                if (score > alpha)
+                {
+                    bestMove = move;
+                    if (score >= beta)
+                        break;
+                    alpha = score;
+                }
             }
         }
         else
             undo(undoer, move);
     }
 
-    return alpha;
+    if (moveCount == 0 && inCheck)
+        return matedIn(ply);
+    
+    U8 ttStoreFlag = bestScore >= beta ? hashLOWER : hashUPPER; // No exact bounds in qsearch
+    ttStoreFlag |= ttPv ? hashPVMove : 0;
+    writeTT(pos.hashKey, bestScore, ss->staticEval, 0, ttStoreFlag, bestMove, ply, ttPv);
+
+    return bestScore;
 }
 
 #define ASPIRATIONWINDOW 25
