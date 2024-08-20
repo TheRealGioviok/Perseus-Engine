@@ -122,7 +122,8 @@ ttEntry *probeTT(HashKey key);
  * @param move The move.
  * @param ply The ply.
  * @param isPv The isPv flag.
+ * @param wasPv The wasPv flag.
  */
-void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv);
+void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv, bool wasPv);
 
 U16 hashfull();

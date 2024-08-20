@@ -188,7 +188,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     else {
         eval = ss->staticEval = evaluate();
         // Store the eval in the TT if not in exclusion mode (in which we might already have the entry)
-        writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, ttPv);
+        writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
 
     // // Calculate the improving flag
@@ -278,44 +278,44 @@ skipPruning:
 
         const bool isQuiet = okToReduce(currMove);
         // const bool givesCheck = isCheck(currMove) || pos.inCheck();
-
-        // Depth extension = 0;
-        // if (false && i == 0 // Can only happen on ttMove
-        //     && ply < currSearch * 2  
-        //     && !RootNode 
-        //     && depth >= singularSearchDepth
-        //     && !excludedMove 
-        //     && (ttBound & hashLOWER) 
-        //     && abs(ttScore) < mateValue 
-        //     && ttDepth >= depth - 3
-        // ){
-        //     // Increase singular candidates
-        //     ++seCandidates;
-        //     const Score singularBeta = ttScore - singularDepthMultiplier * depth;
-        //     const Depth singularDepth = (depth - 1) / 2;
-
-        //     ss->excludedMove = currMove;
-        //     const Score singularScore = search(singularBeta - 1, singularBeta, singularDepth, cutNode, ss);
-        //     ss->excludedMove = noMove;
-
-        //     if (singularScore < singularBeta) {
-        //         extension = 1;
-        //         // Increase singular activations
-        //         ++seActivations;
-        //     }
-        //     // else{
-        //     //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
-        //     // }
-
-        //     // Update avg dist
-        //     avgDist += abs(singularScore - singularBeta);
-        // }
-
-        Depth newDepth = depth - 1; // + extension;
-
         
         if (makeMove(currMove))
         {
+            // // Singular extension
+            // Depth extension = 0;
+            // if (i == 0 // Can only happen on ttMove
+            //     && ply < currSearch * 2  
+            //     && !RootNode 
+            //     && depth >= singularSearchDepth
+            //     && !excludedMove 
+            //     && (ttBound & hashLOWER) 
+            //     && abs(ttScore) < mateValue 
+            //     && ttDepth >= depth - 3
+            // ){
+            //     // Increase singular candidates
+            //     ++seCandidates;
+            //     const Score singularBeta = ttScore - singularDepthMultiplier * depth;
+            //     const Depth singularDepth = (depth - 1) / 2;
+
+            //     ss->excludedMove = currMove;
+            //     const Score singularScore = search(singularBeta - 1, singularBeta, singularDepth, cutNode, ss);
+            //     ss->excludedMove = noMove;
+
+            //     if (singularScore < singularBeta) {
+            //         extension = 1;
+            //         // Increase singular activations
+            //         ++seActivations;
+            //     }
+            //     // else{
+            //     //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
+            //     // }
+
+            //     // Update avg dist
+            //     avgDist += abs(singularScore - singularBeta);
+            // }
+
+            Depth newDepth = depth - 1; // + extension;
+
             ss->move = currMove;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
             S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
@@ -395,16 +395,16 @@ skipPruning:
 
     //// Check for checkmate /
     if (moveSearched == 0){
+        // return excludedMove ? alpha : (inCheck ? matedIn(ply) : randomizedDrawScore(nodes)); // Randomize draw score so that we try to explore different lines
         return inCheck ? matedIn(ply) : randomizedDrawScore(nodes);
     }
-        // return excludedMove ? alpha : (inCheck ? matedIn(ply) : randomizedDrawScore(nodes)); // Randomize draw score so that we try to explore different lines
+        // 
         // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
     if (!stopped){ // && !excludedMove){
         U8 ttStoreFlag = bestScore >= beta ? hashLOWER : alpha != origAlpha ? hashEXACT : hashUPPER;
-        ttStoreFlag |= ttPv ? hashPVMove : 0;
-        writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, ttPv);
-        // writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, false);
+        writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, PVNode, ttPv);
+        // writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, false, PVNode);
     }
 
     return bestScore;
@@ -465,7 +465,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     }
     else {
         ss->staticEval = bestScore = evaluate();
-        writeTT(pos.hashKey, noScore, bestScore, 0, hashNONE, 0, ply, ttPv);
+        writeTT(pos.hashKey, noScore, bestScore, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
 
     if (bestScore >= beta)
@@ -515,7 +515,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     
     U8 ttStoreFlag = bestScore >= beta ? hashLOWER : hashUPPER; // No exact bounds in qsearch
     ttStoreFlag |= ttPv ? hashPVMove : 0;
-    writeTT(pos.hashKey, bestScore, ss->staticEval, 0, ttStoreFlag, bestMove, ply, ttPv);
+    writeTT(pos.hashKey, bestScore, ss->staticEval, 0, ttStoreFlag, bestMove, ply, PVNode, ttPv);
 
     return bestScore;
 }
