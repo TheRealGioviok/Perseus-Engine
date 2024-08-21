@@ -41,11 +41,11 @@ void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMove
     if (okToReduce(bestMove)) {
         // If bestMove is not noisy, we reduce the bonus of all other moves and increase the bonus of the bestMove
         updateHistoryMove(side, bestMove, delta);
-        // updateContHist(ss, bestMove, delta);
+        updateContHist(ss, bestMove, delta);
         for (int i = 0; i < quietsCount; i++) {
             if (quietMoves[i] == bestMove) continue;
             updateHistoryMove(side, quietMoves[i], -delta);
-            // updateContHist(ss, quietMoves[i], -delta);
+            updateContHist(ss, quietMoves[i], -delta);
         }
     }
     else {

@@ -569,8 +569,8 @@ inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Squ
     }
     ml->moves[ml->count++] = ((
         (S64)(historyTable[side][indexFromTo(source, target)]) 
-        // + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
-        // + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
+        + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
+        + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
         + QUIETSCORE
     ) << 32) | move;
 }
@@ -751,8 +751,8 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
     const Move killer1 = ss->killers[0];
     const Move killer2 = ss->killers[1];
     const Move counterMove = lastMove ? counterMoveTable[indexFromTo(moveSource(lastMove), moveTarget(lastMove))] : noMove;
-    const S32 *ply1contHist = nullptr; //(ss - 1)->move ? (ss - 1)->contHistEntry : nullptr;
-    const S32 *ply2contHist = nullptr; //(ss-2)->move ? (ss-2)->contHistEntry : nullptr;
+    const S32 *ply1contHist = (ss - 1)->move ? (ss - 1)->contHistEntry : nullptr;
+    const S32 *ply2contHist = (ss - 2)->move ? (ss - 2)->contHistEntry : nullptr;
 
     BitBoard ourPawns   = bitboards[P + 6 * side];
     BitBoard ourKnights = bitboards[N + 6 * side];

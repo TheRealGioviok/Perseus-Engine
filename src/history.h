@@ -60,5 +60,5 @@ static inline S32 stat_bonus(int depth) {
 #endif
 }
 
-#define MAXHISTORYABS 16384ULL
+#define MAXHISTORYABS 16384LL
 void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);
