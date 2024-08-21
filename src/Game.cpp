@@ -241,7 +241,7 @@ bool Game::isRepetition() {
     HashKey hashKey = pos.hashKey;
     S32 startPoint = pos.totalPly;
     S32 counter = 0;
-    for (int idx = 4; idx < dist; idx += 2){
+    for (int idx = 4; idx <= dist; idx += 2){
         if (repetitionTable[startPoint - idx] == hashKey) {
             if (idx < ply) return true;
             if (++counter >= 2) return true;
