@@ -161,7 +161,10 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     }
 
     if (depth >= IIRdepth && ttBound == hashNONE) --depth; // && !excludedMove
-
+    // else if (depth < ttDepth && (ttBound & hashLOWER)){
+    //     if (ply == 1) depth += std::min(3, ttDepth - depth);
+    //     else depth++; // Principled iterative extensions: If the tt entry is a lower bound (or exact), we don't search shallower than the tt depth
+    // }
     // Initialize the undoer
     UndoInfo undoer = UndoInfo(pos);
 
@@ -330,16 +333,20 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 Depth R = reduction(depth, moveSearched, ttPv, improving);
+                if (currMoveScore >= COUNTERSCORE) R -= 1;
                 if (isQuiet){
                     // R -= givesCheck;
-                    if (currMoveScore >= COUNTERSCORE) R -= 1;
+                    R -= (S8)std::clamp((currMoveScore - QUIETSCORE) / 8192LL, -2LL, 2LL);
                     if (cutNode) R += 2;
                     if (ttPv) R -= cutNode;
                 }
                 else {
-                    if (currMoveScore < GOODNOISYMOVE && cutNode) R += 1;
+                    if (currMoveScore < GOODNOISYMOVE) {
+                        if (cutNode) R += 1;
+                        R -= (S8)std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) / 8192LL, -1LL, 2LL);
+                    }
+                    R -= (S8)std::clamp((currMoveScore - BADNOISYMOVE) / 8192LL, -1LL, 2LL);
                 }
-                // R -= std::clamp(currMoveScore / 8192, -1, 1);
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
                 
