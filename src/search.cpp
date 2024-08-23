@@ -160,7 +160,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         else return quiescence(alpha, beta, ss);
     }
 
-    if (depth >= IIRdepth && ttBound == hashNONE) --depth; // && !excludedMove
     // else if (depth < ttDepth && (ttBound & hashLOWER)){
     //     if (ply == 1) depth += std::min(3, ttDepth - depth);
     //     else depth++; // Principled iterative extensions: If the tt entry is a lower bound (or exact), we don't search shallower than the tt depth
@@ -208,7 +207,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             return eval;
 
         // Null move pruning
-        if (ss->staticEval >= beta + nmpBias &&
+        if (eval >= ss->staticEval &&
             eval >= beta &&
             (ss - 1)->move != noMove &&
             depth >= 3 &&
@@ -256,6 +255,9 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     }
 
 skipPruning:
+
+    if (depth >= IIRdepth && ttBound == hashNONE)
+        --depth; // && !excludedMove
 
     // Search
     const Score origAlpha = alpha;

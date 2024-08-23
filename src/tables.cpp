@@ -53,10 +53,10 @@ BitBoard kingShelter[2][64]; // The king shelter
 Ply reductionTable[128][128]= {{0}};
 S16 lmpMargin[128][2] = {{0}};
 #define RESOLUTION 1000
-double lmrDepthValue = 880;
-double lmrMoveValue = 917;
-double lmrC = 558;
-double lmrA = 788;
+double lmrDepthValue = 1000;
+double lmrMoveValue = 1000;
+double lmrC = 500;
+double lmrA = 750;
 /**
  * @brief The initLMRTable function initializes the LMR reduction table
  */
