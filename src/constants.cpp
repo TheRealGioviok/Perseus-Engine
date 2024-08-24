@@ -1,10 +1,10 @@
 #include "constants.h"
 #include "types.h"
 
-int futilityMarginDelta = 90;       // [55, 125]
+int futilityMarginDelta = 91;       // [55, 125]
 int nmpBias = 13;                   // [0, 30]
 int nmpDepthDivisor = 3;            // [2, 6]
-int nmpScoreDivisor = 234;          // [100, 300]
+int nmpScoreDivisor = 200;          // [100, 300]
 int nmpQ1 = 3;                      // [1, 4]
 int nmpQ2 = 3;                      // [0, 4]
 int razorQ1 = 128;                  // [50, 200]

@@ -154,11 +154,11 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     // Clear excluded move
     (ss+1)->excludedMove = noMove;
 
+    if (inCheck && (depth <= 0 || ply < currSearch * (1 + PVNode)))
+        depth++;
+
     // Quiescence drop
-    if (depth <= 0) {
-        if (inCheck) depth = 1;
-        else return quiescence(alpha, beta, ss);
-    }
+    if (depth <= 0) return quiescence(alpha, beta, ss);
 
     // else if (depth < ttDepth && (ttBound & hashLOWER)){
     //     if (ply == 1) depth += std::min(3, ttDepth - depth);
@@ -232,7 +232,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             {
                 if (nullScore >= mateValue)
                     nullScore = beta;
-                if (depth <= 14)
+                if (nmpPlies || depth <= 14)
                     return nullScore;
 
                 // If the null move failed high, we can try a reduced search when depth is high. This is to avoid zugzwang positions
@@ -345,9 +345,9 @@ skipPruning:
                 else {
                     if (currMoveScore < GOODNOISYMOVE) {
                         if (cutNode) R += 1;
-                        R -= (S8)std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) / 8192LL, -1LL, 2LL);
+                        R -= (S8)std::clamp((currMoveScore - BADNOISYMOVE) / 6144LL, -1LL, 2LL);
                     }
-                    R -= (S8)std::clamp((currMoveScore - BADNOISYMOVE) / 8192LL, -1LL, 2LL);
+                    R -= (S8)std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) / 6144LL, -1LL, 2LL);
                 }
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
