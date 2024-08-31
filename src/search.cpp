@@ -557,26 +557,30 @@ void Game::startSearch(bool halveTT = true)
     // posKillerSearches = 0;
 
     startTime = getTime64();
-
+    U64 totalTime;
+    U64 optim;
     switch (searchMode)
     {
-    case 0:                 // Infinite search
+    case 0: case 3:               // Infinite search
         depth = maxPly - 1; // Avoid overflow
         moveTime = 0xffffffffffffffffULL;
+        optim = moveTime;
         break;
     case 1: // Fixed depth
         moveTime = 0xffffffffffffffffULL;
+        optim = moveTime;
         break;
-#define UCILATENCYMS 10
+#define UCILATENCYMS 20
     case 2: // Time control
         moveTime = getTime64();
-        if (pos.side == WHITE)
-            moveTime += (U64)(wtime / 20) + winc / 2 - UCILATENCYMS;
-        else
-            moveTime += (U64)(btime / 20) + binc / 2 - UCILATENCYMS;
-        depth = maxPly - 1;
-        break;
-    case 3:
+        
+        if (pos.side == WHITE) totalTime = (U64)(wtime / 10) + winc;
+        else totalTime = (U64)(btime / 10) + binc;
+        totalTime -= UCILATENCYMS;
+        optim = totalTime / 4;
+
+        optim += moveTime;
+        moveTime += totalTime;
         depth = maxPly - 1;
         break;
     }
@@ -676,6 +680,8 @@ void Game::startSearch(bool halveTT = true)
                 break;
             }
         }
+        // Check optim time quit
+        if (getTime64() > optim) break;
     }
 
 bmove:
