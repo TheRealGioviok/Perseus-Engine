@@ -274,6 +274,7 @@ skipPruning:
     // Iterate through moves
     for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
     {
+        
         Move currMove = onlyMove(moveList.moves[i]);
         // assert (
         //     i != 0 || !excludedMove ||
@@ -286,6 +287,7 @@ skipPruning:
         
         if (makeMove(currMove))
         {
+            U64 nodesBefore = nodes;
             // // Singular extension
             // Depth extension = 0;
             // if (i == 0 // Can only happen on ttMove
@@ -369,6 +371,8 @@ skipPruning:
                 score = -search(-beta, -alpha, newDepth, false, ss + 1);
             
             undo(undoer, currMove);
+
+            if (RootNode) nodesPerMoveTable[indexFromTo(moveSource(currMove), moveTarget(currMove))] += nodes - nodesBefore;
 
             ++moveSearched;
 
@@ -553,42 +557,39 @@ void Game::startSearch(bool halveTT = true)
     pos.lastMove = 0;
     lastScore = 0;
 
+    // Clear nodesPerMoveTable
+    
+
     // killerCutoffs = 0;
     // posKillerSearches = 0;
 
     startTime = getTime64();
-    U64 totalTime;
     U64 optim;
     switch (searchMode)
     {
     case 0: case 3:               // Infinite search
         depth = maxPly - 1; // Avoid overflow
-        moveTime = 0xffffffffffffffffULL;
-        optim = moveTime;
-        break;
     case 1: // Fixed depth
-        moveTime = 0xffffffffffffffffULL;
-        optim = moveTime;
+        optim = moveTime = 0xffffffffffffffffULL;
         break;
 #define UCILATENCYMS 20
     case 2: // Time control
         moveTime = getTime64();
-        
+        U64 totalTime;
         if (pos.side == WHITE) totalTime = (U64)(wtime / 10) + winc;
         else totalTime = (U64)(btime / 10) + binc;
         totalTime -= UCILATENCYMS;
         optim = totalTime / 4;
 
-        optim += moveTime;
         moveTime += totalTime;
         depth = maxPly - 1;
         break;
     }
 
-    // Clear history, captHistory and counter move tables
-    // memset(historyTable, 0, sizeof(historyTable));
-    // memset(counterMoveTable, 0, sizeof(counterMoveTable));
-    // memset(captureHistoryTable, 0, sizeof(captureHistoryTable));
+    double nodesTmScale = 1.0;
+
+    // Clear nodePerMoveTable
+    memset(nodesPerMoveTable, 0, sizeof(nodesPerMoveTable));
 
     // Clear pv len and pv table
     memset(pvLen, 0, sizeof(pvLen));
@@ -619,7 +620,9 @@ void Game::startSearch(bool halveTT = true)
         {
             alpha = std::max(S32(noScore), score - delta);
             beta = std::min(S32(infinity), score + delta);
+            
         }
+        // Calculate optim base
         while (true)
         {
             seldepth = 0; // Reset seldepth
@@ -680,8 +683,13 @@ void Game::startSearch(bool halveTT = true)
                 break;
             }
         }
+        if (currSearch >= 6){
+            // TODO: update with new percentage from bench 24 (0.673487)
+            // Note: currently used percentage is bench 18 (0.6303)
+            nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * .7910;
+        }
         // Check optim time quit
-        if (getTime64() > optim) break;
+        if (getTime64() > startTime + optim * nodesTmScale) break;
     }
 
 bmove:
@@ -693,7 +701,6 @@ bmove:
     std::cout << "bestmove ";
     printMove(bestMove);
     std::cout << std::endl;
-
     if (halveTT)
     {
         // Age pv table

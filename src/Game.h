@@ -22,6 +22,7 @@ public:
     U32 binc;
     S32 rootDelta = infinity;
     Score lastScore = 0;
+    U64 nodesPerMoveTable[64 * 64];
     S16 nmpPlies = 0;
     bool stopped = false;
 
