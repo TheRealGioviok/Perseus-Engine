@@ -32,11 +32,11 @@ endif
 
 $(OBJ_DIR)/%.o: %.cpp
 	@echo "Compiling $<"
-	$(CXX) $(CXXFLAGS) $(NATIVE) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) $(NATIVE) -c $< -o $@
 
 link:
 	@echo "Linking"
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(OBJ_FILES) -o $(EXE)
+	@$(CXX) $(CXXFLAGS) $(NATIVE) $(OBJ_FILES) -o $(EXE)
 
 clean:
 	@echo "Cleaning"

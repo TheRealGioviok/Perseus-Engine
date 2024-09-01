@@ -3,7 +3,7 @@
 all: release
 
 release:
-	@$(MAKE) -f build.mk TARGET=Release
+	@$(MAKE) -sf build.mk TARGET=Release
 
 debug:
 	@$(MAKE) -sf build.mk TARGET=Debug
