@@ -1,5 +1,6 @@
 #include "types.h"
 #include "Game.h"
+#include "tables.h"
 #include "tt.h"
 #include "uci.h"
 const char *benchmarkfens[50] = {
@@ -55,23 +56,28 @@ const char *benchmarkfens[50] = {
     "2r2b2/5p2/5k2/p1r1pP2/P2pB3/1P3P2/K1P3R1/7R w - - 23 93"
 };
 
-S32 benchmark(){
+S32 benchmark(Depth depth){
     initTT();
     U64 nodes = 0;
     U64 totalTime = 0;
     Game game;
-    game.searchMode = 1;
-    game.depth = 12;
+    double avgNodeProportion = 0;
     for(int i = 0; i < 50; i++){
         std::cout << "Benchmarking position " << i << std::endl;
         U64 currTime = getTime64();
+        game.reset();
+        game.searchMode = 1;
+        game.depth = depth;
         game.parseFEN((char*)benchmarkfens[i]);
         game.startSearch(false);
         nodes += game.nodes;
+        Move bestMove = pvTable[0][0]; // Bench never returns half searches, hence this is always a bestmove
+        avgNodeProportion += (double)game.nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)game.nodes;
         totalTime += getTime64() - currTime;
     }
     std::cout << "Nodes: " << nodes << std::endl;
     std::cout << "Time: " << totalTime << " ms" << std::endl;
     std::cout << "NPS: " << nodes / (1+(totalTime / 1000)) << std::endl;
+    std::cout << "Average proportion: " << avgNodeProportion / 50 << std::endl;
     return 0;
 }

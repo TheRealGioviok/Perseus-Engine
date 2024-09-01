@@ -27,21 +27,20 @@ void uciStr() {
     std::cout << "id name " << "Perseus" << std::endl;
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     std::cout << "option name Hash type spin default 64 min 8 max 1024" << std::endl;
-    std::cout << "option name lmrDepthValue type spin default 880 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrMoveValue type spin default 917 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrA type spin default 788 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrC type spin default 558 min -1000 max 1000" << std::endl;
-    std::cout << "option name futilityMarginDelta type spin default 90 min 55 max 125" << std::endl;
-    std::cout << "option name nmpBias type spin default 13 min 0 max 30" << std::endl;
+    std::cout << "option name lmrDepthValue type spin default 1000 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrMoveValue type spin default 1000 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrA type spin default 750 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrC type spin default 500 min -1000 max 1000" << std::endl;
+    std::cout << "option name futilityMarginDelta type spin default 91 min 55 max 125" << std::endl;
     std::cout << "option name nmpDepthDivisor type spin default 3 min 2 max 6" << std::endl;
-    std::cout << "option name nmpScoreDivisor type spin default 234 min 100 max 300" << std::endl;
+    std::cout << "option name nmpScoreDivisor type spin default 200 min 100 max 300" << std::endl;
     std::cout << "option name nmpQ1 type spin default 3 min 1 max 4" << std::endl;
     std::cout << "option name nmpQ2 type spin default 3 min 0 max 4" << std::endl;
-    std::cout << "option name razorQ1 type spin default 248 min 50 max 400" << std::endl;
+    std::cout << "option name razorQ1 type spin default 128 min 50 max 400" << std::endl;
     std::cout << "option name razorQ2 type spin default 192 min 50 max 400" << std::endl;
     std::cout << "option name singularDepthMultiplier type spin default 4 min 1 max 6" << std::endl;
     std::cout << "option name IIRdepth type spin default 4 min 3 max 7" << std::endl;
-    std::cout << "option name razorDepth type spin default 5 min 2 max 5" << std::endl;
+    std::cout << "option name razorDepth type spin default 4 min 2 max 5" << std::endl;
     std::cout << "option name singularSearchDepth type spin default 7 min 4 max 8" << std::endl;
     std::cout << "option name RFPDepth type spin default 7 min 5 max 10" << std::endl;
     std::cout << "option name futPruningMultiplier type spin default 162 min 50 max 300" << std::endl;
@@ -208,12 +207,16 @@ int executeCommand(Game* game, char* command) {
     if (exec) execCommand(game, command);
 
     if (bench){
-        benchmark();
+        char* args = bench + 5;
+        Depth depth;
+        depth = atoi(args);
+        if (depth == 0) depth = 12;
+        benchmark(depth);
     }
 
     if (extract){
         // Get the filename
-        char* filename = strstr((char*)command, "extract") + 8;
+        char* filename = extract + 8;
         convertToFeatures(filename, "out.bin");
     }
 

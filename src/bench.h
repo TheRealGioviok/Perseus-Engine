@@ -1,3 +1,3 @@
 #include "types.h"
 
-S32 benchmark();
+S32 benchmark(Depth depth);
