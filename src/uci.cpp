@@ -26,6 +26,7 @@ U32 hashSize = 64; // The size of the hash table in MB.
 void uciStr() {
     std::cout << "id name " << "Perseus" << std::endl;
     std::cout << "id author " << "G.M. Manduca" << std::endl;
+    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
     std::cout << "option name Hash type spin default 64 min 8 max 1024" << std::endl;
     std::cout << "option name lmrDepthValue type spin default 1000 min 0 max 16383" << std::endl;
     std::cout << "option name lmrMoveValue type spin default 1000 min 0 max 16383" << std::endl;
@@ -239,6 +240,9 @@ int setOptionCommand(Game* game, char* command) {
     if (optionName == "stposHashDump") {
         // Set hashDumpFile to arg
         hashDumpFile = arg;
+    }
+    else if (optionName == "Threads"){
+        // Nothing for now. TODO: update this when we add multithreading
     }
     else if (optionName == "Hash"){
         hashSize = atoi(arg.c_str());
