@@ -649,7 +649,7 @@ void Game::startSearch(bool halveTT = true)
                 else
                     std::cout << std::dec << "info depth " << (int)currSearch << " score cp " << (score >> 1) << " lowerbound nodes " << nodes << " pv ";
                 printMove(pvTable[0][0]);
-                std::cout << " nps " << ((nodes - locNodes) / (timer2 - timer1 + 1)) * 1000 << std::endl;
+                std::cout << " nps " << (((nodes - locNodes) * 1000) / (timer2 - timer1 + 1)) << std::endl;
                 delta *= 1.44;
             }
             else if (score >= beta)
@@ -662,7 +662,7 @@ void Game::startSearch(bool halveTT = true)
                 else
                     std::cout << std::dec << "info depth " << (int)currSearch << " score cp " << (score >> 1) << " upperbound nodes " << nodes << " pv ";
                 printMove(pvTable[0][0]);
-                std::cout << " nps " << ((nodes - locNodes) / (timer2 - timer1 + 1)) * 1000 << std::endl;
+                std::cout << " nps " << (((nodes - locNodes) * 1000) / (timer2 - timer1 + 1)) << std::endl;
                 delta *= 1.44;
             }
             else
@@ -679,7 +679,7 @@ void Game::startSearch(bool halveTT = true)
                     printMove(pvTable[0][i]);
                     std::cout << " ";
                 }
-                std::cout << " nps " << ((nodes - locNodes) / (timer2 - timer1 + 1)) * 1000 << std::endl;
+                std::cout << " nps " << (((nodes - locNodes) * 1000) / (timer2 - timer1 + 1)) << std::endl;
                 break;
             }
         }

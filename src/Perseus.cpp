@@ -1,5 +1,6 @@
 #include "uci.h"
 #include "tables.h"
+#include "bench.h"
 #include <cstdlib>
 #include <vector>
 #include <string>
@@ -68,10 +69,17 @@ void perftSuite(){
     std::cout << "Perft suite completed.\n";
 }
 
-int main(){
+int main(int argc, char* argv[]){
     initAll();
     // perftSuite();
     Game game;
+
+    // Check if the first argument is "bench"
+    if (argc > 1 && std::string(argv[1]) == "bench") {
+        // If the second argument is provided, parse it; otherwise, use the default value 12
+        int depth = (argc > 2) ? std::atoi(argv[2]) : 12;
+        benchmark(depth);
+    }
     uciLoop(&game);
     return 0;
 }

@@ -75,9 +75,12 @@ S32 benchmark(Depth depth){
         avgNodeProportion += (double)game.nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)game.nodes;
         totalTime += getTime64() - currTime;
     }
-    std::cout << "Nodes: " << nodes << std::endl;
     std::cout << "Time: " << totalTime << " ms" << std::endl;
-    std::cout << "NPS: " << nodes / (1+(totalTime / 1000)) << std::endl;
     std::cout << "Average proportion: " << avgNodeProportion / 50 << std::endl;
+
+
+    std::cout << "Nodes: " << nodes << std::endl;
+    std::cout << "NPS: " << (nodes * 1000) / (1 + totalTime) << std::endl;
+
     return 0;
 }
