@@ -27,7 +27,7 @@ extern Ply pvLen[maxPly];
 // Repetition Table
 extern HashKey repetitionTable[512];
 // The LMR reduction table
-extern Ply reductionTable[128][128];
+extern Ply reductionTable[2][64][64];
 extern S16 lmpMargin[128][2];
 
 /**

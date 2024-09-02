@@ -30,8 +30,10 @@ void uciStr() {
     std::cout << "option name Hash type spin default 64 min 8 max 1024" << std::endl;
     std::cout << "option name lmrDepthValue type spin default 1000 min 0 max 16383" << std::endl;
     std::cout << "option name lmrMoveValue type spin default 1000 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrA type spin default 750 min 0 max 16383" << std::endl;
-    std::cout << "option name lmrC type spin default 500 min -1000 max 1000" << std::endl;
+    std::cout << "option name lmrA0 type spin default 763 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrC0 type spin default -275 min -1000 max 1000" << std::endl;
+    std::cout << "option name lmrA1 type spin default 775 min 0 max 16383" << std::endl;
+    std::cout << "option name lmrC1 type spin default 625 min -1000 max 1000" << std::endl;
     std::cout << "option name futilityMarginDelta type spin default 91 min 55 max 125" << std::endl;
     std::cout << "option name nmpDepthDivisor type spin default 3 min 2 max 6" << std::endl;
     std::cout << "option name nmpScoreDivisor type spin default 200 min 100 max 300" << std::endl;
@@ -260,12 +262,20 @@ int setOptionCommand(Game* game, char* command) {
         lmrMoveValue = double(atoi(arg.c_str()));
         initLMRTable();
     }
-    else if (optionName == "lmrA"){
-        lmrA = double(atoi(arg.c_str()));
+    else if (optionName == "lmrA0"){
+        lmrA0 = double(atoi(arg.c_str()));
         initLMRTable();
     }
-    else if (optionName == "lmrC"){
-        lmrC = double(atoi(arg.c_str()));
+    else if (optionName == "lmrC0"){
+        lmrC0 = double(atoi(arg.c_str()));
+        initLMRTable();
+    }
+    else if (optionName == "lmrA1"){
+        lmrA1 = double(atoi(arg.c_str()));
+        initLMRTable();
+    }
+    else if (optionName == "lmrC1"){
+        lmrC1 = double(atoi(arg.c_str()));
         initLMRTable();
     }
     else if (optionName == "futilityMarginDelta")

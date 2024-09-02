@@ -529,7 +529,7 @@ inline void Position::addPromoCapture(MoveList* ml, ScoredMove move, Piece moved
         GOODNOISYMOVE * SEE(move, -107) 
         + pieceValues[capturedPiece] * captScoreMvvMultiplier 
         + pieceValues[promotion]
-        + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)] // Piece captured can't be NOPIECE (12), so this works
+        + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)] // Piece captured can't be NOPIECE (12), so this works
         + BADNOISYMOVE
     ) << 32) | move;
 }
@@ -538,7 +538,7 @@ inline void Position::addCapture(MoveList* ml, ScoredMove move, Piece movedPiece
     ml->moves[ml->count++] = ((
         GOODNOISYMOVE * SEE(move, -107) 
         + pieceValues[capturedPiece] * captScoreMvvMultiplier 
-        + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)] // Piece captured can't be NOPIECE (12), so this works
+        + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)] // Piece captured can't be NOPIECE (12), so this works
         + BADNOISYMOVE
     ) << 32) | move;
     return;

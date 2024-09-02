@@ -25,9 +25,9 @@ inline bool okToReducePacked(Position &pos, PackedMove move)
     return !((movePiece(move) != NOPIECE) | (pos.pieceOn(moveTarget(move)) != NOPIECE));
 }
 
-static inline Depth reduction(Depth d, U16 m, bool isPv, bool improving)
+static inline Depth reduction(Depth d, U16 m, bool isQuiet, bool isPv, bool improving)
 {
-    return reductionTable[d][m] - isPv - improving;
+    return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - isPv - improving;
 }
 
 static inline Score futilityMargin(Depth depth, bool improving)
@@ -123,7 +123,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     const bool ttHit = tte;
     const Score ttScore = ttHit ? adjustMateScore(tte->score, ply) : noScore;
     const PackedMove ttMove = ttHit ? tte->bestMove : 0;
-    const U8 ttFlags = ttHit ? tte->flags : hashNONE;
+    const U8 ttFlags = ttHit ? tte->flags : 0;
     const U8 ttBound = ttFlags & 3;
     const Depth ttDepth = ttHit ? tte->depth : 0;
 
@@ -336,7 +336,7 @@ skipPruning:
 
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
-                Depth R = reduction(depth, moveSearched, ttPv, improving);
+                Depth R = reduction(depth, moveSearched, isQuiet, ttPv, improving);
                 if (currMoveScore >= COUNTERSCORE) R -= 1;
                 if (isQuiet){
                     // R -= givesCheck;
@@ -433,7 +433,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     Score bestScore;
 
     if (ply >= maxPly - 1)
-        return bestScore;
+        return inCheck ? 0 : evaluate();
 
     const bool PVNode = (beta - alpha) > 1; 
     
@@ -442,7 +442,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     const bool ttHit = tte;
     const Score ttScore = ttHit ? adjustMateScore(tte->score, ply) : noScore;
     const PackedMove ttMove = ttHit ? tte->bestMove : 0;
-    const U8 ttFlags = ttHit ? tte->flags : hashNONE;
+    const U8 ttFlags = ttHit ? tte->flags : 0;
     const U8 ttBound = ttFlags & 3;
 
     if (ttScore != noScore)
@@ -564,7 +564,7 @@ void Game::startSearch(bool halveTT = true)
     // posKillerSearches = 0;
 
     startTime = getTime64();
-    U64 optim;
+    U64 optim = 0xffffffffffffffffULL;
     switch (searchMode)
     {
     case 0: case 3:               // Infinite search
@@ -684,9 +684,9 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // TODO: update with new percentage from bench 24 (0.673487)
-            // Note: currently used percentage is bench 18 (0.6303)
-            nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * .7910;
+            // Percentage ( 0.665124 ) calculated with bench @22
+
+            nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.7285082773110468;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;

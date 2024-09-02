@@ -107,8 +107,10 @@ enum Squares {
 
 extern double lmrDepthValue;
 extern double lmrMoveValue;
-extern double lmrC;
-extern double lmrA;
+extern double lmrA0;
+extern double lmrC0;
+extern double lmrA1;
+extern double lmrC1;
 extern int futilityMarginDelta;
 extern int nmpBias;
 extern int nmpDepthDivisor;
