@@ -92,6 +92,14 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
 
     const bool RootNode = ply == 0;
     const bool PVNode = (beta - alpha) > 1;
+    if (RootNode)
+        ss->inCheck = pos.inCheck();
+    const bool inCheck = ss->inCheck;
+
+    if (inCheck != pos.inCheck()){
+        print();
+        getchar();
+    }
 
     Score eval;
     bool improving = true;
@@ -102,8 +110,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
 
     // Update seldepth
     seldepth = std::max(Ply(seldepth), Ply(ply + 1));
-
-    bool inCheck = isCheck(pos.lastMove) || pos.inCheck();
 
     // Draws - mate distance
     if (!RootNode)
@@ -214,12 +220,12 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             okToReduce(pos.lastMove) && pos.hasNonPawns() &&
             ply >= nmpPlies)
         {
-
+            assert(ss->inCheck == false);
             // make null move
             makeNullMove();
             ss->move = noMove;
             ss->contHistEntry = continuationHistoryTable[0];
-
+            (ss + 1)->inCheck = false; // Null move can't put enemy in check
             Depth R = nmpQ1 + (depth / nmpDepthDivisor) + std::min((eval - beta) / nmpScoreDivisor, nmpQ2);
             Score nullScore = -search(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
 
@@ -324,7 +330,6 @@ skipPruning:
             Depth newDepth = depth - 1; // + extension;
 
             ss->move = currMove;
-            ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
             S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
             Score score;
         
@@ -402,8 +407,6 @@ skipPruning:
                 }
             }
         }
-        else
-            undo(undoer, currMove);
     }
 
     //// Check for checkmate /
@@ -425,7 +428,7 @@ skipPruning:
 
 Score Game::quiescence(Score alpha, Score beta, SStack *ss)
 {
-    bool inCheck = pos.inCheck();
+    const bool inCheck = ss->inCheck;
     if (inCheck)
         if (isRepetition())
             return randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
@@ -500,10 +503,8 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
         // SEE pruning : skip all moves that have see < -100 (We may want to do this with a threshold of 0, but we would introduce another see call. TODO: lazily evaluate the see so that we can skip moves with see < 0)
         if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
             break;
-        if (makeMove(move))
-        {
+        if (makeMove(move, ss, undoer)) {
             ss->move = move;
-            ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))];
             moveCount++;
             Score score = -quiescence(-beta, -alpha, ss+1);
             undo(undoer, move);
@@ -519,8 +520,6 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
                 }
             }
         }
-        else
-            undo(undoer, move);
     }
 
     if (moveCount == 0 && inCheck)

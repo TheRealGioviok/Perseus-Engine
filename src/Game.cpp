@@ -231,6 +231,33 @@ bool Game::makeMove(Move move){
 }
 
 /**
+ * @brief The makeMove function makes a move on the board.
+ * @param move The move to make.
+ * @param ss The SStack pointer to current node. Updates conthist and inCheck flag automatically.
+ * @param undoer The undoer structure
+ * @return True if the move was made, false otherwise (state of the position is undefined).
+ */
+bool Game::makeMove(Move move, SStack* ss, UndoInfo& undoer){
+    assert(pos.totalPly >= 0);
+    assert(pos.totalPly >= pos.fiftyMove);
+    assert(pos.totalPly <= std::numeric_limits<U16>::max());
+    ++ply;
+#if DETECTREPETITION
+    repetitionTable[pos.totalPly] = pos.hashKey;
+#endif
+    bool legal = pos.makeMove(move);
+    if (legal){
+        // Update conthist entry and isCheck flag
+        ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))];
+        (ss+1)->inCheck = pos.inCheck();
+    }
+    else{
+        undo(undoer, move);
+    }
+    return legal;
+}
+
+/**
  * @brief The isRepetition function returns true if the current position is a repetition.
  * @return True if the current position is a repetition, false otherwise.
  */

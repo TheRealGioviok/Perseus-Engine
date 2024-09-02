@@ -103,6 +103,15 @@ public:
     bool makeMove(Move move);
 
     /**
+     * @brief The makeMove function makes a move on the board. It is a call to the internal Position::makeMove function, but it also updates the repetition table, as well as the ply.
+     * @param move The move to make.
+     * @param ss The SStack pointer to current node. Updates conthist and inCheck flag automatically.
+     * @param undoer The undoer structure
+     * @return True if the move was made, false otherwise (state of the position is undefined).
+     */
+    bool makeMove(Move move, SStack *ss, UndoInfo& undoer);
+
+    /**
      * @brief The isRepetition function returns true if the current position is a repetition.
      * @return True if the current position is a repetition, false otherwise.
      */

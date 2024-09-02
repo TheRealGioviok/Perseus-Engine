@@ -22,6 +22,7 @@ struct SStack {
     S16 doubleExtensions = 0;
     Move killers[2] = {0, 0};
     S32* contHistEntry = continuationHistoryTable[0];
+    bool inCheck;
 
     SStack() {
         excludedMove = noMove;
@@ -30,6 +31,7 @@ struct SStack {
         doubleExtensions = 0;
         killers[0] = killers[1] = noMove;
         contHistEntry = continuationHistoryTable[0];
+        inCheck = false;
     }
 
     void wipe() {
@@ -39,6 +41,7 @@ struct SStack {
         doubleExtensions = 0;
         killers[0] = killers[1] = noMove;
         contHistEntry = continuationHistoryTable[0];
+        inCheck = false;
     }
 };
 
