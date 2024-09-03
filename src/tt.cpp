@@ -32,7 +32,7 @@ ttEntry* probeTT(HashKey key) {
     ttEntry *entry = &tt[hashEntryFor(key)];
     // Iterate through the entries.
     if (entry->hashKey == key) {
-        entry->flags &= ~hashOLD;
+        // entry->flags &= ~hashOLD;
         return entry;
     }
     return nullptr;
