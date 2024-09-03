@@ -64,6 +64,10 @@ constexpr Score OUTERSHELTERMG = 36;
 constexpr Score BISHOPPAIRMG = 45;
 constexpr Score ROOKONOPENFILEMG = 29;
 constexpr Score ROOKONSEMIOPENFILEMG = 20;
+constexpr Score KNIGHTONEXTOUTPOSTMG = 6;
+constexpr Score BISHOPONEXTOUTPOSTMG = 8;
+constexpr Score KNIGHTONINTOUTPOSTMG = 23;
+constexpr Score BISHOPONINTOUTPOSTMG = 17;
 constexpr Score TEMPOMG = 34;
 // (EG)
 
@@ -83,6 +87,10 @@ constexpr Score OUTERSHELTEREG = -5;
 constexpr Score BISHOPPAIREG = 97;
 constexpr Score ROOKONOPENFILEEG = -9;
 constexpr Score ROOKONSEMIOPENFILEEG = 19;
+constexpr Score KNIGHTONEXTOUTPOSTEG = 5;
+constexpr Score BISHOPONEXTOUTPOSTEG = 7;
+constexpr Score KNIGHTONINTOUTPOSTEG = 18;
+constexpr Score BISHOPONINTOUTPOSTEG = 14;
 constexpr Score TEMPOEG = 31;
 
 
@@ -334,6 +342,22 @@ static inline BitBoard advancePathMasked(BitBoard bb, BitBoard mask){
     return bb;
 }
 
+template <bool side>
+static inline BitBoard makePawnAttacks(BitBoard pawns){
+    if constexpr (side == WHITE) return ((pawns & notFile(0)) >> 9) | ((pawns & notFile(7)) >> 7);
+    else                         return ((pawns & notFile(0)) << 7) | ((pawns & notFile(7)) << 9);
+}
+
+template <bool side>
+static inline BitBoard pawnSpanPawns(BitBoard movers, BitBoard blockers){
+    if constexpr (side == WHITE){
+        return makePawnAttacks<WHITE>(advancePathMasked<WHITE>(movers, ~blockers)) & ~blockers;
+    }
+    else {
+        return makePawnAttacks<BLACK>(advancePathMasked<BLACK>(movers, ~blockers)) & ~blockers;
+    }
+}
+
 Score pestoEval(Position *pos){
     auto const& bb = pos->bitboards;
     auto const& occ = pos->occupancies;
@@ -381,6 +405,7 @@ Score pestoEval(Position *pos){
         bb[p] & (ranks(1) | ranks(2))
     };
 
+
     BitBoard mobilityArea[2] = {
         // Mobility area.
         // Squares in the mobility area are:
@@ -395,6 +420,16 @@ Score pestoEval(Position *pos){
     // Calculate the mobility scores (index by phase and color)
     Score mobilityScore[2] = {
         0,0 
+    };
+
+    BitBoard pawnSpan[2] = {
+        advancePathMasked<WHITE>(bb[P], ~(bb[p] | pawnAttackedSquares[BLACK])),
+        advancePathMasked<BLACK>(bb[p], ~(bb[P] | pawnAttackedSquares[WHITE]))
+    };
+
+    BitBoard outpostSquares[2] = {
+        (ranks(2) | ranks(3) | ranks(4)) & pawnAttackedSquares[WHITE] & ~(makePawnAttacks<BLACK>(pawnSpan[BLACK]) | bb[p]) & notFile(0) & notFile(7),
+        (ranks(5) | ranks(4) | ranks(3)) & pawnAttackedSquares[BLACK] & ~(makePawnAttacks<WHITE>(pawnSpan[WHITE]) | bb[P]) & notFile(0) & notFile(7)
     };
 
     // White mobility
@@ -591,6 +626,19 @@ Score pestoEval(Position *pos){
     mgScore += semiOpenDiff * ROOKONSEMIOPENFILEMG;
     egScore += semiOpenDiff * ROOKONSEMIOPENFILEEG;
 
+    // Add outpost squares bonus for knights and bishops
+    Score extKnightOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[n]);
+    mgScore += extKnightOutpostDiff * KNIGHTONEXTOUTPOSTMG;
+    egScore += extKnightOutpostDiff * KNIGHTONEXTOUTPOSTEG;
+    Score extBishopOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[b]);
+    mgScore += extBishopOutpostDiff * BISHOPONEXTOUTPOSTMG;
+    egScore += extBishopOutpostDiff * BISHOPONEXTOUTPOSTEG;
+    Score intKnightOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[n]);
+    mgScore += intKnightOutpostDiff * KNIGHTONINTOUTPOSTMG;
+    egScore += intKnightOutpostDiff * KNIGHTONINTOUTPOSTEG;
+    Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
+    mgScore += intBishopOutpostDiff * BISHOPONINTOUTPOSTMG;
+    egScore += intBishopOutpostDiff * BISHOPONINTOUTPOSTEG;
 
     // Calculate the total score
     mgScore += mobilityScore[0];
@@ -660,6 +708,12 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(ROOKONOPENFILEMG);
     weights.push_back(ROOKONSEMIOPENFILEMG);
 
+    // Now, outpost
+    weights.push_back(KNIGHTONEXTOUTPOSTMG);
+    weights.push_back(BISHOPONEXTOUTPOSTMG);
+    weights.push_back(KNIGHTONINTOUTPOSTMG);
+    weights.push_back(BISHOPONINTOUTPOSTMG);
+
     // Add the tempo bonus
     weights.push_back(TEMPOMG);
 
@@ -713,6 +767,12 @@ std::vector<Score> getCurrentEvalWeights(){
     // Add the rook and queen on open file bonus
     weights.push_back(ROOKONOPENFILEEG);
     weights.push_back(ROOKONSEMIOPENFILEEG);
+
+    // Now, outpost
+    weights.push_back(KNIGHTONEXTOUTPOSTEG);
+    weights.push_back(BISHOPONEXTOUTPOSTEG);
+    weights.push_back(KNIGHTONINTOUTPOSTEG);
+    weights.push_back(BISHOPONINTOUTPOSTEG);
 
     // Add the tempo bonus
     weights.push_back(TEMPOEG);
@@ -949,6 +1009,27 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[0] += (popcount(bb[R] & openFiles) - popcount(bb[r] & openFiles));
     tensor[1] += (popcount(bb[R] & semiOpenFor[WHITE]) - popcount(bb[r] & semiOpenFor[BLACK]));
     tensor += 2;
+
+    // Outpost calculations
+    BitBoard pawnSpan[2] = {
+        advancePathMasked<WHITE>(bb[P], ~(bb[p] | pawnAttackedSquares[BLACK])),
+        advancePathMasked<BLACK>(bb[p], ~(bb[P] | pawnAttackedSquares[WHITE]))
+    };
+
+    BitBoard outpostSquares[2] = {
+        (ranks(2) | ranks(3) | ranks(4)) & pawnAttackedSquares[WHITE] & ~(makePawnAttacks<BLACK>(pawnSpan[BLACK]) | bb[p]) & notFile(0) & notFile(7),
+        (ranks(5) | ranks(4) | ranks(3)) & pawnAttackedSquares[BLACK] & ~(makePawnAttacks<WHITE>(pawnSpan[WHITE]) | bb[P]) & notFile(0) & notFile(7)
+    };
+
+    Score extKnightOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[n]);
+    tensor[0] += extKnightOutpostDiff;
+    Score extBishopOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[b]);
+    tensor[1] += extBishopOutpostDiff;
+    Score intKnightOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[n]);
+    tensor[2] += intKnightOutpostDiff;
+    Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
+    tensor[3] += intBishopOutpostDiff;
+    tensor += 3;
 
     // Add the tempo bonus
     tensor[0] += us == WHITE ? 1 : -1;
