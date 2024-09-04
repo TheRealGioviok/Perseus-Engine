@@ -79,6 +79,7 @@ int main(int argc, char* argv[]){
         // If the second argument is provided, parse it; otherwise, use the default value 12
         int depth = (argc > 2) ? std::atoi(argv[2]) : 12;
         benchmark(depth);
+        return 0;
     }
     uciLoop(&game);
     return 0;
