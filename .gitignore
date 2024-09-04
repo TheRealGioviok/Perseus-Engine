@@ -20,3 +20,6 @@ src/chessdata.zip
 src/visualizer.ipynb
 src/obj
 src/outpost.zip
+tuning/runs/*
+tuning/out.bin
+tuning/lichess-big3-resolved.book
