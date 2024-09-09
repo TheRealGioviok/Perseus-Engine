@@ -50,53 +50,53 @@ constexpr Score DOUBLEDEARLYEG = 4;
 // (MG)
 constexpr Score DOUBLEISOLATEDPENMG = 11;
 constexpr Score ISOLATEDPENMG = 15;
-constexpr Score BACKWARDPENMG = 0;
-constexpr Score DOUBLEDPENMG = 16;
-constexpr Score SUPPORTEDPHALANXMG = 2;
-constexpr Score ADVANCABLEPHALANXMG = 4;
+constexpr Score BACKWARDPENMG = 1;
+constexpr Score DOUBLEDPENMG = 15;
+constexpr Score SUPPORTEDPHALANXMG = 1;
+constexpr Score ADVANCABLEPHALANXMG = 7;
 constexpr Score R_SUPPORTEDPHALANXMG = 0;
 constexpr Score R_ADVANCABLEPHALANXMG = 0;
-const Score passedRankBonusMg [7] = {0, -9, -30, -27, 18, 58, 102, };
+constexpr Score passedRankBonusMg [7] = {0, -10, -31, -28, 17, 55, 99, };
 constexpr Score PASSEDPATHBONUSMG = -2;
-constexpr Score SUPPORTEDPASSERMG = 30;
+constexpr Score SUPPORTEDPASSERMG = 32;
 constexpr Score INNERSHELTERMG = 30;
 constexpr Score OUTERSHELTERMG = 22;
-constexpr Score BISHOPPAIRMG = 35;
-constexpr Score ROOKONOPENFILEMG = 23;
-constexpr Score ROOKONSEMIOPENFILEMG = 14;
+constexpr Score BISHOPPAIRMG = 33;
+constexpr Score ROOKONOPENFILEMG = 24;
+constexpr Score ROOKONSEMIOPENFILEMG = 15;
 constexpr Score KNIGHTONEXTOUTPOSTMG = 24;
-constexpr Score BISHOPONEXTOUTPOSTMG = 34;
-constexpr Score KNIGHTONINTOUTPOSTMG = 23;
-constexpr Score BISHOPONINTOUTPOSTMG = 44;
+constexpr Score BISHOPONEXTOUTPOSTMG = 32;
+constexpr Score KNIGHTONINTOUTPOSTMG = 24;
+constexpr Score BISHOPONINTOUTPOSTMG = 45;
+constexpr Score BISHOPPAWNSMG = -1;
 constexpr Score THREATSAFEPAWNMG = 65;
-constexpr Score THREATPAWNPUSHMG = 21;
-constexpr Score TEMPOMG = 23;
+constexpr Score THREATPAWNPUSHMG = 22;
+constexpr Score TEMPOMG = 24;
 // (EG)
 constexpr Score DOUBLEISOLATEDPENEG = 46;
 constexpr Score ISOLATEDPENEG = 17;
 constexpr Score BACKWARDPENEG = 4;
-constexpr Score DOUBLEDPENEG = 25;
-constexpr Score SUPPORTEDPHALANXEG = 9;
-constexpr Score ADVANCABLEPHALANXEG = 19;
+constexpr Score DOUBLEDPENEG = 21;
+constexpr Score SUPPORTEDPHALANXEG = 10;
+constexpr Score ADVANCABLEPHALANXEG = 18;
 constexpr Score R_SUPPORTEDPHALANXEG = 0;
 constexpr Score R_ADVANCABLEPHALANXEG = 0;
-constexpr Score passedRankBonusEg [7] = {0, -66, -50, -8, 38, 141, 218, };
+const Score passedRankBonusEg [7] = {0, -66, -51, -9, 38, 141, 218, };
 constexpr Score PASSEDPATHBONUSEG = 13;
-constexpr Score SUPPORTEDPASSEREG = -7;
-constexpr Score INNERSHELTEREG = -9;
-constexpr Score OUTERSHELTEREG = -3;
-constexpr Score BISHOPPAIREG = 93;
-constexpr Score ROOKONOPENFILEEG = -6;
+constexpr Score SUPPORTEDPASSEREG = -8;
+constexpr Score INNERSHELTEREG = -8;
+constexpr Score OUTERSHELTEREG = -4;
+constexpr Score BISHOPPAIREG = 97;
+constexpr Score ROOKONOPENFILEEG = -5;
 constexpr Score ROOKONSEMIOPENFILEEG = 17;
-constexpr Score KNIGHTONEXTOUTPOSTEG = 32;
-constexpr Score BISHOPONEXTOUTPOSTEG = 14;
+constexpr Score KNIGHTONEXTOUTPOSTEG = 31;
+constexpr Score BISHOPONEXTOUTPOSTEG = 7;
 constexpr Score KNIGHTONINTOUTPOSTEG = 33;
-constexpr Score BISHOPONINTOUTPOSTEG = 2;
+constexpr Score BISHOPONINTOUTPOSTEG = 3;
+constexpr Score BISHOPPAWNSEG = -3;
 constexpr Score THREATSAFEPAWNEG = 46;
-constexpr Score THREATPAWNPUSHEG = 24;
+constexpr Score THREATPAWNPUSHEG = 25;
 constexpr Score TEMPOEG = 17;
-
-
 
 
 constexpr Score OWNPIECEBLOCKEDPAWNMG = 0;
@@ -113,9 +113,6 @@ constexpr Score MG_PAWN_PASSER_BONUS = 3;
 constexpr Score EG_PAWN_PASSER_BONUS = 12;
 
 constexpr Score SUPPORTEDCONNECTEDMG = 21;
-
-constexpr Score BISHOPPAWNSMG = 2;
-constexpr Score BISHOPPAWNSEG = 4;
 
 constexpr Score ROOKONQUEENFILEMG = 4;
 constexpr Score ROOKONQUEENFILEEG = 8;
@@ -197,9 +194,7 @@ static inline constexpr Score bishopOutpostEg(BitBoard pAttacks, U8 pSupport) {
     return pAttacks ? 0 : boutpostEg[pSupport];
 }
 
-static inline constexpr BitBoard centralFiles() {
-    return files(2) | files(3) | files(4) | files(5);
-}
+static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) | files(5);
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
@@ -401,8 +396,8 @@ Score pestoEval(Position *pos){
     };
 
     BitBoard blockedPawns[2] = {
-        ((bb[P] >> 8) & occ[BOTH]) << 8,
-        ((bb[p] << 8) & occ[BOTH]) >> 8
+        bb[P] & (occ[BOTH] << 8),
+        bb[p] & (occ[BOTH] >> 8)
     };
 
     BitBoard underDevelopedPawns[2] = {
@@ -655,6 +650,16 @@ Score pestoEval(Position *pos){
     mgScore += intBishopOutpostDiff * BISHOPONINTOUTPOSTMG;
     egScore += intBishopOutpostDiff * BISHOPONINTOUTPOSTEG;
 
+    // Add bonus for bishop-pawn concordance
+    Score bishopPawnsDiff =
+        popcount(bb[B] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B])) -
+        popcount(bb[b] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[p]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[WHITE] & bb[b])) +
+        popcount(bb[B] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[BLACK] & bb[B])) -
+        popcount(bb[b] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[p]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[BLACK] & bb[b])) ;
+    
+    mgScore += bishopPawnsDiff * BISHOPPAWNSMG;
+    egScore += bishopPawnsDiff * BISHOPPAWNSEG;
+
     // Threats
     BitBoard threatSafePawns[2] = {
         makePawnAttacks<WHITE>(bb[P] & (attackedBy[WHITE] | ~attackedBy[BLACK])) & nonPawns[BLACK],
@@ -755,6 +760,9 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(KNIGHTONINTOUTPOSTMG);
     weights.push_back(BISHOPONINTOUTPOSTMG);
 
+    // Now, bishop pawns
+    weights.push_back(BISHOPPAWNSMG);
+
     // Now, threats
     weights.push_back(THREATSAFEPAWNMG);
     weights.push_back(THREATPAWNPUSHMG);
@@ -818,6 +826,9 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(BISHOPONEXTOUTPOSTEG);
     weights.push_back(KNIGHTONINTOUTPOSTEG);
     weights.push_back(BISHOPONINTOUTPOSTEG);
+
+    // Now, bishop pawns
+    weights.push_back(BISHOPPAWNSEG);
     
     // Now, threats
     weights.push_back(THREATSAFEPAWNEG);
@@ -889,8 +900,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
         getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])};
     BitBoard blockedPawns[2] = {
-        ((bb[P] >> 8) & occ[BOTH]) << 8,
-        ((bb[p] << 8) & occ[BOTH]) >> 8};
+        bb[P] & (occ[BOTH] >> 8),
+        bb[p] & (occ[BOTH] << 8)
+    };
     BitBoard underDevelopedPawns[2] = {
         bb[P] & (ranks(6) | ranks(5)),
         bb[p] & (ranks(1) | ranks(2))};
@@ -1090,6 +1102,17 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
     tensor[3] += intBishopOutpostDiff;
     tensor += 4;
+
+    // Add bonus for bishop-pawn concordance (technically broken in two same colored bishop cases, but kek)
+    Score bishopPawnsDiff =
+        popcount(bb[B] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B])) -
+        popcount(bb[b] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[p]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[WHITE] & bb[b])) +
+        popcount(bb[B] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[BLACK] & bb[B])) -
+        popcount(bb[b] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[p]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[BLACK] & bb[b])) ;
+    
+    tensor[0] += bishopPawnsDiff;
+
+    tensor++;
 
     // Threats
     BitBoard threatSafePawns[2] = {
