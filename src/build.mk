@@ -34,7 +34,7 @@ $(OBJ_DIR)/%.o: %.cpp
 	@echo "Compiling $<"
 	@$(CXX) $(CXXFLAGS) $(NATIVE) -c $< -o $@
 
-link:
+link: $(OBJ_FILES)
 	@echo "Linking"
 	@$(CXX) $(CXXFLAGS) $(NATIVE) $(OBJ_FILES) -o $(EXE)
 
