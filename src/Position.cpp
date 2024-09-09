@@ -589,14 +589,14 @@ bool Position::insufficientMaterial() {
     BitBoard whiteMinors = bitboards[B] | bitboards[N];
     BitBoard blackMinors = bitboards[b] | bitboards[n];
     switch (popcount(whiteMinors | blackMinors)) {
-        case 0: return true; // K vs K
-        case 1: return true; // K vs K + N or K vs K + B
+        case 0: case 1: return true; // K vs K + N or K vs K + B
         case 2: {
             if (whiteMinors && blackMinors) return true; // K + minor vs K + minor is a dead draw
-            if (!blackMinors) return (whiteMinors != bitboards[N]) && // No KNN
-                        (bitboards[N] || ((bitboards[B] & squaresOfColor[WHITE]) != bitboards[B])); // KBN or KBB with different color bishops
-            if (!whiteMinors) return (blackMinors != bitboards[n]) && // No Knn
-                        (bitboards[n] || ((bitboards[b] & squaresOfColor[BLACK]) != bitboards[b])); // Kbn or Kbb with different color bishops
+            
+            if (whiteMinors) 
+                return !bitboards[B] || (!bitboards[N] && ((bitboards[B] & squaresOfColor[WHITE]) == bitboards[B])); // KBN or KBB with different color bishops
+            
+            return !bitboards[b] || (!bitboards[n] && ((bitboards[b] & squaresOfColor[BLACK]) == bitboards[b])); // Kbn or Kbb with different color bishops
         }
         default: return false; // 5 pieces are too complex to analyze, we fall back to standard evaluation
     }
