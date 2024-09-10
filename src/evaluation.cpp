@@ -200,8 +200,9 @@ static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) |
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], BitBoard (&attackedBy)[2], S8 *features) {
+static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], BitBoard (&attackedBy)[2], S8 *features, const BitBoard(&kingRing)[2], const BitBoard(&kingOuter)[2], S32 (&innerAttacks), S32 (&outerAttacks)) {
     constexpr Side us = pt < p ? WHITE : BLACK;
+    constexpr Side them = pt < p ? BLACK : WHITE;
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard mob;
     BitBoard pieces = bb[pt] & ~pinned[us];
@@ -240,6 +241,8 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&oc
             U8 moveCount = popcount(mob);
             features[moveCount] += us == WHITE ? 1 : -1;
         }
+        innerAttacks += popcount(mob & kingRing[them]);
+        outerAttacks += popcount(mob & kingOuter[them]);
         attackedBy[us] |= mob;
     }
 } 
@@ -652,24 +655,6 @@ Score pestoEval(Position *pos){
     mgScore += OUTERSHELTERMG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
     egScore += OUTERSHELTEREG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
 
-    // Calcuate danger score
-    S32 dangerIndex[2] = {
-        innerAttacks[WHITE] + outerAttacks[WHITE], 
-        innerAttacks[BLACK] + outerAttacks[BLACK]
-    };
-
-    dangerIndex[WHITE] -= NOQUEENDANGER * (!bb[Q]);
-    dangerIndex[BLACK] -= NOQUEENDANGER * (!bb[q]);
-
-    dangerIndex[WHITE] += popcount(pinned[BLACK] & innerShelters[BLACK]) * PINNEDSHELTERDANGER;
-    dangerIndex[BLACK] += popcount(pinned[WHITE] & innerShelters[WHITE]) * PINNEDSHELTERDANGER;
-
-    dangerIndex[WHITE] = std::max(0,std::min(63, dangerIndex[WHITE] >> 3));
-    dangerIndex[BLACK] = std::max(0,std::min(63, dangerIndex[BLACK] >> 3));
-
-    mgScore += kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
-    egScore += kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
-
     // Add bonus for bishop pairs
     mgScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIRMG;
     egScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIREG;
@@ -740,6 +725,26 @@ Score pestoEval(Position *pos){
     // Calculate the total score
     mgScore += mobilityScore[0];
     egScore += mobilityScore[1];
+
+    // Add kingDanger index eval
+    // Calcuate danger score
+    S32 dangerIndex[2] = {
+        innerAttacks[WHITE] + outerAttacks[WHITE], 
+        innerAttacks[BLACK] + outerAttacks[BLACK]
+    };
+
+    dangerIndex[WHITE] -= NOQUEENDANGER * (!bb[Q]);
+    dangerIndex[BLACK] -= NOQUEENDANGER * (!bb[q]);
+
+    dangerIndex[WHITE] += popcount(pinned[BLACK] & innerShelters[BLACK]) * PINNEDSHELTERDANGER;
+    dangerIndex[BLACK] += popcount(pinned[WHITE] & innerShelters[WHITE]) * PINNEDSHELTERDANGER;
+
+    dangerIndex[WHITE] = std::max(0,std::min(63, dangerIndex[WHITE] >> 3));
+    dangerIndex[BLACK] = std::max(0,std::min(63, dangerIndex[BLACK] >> 3));
+
+    mgScore += kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
+    egScore += kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
+
 
     // Calculate mg and eg scores
     const Score sign = 1 - 2 * pos->side;
@@ -979,18 +984,36 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         bb[n] | bb[b] | bb[r] | bb[q],
     };
 
+    const BitBoard kingRing[2] = {
+        kingAttacks[whiteKing],
+        kingAttacks[blackKing]
+    };
+
+    const BitBoard kingOuter[2] = {
+        fiveSquare[whiteKing],
+        fiveSquare[blackKing]
+    };
+
+    S32 innerAttacks[2][5] = {{0}}; 
+    S32 outerAttacks[2][5] = {{0}};
+
+    innerAttacks[WHITE][P] = popcount(pawnAttackedSquares[WHITE] & kingRing[BLACK]);
+    innerAttacks[BLACK][P] = popcount(pawnAttackedSquares[BLACK] & kingRing[WHITE]);
+    outerAttacks[WHITE][P] = popcount(pawnAttackedSquares[WHITE] & kingOuter[BLACK]);
+    outerAttacks[BLACK][P] = popcount(pawnAttackedSquares[BLACK] & kingOuter[WHITE]);
+
     // Calculate the mobility scores (index by phase and color)
-    getMobilityFeat<N>(bb, occ, pinned, mobilityArea, attackedBy, tensor);
-    getMobilityFeat<n>(bb, occ, pinned, mobilityArea, attackedBy, tensor);
+    getMobilityFeat<N>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][N], outerAttacks[WHITE][N]);
+    getMobilityFeat<n>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][N], outerAttacks[BLACK][N]);
     tensor += 9;
-    getMobilityFeat<B>(bb, occ, pinned, mobilityArea, attackedBy, tensor);
-    getMobilityFeat<b>(bb, occ, pinned, mobilityArea, attackedBy, tensor);
+    getMobilityFeat<B>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][B], outerAttacks[WHITE][B]);
+    getMobilityFeat<b>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][B], outerAttacks[BLACK][B]);
     tensor += 14;
-    getMobilityFeat<R>(bb, occ, pinned, mobilityArea, attackedBy, tensor);
-    getMobilityFeat<r>(bb, occ, pinned, mobilityArea, attackedBy, tensor);
+    getMobilityFeat<R>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][R], outerAttacks[WHITE][R]);
+    getMobilityFeat<r>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][R], outerAttacks[BLACK][R]);
     tensor += 15;
-    getMobilityFeat<Q>(bb, occ, pinned, mobilityArea, attackedBy, tensor);
-    getMobilityFeat<q>(bb, occ, pinned, mobilityArea, attackedBy, tensor);
+    getMobilityFeat<Q>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][Q], outerAttacks[WHITE][Q]);
+    getMobilityFeat<q>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][Q], outerAttacks[BLACK][Q]);
     tensor += 28;
 
 
@@ -1192,6 +1215,44 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
 
     // Add the tempo bonus
     tensor[0] += us == WHITE ? 1 : -1;
+    tensor++;
+
+    // Now, king index eval.
+    Score noQueenDanger[2] = {!bb[Q], !bb[q]};
+    Score pinnedShelter[2] = {popcount(pinned[BLACK] & innerShelters[BLACK]), popcount(pinned[WHITE] & innerShelters[WHITE])};
+
+#define KINGSAFETYCOLOREDPARAMS 24
+    tensor[P] = innerAttacks[WHITE][P];
+    tensor[N] = innerAttacks[WHITE][N];
+    tensor[B] = innerAttacks[WHITE][B];
+    tensor[R] = innerAttacks[WHITE][R];
+    tensor[Q] = innerAttacks[WHITE][Q];
+    tensor += 5;
+    tensor[P] = outerAttacks[WHITE][P];
+    tensor[N] = outerAttacks[WHITE][N];
+    tensor[B] = outerAttacks[WHITE][B];
+    tensor[R] = outerAttacks[WHITE][R];
+    tensor[Q] = outerAttacks[WHITE][Q];
+    tensor += 5;
+    tensor[0] = noQueenDanger[WHITE];
+    tensor[1] = pinnedShelter[WHITE];
+    tensor += 2;
+
+    tensor[P] = innerAttacks[BLACK][P];
+    tensor[N] = innerAttacks[BLACK][N];
+    tensor[B] = innerAttacks[BLACK][B];
+    tensor[R] = innerAttacks[BLACK][R];
+    tensor[Q] = innerAttacks[BLACK][Q];
+    tensor += 5;
+    tensor[P] = outerAttacks[BLACK][P];
+    tensor[N] = outerAttacks[BLACK][N];
+    tensor[B] = outerAttacks[BLACK][B];
+    tensor[R] = outerAttacks[BLACK][R];
+    tensor[Q] = outerAttacks[BLACK][Q];
+    tensor += 5;
+    tensor[0] = noQueenDanger[BLACK];
+    tensor[1] = pinnedShelter[BLACK];
+    tensor += 2;
 
     // Also assert the last element we wrote is the penultimate element
     // assert(tensorStart + tensorSize - 2 == tensor);
@@ -1217,6 +1278,8 @@ void convertToFeatures(std::string filename, std::string output) {
     U32 weightCount = weights.size();
     std::cout << "Allocating for " << weightCount << " weights: " << 1 + weightCount / 2 + 1 << " bytes per entry" << std::endl;
     U32 entrySize = 1 + weightCount / 2 + 1; // The entry size is the 1 (gamephase) + number of weights divided by 2 + 1, since we add the result at the end, but we don't need to write the features twice for each side
+    entrySize += KINGSAFETYCOLOREDPARAMS;
+    std::cout << "Additional colored params: " << KINGSAFETYCOLOREDPARAMS / 2 << " x 2 = " << KINGSAFETYCOLOREDPARAMS << std::endl;
     // Create buffer to store the features
     S8* features = new S8[entrySize];
     // For each line in the file
