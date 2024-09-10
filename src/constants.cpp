@@ -2,7 +2,6 @@
 #include "types.h"
 
 int futilityMarginDelta = 91;       // [55, 125]
-int nmpBias = 13;                   // [0, 30]
 int nmpDepthDivisor = 3;            // [2, 6]
 int nmpScoreDivisor = 200;          // [100, 300]
 int nmpQ1 = 3;                      // [1, 4]

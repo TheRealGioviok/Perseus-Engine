@@ -280,8 +280,6 @@ int setOptionCommand(Game* game, char* command) {
     }
     else if (optionName == "futilityMarginDelta")
         futilityMarginDelta = atoi(arg.c_str());
-    else if (optionName == "nmpBias")
-        nmpBias = atoi(arg.c_str());
     else if (optionName == "nmpDepthDivisor")
         nmpDepthDivisor = atoi(arg.c_str());
     else if (optionName == "nmpScoreDivisor")

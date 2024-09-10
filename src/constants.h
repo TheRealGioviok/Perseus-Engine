@@ -112,7 +112,6 @@ extern double lmrC0;
 extern double lmrA1;
 extern double lmrC1;
 extern int futilityMarginDelta;
-extern int nmpBias;
 extern int nmpDepthDivisor;
 extern int nmpScoreDivisor;
 extern int nmpQ1;
