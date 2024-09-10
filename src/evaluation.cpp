@@ -81,7 +81,7 @@ constexpr Score SUPPORTEDPHALANXEG = 10;
 constexpr Score ADVANCABLEPHALANXEG = 18;
 constexpr Score R_SUPPORTEDPHALANXEG = 0;
 constexpr Score R_ADVANCABLEPHALANXEG = 0;
-const Score passedRankBonusEg [7] = {0, -66, -51, -9, 38, 141, 218, };
+constexpr Score passedRankBonusEg [7] = {0, -66, -51, -9, 38, 141, 218, };
 constexpr Score PASSEDPATHBONUSEG = 13;
 constexpr Score SUPPORTEDPASSEREG = -8;
 constexpr Score INNERSHELTEREG = -8;
@@ -98,6 +98,18 @@ constexpr Score THREATSAFEPAWNEG = 46;
 constexpr Score THREATPAWNPUSHEG = 25;
 constexpr Score TEMPOEG = 17;
 
+
+constexpr Score KNIGHTATTACKOUTERRING = 11;
+constexpr Score KNIGHTATTACKINNERRING = 9;
+constexpr Score BISHOPATTACKOUTERRING = 11;
+constexpr Score BISHOPATTACKINNERRING = 8;
+constexpr Score ROOKATTACKOUTERRING = 17;
+constexpr Score ROOKATTACKINNERRING = 12;
+constexpr Score QUEENATTACKOUTERRING = 31;
+constexpr Score QUEENATTACKINNERRING = 24;
+
+constexpr Score NOQUEENDANGER = 65;
+constexpr Score PINNEDSHELTERDANGER = 11;
 
 constexpr Score OWNPIECEBLOCKEDPAWNMG = 0;
 constexpr Score OWNPIECEBLOCKEDPAWNEG = 8;
@@ -154,16 +166,6 @@ constexpr Score OPENFILEONKINGMG = -18;
 constexpr Score OPENFILEONKINGEG = -12;
 
 constexpr Score PAWNSTORM = 1;
-
-constexpr Score KNIGHTATTACKOUTERRING = 10;
-constexpr Score KNIGHTATTACKINNERRING = 23;
-constexpr Score KNIGHTATTACKZONE = 31;
-constexpr Score BISHOPATTACKOUTERRING = 10;
-constexpr Score BISHOPATTACKINNERRING = 27;
-constexpr Score ROOKATTACKOUTERRING = 11;
-constexpr Score ROOKATTACKINNERRING = 15;
-constexpr Score QUEENATTACKOUTERRING = 17;
-constexpr Score QUEENATTACKINNERRING = 32;
 
 #define MOBILITYEVAL true
 #define PAWNEVAL true
@@ -244,7 +246,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&oc
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], Score (&mobilityScore)[2], BitBoard (&attackedBy)[2]) {
+static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], Score (&mobilityScore)[2], BitBoard (&attackedBy)[2], const BitBoard(&kingRing)[2], const BitBoard(&kingOuter)[2], S32 (&innerAttacks)[2], S32 (&outerAttacks)[2]){
     constexpr Side us = pt < p ? WHITE : BLACK;
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard mob;
@@ -271,10 +273,14 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
             if constexpr (pt == N) {
                 mobilityScore[0] += knightMobMg[moveCount];
                 mobilityScore[1] += knightMobEg[moveCount];
+                innerAttacks[WHITE] += popcount(mob & kingRing[BLACK]) * KNIGHTATTACKINNERRING;
+                outerAttacks[WHITE] += popcount(mob & kingOuter[BLACK]) * KNIGHTATTACKOUTERRING;
             }
             else {
                 mobilityScore[0] -= knightMobMg[moveCount];
                 mobilityScore[1] -= knightMobEg[moveCount];
+                innerAttacks[BLACK] += popcount(mob & kingRing[WHITE]) * KNIGHTATTACKINNERRING;
+                outerAttacks[BLACK] += popcount(mob & kingOuter[WHITE]) * KNIGHTATTACKOUTERRING;
             }
         }
         else if constexpr (pt == B || pt == b) {
@@ -284,10 +290,14 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
             if constexpr (pt == B) {
                 mobilityScore[0] += bishopMobMg[moveCount];
                 mobilityScore[1] += bishopMobEg[moveCount];
+                innerAttacks[WHITE] += popcount(mob & kingRing[BLACK]) * BISHOPATTACKINNERRING;
+                outerAttacks[WHITE] += popcount(mob & kingOuter[BLACK]) * BISHOPATTACKOUTERRING;
             }
             else {
                 mobilityScore[0] -= bishopMobMg[moveCount];
                 mobilityScore[1] -= bishopMobEg[moveCount];
+                innerAttacks[BLACK] += popcount(mob & kingRing[WHITE]) * BISHOPATTACKINNERRING;
+                outerAttacks[BLACK] += popcount(mob & kingOuter[WHITE]) * BISHOPATTACKOUTERRING;
             }
         }
         else if constexpr (pt == R || pt == r) {
@@ -297,10 +307,14 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
             if constexpr (pt == R) {
                 mobilityScore[0] += rookMobMg[moveCount];
                 mobilityScore[1] += rookMobEg[moveCount];
+                innerAttacks[WHITE] += popcount(mob & kingRing[BLACK]) * ROOKATTACKINNERRING;
+                outerAttacks[WHITE] += popcount(mob & kingOuter[BLACK]) * ROOKATTACKOUTERRING;
             }
             else {
                 mobilityScore[0] -= rookMobMg[moveCount];
                 mobilityScore[1] -= rookMobEg[moveCount];
+                innerAttacks[BLACK] += popcount(mob & kingRing[WHITE]) * ROOKATTACKINNERRING;
+                outerAttacks[BLACK] += popcount(mob & kingOuter[WHITE]) * ROOKATTACKOUTERRING;
             }
         }
         else if constexpr (pt == Q || pt == q) {
@@ -310,10 +324,14 @@ static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], 
             if constexpr (pt == Q) {
                 mobilityScore[0] += queenMobMg[moveCount];
                 mobilityScore[1] += queenMobEg[moveCount];
+                innerAttacks[WHITE] += popcount(mob & kingRing[BLACK]) * QUEENATTACKINNERRING;
+                outerAttacks[WHITE] += popcount(mob & kingOuter[BLACK]) * QUEENATTACKOUTERRING;
             }
             else {
                 mobilityScore[0] -= queenMobMg[moveCount];
                 mobilityScore[1] -= queenMobEg[moveCount];
+                innerAttacks[BLACK] += popcount(mob & kingRing[WHITE]) * QUEENATTACKINNERRING;
+                outerAttacks[BLACK] += popcount(mob & kingOuter[WHITE]) * QUEENATTACKOUTERRING;
             }
         }
         attackedBy[us] |= mob;
@@ -371,42 +389,42 @@ Score pestoEval(Position *pos){
     gamePhase = std::min(gamePhase, (S32)24); // If we have a lot of pieces, we don't want to go over 24
 
     Score mgScore = 0, egScore = 0;
-    Square whiteKing = lsb(bb[K]);
-    Square blackKing = lsb(bb[k]);
+    const Square whiteKing = lsb(bb[K]);
+    const Square blackKing = lsb(bb[k]);
 
     // Mobility calculations
-    BitBoard pawnAttackedSquares[2] = {
+    const BitBoard pawnAttackedSquares[2] = {
         ((bb[P] & notFile(0)) >> 9) | ((bb[P] & notFile(7)) >> 7),
         ((bb[p] & notFile(0)) << 7) | ((bb[p] & notFile(7)) << 9)
     };
 
     // Pinned mask
-    BitBoard RQmask[2] = {
+    const BitBoard RQmask[2] = {
         bb[R] | bb[Q],
         bb[r] | bb[q]
     };
-    BitBoard BQmask[2] = {
+    const BitBoard BQmask[2] = {
         bb[B] | bb[Q],
         bb[b] | bb[q]
     };
 
-    BitBoard pinned[2] = {
+    const BitBoard pinned[2] = {
         getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
         getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE]) 
     };
 
-    BitBoard blockedPawns[2] = {
+    const BitBoard blockedPawns[2] = {
         bb[P] & (occ[BOTH] << 8),
         bb[p] & (occ[BOTH] >> 8)
     };
 
-    BitBoard underDevelopedPawns[2] = {
+    const BitBoard underDevelopedPawns[2] = {
         bb[P] & (ranks(6) | ranks(5)),
         bb[p] & (ranks(1) | ranks(2))
     };
 
 
-    BitBoard mobilityArea[2] = {
+    const BitBoard mobilityArea[2] = {
         // Mobility area.
         // Squares in the mobility area are:
         // 1. Free of our pieces
@@ -422,12 +440,12 @@ Score pestoEval(Position *pos){
         0,0 
     };
 
-    BitBoard pawnSpan[2] = {
+    const BitBoard pawnSpan[2] = {
         advancePathMasked<WHITE>(bb[P], ~(bb[p] | pawnAttackedSquares[BLACK])),
         advancePathMasked<BLACK>(bb[p], ~(bb[P] | pawnAttackedSquares[WHITE]))
     };
 
-    BitBoard outpostSquares[2] = {
+    const BitBoard outpostSquares[2] = {
         (ranks(2) | ranks(3) | ranks(4)) & pawnAttackedSquares[WHITE] & ~(makePawnAttacks<BLACK>(pawnSpan[BLACK]) | bb[p]) & notFile(0) & notFile(7),
         (ranks(5) | ranks(4) | ranks(3)) & pawnAttackedSquares[BLACK] & ~(makePawnAttacks<WHITE>(pawnSpan[WHITE]) | bb[P]) & notFile(0) & notFile(7)
     };
@@ -437,30 +455,45 @@ Score pestoEval(Position *pos){
         pawnAttackedSquares[BLACK] | kingAttacks[blackKing]
     };
 
-    BitBoard nonPawns[2] = {
-        bb[N] | bb[B] | bb[R] | bb[Q],
-        bb[n] | bb[b] | bb[r] | bb[q],
+    const BitBoard nonPawns[2] = {
+        bb[N] | bb[B] | RQmask[WHITE],
+        bb[n] | bb[b] | RQmask[BLACK],
     };
 
+    const BitBoard kingRing[2] = {
+        kingAttacks[whiteKing],
+        kingAttacks[blackKing]
+    };
+
+    const BitBoard kingOuter[2] = {
+        fiveSquare[whiteKing],
+        fiveSquare[blackKing]
+    };
+
+    S32 innerAttacks[2] = {0,0};
+    S32 outerAttacks[2] = {0,0};
+
+    
+
     // White mobility
-    mobility<N>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy);
-    mobility<B>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy);
-    mobility<R>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy);
-    mobility<Q>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy);
+    mobility<N>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
+    mobility<B>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
+    mobility<R>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
+    mobility<Q>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
 
     // Black mobility
-    mobility<n>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy);
-    mobility<b>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy);
-    mobility<r>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy);
-    mobility<q>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy);
+    mobility<n>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
+    mobility<b>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
+    mobility<r>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
+    mobility<q>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
 
     // Malus for directly doubled, undefended pawns
-    BitBoard protectedPawns[2] = {
+    const BitBoard protectedPawns[2] = {
         bb[P] & pawnAttackedSquares[WHITE],
         bb[p] & pawnAttackedSquares[BLACK]
     };
 
-    BitBoard pawnBlockage[2] = {
+    const BitBoard pawnBlockage[2] = {
         bb[P] | pawnAttackedSquares[WHITE],
         bb[p] | pawnAttackedSquares[BLACK]
     };
@@ -471,9 +504,9 @@ Score pestoEval(Position *pos){
     BitBoard pieces = bb[P];
     while (pieces){
         // Evaluate isolated, backward, doubled pawns and connected pawns
-        Square sq = popLsb(pieces);
-        BitBoard sqb = squareBB(sq);
-        U8 rank = 7 - rankOf(sq);
+        const Square sq = popLsb(pieces);
+        const BitBoard sqb = squareBB(sq);
+        const U8 rank = 7 - rankOf(sq);
         bool doubled = doubledPawns[WHITE] & squareBB(sq);
         bool isolated = !(isolatedPawnMask[sq] & bb[P]);
         bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
@@ -535,9 +568,9 @@ Score pestoEval(Position *pos){
     pieces = bb[p];
     while (pieces){
         // Evaluate isolated, backward, doubled pawns and connected pawns
-        Square sq = popLsb(pieces);
-        BitBoard sqb = squareBB(sq);
-        U8 rank = rankOf(sq);
+        const Square sq = popLsb(pieces);
+        const BitBoard sqb = squareBB(sq);
+        const U8 rank = rankOf(sq);
         bool doubled = doubledPawns[BLACK] & squareBB(sq);
         bool isolated = !(isolatedPawnMask[sq] & bb[p]);
         bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
@@ -619,39 +652,57 @@ Score pestoEval(Position *pos){
     mgScore += OUTERSHELTERMG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
     egScore += OUTERSHELTEREG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
 
+    // Calcuate danger score
+    S32 dangerIndex[2] = {
+        innerAttacks[WHITE] + outerAttacks[WHITE], 
+        innerAttacks[BLACK] + outerAttacks[BLACK]
+    };
+
+    dangerIndex[WHITE] -= NOQUEENDANGER * (!bb[Q]);
+    dangerIndex[BLACK] -= NOQUEENDANGER * (!bb[q]);
+
+    dangerIndex[WHITE] += popcount(pinned[BLACK] & innerShelters[BLACK]) * PINNEDSHELTERDANGER;
+    dangerIndex[BLACK] += popcount(pinned[WHITE] & innerShelters[WHITE]) * PINNEDSHELTERDANGER;
+
+    dangerIndex[WHITE] = std::max(0,std::min(63, dangerIndex[WHITE] >> 3));
+    dangerIndex[BLACK] = std::max(0,std::min(63, dangerIndex[BLACK] >> 3));
+
+    mgScore += kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
+    egScore += kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
+
     // Add bonus for bishop pairs
     mgScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIRMG;
     egScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIREG;
 
     // Add bonus for rooks on open files
-    BitBoard openFiles = ~(pawnFiles[WHITE] | pawnFiles[BLACK]);
-    BitBoard semiOpenFor[2] = {
+    const BitBoard openFiles = ~(pawnFiles[WHITE] | pawnFiles[BLACK]);
+    const BitBoard semiOpenFor[2] = {
         ~pawnFiles[WHITE],
         ~pawnFiles[BLACK]
     };
-    Score openDiff = popcount(bb[R] & openFiles) - popcount(bb[r] & openFiles);
-    Score semiOpenDiff = popcount(bb[R] & semiOpenFor[WHITE]) - popcount(bb[r] & semiOpenFor[BLACK]);
+    const Score openDiff = popcount(bb[R] & openFiles) - popcount(bb[r] & openFiles);
+    const Score semiOpenDiff = popcount(bb[R] & semiOpenFor[WHITE]) - popcount(bb[r] & semiOpenFor[BLACK]);
     mgScore += openDiff * ROOKONOPENFILEMG;
     egScore += openDiff * ROOKONOPENFILEEG;
     mgScore += semiOpenDiff * ROOKONSEMIOPENFILEMG;
     egScore += semiOpenDiff * ROOKONSEMIOPENFILEEG;
 
     // Add outpost squares bonus for knights and bishops
-    Score extKnightOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[n]);
+    const Score extKnightOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[n]);
     mgScore += extKnightOutpostDiff * KNIGHTONEXTOUTPOSTMG;
     egScore += extKnightOutpostDiff * KNIGHTONEXTOUTPOSTEG;
-    Score extBishopOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[b]);
+    const Score extBishopOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[b]);
     mgScore += extBishopOutpostDiff * BISHOPONEXTOUTPOSTMG;
     egScore += extBishopOutpostDiff * BISHOPONEXTOUTPOSTEG;
-    Score intKnightOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[n]);
+    const Score intKnightOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[n]);
     mgScore += intKnightOutpostDiff * KNIGHTONINTOUTPOSTMG;
     egScore += intKnightOutpostDiff * KNIGHTONINTOUTPOSTEG;
-    Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
+    const Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
     mgScore += intBishopOutpostDiff * BISHOPONINTOUTPOSTMG;
     egScore += intBishopOutpostDiff * BISHOPONINTOUTPOSTEG;
 
     // Add bonus for bishop-pawn concordance
-    Score bishopPawnsDiff =
+    const Score bishopPawnsDiff =
         popcount(bb[B] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B])) -
         popcount(bb[b] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[p]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[WHITE] & bb[b])) +
         popcount(bb[B] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[BLACK] & bb[B])) -
@@ -661,7 +712,7 @@ Score pestoEval(Position *pos){
     egScore += bishopPawnsDiff * BISHOPPAWNSEG;
 
     // Threats
-    BitBoard threatSafePawns[2] = {
+    const BitBoard threatSafePawns[2] = {
         makePawnAttacks<WHITE>(bb[P] & (attackedBy[WHITE] | ~attackedBy[BLACK])) & nonPawns[BLACK],
         makePawnAttacks<BLACK>(bb[p] & (attackedBy[BLACK] | ~attackedBy[WHITE])) & nonPawns[WHITE],
     };
@@ -673,13 +724,13 @@ Score pestoEval(Position *pos){
     pushes[WHITE] |= north(pushes[WHITE] & files(5)) & ~(occ[BOTH] | pawnAttackedSquares[BLACK]);
     pushes[BLACK] |= north(pushes[BLACK] & files(2)) & ~(occ[BOTH] | pawnAttackedSquares[WHITE]);
 
-    BitBoard threatPawnPush[2] = {
+    const BitBoard threatPawnPush[2] = {
         makePawnAttacks<WHITE>(pushes[WHITE] & (attackedBy[WHITE] | ~attackedBy[BLACK])) & nonPawns[BLACK],
         makePawnAttacks<BLACK>(pushes[BLACK] & (attackedBy[BLACK] | ~attackedBy[WHITE])) & nonPawns[WHITE],
     };
 
-    Score safePawnThreatDiff = popcount(threatSafePawns[WHITE]) - popcount(threatSafePawns[BLACK]);
-    Score pawnPushThreatDiff = popcount(threatPawnPush[WHITE]) - popcount(threatPawnPush[BLACK]);
+    const Score safePawnThreatDiff = popcount(threatSafePawns[WHITE]) - popcount(threatSafePawns[BLACK]);
+    const Score pawnPushThreatDiff = popcount(threatPawnPush[WHITE]) - popcount(threatPawnPush[BLACK]);
 
     mgScore += THREATSAFEPAWNMG * safePawnThreatDiff;
     egScore += THREATSAFEPAWNEG * safePawnThreatDiff;
@@ -691,7 +742,7 @@ Score pestoEval(Position *pos){
     egScore += mobilityScore[1];
 
     // Calculate mg and eg scores
-    Score sign = 1 - 2 * pos->side;
+    const Score sign = 1 - 2 * pos->side;
     mgScore += sign * TEMPOMG;
     egScore += sign * TEMPOEG;
     
