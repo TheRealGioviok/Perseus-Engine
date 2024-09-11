@@ -48,55 +48,55 @@ constexpr Score DOUBLEDEARLYMG = 11;
 constexpr Score DOUBLEDEARLYEG = 4;
 
 // (MG)
-constexpr Score DOUBLEISOLATEDPENMG = 19;
-constexpr Score ISOLATEDPENMG = 20;
+constexpr Score DOUBLEISOLATEDPENMG = 11;
+constexpr Score ISOLATEDPENMG = 15;
 constexpr Score BACKWARDPENMG = 1;
-constexpr Score DOUBLEDPENMG = 17;
+constexpr Score DOUBLEDPENMG = 15;
 constexpr Score SUPPORTEDPHALANXMG = 1;
-constexpr Score ADVANCABLEPHALANXMG = 8;
-constexpr Score R_SUPPORTEDPHALANXMG = 4;
-constexpr Score R_ADVANCABLEPHALANXMG = 1;
-constexpr Score passedRankBonusMg [7] = {0, -7, -33, -28, 5, 9, 86, };
+constexpr Score ADVANCABLEPHALANXMG = 7;
+constexpr Score R_SUPPORTEDPHALANXMG = 0;
+constexpr Score R_ADVANCABLEPHALANXMG = 0;
+constexpr Score passedRankBonusMg [7] = {0, -10, -31, -28, 17, 55, 99, };
 constexpr Score PASSEDPATHBONUSMG = -2;
-constexpr Score SUPPORTEDPASSERMG = 38;
-constexpr Score INNERSHELTERMG = 31;
-constexpr Score OUTERSHELTERMG = 28;
-constexpr Score BISHOPPAIRMG = 31;
-constexpr Score ROOKONOPENFILEMG = 25;
-constexpr Score ROOKONSEMIOPENFILEMG = 18;
-constexpr Score KNIGHTONEXTOUTPOSTMG = 25;
+constexpr Score SUPPORTEDPASSERMG = 32;
+constexpr Score INNERSHELTERMG = 30;
+constexpr Score OUTERSHELTERMG = 22;
+constexpr Score BISHOPPAIRMG = 33;
+constexpr Score ROOKONOPENFILEMG = 24;
+constexpr Score ROOKONSEMIOPENFILEMG = 15;
+constexpr Score KNIGHTONEXTOUTPOSTMG = 24;
 constexpr Score BISHOPONEXTOUTPOSTMG = 32;
-constexpr Score KNIGHTONINTOUTPOSTMG = 23;
-constexpr Score BISHOPONINTOUTPOSTMG = 38;
-constexpr Score BISHOPPAWNSMG = 0;
-constexpr Score THREATSAFEPAWNMG = 67;
-constexpr Score THREATPAWNPUSHMG = 25;
+constexpr Score KNIGHTONINTOUTPOSTMG = 24;
+constexpr Score BISHOPONINTOUTPOSTMG = 45;
+constexpr Score BISHOPPAWNSMG = -1;
+constexpr Score THREATSAFEPAWNMG = 65;
+constexpr Score THREATPAWNPUSHMG = 22;
 constexpr Score TEMPOMG = 24;
 // (EG)
 constexpr Score DOUBLEISOLATEDPENEG = 46;
-constexpr Score ISOLATEDPENEG = 22;
-constexpr Score BACKWARDPENEG = 15;
-constexpr Score DOUBLEDPENEG = 17;
-constexpr Score SUPPORTEDPHALANXEG = 6;
-constexpr Score ADVANCABLEPHALANXEG = 29;
-constexpr Score R_SUPPORTEDPHALANXEG = 7;
-constexpr Score R_ADVANCABLEPHALANXEG = 18;
-constexpr Score passedRankBonusEg [7] = {0, -71, -52, 1, 45, 140, 201, };
+constexpr Score ISOLATEDPENEG = 17;
+constexpr Score BACKWARDPENEG = 4;
+constexpr Score DOUBLEDPENEG = 21;
+constexpr Score SUPPORTEDPHALANXEG = 10;
+constexpr Score ADVANCABLEPHALANXEG = 18;
+constexpr Score R_SUPPORTEDPHALANXEG = 0;
+constexpr Score R_ADVANCABLEPHALANXEG = 0;
+constexpr Score passedRankBonusEg [7] = {0, -66, -51, -9, 38, 141, 218, };
 constexpr Score PASSEDPATHBONUSEG = 13;
-constexpr Score SUPPORTEDPASSEREG = 5;
+constexpr Score SUPPORTEDPASSEREG = -8;
 constexpr Score INNERSHELTEREG = -8;
-constexpr Score OUTERSHELTEREG = -7;
-constexpr Score BISHOPPAIREG = 115;
-constexpr Score ROOKONOPENFILEEG = -9;
-constexpr Score ROOKONSEMIOPENFILEEG = 16;
-constexpr Score KNIGHTONEXTOUTPOSTEG = 33;
-constexpr Score BISHOPONEXTOUTPOSTEG = 3;
-constexpr Score KNIGHTONINTOUTPOSTEG = 36;
-constexpr Score BISHOPONINTOUTPOSTEG = -3;
+constexpr Score OUTERSHELTEREG = -4;
+constexpr Score BISHOPPAIREG = 97;
+constexpr Score ROOKONOPENFILEEG = -5;
+constexpr Score ROOKONSEMIOPENFILEEG = 17;
+constexpr Score KNIGHTONEXTOUTPOSTEG = 31;
+constexpr Score BISHOPONEXTOUTPOSTEG = 7;
+constexpr Score KNIGHTONINTOUTPOSTEG = 33;
+constexpr Score BISHOPONINTOUTPOSTEG = 3;
 constexpr Score BISHOPPAWNSEG = -3;
-constexpr Score THREATSAFEPAWNEG = 54;
-constexpr Score THREATPAWNPUSHEG = 35;
-constexpr Score TEMPOEG = 25;
+constexpr Score THREATSAFEPAWNEG = 46;
+constexpr Score THREATPAWNPUSHEG = 25;
+constexpr Score TEMPOEG = 17;
 
 
 constexpr Score KNIGHTATTACKOUTERRING = 9;
@@ -401,17 +401,6 @@ Score pestoEval(Position *pos){
         ((bb[p] & notFile(0)) << 7) | ((bb[p] & notFile(7)) << 9)
     };
 
-    // Malus for directly doubled, undefended pawns
-    const BitBoard protectedPawns[2] = {
-        bb[P] & pawnAttackedSquares[WHITE],
-        bb[p] & pawnAttackedSquares[BLACK]
-    };
-
-    const BitBoard pawnBlockage[2] = {
-        bb[P] | pawnAttackedSquares[WHITE],
-        bb[p] | pawnAttackedSquares[BLACK]
-    };
-
     // Pinned mask
     const BitBoard RQmask[2] = {
         bb[R] | bb[Q],
@@ -455,8 +444,8 @@ Score pestoEval(Position *pos){
     };
 
     const BitBoard pawnSpan[2] = {
-        advancePathMasked<WHITE>(bb[P], ~protectedPawns[BLACK]),
-        advancePathMasked<BLACK>(bb[p], ~protectedPawns[WHITE])
+        advancePathMasked<WHITE>(bb[P], ~(bb[p] | pawnAttackedSquares[BLACK])),
+        advancePathMasked<BLACK>(bb[p], ~(bb[P] | pawnAttackedSquares[WHITE]))
     };
 
     const BitBoard outpostSquares[2] = {
@@ -487,6 +476,8 @@ Score pestoEval(Position *pos){
     S32 innerAttacks[2] = {0,0};
     S32 outerAttacks[2] = {0,0};
 
+    
+
     // White mobility
     mobility<N>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
     mobility<B>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
@@ -499,6 +490,17 @@ Score pestoEval(Position *pos){
     mobility<r>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
     mobility<q>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
 
+    // Malus for directly doubled, undefended pawns
+    const BitBoard protectedPawns[2] = {
+        bb[P] & pawnAttackedSquares[WHITE],
+        bb[p] & pawnAttackedSquares[BLACK]
+    };
+
+    const BitBoard pawnBlockage[2] = {
+        bb[P] | pawnAttackedSquares[WHITE],
+        bb[p] | pawnAttackedSquares[BLACK]
+    };
+
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
     // White pawns
@@ -508,28 +510,26 @@ Score pestoEval(Position *pos){
         const Square sq = popLsb(pieces);
         const BitBoard sqb = squareBB(sq);
         const U8 rank = 7 - rankOf(sq);
-        const bool doubled = doubledPawns[WHITE] & squareBB(sq);
-        const bool isolated = !(isolatedPawnMask[sq] & bb[P]);
-        const bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
-        const bool supported = protectedPawns[WHITE] & sqb;
-        const bool advancable = !((pawnBlockage[BLACK]|bb[P]) & north(sqb));
-        const bool phal = phalanx[sq] & bb[P];
-        const bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
+        bool doubled = doubledPawns[WHITE] & squareBB(sq);
+        bool isolated = !(isolatedPawnMask[sq] & bb[P]);
+        bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
+        bool supported = protectedPawns[WHITE] & sqb;
+        bool advancable = !(pawnBlockage[WHITE] & north(sqb));
+        bool phal = phalanx[sq] & bb[P];
+        bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
         
         bool backward = !( // If the pawn
             (backwardPawnMask[WHITE][sq] & bb[P]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
             || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
         );
         // Check if the pawn is doubled
-        if (isolated){
-            if (doubled && pawnOpposed){
-                mgScore -= DOUBLEISOLATEDPENMG;
-                egScore -= DOUBLEISOLATEDPENEG;
-            }
-            else {
-                mgScore -= ISOLATEDPENMG;
-                egScore -= ISOLATEDPENEG;
-            }
+        if (doubled && isolated && pawnOpposed){
+            mgScore -= DOUBLEISOLATEDPENMG;
+            egScore -= DOUBLEISOLATEDPENEG;
+        }
+        else if (isolated){
+            mgScore -= ISOLATEDPENMG;
+            egScore -= ISOLATEDPENEG;
         }
         else if (backward){
             mgScore -= BACKWARDPENMG;
@@ -557,9 +557,8 @@ Score pestoEval(Position *pos){
             mgScore += passedRankBonusMg[rank];
             egScore += passedRankBonusEg[rank];
             // Give bonus for how many squares the pawn can advance
-            const S32 pathLength = popcount(passedPath);
-            mgScore += pathLength * PASSEDPATHBONUSMG;
-            egScore += pathLength * PASSEDPATHBONUSEG;
+            mgScore += popcount(passedPath) * PASSEDPATHBONUSMG;
+            egScore += popcount(passedPath) * PASSEDPATHBONUSEG;
             // Bonus for connected or supported passed pawns
             if (supported){
                 mgScore += SUPPORTEDPASSERMG;
@@ -575,28 +574,26 @@ Score pestoEval(Position *pos){
         const Square sq = popLsb(pieces);
         const BitBoard sqb = squareBB(sq);
         const U8 rank = rankOf(sq);
-        const bool doubled = doubledPawns[BLACK] & squareBB(sq);
-        const bool isolated = !(isolatedPawnMask[sq] & bb[p]);
-        const bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
-        const bool supported = protectedPawns[BLACK] & sqb;
-        const bool advancable = !((pawnBlockage[WHITE]|bb[p]) & south(sqb));
-        const bool phal = phalanx[sq] & bb[p];
-        const bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
+        bool doubled = doubledPawns[BLACK] & squareBB(sq);
+        bool isolated = !(isolatedPawnMask[sq] & bb[p]);
+        bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
+        bool supported = protectedPawns[BLACK] & sqb;
+        bool advancable = !(pawnBlockage[BLACK] & south(sqb));
+        bool phal = phalanx[sq] & bb[p];
+        bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
         
         bool backward = !( // If the pawn
             (backwardPawnMask[BLACK][sq] & bb[p]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
             || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
         );
         // Check if the pawn is doubled
-        if (isolated){
-            if (doubled && pawnOpposed){
-                mgScore += DOUBLEISOLATEDPENMG;
-                egScore += DOUBLEISOLATEDPENEG;
-            }
-            else {
-                mgScore += ISOLATEDPENMG;
-                egScore += ISOLATEDPENEG;
-            }
+        if (doubled && isolated && pawnOpposed){
+            mgScore += DOUBLEISOLATEDPENMG;
+            egScore += DOUBLEISOLATEDPENEG;
+        }
+        else if (isolated){
+            mgScore += ISOLATEDPENMG;
+            egScore += ISOLATEDPENEG;
         }
         else if (backward){
             mgScore += BACKWARDPENMG;
@@ -624,9 +621,8 @@ Score pestoEval(Position *pos){
             mgScore -= passedRankBonusMg[rank];
             egScore -= passedRankBonusEg[rank];
             // Give bonus for how many squares the pawn can advance
-            const S32 pathLength = popcount(passedPath);
-            mgScore -= pathLength * PASSEDPATHBONUSMG;
-            egScore -= pathLength * PASSEDPATHBONUSEG;
+            mgScore -= popcount(passedPath) * PASSEDPATHBONUSMG;
+            egScore -= popcount(passedPath) * PASSEDPATHBONUSEG;
             // Bonus for connected or supported passed pawns
             if (supported){
                 mgScore -= SUPPORTEDPASSERMG;
@@ -654,17 +650,14 @@ Score pestoEval(Position *pos){
     outerShelters[BLACK] &= bb[p];
 
     // Add the shelter bonus
-    S32 innerShelterDiff = popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]);
-    S32 outerShelterDiff = popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]);
-    mgScore += innerShelterDiff * INNERSHELTERMG;
-    egScore += innerShelterDiff * INNERSHELTEREG;
-    mgScore += outerShelterDiff * OUTERSHELTERMG;
-    egScore += outerShelterDiff * OUTERSHELTEREG;
+    mgScore += INNERSHELTERMG * (popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]));
+    egScore += INNERSHELTEREG * (popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]));
+    mgScore += OUTERSHELTERMG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
+    egScore += OUTERSHELTEREG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
 
     // Add bonus for bishop pairs
-    const Score bishopPairDiff = (popcount(bb[B])>=2) - (popcount(bb[b])>=2);
-    mgScore += bishopPairDiff * BISHOPPAIRMG;
-    egScore += bishopPairDiff * BISHOPPAIREG;
+    mgScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIRMG;
+    egScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIREG;
 
     // Add bonus for rooks on open files
     const BitBoard openFiles = ~(pawnFiles[WHITE] | pawnFiles[BLACK]);
@@ -1050,7 +1043,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         bool isolated = !(isolatedPawnMask[sq] & bb[P]);
         bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
         bool supported = protectedPawns[WHITE] & sqb;
-        bool advancable = !((pawnBlockage[BLACK]|bb[P]) & north(sqb));
+        bool advancable = !(pawnBlockage[WHITE] & north(sqb));
         bool phal = phalanx[sq] & bb[P];
         bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
         
@@ -1094,7 +1087,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         bool isolated = !(isolatedPawnMask[sq] & bb[p]);
         bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
         bool supported = protectedPawns[BLACK] & sqb;
-        bool advancable = !((pawnBlockage[WHITE]|bb[p]) & south(sqb));
+        bool advancable = !(pawnBlockage[BLACK] & south(sqb));
         bool phal = phalanx[sq] & bb[p];
         bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
         
