@@ -686,7 +686,7 @@ void Game::startSearch(bool halveTT = true)
         if (currSearch >= 6){
             // Percentage ( 0.665124 ) calculated with bench @22
 
-            nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.714667551;
+            nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.702622186;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
