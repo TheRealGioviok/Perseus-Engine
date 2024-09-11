@@ -512,7 +512,7 @@ Score pestoEval(Position *pos){
         const bool isolated = !(isolatedPawnMask[sq] & bb[P]);
         const bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
         const bool supported = protectedPawns[WHITE] & sqb;
-        const bool advancable = !(pawnBlockage[BLACK] & north(sqb));
+        const bool advancable = !((pawnBlockage[BLACK]|bb[P]) & north(sqb));
         const bool phal = phalanx[sq] & bb[P];
         const bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
         
@@ -579,7 +579,7 @@ Score pestoEval(Position *pos){
         const bool isolated = !(isolatedPawnMask[sq] & bb[p]);
         const bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
         const bool supported = protectedPawns[BLACK] & sqb;
-        const bool advancable = !(pawnBlockage[WHITE] & south(sqb));
+        const bool advancable = !((pawnBlockage[WHITE]|bb[p]) & south(sqb));
         const bool phal = phalanx[sq] & bb[p];
         const bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
         
@@ -1050,7 +1050,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         bool isolated = !(isolatedPawnMask[sq] & bb[P]);
         bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
         bool supported = protectedPawns[WHITE] & sqb;
-        bool advancable = !(pawnBlockage[BLACK] & north(sqb));
+        bool advancable = !((pawnBlockage[BLACK]|bb[P]) & north(sqb));
         bool phal = phalanx[sq] & bb[P];
         bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
         
@@ -1094,7 +1094,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         bool isolated = !(isolatedPawnMask[sq] & bb[p]);
         bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
         bool supported = protectedPawns[BLACK] & sqb;
-        bool advancable = !(pawnBlockage[WHITE] & south(sqb));
+        bool advancable = !((pawnBlockage[WHITE]|bb[p]) & south(sqb));
         bool phal = phalanx[sq] & bb[p];
         bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
         
