@@ -59,6 +59,10 @@ double lmrA0 = 763;
 double lmrC0 = -275;
 double lmrA1 = 775;
 double lmrC1 = 625;
+int lmpA0 = 500;
+int lmpC0 = 1500;
+int lmpA1 = 1000;
+int lmpC1 = 3000;
 /**
  * @brief The initLMRTable function initializes the LMR reduction table
  */
@@ -86,8 +90,8 @@ void initLMRTable(){
     // Init lmpMargin
     for (int depth = 0; depth < 128; depth++) {
         for (int improving = 0; improving < 2; improving++) {
-            lmpMargin[depth][0] = 8 * depth; // 1.5 + 0.5 * std::pow(depth, 2.0); // Not improving
-            lmpMargin[depth][1] = 8 * depth; // 3.0 + 1.0 * std::pow(depth, 2.0); // improving
+            lmpMargin[depth][0] = (lmpC0 + lmpA0 * depth * depth) / RESOLUTION; // 1.5 + 0.5 * std::pow(depth, 2.0); // Not improving
+            lmpMargin[depth][1] = (lmpC1 + lmpA1 * depth * depth) / RESOLUTION; // 3.0 + 1.0 * std::pow(depth, 2.0); // improving
         }
     }
 }
@@ -326,8 +330,3 @@ void initAll(){
     initTables();
     initTT();
 }
-
-
-
-
-

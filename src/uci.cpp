@@ -34,6 +34,10 @@ void uciStr() {
     std::cout << "option name lmrC0 type spin default -275 min -1000 max 1000" << std::endl;
     std::cout << "option name lmrA1 type spin default 775 min 0 max 16383" << std::endl;
     std::cout << "option name lmrC1 type spin default 625 min -1000 max 1000" << std::endl;
+    std::cout << "option name lmpA0 type spin default 8000 min 0 max 16383" << std::endl;
+    std::cout << "option name lmpC0 type spin default 1000 min -1000 max 1000" << std::endl;
+    std::cout << "option name lmpA1 type spin default 6000 min 0 max 16383" << std::endl;
+    std::cout << "option name lmpC1 type spin default 0 min -1000 max 1000" << std::endl;
     std::cout << "option name futilityMarginDelta type spin default 91 min 55 max 125" << std::endl;
     std::cout << "option name nmpDepthDivisor type spin default 3 min 2 max 6" << std::endl;
     std::cout << "option name nmpScoreDivisor type spin default 200 min 100 max 300" << std::endl;
@@ -41,7 +45,7 @@ void uciStr() {
     std::cout << "option name nmpQ2 type spin default 3 min 0 max 4" << std::endl;
     std::cout << "option name razorQ1 type spin default 128 min 50 max 400" << std::endl;
     std::cout << "option name razorQ2 type spin default 192 min 50 max 400" << std::endl;
-    std::cout << "option name singularDepthMultiplier type spin default 4 min 1 max 6" << std::endl;
+    std::cout << "option name singularDepthMultiplier type spin default 1 min 1 max 6" << std::endl;
     std::cout << "option name IIRdepth type spin default 4 min 3 max 7" << std::endl;
     std::cout << "option name razorDepth type spin default 4 min 2 max 5" << std::endl;
     std::cout << "option name singularSearchDepth type spin default 7 min 4 max 8" << std::endl;
@@ -276,6 +280,22 @@ int setOptionCommand(Game* game, char* command) {
     }
     else if (optionName == "lmrC1"){
         lmrC1 = double(atoi(arg.c_str()));
+        initLMRTable();
+    }
+    else if (optionName == "lmpA0"){
+        lmpA0 = double(atoi(arg.c_str()));
+        initLMRTable();
+    }
+    else if (optionName == "lmpC0"){
+        lmpC0 = double(atoi(arg.c_str()));
+        initLMRTable();
+    }
+    else if (optionName == "lmpA1"){
+        lmpA1 = double(atoi(arg.c_str()));
+        initLMRTable();
+    }
+    else if (optionName == "lmpC1"){
+        lmpC1 = double(atoi(arg.c_str()));
         initLMRTable();
     }
     else if (optionName == "futilityMarginDelta")
