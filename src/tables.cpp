@@ -86,8 +86,8 @@ void initLMRTable(){
     // Init lmpMargin
     for (int depth = 0; depth < 128; depth++) {
         for (int improving = 0; improving < 2; improving++) {
-            lmpMargin[depth][0] = 1.5 + 0.5 * std::pow(depth, 2.0); // Not improving
-            lmpMargin[depth][1] = 3.0 + 1.0 * std::pow(depth, 2.0); // improving
+            lmpMargin[depth][0] = 8 * depth; // 1.5 + 0.5 * std::pow(depth, 2.0); // Not improving
+            lmpMargin[depth][1] = 8 * depth; // 3.0 + 1.0 * std::pow(depth, 2.0); // improving
         }
     }
 }
@@ -326,8 +326,3 @@ void initAll(){
     initTables();
     initTT();
 }
-
-
-
-
-
