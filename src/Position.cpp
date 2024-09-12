@@ -84,8 +84,6 @@ void Position::print(){
         ((castle & CastleRights::BK) ? "k" : "") <<
         ((castle & CastleRights::BQ) ? "q" : "") << "\n";
     std::cout << "Hash:\t\t\t" << std::hex << hashKey << std::dec << "\n";
-    std::cout << "LastMove:\t\t";
-    printMove(lastMove);
     std::cout << std::endl;
 
 }
@@ -292,6 +290,7 @@ bool Position::parseFEN(char *fen) {
 FENkeyEval:
     // If everything is alright, generate the hash key for the current position
     hashKey = generateHashKey();
+    checkers = calculateCheckers();
     return true;
 }
 
@@ -499,19 +498,17 @@ bool Position::makeMove(Move move)
     castle &= castlingRights[from];
     castle &= castlingRights[to];
     hashKey ^= castleKeys[castle];
-
     // Change side to move
     side ^= 1;
-    lastMove = onlyMove(move);
 
     totalPly++;
     plyFromNull++;
 
-    if (isCapture(lastMove) || isPromotion(lastMove) || ((movePiece(lastMove) % 6) == 0))
+    if (isCapture(move) || isPromotion(move) || ((movePiece(move) % 6) == 0))
         fiftyMove = 0;
     else
         fiftyMove++;
-
+    checkers = calculateCheckers();
     return true;
 }
 
@@ -750,8 +747,9 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
 
     const Move killer1 = ss->killers[0];
     const Move killer2 = ss->killers[1];
+    const Move lastMove = (ss-1)->move;
     const Move counterMove = lastMove ? counterMoveTable[indexFromTo(moveSource(lastMove), moveTarget(lastMove))] : noMove;
-    const S32 *ply1contHist = (ss - 1)->move ? (ss - 1)->contHistEntry : nullptr;
+    const S32 *ply1contHist = lastMove ? (ss - 1)->contHistEntry : nullptr;
     const S32 *ply2contHist = (ss - 2)->move ? (ss - 2)->contHistEntry : nullptr;
 
     BitBoard ourPawns   = bitboards[P + 6 * side];
@@ -1540,10 +1538,10 @@ void Position::makeNullMove(){
     hashKey ^= sideKey;
     hashKey ^= enPassantKeys[enPassant];
     enPassant = noSquare;
-    lastMove = 0;
     fiftyMove++;
     totalPly++;
     plyFromNull = 0;
+    checkers = 0ULL; // null moves will never be done while in check.
 }
 
 UndoInfo::UndoInfo(Position& position){
@@ -1554,9 +1552,9 @@ UndoInfo::UndoInfo(Position& position){
     totalPly = position.totalPly;
     plyFromNull = position.plyFromNull;
     side = position.side;
-    lastMove = position.lastMove;
     psqtScore[0] = position.psqtScore[0];
     psqtScore[1] = position.psqtScore[1];
+    checkers = position.checkers;
     memcpy(bitboards, position.bitboards, sizeof(BitBoard) * 12);
     memcpy(occupancies, position.occupancies, sizeof(BitBoard) * 3);
 }
@@ -1568,7 +1566,6 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.fiftyMove = fiftyMove;
     position.totalPly = totalPly;
     position.plyFromNull = plyFromNull;
-    position.lastMove = lastMove;
     position.psqtScore[0] = psqtScore[0];
     position.psqtScore[1] = psqtScore[1];
     position.side = side;
@@ -1585,6 +1582,7 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.bitboards[piece] = bitboards[piece];
     position.bitboards[captured] = bitboards[captured];
     position.bitboards[aux] = bitboards[aux];
+    position.checkers = checkers;
 
     memcpy(position.occupancies, occupancies, sizeof(BitBoard) * 3);
 }
@@ -1596,8 +1594,8 @@ void UndoInfo::undoNullMove(Position& position){
     position.fiftyMove = fiftyMove;
     position.totalPly = totalPly;
     position.plyFromNull = plyFromNull;
-    position.lastMove = lastMove;
     position.psqtScore[0] = psqtScore[0];
     position.psqtScore[1] = psqtScore[1];
     position.side = side;
+    position.checkers = checkers;
 }
