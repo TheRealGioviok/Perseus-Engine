@@ -3,7 +3,6 @@
 #include <algorithm>
 #include "BBmacros.h"
 #include "history.h"
-#include "movegen.h"
 
 // TTmove is always first
 
@@ -28,7 +27,6 @@ struct Position{
     
     BitBoard bitboards[12];
     BitBoard occupancies[3];
-    BitBoard checkers;
     U8 side;
     U8 enPassant;
     U8 fiftyMove; // 50 move rule counter, number of plies since the last irreversible move
@@ -36,6 +34,7 @@ struct Position{
     Ply plyFromNull; // Ply from the last null move (see Null Move Pruning for more information)
     U8 castle;
     HashKey hashKey;
+    Move lastMove = 0;
     Score psqtScore[2] = {0,0}; // PSQT score, incrementally updated
 
     // The default constructor instantiates the position with the standard chess starting position.
@@ -105,19 +104,6 @@ struct Position{
      * @TODO: diagonal and orthogonal attackers can be passed as parameters as they are already calculated
      */
     inline BitBoard attacksToPre(Square square, BitBoard occupancy, BitBoard diagonalAttackers, BitBoard orthogonalAttackers);
-
-    /**
-     * @brief The checkers function calculate current position checking pieces.
-     * @return A bitboard with all checker pieces
-     */
-    inline BitBoard calculateCheckers(){
-        const Square king = lsb(bitboards[K + 6 * side]);
-        const BitBoard* them = bitboards + 6 * (!side);
-        return (pawnAttacks[side][king] & them[P]) |
-            (knightAttacks[king] & them[N]) |
-            (getBishopAttack(king, occupancies[BOTH]) & (them[B] | them[Q])) |
-            (getRookAttack(king, occupancies[BOTH]) & (them[R] | them[Q])) ;
-    }
 
     /**
      * @brief The makeMove function makes a move on the board.
@@ -222,12 +208,13 @@ struct UndoInfo {
     U8 fiftyMove;
     Ply totalPly;
     Ply plyFromNull;
+    Move lastMove;
     Score psqtScore[2];
     U8 side;
     // Reversible information
     BitBoard bitboards[12];
     BitBoard occupancies[3];
-    BitBoard checkers;
+
     /**
      * @brief The constructor of the UndoInfo class.
      * @param position The position to store the information from.

@@ -103,7 +103,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     // Update seldepth
     seldepth = std::max(Ply(seldepth), Ply(ply + 1));
 
-    const bool inCheck = pos.checkers;
+    bool inCheck = isCheck(pos.lastMove) || pos.inCheck();
 
     // Draws - mate distance
     if (!RootNode)
@@ -153,7 +153,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     clearKillers(ss+1);
     // Clear excluded move
     (ss+1)->excludedMove = noMove;
-    
+
     if (inCheck && (depth <= 0 || ply < currSearch * (1 + PVNode)))
         depth++;
 
@@ -209,9 +209,9 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         // Null move pruning
         if (eval >= ss->staticEval &&
             eval >= beta &&
-            (ss - 1)->move &&
+            (ss - 1)->move != noMove &&
             depth >= 3 &&
-            okToReduce((ss - 1)->move) && pos.hasNonPawns() &&
+            okToReduce(pos.lastMove) && pos.hasNonPawns() &&
             ply >= nmpPlies)
         {
 
@@ -255,6 +255,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     }
 
 skipPruning:
+
     if (depth >= IIRdepth && ttBound == hashNONE)
         --depth; // && !excludedMove
 
@@ -263,22 +264,18 @@ skipPruning:
     Score bestScore = noScore;
     Move bestMove = noMove;
     U16 moveSearched = 0;
-    bool skipQuiets = false;
 
     Move quiets[256], noisy[256];
     U16 quietsCount = 0, noisyCount = 0;
 
     MoveList moveList;
     generateMoves(moveList, ss);
+
     // Iterate through moves
     for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
     {
         
         Move currMove = onlyMove(moveList.moves[i]);
-        if (!skipQuiets) { 
-            if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
-        }
-        else if (okToReduce(currMove)) continue;
         // assert (
         //     i != 0 || !excludedMove ||
         //     (excludedMove == currMove)
@@ -332,6 +329,7 @@ skipPruning:
             Score score;
         
             ++nodes;
+            // bool givesCheck = isCheck(currMove) || pos.inCheck();
             if (isQuiet) quiets[quietsCount++] = currMove;
             else noisy[noisyCount++] = currMove;
             if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
@@ -427,7 +425,7 @@ skipPruning:
 
 Score Game::quiescence(Score alpha, Score beta, SStack *ss)
 {
-    const bool inCheck = pos.checkers;
+    bool inCheck = pos.inCheck();
     if (inCheck)
         if (isRepetition())
             return randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
@@ -556,6 +554,7 @@ void Game::startSearch(bool halveTT = true)
 
     std::cin.clear();
 
+    pos.lastMove = 0;
     lastScore = 0;
 
     // Clear nodesPerMoveTable
@@ -686,7 +685,7 @@ void Game::startSearch(bool halveTT = true)
         }
         if (currSearch >= 6){
             // Percentage ( 0.665124 ) calculated with bench @22
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.708206269;
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.747242302;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
