@@ -4,6 +4,7 @@
 #include "Game.h"
 #ifndef _WIN32
 #include <unistd.h>
+#include <sys/select.h> // Solves IO problems for some very barebone linux distros
 #else
 #include <Windows.h>
 #include <io.h>
