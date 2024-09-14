@@ -273,12 +273,12 @@ skipPruning:
     // Iterate through moves
     for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
     {
-        
+        S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
         Move currMove = onlyMove(moveList.moves[i]);
         if (!skipQuiets) { 
             if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
         }
-        else if (okToReduce(currMove)) continue;
+        else if (currMoveScore < COUNTERSCORE) continue;
         // assert (
         //     i != 0 || !excludedMove ||
         //     (excludedMove == currMove)
@@ -328,7 +328,7 @@ skipPruning:
 
             ss->move = currMove;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
-            S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
+            
             Score score;
         
             ++nodes;
@@ -686,7 +686,7 @@ void Game::startSearch(bool halveTT = true)
         }
         if (currSearch >= 6){
             // Percentage ( 0.665124 ) calculated with bench @22
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.717235602;
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.709880399;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
