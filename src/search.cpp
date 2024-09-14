@@ -535,7 +535,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     return bestScore;
 }
 
-#define ASPIRATIONWINDOW 25
+#define ASPIRATIONWINDOW 19
 void Game::startSearch(bool halveTT = true)
 {
     // Set SE counters to 0
@@ -685,8 +685,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.665124 ) calculated with bench @22
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.709880399;
+            // Percentage ( 0.680021 ) calculated with bench @24
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.735271411;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
