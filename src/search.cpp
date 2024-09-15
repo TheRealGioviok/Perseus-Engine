@@ -397,7 +397,7 @@ skipPruning:
                             updateKillers(ss, currMove);
                             updateCounters(currMove, (ss - 1)->move);
                         }
-                        updateHH(ss, pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount);
+                        updateHH(ss, pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount, pos.bitboards[P] | pos.bitboards[p]);
                         break;
                     }
                     alpha = score;
@@ -559,6 +559,11 @@ void Game::startSearch(bool halveTT = true)
     lastScore = 0;
 
     // Clear nodesPerMoveTable
+
+    // Clear pawnSim table
+    memset(pawnStructuredHistoryTable, 0, sizeof(pawnStructuredHistoryTable));
+    // Set first and second indices to be root pos
+    pawnIndices[0] = pawnIndices[1] = pos.bitboards[P] | pos.bitboards[p];
     
 
     // killerCutoffs = 0;
@@ -633,6 +638,8 @@ void Game::startSearch(bool halveTT = true)
             // Clear the first sstack entry
             ss->wipe();
             score = search(alpha, beta, currSearch, false, ss); // Search at depth currSearch
+            // Wipe second pawn index, and set it to end of variation pawn structure
+
             if (stopped)
                 goto bmove;
             bestMove = pvTable[0][0];
@@ -686,10 +693,14 @@ void Game::startSearch(bool halveTT = true)
         }
         if (currSearch >= 6){
             // Percentage ( 0.665124 ) calculated with bench @22
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.709880399;
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.735206542;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
+        Position dummy = pos;
+        for (int i = 0; i < pvLen[0]; i++) dummy.makeMove(pvTable[0][i]);
+        pawnIndices[1] = dummy.bitboards[P] | dummy.bitboards[p];
+        memset(pawnStructuredHistoryTable[1], 0, sizeof(pawnStructuredHistoryTable[1]));
     }
 
 bmove:

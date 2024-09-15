@@ -91,6 +91,10 @@ inline int popcount(BitBoard b) {
 
 inline BitBoard reflectBitBoard(BitBoard bb) { return __builtin_bswap64(bb); }
 
+inline S32 editDist(BitBoard a, BitBoard b){
+	return popcount(a ^ b);
+}
+
 #elif defined(_MSC_VER)  // MSVC
 
 #ifdef _WIN64  // MSVC, WIN64

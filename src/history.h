@@ -6,6 +6,12 @@
 // history table
 extern S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
 
+// Similarity History table
+extern S32 pawnStructuredHistoryTable[2][2 * NUM_SQUARES * NUM_SQUARES];
+// extern S32 pieceStructuredHistoryTable[2][2 * NUM_SQUARES * NUM_SQUARES];
+extern BitBoard pawnIndices[2];
+// extern BitBoard structureIndices[2];
+
 // capture history table
 extern S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES / 2]; // The color of the captured piece is always the opposite of the color of the moving piece
 
@@ -42,12 +48,16 @@ struct SStack {
     }
 };
 
+inline S32 indexSideFromTo(S32 side, Square from, Square to) {
+	return (side << 12) ^ (from << 6) ^ to;
+}
+
 inline S32 indexFromTo(Square from, Square to) {
-	return from * 64 + to;
+	return (from << 6) ^ to;
 }
 
 inline S32 indexPieceTo(Piece piece, Square to) {
-	return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
+	return (piece << 6) ^ to ^ 56; // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
 }
 
 
@@ -61,4 +71,5 @@ static inline S32 stat_bonus(int depth) {
 }
 
 #define MAXHISTORYABS 16384LL
-void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);
+#define MAXSMALLHISTORYABS 8192LL
+void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount, BitBoard pawnSimMask);

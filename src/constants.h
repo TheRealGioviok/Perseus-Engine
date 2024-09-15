@@ -30,7 +30,7 @@ constexpr int NUM_PIECE_TYPES = 6;  // The number of piece types (color insensit
 // ENUMS
 
 // The enum of side to move.
-enum Side {
+enum Side : U8{
 	// White to move.
 	WHITE = 0,
 	// Black to move.
