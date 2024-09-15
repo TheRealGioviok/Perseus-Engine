@@ -61,13 +61,11 @@ inline S32 indexPieceTo(Piece piece, Square to) {
 }
 
 
+template <bool depthLimitedFormula>
 static inline S32 stat_bonus(int depth) {
-#if ENABLEBETTERHISTORYFORMULA
-	// Approximately verbatim stat bonus formula from Stockfish // Formula from Ethereal, who took it from stockfish. I love chess programming.
-    return depth > 13 ? 32 : 16 * depth * depth + 128 * std::max(depth - 1, 0);
-#else
-	return std::min(16 * depth * depth + 32 * depth + 16, 1200);
-#endif
+    // Approximately verbatim stat bonus formula from Stockfish // Formula from Ethereal, who took it from stockfish. I love chess programming.
+    if constexpr (depthLimitedFormula) return depth > 13 ? 32 : 16 * depth * depth + 128 * std::max(depth - 1, 0);
+    else return std::min(16 * depth * depth + 32 * depth + 16, 1200);
 }
 
 #define MAXHISTORYABS 16384LL
