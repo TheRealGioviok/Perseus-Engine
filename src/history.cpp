@@ -22,13 +22,13 @@ Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
 // Continuation History table
 S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
 
-void updateHistoryMove(bool side, Move move, const S32 pawnSimIndices[2], const S32 err, S32 delta) {
+void updateHistoryMove(bool side, Move move, S32 hhDelta, S32 p1delta, S32 p2delta) {
     S32 *current = &historyTable[side][indexFromTo(moveSource(move),moveTarget(move))];
-    *current += delta - *current * abs(delta) / MAXSMALLHISTORYABS;
+    *current += hhDelta - *current * abs(hhDelta) / MAXSMALLHISTORYABS;
     current = &pawnStructuredHistoryTable[0][indexSideFromTo(side, moveSource(move),moveTarget(move))];
-    *current += (delta * pawnSimIndices[0] / err) - *current * abs(delta) / MAXSMALLHISTORYABS;
+    *current += p1delta - *current * abs(p1delta) / MAXSMALLHISTORYABS;
     current = &pawnStructuredHistoryTable[1][indexSideFromTo(side, moveSource(move),moveTarget(move))];
-    *current += (delta * pawnSimIndices[1] / err) - *current * abs(delta) / MAXSMALLHISTORYABS;
+    *current += p2delta - *current * abs(p2delta) / MAXSMALLHISTORYABS;
 }
 
 void updateCaptureHistory(Move move, S32 delta) {
@@ -48,17 +48,18 @@ void updateContHist(SStack* ss, const Move move, const S32 delta){
 }
 
 void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount, BitBoard pawnSimMask) {
-    const S32 delta = stat_bonus(depth);
-    // BitBoard piecesSimMask = pos->occupancies[BOTH] ^ pawnSimMask;
-    const S32 pawnSimIndices[2] = { editDist(pawnIndices[0], pawnSimMask), editDist(pawnIndices[1], pawnSimMask)}; // We might want to think of a better dist function
+    const S32 delta = stat_bonus<true>(depth);
+    const S32 deltaI = stat_bonus<false>(depth);
+    const S32 pawnSimIndices[2] = { editDist(pawnIndices[0], pawnSimMask) << 8, editDist(pawnIndices[1], pawnSimMask) << 8}; // We might want to think of a better dist function
     const S32 err = pawnSimIndices[0] + pawnSimIndices[1] + 1; // For now, dumb way to avoid 0 div, have to think of something better
+    const S32 pawnDeltas[2] = {deltaI * pawnSimIndices[0] / err, deltaI * pawnSimIndices[1] / err};
     if (okToReduce(bestMove)) {
         // If bestMove is not noisy, we reduce the bonus of all other moves and increase the bonus of the bestMove
-        updateHistoryMove(side, bestMove, pawnSimIndices, err, delta);
+        updateHistoryMove(side, bestMove, delta, pawnDeltas[0], pawnDeltas[1]);
         updateContHist(ss, bestMove, delta);
         for (int i = 0; i < quietsCount; i++) {
             if (quietMoves[i] == bestMove) continue;
-            updateHistoryMove(side, quietMoves[i], pawnSimIndices, err, -delta);
+            updateHistoryMove(side, quietMoves[i], -delta, -pawnDeltas[0], -pawnDeltas[1]);
             updateContHist(ss, quietMoves[i], -delta);
         }
     }
