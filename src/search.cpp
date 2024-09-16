@@ -702,7 +702,7 @@ void Game::startSearch(bool halveTT = true)
         for (int i = 0; i < pvLen[0]; i++) dummy.makeMove(pvTable[0][i]);
         BitBoard newIndex = dummy.occupancies[BOTH];
         S32 diff = editDist(pawnIndices[1], newIndex);
-        if (diff > 0){
+        if (diff > 0)
             for (int idx = 0; idx < 8192; idx++) pawnStructuredHistoryTable[1][idx] /= (1+diff);
         pawnIndices[1] = newIndex;
     }
