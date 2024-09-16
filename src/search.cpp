@@ -692,8 +692,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.708654 ) calculated with bench @24
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.70556294;
+            // Percentage ( 0.703375 ) calculated with bench @24
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.710858361;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
@@ -701,10 +701,9 @@ void Game::startSearch(bool halveTT = true)
         Position dummy = pos;
         for (int i = 0; i < pvLen[0]; i++) dummy.makeMove(pvTable[0][i]);
         BitBoard newIndex = dummy.occupancies[BOTH];
-        S32 diff = std::max(0, editDist(pawnIndices[0], newIndex) - editDist(pawnIndices[0],pawnIndices[1]));
+        S32 diff = editDist(pawnIndices[1], newIndex);
         if (diff > 0){
-            for (int idx = 0; idx < 8192; idx++) pawnStructuredHistoryTable[1][idx] >>= diff;
-        }
+            for (int idx = 0; idx < 8192; idx++) pawnStructuredHistoryTable[1][idx] /= (1+diff);
         pawnIndices[1] = newIndex;
     }
 
