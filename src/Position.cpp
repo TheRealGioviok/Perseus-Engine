@@ -566,8 +566,8 @@ inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Squ
     }
     ml->moves[ml->count++] = ((
         (S64)(historyTable[side][indexFromTo(source, target)]) 
-        + (S64)(pawnStructuredHistoryTable[0][indexSideFromTo(side, source, target)] * pawnSimIndices[0] / err)
-        + (S64)(pawnStructuredHistoryTable[1][indexSideFromTo(side, source, target)] * pawnSimIndices[1] / err)
+        + (S64)(pawnStructuredHistoryTable[0][indexSideFromTo(side, source, target)] * pawnSimIndices[1] / err)
+        + (S64)(pawnStructuredHistoryTable[1][indexSideFromTo(side, source, target)] * pawnSimIndices[0] / err)
         + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
         + QUIETSCORE
@@ -755,7 +755,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
     const S32 *ply2contHist = (ss - 2)->move ? (ss - 2)->contHistEntry : nullptr;
 
     const BitBoard pawnSimMask = bitboards[P] | bitboards[p];
-    const S32 pawnSimIndices[2] = { editDist(pawnIndices[0], pawnSimMask), editDist(pawnIndices[1], pawnSimMask)}; // We might want to think of a better dist function
+    const S32 pawnSimIndices[2] = { editDist(pawnIndices[0], pawnSimMask) << 8, editDist(pawnIndices[1], pawnSimMask) << 8}; // We might want to think of a better dist function
     const S32 err = pawnSimIndices[0] + pawnSimIndices[1] + 1; // For now, dumb way to avoid 0 div, have to think of something better
 
     BitBoard ourPawns   = bitboards[P + 6 * side];

@@ -52,7 +52,7 @@ void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMove
     const S32 deltaI = stat_bonus<false>(depth);
     const S32 pawnSimIndices[2] = { editDist(pawnIndices[0], pawnSimMask) << 8, editDist(pawnIndices[1], pawnSimMask) << 8}; // We might want to think of a better dist function
     const S32 err = pawnSimIndices[0] + pawnSimIndices[1] + 1; // For now, dumb way to avoid 0 div, have to think of something better
-    const S32 pawnDeltas[2] = {deltaI * pawnSimIndices[0] / err, deltaI * pawnSimIndices[1] / err};
+    const S32 pawnDeltas[2] = {deltaI * pawnSimIndices[1] / err, deltaI * pawnSimIndices[0] / err}; // Simplification of err - indices = otherindices
     if (okToReduce(bestMove)) {
         // If bestMove is not noisy, we reduce the bonus of all other moves and increase the bonus of the bestMove
         updateHistoryMove(side, bestMove, delta, pawnDeltas[0], pawnDeltas[1]);
