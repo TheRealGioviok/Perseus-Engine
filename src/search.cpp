@@ -638,8 +638,6 @@ void Game::startSearch(bool halveTT = true)
             // Clear the first sstack entry
             ss->wipe();
             score = search(alpha, beta, currSearch, false, ss); // Search at depth currSearch
-            // Wipe second pawn index, and set it to end of variation pawn structure
-
             if (stopped)
                 goto bmove;
             bestMove = pvTable[0][0];
