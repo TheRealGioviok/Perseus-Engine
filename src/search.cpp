@@ -397,7 +397,7 @@ skipPruning:
                             updateKillers(ss, currMove);
                             updateCounters(currMove, (ss - 1)->move);
                         }
-                        updateHH(ss, pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount, pos.bitboards[P] | pos.bitboards[p]);
+                        updateHH(ss, pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount, pos.occupancies[BOTH]);
                         break;
                     }
                     alpha = score;
@@ -692,8 +692,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.665124 ) calculated with bench @22
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.694826599;
+            // Percentage ( 0.708654 ) calculated with bench @24
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.70556294;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
