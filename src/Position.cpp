@@ -754,7 +754,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
     const S32 *ply1contHist = lastMove ? (ss - 1)->contHistEntry : nullptr;
     const S32 *ply2contHist = (ss - 2)->move ? (ss - 2)->contHistEntry : nullptr;
 
-    const BitBoard pawnSimMask = bitboards[P] | bitboards[p];
+    const BitBoard pawnSimMask = occupancies[BOTH];
     const S32 pawnSimIndices[2] = { editDist(pawnIndices[0], pawnSimMask) << 8, editDist(pawnIndices[1], pawnSimMask) << 8}; // We might want to think of a better dist function
     const S32 err = pawnSimIndices[0] + pawnSimIndices[1] + 1; // For now, dumb way to avoid 0 div, have to think of something better
 
