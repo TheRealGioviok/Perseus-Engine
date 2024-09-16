@@ -563,9 +563,9 @@ void Game::startSearch(bool halveTT = true)
     // Clear pawnSim table
     memset(pawnStructuredHistoryTable, 0, sizeof(pawnStructuredHistoryTable));
     // Set first and second indices to be root pos
-    pawnIndices[0] = pawnIndices[1] = pos.bitboards[P] | pos.bitboards[p];
-    
-
+    pawnIndices[0] = pos.bitboards[P] | pos.bitboards[p];
+    BitBoard virtualPushers = (north(pos.bitboards[P]) & ~pos.bitboards[p]) | (south(pos.bitboards[p]) & ~pos.bitboards[P])
+    pawnIndices[1] = virtualPushers;
     // killerCutoffs = 0;
     // posKillerSearches = 0;
 
@@ -697,10 +697,6 @@ void Game::startSearch(bool halveTT = true)
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
-        Position dummy = pos;
-        for (int i = 0; i < pvLen[0]; i++) dummy.makeMove(pvTable[0][i]);
-        pawnIndices[1] = dummy.bitboards[P] | dummy.bitboards[p];
-        memset(pawnStructuredHistoryTable[1], 0, sizeof(pawnStructuredHistoryTable[1]));
     }
 
 bmove:
