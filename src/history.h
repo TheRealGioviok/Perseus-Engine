@@ -4,7 +4,7 @@
 #include "constants.h"
 
 // history table
-extern S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
+// extern S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
 
 // Similarity History table
 extern S32 pawnStructuredHistoryTable[2][2 * NUM_SQUARES * NUM_SQUARES];

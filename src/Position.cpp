@@ -565,7 +565,7 @@ inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Squ
         return;
     }
     ml->moves[ml->count++] = ((
-        (S64)(historyTable[side][indexFromTo(source, target)]) 
+        // (S64)(historyTable[side][indexFromTo(source, target)]) 
         + (S64)(pawnStructuredHistoryTable[0][indexSideFromTo(side, source, target)] * pawnSimIndices[1] / err)
         + (S64)(pawnStructuredHistoryTable[1][indexSideFromTo(side, source, target)] * pawnSimIndices[0] / err)
         + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)

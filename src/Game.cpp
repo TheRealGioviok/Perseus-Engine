@@ -111,10 +111,11 @@ void Game::reset(){
     nmpPlies = 0;
 
     // Clear history, killer and counter move tables
-    memset(historyTable, 0, sizeof(historyTable));
+    // memset(historyTable, 0, sizeof(historyTable));
     memset(counterMoveTable, 0, sizeof(counterMoveTable));
     memset(captureHistoryTable, 0, sizeof(captureHistoryTable));
     memset(continuationHistoryTable, 0, sizeof(continuationHistoryTable));
+    memset(pawnStructuredHistoryTable, 0, sizeof(pawnStructuredHistoryTable));
 
     // Clear pv len and pv table
     memset(pvLen, 0, sizeof(pvLen));
