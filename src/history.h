@@ -4,7 +4,7 @@
 #include "constants.h"
 
 // history table
-extern S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
+extern S32 phasedHistoryTable[2][2 * NUM_SQUARES * NUM_SQUARES];
 
 // capture history table
 extern S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES / 2]; // The color of the captured piece is always the opposite of the color of the moving piece
@@ -50,6 +50,10 @@ inline S32 indexPieceTo(Piece piece, Square to) {
 	return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
 }
 
+inline S32 indexSideFromTo(bool side, Square from, Square to){
+    assert(side * 4096 + from * 64 + to < 8192);
+    return side * 4096 + from * 64 + to;
+}
 
 static inline S32 stat_bonus(int depth) {
 #if ENABLEBETTERHISTORYFORMULA
@@ -61,4 +65,5 @@ static inline S32 stat_bonus(int depth) {
 }
 
 #define MAXHISTORYABS 16384LL
-void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);
+#define HALFHISTORYABS 8192LL
+void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount, S32 gamePhase);

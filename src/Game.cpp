@@ -111,7 +111,7 @@ void Game::reset(){
     nmpPlies = 0;
 
     // Clear history, killer and counter move tables
-    memset(historyTable, 0, sizeof(historyTable));
+    memset(phasedHistoryTable, 0, sizeof(phasedHistoryTable));
     memset(counterMoveTable, 0, sizeof(counterMoveTable));
     memset(captureHistoryTable, 0, sizeof(captureHistoryTable));
     memset(continuationHistoryTable, 0, sizeof(continuationHistoryTable));

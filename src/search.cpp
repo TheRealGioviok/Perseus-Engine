@@ -397,7 +397,8 @@ skipPruning:
                             updateKillers(ss, currMove);
                             updateCounters(currMove, (ss - 1)->move);
                         }
-                        updateHH(ss, pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount);
+                        S32 gamePhase = std::min(24, popcount(pos.bitboards[N] | pos.bitboards[n] | pos.bitboards[B] | pos.bitboards[b]) + 2 * popcount(pos.bitboards[R] | pos.bitboards[r]) + 4 * popcount(pos.bitboards[Q] | pos.bitboards[q]));
+                        updateHH(ss, pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount, gamePhase);
                         break;
                     }
                     alpha = score;
@@ -685,8 +686,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.665124 ) calculated with bench @22
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.709880399;
+            // Percentage ( 0.690029 ) calculated with bench @24
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.724607227;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;

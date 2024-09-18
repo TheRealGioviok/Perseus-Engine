@@ -184,7 +184,7 @@ struct Position{
 
     inline void addPromotion(MoveList *ml, ScoredMove move, Piece piece);
 
-    inline void addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S32 *ply1contHist, const S32 *ply2contHist);
+    inline void addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S32 *ply1contHist, const S32 *ply2contHist, const S32 gamePhase);
 
     inline void addUnsorted(MoveList *ml, ScoredMove move);
 
