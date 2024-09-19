@@ -704,9 +704,7 @@ bmove:
     if (halveTT)
     {
         // Age pv table
-        for (U64 i = 0; i < ttEntryCount; i++)
-        {
-            tt[i].depth = std::max(Depth(0), Depth(tt[i].depth - Depth(2)));
+        for (U64 i = 0; i < ttEntryCount; i++){
             tt[i].flags |= hashOLD;
         }
     }
