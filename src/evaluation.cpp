@@ -48,68 +48,71 @@ constexpr Score DOUBLEDEARLYMG = 11;
 constexpr Score DOUBLEDEARLYEG = 4;
 
 // (MG)
-constexpr Score DOUBLEISOLATEDPENMG = 11;
-constexpr Score ISOLATEDPENMG = 15;
-constexpr Score BACKWARDPENMG = 1;
-constexpr Score DOUBLEDPENMG = 15;
-constexpr Score SUPPORTEDPHALANXMG = 1;
-constexpr Score ADVANCABLEPHALANXMG = 7;
-constexpr Score R_SUPPORTEDPHALANXMG = 0;
-constexpr Score R_ADVANCABLEPHALANXMG = 0;
-constexpr Score passedRankBonusMg [7] = {0, -10, -31, -28, 17, 55, 99, };
-constexpr Score PASSEDPATHBONUSMG = -2;
+constexpr Score DOUBLEISOLATEDPENMG = 14;
+constexpr Score ISOLATEDPENMG = 19;
+constexpr Score BACKWARDPENMG = 5;
+constexpr Score DOUBLEDPENMG = 18;
+constexpr Score SUPPORTEDPHALANXMG = -1;
+constexpr Score ADVANCABLEPHALANXMG = 11;
+constexpr Score R_SUPPORTEDPHALANXMG = 3;
+constexpr Score R_ADVANCABLEPHALANXMG = 1;
+constexpr Score passedRankBonusMg [7] = {0, -13, -38, -29, 12, 16, 92, };
+constexpr Score PASSEDPATHBONUSMG = -1;
 constexpr Score SUPPORTEDPASSERMG = 32;
-constexpr Score INNERSHELTERMG = 30;
-constexpr Score OUTERSHELTERMG = 22;
-constexpr Score BISHOPPAIRMG = 33;
-constexpr Score ROOKONOPENFILEMG = 24;
+constexpr Score INNERSHELTERMG = 26;
+constexpr Score OUTERSHELTERMG = 24;
+constexpr Score BISHOPPAIRMG = 36;
+constexpr Score ROOKONOPENFILEMG = 26;
 constexpr Score ROOKONSEMIOPENFILEMG = 15;
-constexpr Score KNIGHTONEXTOUTPOSTMG = 24;
-constexpr Score BISHOPONEXTOUTPOSTMG = 32;
-constexpr Score KNIGHTONINTOUTPOSTMG = 24;
-constexpr Score BISHOPONINTOUTPOSTMG = 45;
-constexpr Score BISHOPPAWNSMG = -1;
+constexpr Score KNIGHTONEXTOUTPOSTMG = 30;
+constexpr Score BISHOPONEXTOUTPOSTMG = 36;
+constexpr Score KNIGHTONINTOUTPOSTMG = 26;
+constexpr Score BISHOPONINTOUTPOSTMG = 43;
+constexpr Score BISHOPPAWNSMG = 1;
 constexpr Score THREATSAFEPAWNMG = 65;
-constexpr Score THREATPAWNPUSHMG = 22;
-constexpr Score TEMPOMG = 24;
+constexpr Score THREATPAWNPUSHMG = 25;
+constexpr Score TEMPOMG = 25;
 // (EG)
-constexpr Score DOUBLEISOLATEDPENEG = 46;
-constexpr Score ISOLATEDPENEG = 17;
-constexpr Score BACKWARDPENEG = 4;
-constexpr Score DOUBLEDPENEG = 21;
-constexpr Score SUPPORTEDPHALANXEG = 10;
-constexpr Score ADVANCABLEPHALANXEG = 18;
-constexpr Score R_SUPPORTEDPHALANXEG = 0;
-constexpr Score R_ADVANCABLEPHALANXEG = 0;
-constexpr Score passedRankBonusEg [7] = {0, -66, -51, -9, 38, 141, 218, };
-constexpr Score PASSEDPATHBONUSEG = 13;
-constexpr Score SUPPORTEDPASSEREG = -8;
-constexpr Score INNERSHELTEREG = -8;
-constexpr Score OUTERSHELTEREG = -4;
-constexpr Score BISHOPPAIREG = 97;
-constexpr Score ROOKONOPENFILEEG = -5;
-constexpr Score ROOKONSEMIOPENFILEEG = 17;
-constexpr Score KNIGHTONEXTOUTPOSTEG = 31;
-constexpr Score BISHOPONEXTOUTPOSTEG = 7;
+constexpr Score DOUBLEISOLATEDPENEG = 60;
+constexpr Score ISOLATEDPENEG = 21;
+constexpr Score BACKWARDPENEG = 21;
+constexpr Score DOUBLEDPENEG = 19;
+constexpr Score SUPPORTEDPHALANXEG = 3;
+constexpr Score ADVANCABLEPHALANXEG = 27;
+constexpr Score R_SUPPORTEDPHALANXEG = 9;
+constexpr Score R_ADVANCABLEPHALANXEG = 19;
+constexpr Score passedRankBonusEg [7] = {0, -82, -56, -4, 40, 140, 181, };
+constexpr Score PASSEDPATHBONUSEG = 14;
+constexpr Score SUPPORTEDPASSEREG = 4;
+constexpr Score INNERSHELTEREG = -9;
+constexpr Score OUTERSHELTEREG = 1;
+constexpr Score BISHOPPAIREG = 113;
+constexpr Score ROOKONOPENFILEEG = -6;
+constexpr Score ROOKONSEMIOPENFILEEG = 26;
+constexpr Score KNIGHTONEXTOUTPOSTEG = 33;
+constexpr Score BISHOPONEXTOUTPOSTEG = 0;
 constexpr Score KNIGHTONINTOUTPOSTEG = 33;
-constexpr Score BISHOPONINTOUTPOSTEG = 3;
-constexpr Score BISHOPPAWNSEG = -3;
-constexpr Score THREATSAFEPAWNEG = 46;
-constexpr Score THREATPAWNPUSHEG = 25;
-constexpr Score TEMPOEG = 17;
+constexpr Score BISHOPONINTOUTPOSTEG = -10;
+constexpr Score BISHOPPAWNSEG = -4;
+constexpr Score THREATSAFEPAWNEG = 60;
+constexpr Score THREATPAWNPUSHEG = 26;
+constexpr Score TEMPOEG = 21;
 
 
-constexpr Score KNIGHTATTACKOUTERRING = 9;
-constexpr Score KNIGHTATTACKINNERRING = 11;
-constexpr Score BISHOPATTACKOUTERRING = 8;
-constexpr Score BISHOPATTACKINNERRING = 11;
-constexpr Score ROOKATTACKOUTERRING = 12;
-constexpr Score ROOKATTACKINNERRING = 17;
-constexpr Score QUEENATTACKOUTERRING = 24;
-constexpr Score QUEENATTACKINNERRING = 34;
+constexpr Score PAWNATTACKINNERRING = 15;
+constexpr Score KNIGHTATTACKINNERRING = 9;
+constexpr Score BISHOPATTACKINNERRING = 32;
+constexpr Score ROOKATTACKINNERRING = 38;
+constexpr Score QUEENATTACKINNERRING = 22;
 
-constexpr Score NOQUEENDANGER = 65;
-constexpr Score PINNEDSHELTERDANGER = 11;
+constexpr Score PAWNATTACKOUTERRING = 18;
+constexpr Score KNIGHTATTACKOUTERRING = 43;
+constexpr Score BISHOPATTACKOUTERRING = 27;
+constexpr Score ROOKATTACKOUTERRING = 17;
+constexpr Score QUEENATTACKOUTERRING = 31;
+
+constexpr Score NOQUEENDANGER = -175;
+constexpr Score PINNEDSHELTERDANGER = 28;
 
 constexpr Score OWNPIECEBLOCKEDPAWNMG = 0;
 constexpr Score OWNPIECEBLOCKEDPAWNEG = 8;
@@ -200,9 +203,8 @@ static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) |
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], BitBoard (&attackedBy)[2], S8 *features, const BitBoard(&kingRing)[2], const BitBoard(&kingOuter)[2], S32 (&innerAttacks), S32 (&outerAttacks)) {
+static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], BitBoard (&attackedBy)[2], S8 *features, const BitBoard(&kingRing), const BitBoard(&kingOuter), S32 (&innerAttacks), S32 (&outerAttacks)) {
     constexpr Side us = pt < p ? WHITE : BLACK;
-    constexpr Side them = pt < p ? BLACK : WHITE;
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard mob;
     BitBoard pieces = bb[pt] & ~pinned[us];
@@ -241,8 +243,8 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&oc
             U8 moveCount = popcount(mob);
             features[moveCount] += us == WHITE ? 1 : -1;
         }
-        innerAttacks += popcount(mob & kingRing[them]);
-        outerAttacks += popcount(mob & kingOuter[them]);
+        innerAttacks += popcount(mob & kingRing);
+        outerAttacks += popcount(mob & kingOuter);
         attackedBy[us] |= mob;
     }
 } 
@@ -476,7 +478,10 @@ Score pestoEval(Position *pos){
     S32 innerAttacks[2] = {0,0};
     S32 outerAttacks[2] = {0,0};
 
-    
+    innerAttacks[WHITE] = popcount(pawnAttackedSquares[WHITE] & kingRing[BLACK]);
+    innerAttacks[BLACK] = popcount(pawnAttackedSquares[BLACK] & kingRing[WHITE]);
+    outerAttacks[WHITE] = popcount(pawnAttackedSquares[WHITE] & kingOuter[BLACK]);
+    outerAttacks[BLACK] = popcount(pawnAttackedSquares[BLACK] & kingOuter[WHITE]);
 
     // White mobility
     mobility<N>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
@@ -497,8 +502,8 @@ Score pestoEval(Position *pos){
     };
 
     const BitBoard pawnBlockage[2] = {
-        bb[P] | pawnAttackedSquares[WHITE],
-        bb[p] | pawnAttackedSquares[BLACK]
+        bb[P] | pawnAttackedSquares[BLACK] | protectedPawns[BLACK],
+        bb[p] | pawnAttackedSquares[WHITE] | protectedPawns[WHITE]
     };
 
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
@@ -729,18 +734,20 @@ Score pestoEval(Position *pos){
     // Add kingDanger index eval
     // Calcuate danger score
     S32 dangerIndex[2] = {
-        innerAttacks[WHITE] + outerAttacks[WHITE], 
-        innerAttacks[BLACK] + outerAttacks[BLACK]
+        innerAttacks[WHITE] + outerAttacks[WHITE] + 255,
+        innerAttacks[BLACK] + outerAttacks[BLACK] + 255
     };
 
-    dangerIndex[WHITE] -= NOQUEENDANGER * (!bb[Q]);
-    dangerIndex[BLACK] -= NOQUEENDANGER * (!bb[q]);
+    dangerIndex[WHITE] += NOQUEENDANGER * (!bb[Q]);
+    dangerIndex[BLACK] += NOQUEENDANGER * (!bb[q]);
 
     dangerIndex[WHITE] += popcount(pinned[BLACK] & innerShelters[BLACK]) * PINNEDSHELTERDANGER;
     dangerIndex[BLACK] += popcount(pinned[WHITE] & innerShelters[WHITE]) * PINNEDSHELTERDANGER;
+    // std::cout << "White danger index: " << dangerIndex[WHITE] << " ||| Black danger index: " << dangerIndex[BLACK] << "\n";
 
-    dangerIndex[WHITE] = std::max(0,std::min(63, dangerIndex[WHITE] >> 3));
-    dangerIndex[BLACK] = std::max(0,std::min(63, dangerIndex[BLACK] >> 3));
+    dangerIndex[WHITE] = std::min(63, std::max(0, (dangerIndex[WHITE]+8)/16));
+    dangerIndex[BLACK] = std::min(63, std::max(0, (dangerIndex[BLACK]+8)/16));
+    // std::cout << "White danger index: " << dangerIndex[WHITE] << " ||| Black danger index: " << dangerIndex[BLACK] << "\n";
 
     mgScore += kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
     egScore += kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
@@ -1003,17 +1010,17 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     outerAttacks[BLACK][P] = popcount(pawnAttackedSquares[BLACK] & kingOuter[WHITE]);
 
     // Calculate the mobility scores (index by phase and color)
-    getMobilityFeat<N>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][N], outerAttacks[WHITE][N]);
-    getMobilityFeat<n>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][N], outerAttacks[BLACK][N]);
+    getMobilityFeat<N>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][N], outerAttacks[WHITE][N]);
+    getMobilityFeat<n>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][N], outerAttacks[BLACK][N]);
     tensor += 9;
-    getMobilityFeat<B>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][B], outerAttacks[WHITE][B]);
-    getMobilityFeat<b>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][B], outerAttacks[BLACK][B]);
+    getMobilityFeat<B>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][B], outerAttacks[WHITE][B]);
+    getMobilityFeat<b>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][B], outerAttacks[BLACK][B]);
     tensor += 14;
-    getMobilityFeat<R>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][R], outerAttacks[WHITE][R]);
-    getMobilityFeat<r>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][R], outerAttacks[BLACK][R]);
+    getMobilityFeat<R>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][R], outerAttacks[WHITE][R]);
+    getMobilityFeat<r>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][R], outerAttacks[BLACK][R]);
     tensor += 15;
-    getMobilityFeat<Q>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][Q], outerAttacks[WHITE][Q]);
-    getMobilityFeat<q>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][Q], outerAttacks[BLACK][Q]);
+    getMobilityFeat<Q>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][Q], outerAttacks[WHITE][Q]);
+    getMobilityFeat<q>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][Q], outerAttacks[BLACK][Q]);
     tensor += 28;
 
 
@@ -1025,9 +1032,10 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         bb[p] & pawnAttackedSquares[BLACK]
     };
 
-    BitBoard pawnBlockage[2] = {
-        bb[P] | pawnAttackedSquares[WHITE],
-        bb[p] | pawnAttackedSquares[BLACK]
+    
+    const BitBoard pawnBlockage[2] = {
+        bb[P] | pawnAttackedSquares[BLACK] | protectedPawns[BLACK],
+        bb[p] | pawnAttackedSquares[WHITE] | protectedPawns[WHITE]
     };
 
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
