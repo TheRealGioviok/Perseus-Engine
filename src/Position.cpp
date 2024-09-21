@@ -568,7 +568,7 @@ inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Squ
         (S64)(historyTable[side][indexFromTo(source, target)]) 
         + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
-        + (S64)(ply4contHist ? ply4contHist[indexPieceTo(movePiece(move), target)] / 2 : 0)
+        + (S64)(ply4contHist ? ply4contHist[indexPieceTo(movePiece(move), target)] : 0)
         + QUIETSCORE
     ) << 32) | move;
 }
@@ -625,14 +625,14 @@ bool Position::SEE(const Move move, const Score threshold) {
 
     // Initialize the attackers, occupancies, vertical and horizontal sliders
     BitBoard occupied = occupancies[BOTH] ^ squareBB(from);
-    if (isEnPassant(move)) occupied ^= squareBB(to + (side == WHITE ? 8 : -8));
+    if (isEnPassant(move)) occupied ^= squareBB(enPassant);
 
     BitBoard diagonalSliders = bitboards[Q] | bitboards[q] | bitboards[B] | bitboards[b];
     BitBoard orthogonalSliders = bitboards[Q] | bitboards[q] | bitboards[R] | bitboards[r];
 
     BitBoard attackers = attacksToPre(to, occupied, diagonalSliders, orthogonalSliders);
 
-    const U8 us = attacker < 6 ? WHITE : BLACK; // Side of the attacker
+    const U8 us = attacker < p ? WHITE : BLACK; // Side of the attacker
 
     U8 side = us ^ 1; // Side of the attacker, flipped (one move already executed)
 
@@ -659,7 +659,7 @@ bool Position::SEE(const Move move, const Score threshold) {
         }
 
         // Remove the used piece from the board
-        clearBit(occupied, lsb(ourAttackers & (bitboards[pt] | bitboards[pt + 6])));
+        clearBit(occupied, lsb(ourAttackers & (bitboards[pt + 6 * !side])));
 
         // Update the attackers
         if (pt == P || pt == B || pt == Q) attackers |= getBishopAttack(to, occupied) & diagonalSliders;
