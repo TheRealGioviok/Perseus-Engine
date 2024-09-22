@@ -160,7 +160,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta, ss);
 
-    else if (!inCheck && depth < ttDepth && (ttBound & hashLOWER) && !(ttFlags & hashOLD)){
+    else if (ply < currSearch * (1 + PVNode) && !inCheck && depth < ttDepth && (ttBound & hashLOWER) && !(ttFlags & hashOLD)){
         if (ply == 1 || PVNode) depth += std::min(2, ttDepth - depth);
         else depth++; // Principled iterative extensions: If the tt entry is a lower bound (or exact), we don't search shallower than the tt depth
     }
@@ -686,7 +686,7 @@ void Game::startSearch(bool halveTT = true)
         }
         if (currSearch >= 6){
             // Percentage ( 0.665124 ) calculated with bench @22
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.720369751;
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.747374101;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
