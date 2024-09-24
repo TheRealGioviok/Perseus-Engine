@@ -344,10 +344,10 @@ skipPruning:
                     // R -= givesCheck;
                     R -= (S8)std::clamp((currMoveScore - QUIETSCORE) / 8192LL, -2LL, 2LL);
                     if (cutNode) R += 2;
-                    if (ttPv) R -= cutNode;
+                    if (ttPv) R -= 1;
                 }
                 else {
-                    if (currMoveScore < GOODNOISYMOVE) {
+                    if (currMoveScore < QUIETSCORE) {
                         if (cutNode) R += 1;
                         R -= (S8)std::clamp((currMoveScore - BADNOISYMOVE) / 6144LL, -1LL, 2LL);
                     }
@@ -685,8 +685,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.665124 ) calculated with bench @22
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.709880399;
+            // Percentage ( 0.719769 ) calculated with bench @24
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.694667317;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
