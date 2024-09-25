@@ -54,11 +54,11 @@ Ply reductionTable[2][64][64] = {{0}};
 S16 lmpMargin[128][2] = {{0}};
 #define RESOLUTION 1000
 double lmrDepthValue = 1000;
-double lmrMoveValue = 1000;
-double lmrA0 = 763;
+double lmrMoveValue = 990;
+double lmrA0 = 650;
 double lmrC0 = -275;
-double lmrA1 = 775;
-double lmrC1 = 625;
+double lmrA1 = 650;
+double lmrC1 = 600;
 int lmpA0 = 500;
 int lmpC0 = 1500;
 int lmpA1 = 1000;

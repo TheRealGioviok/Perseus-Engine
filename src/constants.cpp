@@ -1,14 +1,14 @@
 #include "constants.h"
 #include "types.h"
 
-int futilityMarginDelta = 91;       // [55, 125]
+int futilityMarginDelta = 105;       // [55, 125]
 int nmpDepthDivisor = 3;            // [2, 6]
 int nmpScoreDivisor = 200;          // [100, 300]
 int nmpQ1 = 3;                      // [1, 4]
 int nmpQ2 = 3;                      // [0, 4]
-int razorQ1 = 128;                  // [50, 200]
-int razorQ2 = 192;                  // [100, 300]
-int singularDepthMultiplier = 2;    // [1, 6]
+int razorQ1 = 156;                  // [50, 200]
+int razorQ2 = 224;                  // [100, 300]
+int singularDepthMultiplier = 1;    // [1, 6]
 Depth IIRdepth = 4;                 // [3, 7]
 Depth razorDepth = 4;               // [2, 5]
 Depth singularSearchDepth = 7;            // [4, 8]
