@@ -339,18 +339,20 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 Depth R = reduction(depth, moveSearched, isQuiet, ttPv, improving);
-                
+                if (currMoveScore >= COUNTERSCORE) R -= 1;
                 if (isQuiet){
-                    if (currMoveScore >= COUNTERSCORE) R -= 1;
                     // R -= givesCheck;
                     R -= (S8)std::clamp((currMoveScore - QUIETSCORE) / 8192LL, -2LL, 2LL);
                     if (cutNode) R += 2;
                     if (ttPv) R -= cutNode;
                 }
                 else {
-                    if (cutNode) R += 1;
-                    if (currMoveScore <= QUIETSCORE) R += cutNode;
-                    R -= (S8)std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) / 6144LL, -1LL, 2LL);
+                    if (cutNode) R += 1 + (currMoveScore < QUIETSCORE);
+                    if (currMoveScore < QUIETSCORE) 
+                        R -= (S8)std::clamp((currMoveScore - BADNOISYMOVE) / 6144LL, -1LL, 2LL);
+                    else
+                        R -= (S8)std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) / 6144LL, -2LL, 2LL);
+
                 }
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
@@ -685,7 +687,7 @@ void Game::startSearch(bool halveTT = true)
         }
         if (currSearch >= 6){
             // Percentage ( 0.665124 ) calculated with bench @22
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.750525368;
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.730434579;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
