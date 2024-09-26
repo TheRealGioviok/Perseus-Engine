@@ -343,8 +343,7 @@ skipPruning:
                 if (isQuiet){
                     // R -= givesCheck;
                     R -= (S8)std::clamp((currMoveScore - QUIETSCORE) / 8192LL, -2LL, 2LL);
-                    if (cutNode) R += 2;
-                    if (ttPv) R -= cutNode;
+                    if (cutNode) R += 1 + ttPv;
                 }
                 else {
                     if (cutNode) R += 1 + (currMoveScore < QUIETSCORE);
@@ -687,7 +686,7 @@ void Game::startSearch(bool halveTT = true)
         }
         if (currSearch >= 6){
             // Percentage ( 0.665124 ) calculated with bench @22
-             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.694844945;
+             nodesTmScale = 1.5 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 0.736485491;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
