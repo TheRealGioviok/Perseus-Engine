@@ -36,8 +36,8 @@ void uciStr() {
     std::cout << "option name lmrC1 type spin default 625 min -5000 max 5000" << std::endl;
     std::cout << "option name lmpA0 type spin default 500 min 0 max 16383" << std::endl;
     std::cout << "option name lmpC0 type spin default 1500 min -5000 max 5000" << std::endl;
-    std::cout << "option name lmpA1 type spin default 775 min 0 max 16383" << std::endl;
-    std::cout << "option name lmpC1 type spin default 625 min -5000 max 5000" << std::endl;
+    std::cout << "option name lmpA1 type spin default 1000 min 0 max 16383" << std::endl;
+    std::cout << "option name lmpC1 type spin default 3000 min -5000 max 5000" << std::endl;
     std::cout << "option name futilityMarginDelta type spin default 91 min 55 max 125" << std::endl;
     std::cout << "option name nmpDepthDivisor type spin default 3 min 2 max 6" << std::endl;
     std::cout << "option name nmpScoreDivisor type spin default 200 min 100 max 300" << std::endl;
