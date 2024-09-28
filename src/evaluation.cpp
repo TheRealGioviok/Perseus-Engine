@@ -108,7 +108,7 @@ constexpr Score ROOKATTACKINNERRING = 17;
 constexpr Score QUEENATTACKOUTERRING = 24;
 constexpr Score QUEENATTACKINNERRING = 34;
 
-constexpr Score NOQUEENDANGER = 65;
+constexpr Score NOQUEENDANGER = -65;
 constexpr Score PINNEDSHELTERDANGER = 11;
 
 constexpr Score OWNPIECEBLOCKEDPAWNMG = 0;
@@ -249,95 +249,58 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&oc
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void mobility(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], Score (&mobilityScore)[2], BitBoard (&attackedBy)[2], const BitBoard(&kingRing)[2], const BitBoard(&kingOuter)[2], S32 (&innerAttacks)[2], S32 (&outerAttacks)[2]){
-    constexpr Side us = pt < p ? WHITE : BLACK;
+static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoard &pinned, const BitBoard mobilityArea, Score (&mobilityScore)[2], BitBoard &attackedByUs, const BitBoard &kingRing, const BitBoard &kingOuter, S32 &innerAttacks, S32 &outerAttacks){
     // constexpr Side them = us ? BLACK : WHITE;
-    BitBoard mob;
-    BitBoard pieces = bb[pt] & ~pinned[us];
-    BitBoard occCheck = occ[BOTH];
+    BitBoard pieces = bb[pt] & ~pinned; // TODO: try to exclude xray through pinned pieces
 
     // Consider diagonal xrays through our queens
     if constexpr (pt == B || pt == Q)                   occCheck ^= bb[Q];
-    else if constexpr (pt == b || pt == q)              occCheck ^= bb[q];
 
     // Consider cross xrays through our rooks
     if constexpr (pt == R || pt == Q)                   occCheck ^= bb[R];
-    else if constexpr (pt == r || pt == q)              occCheck ^= bb[r];
     
     // Iterate over all pieces of the given type
     
     while (pieces) {
+        BitBoard moves;
         Square sq = popLsb(pieces);
-        mob = mobilityArea[us];
-        if constexpr (pt == N || pt == n) {
-            mob &= knightAttacks[sq];
-            U8 moveCount = popcount(mob);
+        if constexpr (pt == N) {
+            moves = mobilityArea & knightAttacks[sq];
+            U8 moveCount = popcount(moves);
             // Add the mobility score
-            if constexpr (pt == N) {
-                mobilityScore[0] += knightMobMg[moveCount];
-                mobilityScore[1] += knightMobEg[moveCount];
-                innerAttacks[WHITE] += popcount(mob & kingRing[BLACK]) * KNIGHTATTACKINNERRING;
-                outerAttacks[WHITE] += popcount(mob & kingOuter[BLACK]) * KNIGHTATTACKOUTERRING;
-            }
-            else {
-                mobilityScore[0] -= knightMobMg[moveCount];
-                mobilityScore[1] -= knightMobEg[moveCount];
-                innerAttacks[BLACK] += popcount(mob & kingRing[WHITE]) * KNIGHTATTACKINNERRING;
-                outerAttacks[BLACK] += popcount(mob & kingOuter[WHITE]) * KNIGHTATTACKOUTERRING;
-            }
+            mobilityScore[0] += knightMobMg[moveCount];
+            mobilityScore[1] += knightMobEg[moveCount];
+            innerAttacks += popcount(moves & kingRing) * KNIGHTATTACKINNERRING;
+            outerAttacks += popcount(moves & kingOuter) * KNIGHTATTACKOUTERRING;
         }
-        else if constexpr (pt == B || pt == b) {
-            mob &= getBishopAttack(sq, occCheck); // X-ray through our queens
-            U8 moveCount = popcount(mob);
+        else if constexpr (pt == B) {
+            moves = mobilityArea & getBishopAttack(sq, occCheck);
+            U8 moveCount = popcount(moves); // X-ray through our queens
             // Add the mobility score
-            if constexpr (pt == B) {
-                mobilityScore[0] += bishopMobMg[moveCount];
-                mobilityScore[1] += bishopMobEg[moveCount];
-                innerAttacks[WHITE] += popcount(mob & kingRing[BLACK]) * BISHOPATTACKINNERRING;
-                outerAttacks[WHITE] += popcount(mob & kingOuter[BLACK]) * BISHOPATTACKOUTERRING;
-            }
-            else {
-                mobilityScore[0] -= bishopMobMg[moveCount];
-                mobilityScore[1] -= bishopMobEg[moveCount];
-                innerAttacks[BLACK] += popcount(mob & kingRing[WHITE]) * BISHOPATTACKINNERRING;
-                outerAttacks[BLACK] += popcount(mob & kingOuter[WHITE]) * BISHOPATTACKOUTERRING;
-            }
+            mobilityScore[0] += bishopMobMg[moveCount];
+            mobilityScore[1] += bishopMobEg[moveCount];
+            innerAttacks += popcount(moves & kingRing) * BISHOPATTACKINNERRING;
+            outerAttacks += popcount(moves & kingOuter) * BISHOPATTACKOUTERRING;
         }
-        else if constexpr (pt == R || pt == r) {
-            mob &= getRookAttack(sq, occCheck); // X-ray through our queens and rooks
-            U8 moveCount = popcount(mob);
+        else if constexpr (pt == R) {
+            moves = mobilityArea & getRookAttack(sq, occCheck);
+            U8 moveCount = popcount(moves); // X-ray through our queens and rooks
             // Add the mobility score
-            if constexpr (pt == R) {
-                mobilityScore[0] += rookMobMg[moveCount];
-                mobilityScore[1] += rookMobEg[moveCount];
-                innerAttacks[WHITE] += popcount(mob & kingRing[BLACK]) * ROOKATTACKINNERRING;
-                outerAttacks[WHITE] += popcount(mob & kingOuter[BLACK]) * ROOKATTACKOUTERRING;
-            }
-            else {
-                mobilityScore[0] -= rookMobMg[moveCount];
-                mobilityScore[1] -= rookMobEg[moveCount];
-                innerAttacks[BLACK] += popcount(mob & kingRing[WHITE]) * ROOKATTACKINNERRING;
-                outerAttacks[BLACK] += popcount(mob & kingOuter[WHITE]) * ROOKATTACKOUTERRING;
-            }
+            mobilityScore[0] += rookMobMg[moveCount];
+            mobilityScore[1] += rookMobEg[moveCount];
+            innerAttacks += popcount(moves & kingRing) * ROOKATTACKINNERRING;
+            outerAttacks += popcount(moves & kingOuter) * ROOKATTACKOUTERRING;
         }
-        else if constexpr (pt == Q || pt == q) {
-            mob &= getQueenAttack(sq, occCheck); // X-ray through our queens
-            U8 moveCount = popcount(mob);
+        else if constexpr (pt == Q) {
+            moves = mobilityArea & getQueenAttack(sq, occCheck);
+            U8 moveCount = popcount(moves); // X-ray through our queens
             // Add the mobility score
-            if constexpr (pt == Q) {
-                mobilityScore[0] += queenMobMg[moveCount];
-                mobilityScore[1] += queenMobEg[moveCount];
-                innerAttacks[WHITE] += popcount(mob & kingRing[BLACK]) * QUEENATTACKINNERRING;
-                outerAttacks[WHITE] += popcount(mob & kingOuter[BLACK]) * QUEENATTACKOUTERRING;
-            }
-            else {
-                mobilityScore[0] -= queenMobMg[moveCount];
-                mobilityScore[1] -= queenMobEg[moveCount];
-                innerAttacks[BLACK] += popcount(mob & kingRing[WHITE]) * QUEENATTACKINNERRING;
-                outerAttacks[BLACK] += popcount(mob & kingOuter[WHITE]) * QUEENATTACKOUTERRING;
-            }
+            mobilityScore[0] += queenMobMg[moveCount];
+            mobilityScore[1] += queenMobEg[moveCount];
+            innerAttacks += popcount(moves & kingRing) * QUEENATTACKINNERRING;
+            outerAttacks += popcount(moves & kingOuter) * QUEENATTACKOUTERRING;   
         }
-        attackedBy[us] |= mob;
+        attackedByUs |= moves;
     }
 } 
 
@@ -439,10 +402,7 @@ Score pestoEval(Position *pos){
     };
 
     // Calculate the mobility scores (index by phase and color)
-    Score mobilityScore[2] = {
-        0,0 
-    };
-
+    Score mobilityScore[2] = {0,0};
     const BitBoard pawnSpan[2] = {
         advancePathMasked<WHITE>(bb[P], ~(bb[p] | pawnAttackedSquares[BLACK])),
         advancePathMasked<BLACK>(bb[p], ~(bb[P] | pawnAttackedSquares[WHITE]))
@@ -476,19 +436,21 @@ Score pestoEval(Position *pos){
     S32 innerAttacks[2] = {0,0};
     S32 outerAttacks[2] = {0,0};
 
-    
+    // Black mobility
+    mobility<N>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<B>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<R>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<Q>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+
+    // Flip
+    mobilityScore[0] *= -1;
+    mobilityScore[1] *= -1;
 
     // White mobility
-    mobility<N>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
-    mobility<B>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
-    mobility<R>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
-    mobility<Q>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
-
-    // Black mobility
-    mobility<n>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
-    mobility<b>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
-    mobility<r>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
-    mobility<q>(bb, occ, pinned, mobilityArea, mobilityScore, attackedBy, kingRing, kingOuter, innerAttacks, outerAttacks);
+    mobility<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
 
     // Malus for directly doubled, undefended pawns
     const BitBoard protectedPawns[2] = {
@@ -523,13 +485,15 @@ Score pestoEval(Position *pos){
             || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
         );
         // Check if the pawn is doubled
-        if (doubled && isolated && pawnOpposed){
-            mgScore -= DOUBLEISOLATEDPENMG;
-            egScore -= DOUBLEISOLATEDPENEG;
-        }
-        else if (isolated){
-            mgScore -= ISOLATEDPENMG;
-            egScore -= ISOLATEDPENEG;
+        if (isolated){
+            if (doubled && pawnOpposed){
+                mgScore -= DOUBLEISOLATEDPENMG;
+                egScore -= DOUBLEISOLATEDPENEG;
+            }
+            else{
+                mgScore -= ISOLATEDPENMG;
+                egScore -= ISOLATEDPENEG;
+            }
         }
         else if (backward){
             mgScore -= BACKWARDPENMG;
@@ -587,13 +551,15 @@ Score pestoEval(Position *pos){
             || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
         );
         // Check if the pawn is doubled
-        if (doubled && isolated && pawnOpposed){
-            mgScore += DOUBLEISOLATEDPENMG;
-            egScore += DOUBLEISOLATEDPENEG;
-        }
-        else if (isolated){
-            mgScore += ISOLATEDPENMG;
-            egScore += ISOLATEDPENEG;
+        if (isolated){
+            if (doubled && pawnOpposed){
+                mgScore += DOUBLEISOLATEDPENMG;
+                egScore += DOUBLEISOLATEDPENEG;
+            }
+            else{
+                mgScore += ISOLATEDPENMG;
+                egScore += ISOLATEDPENEG;
+            }
         }
         else if (backward){
             mgScore += BACKWARDPENMG;
@@ -645,15 +611,17 @@ Score pestoEval(Position *pos){
 
     // Get pawns
     innerShelters[WHITE] &= bb[P];
-    innerShelters[BLACK] &= bb[p];
     outerShelters[WHITE] &= bb[P];
+    innerShelters[BLACK] &= bb[p];
     outerShelters[BLACK] &= bb[p];
 
     // Add the shelter bonus
-    mgScore += INNERSHELTERMG * (popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]));
-    egScore += INNERSHELTEREG * (popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]));
-    mgScore += OUTERSHELTERMG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
-    egScore += OUTERSHELTEREG * (popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]));
+    const Score innerShelterDiff = popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]);
+    const Score outerShelterDiff = popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]);
+    mgScore += INNERSHELTERMG * innerShelterDiff;
+    egScore += INNERSHELTEREG * innerShelterDiff;
+    mgScore += OUTERSHELTERMG * outerShelterDiff;
+    egScore += OUTERSHELTEREG * outerShelterDiff;
 
     // Add bonus for bishop pairs
     mgScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIRMG;
@@ -733,8 +701,8 @@ Score pestoEval(Position *pos){
         innerAttacks[BLACK] + outerAttacks[BLACK]
     };
 
-    dangerIndex[WHITE] -= NOQUEENDANGER * (!bb[Q]);
-    dangerIndex[BLACK] -= NOQUEENDANGER * (!bb[q]);
+    dangerIndex[WHITE] += NOQUEENDANGER * (!bb[Q]);
+    dangerIndex[BLACK] += NOQUEENDANGER * (!bb[q]);
 
     dangerIndex[WHITE] += popcount(pinned[BLACK] & innerShelters[BLACK]) * PINNEDSHELTERDANGER;
     dangerIndex[BLACK] += popcount(pinned[WHITE] & innerShelters[WHITE]) * PINNEDSHELTERDANGER;
