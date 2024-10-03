@@ -55,48 +55,54 @@ constexpr Score DOUBLEDPENMG = 15;
 constexpr Score SUPPORTEDPHALANXMG = 1;
 constexpr Score ADVANCABLEPHALANXMG = 10;
 constexpr Score R_SUPPORTEDPHALANXMG = 4;
-constexpr Score R_ADVANCABLEPHALANXMG = 0;
-constexpr Score passedRankBonusMg [7] = {0, -7, -34, -27, 8, 13, 88, };
+constexpr Score R_ADVANCABLEPHALANXMG = 1;
+constexpr Score passedRankBonusMg [7] = {0, -8, -35, -28, 8, 13, 86, };
 constexpr Score PASSEDPATHBONUSMG = -1;
-constexpr Score SUPPORTEDPASSERMG = 31;
+constexpr Score SUPPORTEDPASSERMG = 32;
 constexpr Score INNERSHELTERMG = 30;
-constexpr Score OUTERSHELTERMG = 25;
+constexpr Score OUTERSHELTERMG = 26;
 constexpr Score BISHOPPAIRMG = 31;
-constexpr Score ROOKONOPENFILEMG = 25;
+constexpr Score ROOKONOPENFILEMG = 24;
 constexpr Score ROOKONSEMIOPENFILEMG = 17;
-constexpr Score KNIGHTONEXTOUTPOSTMG = 25;
-constexpr Score BISHOPONEXTOUTPOSTMG = 36;
-constexpr Score KNIGHTONINTOUTPOSTMG = 24;
-constexpr Score BISHOPONINTOUTPOSTMG = 47;
+constexpr Score KNIGHTONEXTOUTPOSTMG = 24;
+constexpr Score BISHOPONEXTOUTPOSTMG = 34;
+constexpr Score KNIGHTONINTOUTPOSTMG = 23;
+constexpr Score BISHOPONINTOUTPOSTMG = 45;
 constexpr Score BISHOPPAWNSMG = 1;
-constexpr Score THREATSAFEPAWNMG = 62;
-constexpr Score THREATPAWNPUSHMG = 22;
-constexpr Score TEMPOMG = 24;
+constexpr Score THREATSAFEPAWNMG = 61;
+constexpr Score THREATPAWNPUSHMG = 23;
+constexpr Score PAWNHANGINGMG = 4;
+constexpr Score NONPAWNHANGINGMG = -29;
+constexpr Score KINGTHREATMG = -2;
+constexpr Score TEMPOMG = 27;
 // (EG)
-constexpr Score DOUBLEISOLATEDPENEG = 51;
-constexpr Score ISOLATEDPENEG = 20;
+constexpr Score DOUBLEISOLATEDPENEG = 50;
+constexpr Score ISOLATEDPENEG = 19;
 constexpr Score BACKWARDPENEG = 17;
 constexpr Score DOUBLEDPENEG = 19;
 constexpr Score SUPPORTEDPHALANXEG = 6;
 constexpr Score ADVANCABLEPHALANXEG = 24;
-constexpr Score R_SUPPORTEDPHALANXEG = 8;
+constexpr Score R_SUPPORTEDPHALANXEG = 9;
 constexpr Score R_ADVANCABLEPHALANXEG = 17;
-constexpr Score passedRankBonusEg [7] = {0, -68, -46, -1, 39, 129, 188, };
-constexpr Score PASSEDPATHBONUSEG = 12;
-constexpr Score SUPPORTEDPASSEREG = 3;
-constexpr Score INNERSHELTEREG = -9;
-constexpr Score OUTERSHELTEREG = 0;
+constexpr Score passedRankBonusEg [7] = {0, -71, -48, -2, 38, 129, 192, };
+constexpr Score PASSEDPATHBONUSEG = 13;
+constexpr Score SUPPORTEDPASSEREG = 1;
+constexpr Score INNERSHELTEREG = -11;
+constexpr Score OUTERSHELTEREG = -1;
 constexpr Score BISHOPPAIREG = 103;
-constexpr Score ROOKONOPENFILEEG = -6;
+constexpr Score ROOKONOPENFILEEG = -2;
 constexpr Score ROOKONSEMIOPENFILEEG = 17;
-constexpr Score KNIGHTONEXTOUTPOSTEG = 30;
-constexpr Score BISHOPONEXTOUTPOSTEG = 1;
+constexpr Score KNIGHTONEXTOUTPOSTEG = 33;
+constexpr Score BISHOPONEXTOUTPOSTEG = 0;
 constexpr Score KNIGHTONINTOUTPOSTEG = 33;
-constexpr Score BISHOPONINTOUTPOSTEG = -5;
+constexpr Score BISHOPONINTOUTPOSTEG = -6;
 constexpr Score BISHOPPAWNSEG = -3;
-constexpr Score THREATSAFEPAWNEG = 53;
-constexpr Score THREATPAWNPUSHEG = 25;
-constexpr Score TEMPOEG = 19;
+constexpr Score THREATSAFEPAWNEG = 39;
+constexpr Score THREATPAWNPUSHEG = 26;
+constexpr Score PAWNHANGINGEG = -58;
+constexpr Score NONPAWNHANGINGEG = -27;
+constexpr Score KINGTHREATEG = 9;
+constexpr Score TEMPOEG = 27;
 
 
 constexpr Score KNIGHTATTACKOUTERRING = 9;
@@ -200,13 +206,10 @@ static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) |
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&occ)[3], const BitBoard (&pinned)[2], const BitBoard (&mobilityArea)[2], BitBoard (&attackedBy)[2], S8 *features, const BitBoard(&kingRing)[2], const BitBoard(&kingOuter)[2], S32 (&innerAttacks), S32 (&outerAttacks)) {
+static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, const BitBoard pinned, const BitBoard mob, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, S8 *features, const BitBoard kingRing, const BitBoard kingOuter, S32 &innerAttacks, S32 &outerAttacks) {
     constexpr Side us = pt < p ? WHITE : BLACK;
-    constexpr Side them = pt < p ? BLACK : WHITE;
     // constexpr Side them = us ? BLACK : WHITE;
-    BitBoard mob;
-    BitBoard pieces = bb[pt] & ~pinned[us];
-    BitBoard occCheck = occ[BOTH];
+    BitBoard pieces = bb[pt] & ~pinned;
 
     // Consider diagonal xrays through our queens
     if constexpr (pt == B || pt == Q)                   occCheck ^= bb[Q];
@@ -219,37 +222,43 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const BitBoard (&oc
     // Iterate over all pieces of the given type
     
     while (pieces) {
+        BitBoard moves;
+        BitBoard mobMoves;
         Square sq = popLsb(pieces);
-        mob = mobilityArea[us];
         if constexpr (pt == N || pt == n) {
-            mob &= knightAttacks[sq];
-            U8 moveCount = popcount(mob);
+            moves = knightAttacks[sq];
+            mobMoves = moves & mob;
+            U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
         }
-        else if constexpr (pt == B || pt == b) {
-            mob &= getBishopAttack(sq, occCheck); // X-ray through our queens
-            U8 moveCount = popcount(mob);
+        else if constexpr (pt == B || pt == b) { // X-ray through our queens
+            moves = getBishopAttack(sq, occCheck);
+            mobMoves = moves & mob;
+            U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
         }
-        else if constexpr (pt == R || pt == r) {
-            mob &= getRookAttack(sq, occCheck); // X-ray through our queens and rooks
-            U8 moveCount = popcount(mob);
+        else if constexpr (pt == R || pt == r) { // X-ray through our queens and rooks
+            moves = getRookAttack(sq, occCheck);
+            mobMoves = moves & mob;
+            U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
         }
-        else if constexpr (pt == Q || pt == q) {
-            mob &= getQueenAttack(sq, occCheck); // X-ray through our queens
-            U8 moveCount = popcount(mob);
+        else if constexpr (pt == Q || pt == q) { // X-ray through our queens
+            moves = getQueenAttack(sq, occCheck);
+            mobMoves = moves & mob;
+            U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
         }
-        innerAttacks += popcount(mob & kingRing[them]);
-        outerAttacks += popcount(mob & kingOuter[them]);
-        attackedBy[us] |= mob;
+        innerAttacks += popcount(mobMoves & kingRing);
+        outerAttacks += popcount(mobMoves & kingOuter);
+        ourMultiAttacks |= attackedByUs & moves;
+        attackedByUs |= moves;
     }
 } 
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoard &pinned, const BitBoard mobilityArea, Score (&mobilityScore)[2], BitBoard &attackedByUs, const BitBoard &kingRing, const BitBoard &kingOuter, S32 &innerAttacks, S32 &outerAttacks){
+static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoard pinned, const BitBoard mobilityArea, Score (&mobilityScore)[2], BitBoard &attackedByUs, BitBoard &ourMultiAttacks, const BitBoard kingRing, const BitBoard kingOuter, S32 &innerAttacks, S32 &outerAttacks){
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard pieces = bb[pt] & ~pinned; // TODO: try to exclude xray through pinned pieces
 
@@ -263,44 +272,50 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
     
     while (pieces) {
         BitBoard moves;
+        BitBoard mobMoves;
         Square sq = popLsb(pieces);
         if constexpr (pt == N) {
-            moves = mobilityArea & knightAttacks[sq];
-            U8 moveCount = popcount(moves);
+            moves = knightAttacks[sq];
+            mobMoves = moves & mobilityArea;
+            U8 moveCount = popcount(mobMoves);
             // Add the mobility score
             mobilityScore[0] += knightMobMg[moveCount];
             mobilityScore[1] += knightMobEg[moveCount];
-            innerAttacks += popcount(moves & kingRing) * KNIGHTATTACKINNERRING;
-            outerAttacks += popcount(moves & kingOuter) * KNIGHTATTACKOUTERRING;
+            innerAttacks += popcount(mobMoves & kingRing) * KNIGHTATTACKINNERRING;
+            outerAttacks += popcount(mobMoves & kingOuter) * KNIGHTATTACKOUTERRING;
         }
         else if constexpr (pt == B) {
-            moves = mobilityArea & getBishopAttack(sq, occCheck);
-            U8 moveCount = popcount(moves); // X-ray through our queens
+            moves = getBishopAttack(sq, occCheck);
+            mobMoves = moves & mobilityArea;
+            U8 moveCount = popcount(mobMoves); // X-ray through our queens
             // Add the mobility score
             mobilityScore[0] += bishopMobMg[moveCount];
             mobilityScore[1] += bishopMobEg[moveCount];
-            innerAttacks += popcount(moves & kingRing) * BISHOPATTACKINNERRING;
-            outerAttacks += popcount(moves & kingOuter) * BISHOPATTACKOUTERRING;
+            innerAttacks += popcount(mobMoves & kingRing) * BISHOPATTACKINNERRING;
+            outerAttacks += popcount(mobMoves & kingOuter) * BISHOPATTACKOUTERRING;
         }
         else if constexpr (pt == R) {
-            moves = mobilityArea & getRookAttack(sq, occCheck);
-            U8 moveCount = popcount(moves); // X-ray through our queens and rooks
+            moves = getRookAttack(sq, occCheck);
+            mobMoves = moves & mobilityArea;
+            U8 moveCount = popcount(mobMoves); // X-ray through our queens and rooks
             // Add the mobility score
             mobilityScore[0] += rookMobMg[moveCount];
             mobilityScore[1] += rookMobEg[moveCount];
-            innerAttacks += popcount(moves & kingRing) * ROOKATTACKINNERRING;
-            outerAttacks += popcount(moves & kingOuter) * ROOKATTACKOUTERRING;
+            innerAttacks += popcount(mobMoves & kingRing) * ROOKATTACKINNERRING;
+            outerAttacks += popcount(mobMoves & kingOuter) * ROOKATTACKOUTERRING;
         }
         else if constexpr (pt == Q) {
-            moves = mobilityArea & getQueenAttack(sq, occCheck);
-            U8 moveCount = popcount(moves); // X-ray through our queens
+            moves = getQueenAttack(sq, occCheck);
+            mobMoves = moves & mobilityArea;
+            U8 moveCount = popcount(mobMoves); // X-ray through our queens
             // Add the mobility score
             mobilityScore[0] += queenMobMg[moveCount];
             mobilityScore[1] += queenMobEg[moveCount];
-            innerAttacks += popcount(moves & kingRing) * QUEENATTACKINNERRING;
-            outerAttacks += popcount(moves & kingOuter) * QUEENATTACKOUTERRING;   
+            innerAttacks += popcount(mobMoves & kingRing) * QUEENATTACKINNERRING;
+            outerAttacks += popcount(mobMoves & kingOuter) * QUEENATTACKOUTERRING;   
         }
-        attackedByUs |= moves;
+        ourMultiAttacks |= attackedByUs & mobMoves;
+        attackedByUs |= mobMoves;
     }
 } 
 
@@ -359,36 +374,76 @@ Score pestoEval(Position *pos){
     const Square blackKing = lsb(bb[k]);
 
     // Mobility calculations
-    const BitBoard pawnAttackedSquares[2] = {
-        ((bb[P] & notFile(0)) >> 9) | ((bb[P] & notFile(7)) >> 7),
-        ((bb[p] & notFile(0)) << 7) | ((bb[p] & notFile(7)) << 9)
+
+    // Pin, mobility and threat calculations
+    BitBoard attackedBy[2] = {
+        kingAttacks[whiteKing],
+        kingAttacks[blackKing]
     };
 
+    BitBoard pawnAttackedSquares[2] = {
+        0,
+        0
+    };
+
+
+    BitBoard multiAttacks[2] = {
+        0ULL,
+        0ULL
+    };
+    
+    {
+        // Left Attacks
+        BitBoard sidePawnAttacks[2] = {
+            ((bb[P] & notFile(0)) >> 9),
+            ((bb[p] & notFile(0)) << 7)
+        }; 
+        // Update Multi attacks
+        multiAttacks[WHITE] |= attackedBy[WHITE] & sidePawnAttacks[WHITE];
+        multiAttacks[BLACK] |= attackedBy[BLACK] & sidePawnAttacks[BLACK];
+        // Update Normal attacks
+        attackedBy[WHITE] |= sidePawnAttacks[WHITE];
+        attackedBy[BLACK] |= sidePawnAttacks[BLACK];
+        // Update exclusive pawn attacks
+        pawnAttackedSquares[WHITE] |= sidePawnAttacks[WHITE];
+        pawnAttackedSquares[BLACK] |= sidePawnAttacks[BLACK];
+        // Right Attacks
+        sidePawnAttacks[WHITE] = ((bb[P] & notFile(7)) >> 7); 
+        sidePawnAttacks[BLACK] = ((bb[p] & notFile(7)) << 9);
+        // Update multi attacks
+        multiAttacks[WHITE] |= attackedBy[WHITE] & sidePawnAttacks[WHITE];
+        multiAttacks[BLACK] |= attackedBy[BLACK] & sidePawnAttacks[BLACK];
+        // Update Normal attacks
+        attackedBy[WHITE] |= sidePawnAttacks[WHITE];
+        attackedBy[BLACK] |= sidePawnAttacks[BLACK];
+        // Update exclusive pawn attacks
+        pawnAttackedSquares[WHITE] |= sidePawnAttacks[WHITE];
+        pawnAttackedSquares[BLACK] |= sidePawnAttacks[BLACK];
+    }
+
     // Pinned mask
-    const BitBoard RQmask[2] = {
+    BitBoard RQmask[2] = {
         bb[R] | bb[Q],
         bb[r] | bb[q]
     };
-    const BitBoard BQmask[2] = {
+    BitBoard BQmask[2] = {
         bb[B] | bb[Q],
         bb[b] | bb[q]
     };
-
-    const BitBoard pinned[2] = {
+    BitBoard pinned[2] = {
         getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
-        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE]) 
+        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
     };
 
     const BitBoard blockedPawns[2] = {
-        bb[P] & (occ[BOTH] << 8),
-        bb[p] & (occ[BOTH] >> 8)
+        bb[P] & (occ[BOTH] >> 8),
+        bb[p] & (occ[BOTH] << 8)
     };
 
-    const BitBoard underDevelopedPawns[2] = {
+    BitBoard underDevelopedPawns[2] = {
         bb[P] & (ranks(6) | ranks(5)),
         bb[p] & (ranks(1) | ranks(2))
     };
-
 
     const BitBoard mobilityArea[2] = {
         // Mobility area.
@@ -413,11 +468,6 @@ Score pestoEval(Position *pos){
         (ranks(5) | ranks(4) | ranks(3)) & pawnAttackedSquares[BLACK] & ~(makePawnAttacks<WHITE>(pawnSpan[WHITE]) | bb[P]) & notFile(0) & notFile(7)
     };
 
-    BitBoard attackedBy[2] = {
-        pawnAttackedSquares[WHITE] | kingAttacks[whiteKing],
-        pawnAttackedSquares[BLACK] | kingAttacks[blackKing]
-    };
-
     const BitBoard nonPawns[2] = {
         bb[N] | bb[B] | RQmask[WHITE],
         bb[n] | bb[b] | RQmask[BLACK],
@@ -437,20 +487,38 @@ Score pestoEval(Position *pos){
     S32 outerAttacks[2] = {0,0};
 
     // Black mobility
-    mobility<N>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<B>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<R>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<Q>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<N>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<B>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<R>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<Q>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
 
     // Flip
     mobilityScore[0] *= -1;
     mobilityScore[1] *= -1;
 
     // White mobility
-    mobility<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+
+    // Weak pieces
+    BitBoard weakPieces[2] = {
+        occ[WHITE] & ~pawnAttackedSquares[WHITE] & ((attackedBy[BLACK] & ~attackedBy[WHITE]) | (multiAttacks[BLACK] & ~multiAttacks[WHITE])),
+        occ[BLACK] & ~pawnAttackedSquares[BLACK] & ((attackedBy[WHITE] & ~attackedBy[BLACK]) | (multiAttacks[WHITE] & ~multiAttacks[BLACK]))
+    };
+
+    // Hanging enemies
+    BitBoard hanging[2] = {
+        weakPieces[WHITE] & (~attackedBy[WHITE] | (nonPawns[WHITE] & multiAttacks[BLACK])),
+        weakPieces[BLACK] & (~attackedBy[BLACK] | (nonPawns[BLACK] & multiAttacks[WHITE]))
+    };
+
+    // King Threats (eg op-ness hopefully) (also, cap to 1)
+    BitBoard kingThreats[2] = {
+        weakPieces[BLACK] & kingAttacks[WHITE],
+        weakPieces[WHITE] & kingAttacks[BLACK]
+    };
 
     // Malus for directly doubled, undefended pawns
     const BitBoard protectedPawns[2] = {
@@ -690,6 +758,17 @@ Score pestoEval(Position *pos){
     mgScore += THREATPAWNPUSHMG * pawnPushThreatDiff;
     egScore += THREATPAWNPUSHMG * pawnPushThreatDiff;
 
+    const Score pawnHangingDiff = popcount(hanging[WHITE] & bb[P]) - popcount(hanging[BLACK] & bb[p]);
+    const Score nonPawnHangingDiff = popcount(hanging[WHITE] & nonPawns[WHITE]) - popcount(hanging[BLACK] & nonPawns[BLACK]);
+    mgScore += PAWNHANGINGMG * pawnHangingDiff;
+    egScore += PAWNHANGINGEG * pawnHangingDiff;
+    mgScore += NONPAWNHANGINGMG * nonPawnHangingDiff;
+    egScore += NONPAWNHANGINGEG * nonPawnHangingDiff;
+
+    const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
+    mgScore += KINGTHREATMG * kingThreatsDiff;
+    egScore += KINGTHREATEG * kingThreatsDiff;
+
     // Calculate the total score
     mgScore += mobilityScore[0];
     egScore += mobilityScore[1];
@@ -790,6 +869,9 @@ std::vector<Score> getCurrentEvalWeights(){
     // Now, threats
     weights.push_back(THREATSAFEPAWNMG);
     weights.push_back(THREATPAWNPUSHMG);
+    weights.push_back(PAWNHANGINGMG);
+    weights.push_back(NONPAWNHANGINGMG);
+    weights.push_back(KINGTHREATMG);
 
     // Add the tempo bonus
     weights.push_back(TEMPOMG);
@@ -857,6 +939,9 @@ std::vector<Score> getCurrentEvalWeights(){
     // Now, threats
     weights.push_back(THREATSAFEPAWNEG);
     weights.push_back(THREATPAWNPUSHEG);
+    weights.push_back(PAWNHANGINGEG);
+    weights.push_back(NONPAWNHANGINGEG);
+    weights.push_back(KINGTHREATEG);
 
     // Add the tempo bonus
     weights.push_back(TEMPOEG);
@@ -903,33 +988,77 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         tensor[64 * (piece % 6) + sq] += piece < p ? 1 : -1;
     }
     tensor += 64 * 6;
+    
+    // Pin, mobility and threat calculations
+    BitBoard attackedBy[2] = {
+        kingAttacks[whiteKing],
+        kingAttacks[blackKing]
+    };
 
-
-
-    // Add the mobility weights
-
-    // Mobility calculations
     BitBoard pawnAttackedSquares[2] = {
-        ((bb[P] & notFile(0)) >> 9) | ((bb[P] & notFile(7)) >> 7),
-        ((bb[p] & notFile(0)) << 7) | ((bb[p] & notFile(7)) << 9)};
+        0,
+        0
+    };
+
+
+    BitBoard multiAttacks[2] = {
+        0ULL,
+        0ULL
+    };
+    
+    {
+        // Left Attacks
+        BitBoard sidePawnAttacks[2] = {
+            ((bb[P] & notFile(0)) >> 9),
+            ((bb[p] & notFile(0)) << 7)
+        }; 
+        // Update Multi attacks
+        multiAttacks[WHITE] |= attackedBy[WHITE] & sidePawnAttacks[WHITE];
+        multiAttacks[BLACK] |= attackedBy[BLACK] & sidePawnAttacks[BLACK];
+        // Update Normal attacks
+        attackedBy[WHITE] |= sidePawnAttacks[WHITE];
+        attackedBy[BLACK] |= sidePawnAttacks[BLACK];
+        // Update exclusive pawn attacks
+        pawnAttackedSquares[WHITE] |= sidePawnAttacks[WHITE];
+        pawnAttackedSquares[BLACK] |= sidePawnAttacks[BLACK];
+        // Right Attacks
+        sidePawnAttacks[WHITE] = ((bb[P] & notFile(7)) >> 7); 
+        sidePawnAttacks[BLACK] = ((bb[p] & notFile(7)) << 9);
+        // Update multi attacks
+        multiAttacks[WHITE] |= attackedBy[WHITE] & sidePawnAttacks[WHITE];
+        multiAttacks[BLACK] |= attackedBy[BLACK] & sidePawnAttacks[BLACK];
+        // Update Normal attacks
+        attackedBy[WHITE] |= sidePawnAttacks[WHITE];
+        attackedBy[BLACK] |= sidePawnAttacks[BLACK];
+        // Update exclusive pawn attacks
+        pawnAttackedSquares[WHITE] |= sidePawnAttacks[WHITE];
+        pawnAttackedSquares[BLACK] |= sidePawnAttacks[BLACK];
+    }
 
     // Pinned mask
     BitBoard RQmask[2] = {
         bb[R] | bb[Q],
-        bb[r] | bb[q]};
+        bb[r] | bb[q]
+    };
     BitBoard BQmask[2] = {
         bb[B] | bb[Q],
-        bb[b] | bb[q]};
+        bb[b] | bb[q]
+    };
     BitBoard pinned[2] = {
         getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
-        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])};
+        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
+    };
+
     BitBoard blockedPawns[2] = {
         bb[P] & (occ[BOTH] >> 8),
         bb[p] & (occ[BOTH] << 8)
     };
+
     BitBoard underDevelopedPawns[2] = {
         bb[P] & (ranks(6) | ranks(5)),
-        bb[p] & (ranks(1) | ranks(2))};
+        bb[p] & (ranks(1) | ranks(2))
+    };
+
     BitBoard mobilityArea[2] = {
         // Mobility area.
         // Squares in the mobility area are:
@@ -940,13 +1069,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         (blockedPawns[WHITE] | underDevelopedPawns[WHITE] | pawnAttackedSquares[BLACK] | pinned[WHITE] | bb[K] | bb[Q]) ^ 0xFFFFFFFFFFFFFFFF,
         (blockedPawns[BLACK] | underDevelopedPawns[BLACK] | pawnAttackedSquares[WHITE] | pinned[BLACK] | bb[k] | bb[q]) ^ 0xFFFFFFFFFFFFFFFF
     };
-
-
-    BitBoard attackedBy[2] = {
-        pawnAttackedSquares[WHITE] | kingAttacks[whiteKing],
-        pawnAttackedSquares[BLACK] | kingAttacks[blackKing]
-    };
-
+    
     BitBoard nonPawns[2] = {
         bb[N] | bb[B] | bb[R] | bb[Q],
         bb[n] | bb[b] | bb[r] | bb[q],
@@ -971,20 +1094,36 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     outerAttacks[BLACK][P] = popcount(pawnAttackedSquares[BLACK] & kingOuter[WHITE]);
 
     // Calculate the mobility scores (index by phase and color)
-    getMobilityFeat<N>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][N], outerAttacks[WHITE][N]);
-    getMobilityFeat<n>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][N], outerAttacks[BLACK][N]);
+    getMobilityFeat<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], tensor, kingRing[WHITE], kingOuter[WHITE], innerAttacks[WHITE][N], outerAttacks[WHITE][N]);
+    getMobilityFeat<n>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], tensor, kingRing[BLACK], kingOuter[BLACK], innerAttacks[BLACK][N], outerAttacks[BLACK][N]);
     tensor += 9;
-    getMobilityFeat<B>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][B], outerAttacks[WHITE][B]);
-    getMobilityFeat<b>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][B], outerAttacks[BLACK][B]);
+    getMobilityFeat<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], tensor, kingRing[WHITE], kingOuter[WHITE], innerAttacks[WHITE][B], outerAttacks[WHITE][B]);
+    getMobilityFeat<b>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], tensor, kingRing[BLACK], kingOuter[BLACK], innerAttacks[BLACK][B], outerAttacks[BLACK][B]);
     tensor += 14;
-    getMobilityFeat<R>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][R], outerAttacks[WHITE][R]);
-    getMobilityFeat<r>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][R], outerAttacks[BLACK][R]);
+    getMobilityFeat<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], tensor, kingRing[WHITE], kingOuter[WHITE], innerAttacks[WHITE][R], outerAttacks[WHITE][R]);
+    getMobilityFeat<r>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], tensor, kingRing[BLACK], kingOuter[BLACK], innerAttacks[BLACK][R], outerAttacks[BLACK][R]);
     tensor += 15;
-    getMobilityFeat<Q>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[WHITE][Q], outerAttacks[WHITE][Q]);
-    getMobilityFeat<q>(bb, occ, pinned, mobilityArea, attackedBy, tensor, kingRing, kingOuter, innerAttacks[BLACK][Q], outerAttacks[BLACK][Q]);
+    getMobilityFeat<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], tensor, kingRing[WHITE], kingOuter[WHITE], innerAttacks[WHITE][Q], outerAttacks[WHITE][Q]);
+    getMobilityFeat<q>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], tensor, kingRing[BLACK], kingOuter[BLACK], innerAttacks[BLACK][Q], outerAttacks[BLACK][Q]);
     tensor += 28;
 
+    // Weak pieces
+    BitBoard weakPieces[2] = {
+        occ[WHITE] & ~pawnAttackedSquares[WHITE] & ((attackedBy[BLACK] & ~attackedBy[WHITE]) | (multiAttacks[BLACK] & ~multiAttacks[WHITE])),
+        occ[BLACK] & ~pawnAttackedSquares[BLACK] & ((attackedBy[WHITE] & ~attackedBy[BLACK]) | (multiAttacks[WHITE] & ~multiAttacks[BLACK]))
+    };
 
+    // Hanging enemies
+    BitBoard hanging[2] = {
+        weakPieces[WHITE] & (~attackedBy[WHITE] | (nonPawns[WHITE] & multiAttacks[BLACK])),
+        weakPieces[BLACK] & (~attackedBy[BLACK] | (nonPawns[BLACK] & multiAttacks[WHITE]))
+    };
+
+    // King Threats (eg op-ness hopefully) (also, cap to 1)
+    BitBoard kingThreats[2] = {
+        weakPieces[BLACK] & kingAttacks[WHITE],
+        weakPieces[WHITE] & kingAttacks[BLACK]
+    };
 
     // Add the pawn evaluation weights
     // Malus for directly doubled, undefended pawns
@@ -1181,13 +1320,23 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[1] = pawnPushThreatDiff;
     tensor += 2;
 
+    const Score pawnHangingDiff = popcount(hanging[WHITE] & bb[P]) - popcount(hanging[BLACK] & bb[p]);
+    const Score nonPawnHangingDiff = popcount(hanging[WHITE] & nonPawns[WHITE]) - popcount(hanging[BLACK] & nonPawns[BLACK]);
+    tensor[0] = pawnHangingDiff;
+    tensor[1] = nonPawnHangingDiff;
+    tensor += 2;
+
+    const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
+    tensor[0] = kingThreatsDiff;
+    ++tensor;
+
     // Add the tempo bonus
     tensor[0] += us == WHITE ? 1 : -1;
     tensor++;
 
     // Now, king index eval.
     Score noQueenDanger[2] = {!bb[Q], !bb[q]};
-    Score pinnedShelter[2] = {popcount(pinned[BLACK] & innerShelters[BLACK]), popcount(pinned[WHITE] & innerShelters[WHITE])};
+    S32 pinnedShelter[2] = {popcount(pinned[BLACK] & innerShelters[BLACK]), popcount(pinned[WHITE] & innerShelters[WHITE])};
 
 #define KINGSAFETYCOLOREDPARAMS 24
     tensor[P] = innerAttacks[WHITE][P];
