@@ -48,55 +48,55 @@ constexpr Score DOUBLEDEARLYMG = 11;
 constexpr Score DOUBLEDEARLYEG = 4;
 
 // (MG)
-constexpr Score DOUBLEISOLATEDPENMG = 11;
-constexpr Score ISOLATEDPENMG = 15;
-constexpr Score BACKWARDPENMG = 1;
+constexpr Score DOUBLEISOLATEDPENMG = 10;
+constexpr Score ISOLATEDPENMG = 17;
+constexpr Score BACKWARDPENMG = 2;
 constexpr Score DOUBLEDPENMG = 15;
 constexpr Score SUPPORTEDPHALANXMG = 1;
-constexpr Score ADVANCABLEPHALANXMG = 7;
-constexpr Score R_SUPPORTEDPHALANXMG = 0;
+constexpr Score ADVANCABLEPHALANXMG = 10;
+constexpr Score R_SUPPORTEDPHALANXMG = 4;
 constexpr Score R_ADVANCABLEPHALANXMG = 0;
-constexpr Score passedRankBonusMg [7] = {0, -10, -31, -28, 17, 55, 99, };
-constexpr Score PASSEDPATHBONUSMG = -2;
-constexpr Score SUPPORTEDPASSERMG = 32;
+constexpr Score passedRankBonusMg [7] = {0, -7, -34, -27, 8, 13, 88, };
+constexpr Score PASSEDPATHBONUSMG = -1;
+constexpr Score SUPPORTEDPASSERMG = 31;
 constexpr Score INNERSHELTERMG = 30;
-constexpr Score OUTERSHELTERMG = 22;
-constexpr Score BISHOPPAIRMG = 33;
-constexpr Score ROOKONOPENFILEMG = 24;
-constexpr Score ROOKONSEMIOPENFILEMG = 15;
-constexpr Score KNIGHTONEXTOUTPOSTMG = 24;
-constexpr Score BISHOPONEXTOUTPOSTMG = 32;
+constexpr Score OUTERSHELTERMG = 25;
+constexpr Score BISHOPPAIRMG = 31;
+constexpr Score ROOKONOPENFILEMG = 25;
+constexpr Score ROOKONSEMIOPENFILEMG = 17;
+constexpr Score KNIGHTONEXTOUTPOSTMG = 25;
+constexpr Score BISHOPONEXTOUTPOSTMG = 36;
 constexpr Score KNIGHTONINTOUTPOSTMG = 24;
-constexpr Score BISHOPONINTOUTPOSTMG = 45;
-constexpr Score BISHOPPAWNSMG = -1;
-constexpr Score THREATSAFEPAWNMG = 65;
+constexpr Score BISHOPONINTOUTPOSTMG = 47;
+constexpr Score BISHOPPAWNSMG = 1;
+constexpr Score THREATSAFEPAWNMG = 62;
 constexpr Score THREATPAWNPUSHMG = 22;
 constexpr Score TEMPOMG = 24;
 // (EG)
-constexpr Score DOUBLEISOLATEDPENEG = 46;
-constexpr Score ISOLATEDPENEG = 17;
-constexpr Score BACKWARDPENEG = 4;
-constexpr Score DOUBLEDPENEG = 21;
-constexpr Score SUPPORTEDPHALANXEG = 10;
-constexpr Score ADVANCABLEPHALANXEG = 18;
-constexpr Score R_SUPPORTEDPHALANXEG = 0;
-constexpr Score R_ADVANCABLEPHALANXEG = 0;
-constexpr Score passedRankBonusEg [7] = {0, -66, -51, -9, 38, 141, 218, };
-constexpr Score PASSEDPATHBONUSEG = 13;
-constexpr Score SUPPORTEDPASSEREG = -8;
-constexpr Score INNERSHELTEREG = -8;
-constexpr Score OUTERSHELTEREG = -4;
-constexpr Score BISHOPPAIREG = 97;
-constexpr Score ROOKONOPENFILEEG = -5;
+constexpr Score DOUBLEISOLATEDPENEG = 51;
+constexpr Score ISOLATEDPENEG = 20;
+constexpr Score BACKWARDPENEG = 17;
+constexpr Score DOUBLEDPENEG = 19;
+constexpr Score SUPPORTEDPHALANXEG = 6;
+constexpr Score ADVANCABLEPHALANXEG = 24;
+constexpr Score R_SUPPORTEDPHALANXEG = 8;
+constexpr Score R_ADVANCABLEPHALANXEG = 17;
+constexpr Score passedRankBonusEg [7] = {0, -68, -46, -1, 39, 129, 188, };
+constexpr Score PASSEDPATHBONUSEG = 12;
+constexpr Score SUPPORTEDPASSEREG = 3;
+constexpr Score INNERSHELTEREG = -9;
+constexpr Score OUTERSHELTEREG = 0;
+constexpr Score BISHOPPAIREG = 103;
+constexpr Score ROOKONOPENFILEEG = -6;
 constexpr Score ROOKONSEMIOPENFILEEG = 17;
-constexpr Score KNIGHTONEXTOUTPOSTEG = 31;
-constexpr Score BISHOPONEXTOUTPOSTEG = 7;
+constexpr Score KNIGHTONEXTOUTPOSTEG = 30;
+constexpr Score BISHOPONEXTOUTPOSTEG = 1;
 constexpr Score KNIGHTONINTOUTPOSTEG = 33;
-constexpr Score BISHOPONINTOUTPOSTEG = 3;
+constexpr Score BISHOPONINTOUTPOSTEG = -5;
 constexpr Score BISHOPPAWNSEG = -3;
-constexpr Score THREATSAFEPAWNEG = 46;
+constexpr Score THREATSAFEPAWNEG = 53;
 constexpr Score THREATPAWNPUSHEG = 25;
-constexpr Score TEMPOEG = 17;
+constexpr Score TEMPOEG = 19;
 
 
 constexpr Score KNIGHTATTACKOUTERRING = 9;
@@ -459,8 +459,8 @@ Score pestoEval(Position *pos){
     };
 
     const BitBoard pawnBlockage[2] = {
-        bb[P] | pawnAttackedSquares[WHITE],
-        bb[p] | pawnAttackedSquares[BLACK]
+        bb[p] | bb[P] | pawnAttackedSquares[BLACK],
+        bb[P] | bb[p] | pawnAttackedSquares[WHITE]
     };
 
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
@@ -994,8 +994,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     };
 
     BitBoard pawnBlockage[2] = {
-        bb[P] | pawnAttackedSquares[WHITE],
-        bb[p] | pawnAttackedSquares[BLACK]
+        bb[p] | bb[P] | pawnAttackedSquares[BLACK],
+        bb[P] | bb[p] | pawnAttackedSquares[WHITE]
     };
 
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
