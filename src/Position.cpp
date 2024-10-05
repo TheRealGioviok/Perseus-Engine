@@ -103,8 +103,7 @@ void Position::wipe(){
     plyFromNull = 0;
     castle = 0;
     hashKey = 0;
-    psqtScore[0] = 0;
-    psqtScore[1] = 0;
+    psqtScore = SCORE_ZERO;
 }
 
 /**
@@ -115,7 +114,7 @@ void Position::wipe(){
  * @param hashKey The hash key of the position, to update.
  * @param psqt The psqt score of the position, to update.
  */
-static inline void removePiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, U64& hashKey, Score (&psqt)[2]){
+static inline void removePiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, U64& hashKey, PScore &psqt){
     // Remove the piece from the bitboard
     clearBit(bbs[piece], square);
     // Remove it also from the side and both bitboard
@@ -123,10 +122,8 @@ static inline void removePiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square
     clearBit(occ[BOTH], square);
     // Update the hash key
     hashKey ^= pieceKeys[piece][square];
-    Score sign = (piece < 6) ? 1 : -1;
     // Update the psqt score
-    psqt[0] -= sign * mgTables[piece][square];
-    psqt[1] -= sign * egTables[piece][square];
+    psqt -= PSQTs[piece][square];
 }
 
 /**l
@@ -137,7 +134,7 @@ static inline void removePiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square
  * @param hashKey The hash key of the position, to update.
  * @param psqt The psqt score of the position, to update.
  */
-static inline void addPiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, U64& hashKey, Score (&psqt)[2]){
+static inline void addPiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, U64& hashKey, PScore &psqt){
     // Add the piece to the bitboard
     setBit(bbs[piece], square);
     // Add it also to the side and both bitboard
@@ -145,10 +142,10 @@ static inline void addPiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square sq
     setBit(occ[BOTH], square);
     // Update the hash key
     hashKey ^= pieceKeys[piece][square];
-    Score sign = (piece < 6) ? 1 : -1;
+    assert(psqt.mg() + PSQTs[piece][square].mg() < 0xFFFF);
+    // std::cout << "Previous psqt score was " << psqt << " and we are adding " << PSQTs[piece][square] << "\n";
     // Update the psqt score
-    psqt[0] += sign * mgTables[piece][square];
-    psqt[1] += sign * egTables[piece][square];
+    psqt += PSQTs[piece][square];
 }
 
 
@@ -193,6 +190,7 @@ bool Position::parseFEN(char *fen) {
                 return false;
             }
             addPiece(bitboards, occupancies, piece, square, hashKey, psqtScore);
+            // std::cout << "After addition of piece " << getPieceChar(piece) << " on square " << coords[square] << " the psqt score is now: " << psqtScore.mg() << "\t" << psqtScore.eg() << std::endl;
             fen++;
             square++;
             pieceCount++;
@@ -671,6 +669,8 @@ bool Position::SEE(const Move move, const Score threshold) {
 
 
 void Position::reflect() {
+    // reflect psqt
+    psqtScore = -psqtScore;
     // First, swap white with black
     for (int i = P; i <= K; i++) {
 
@@ -682,6 +682,9 @@ void Position::reflect() {
 	for (int i = 0; i < 12; i++) {
 		bitboards[i] = reflectBitBoard(bitboards[i]);
 	}
+    occupancies[WHITE] = bitboards[P] | bitboards[N] | bitboards[B] | bitboards[R] | bitboards[Q] | bitboards[K];
+    occupancies[BLACK] = bitboards[p] | bitboards[n] | bitboards[b] | bitboards[r] | bitboards[q] | bitboards[k];
+    occupancies[BOTH]  = occupancies[WHITE] | occupancies[BLACK];
 	// Then reflect ep square
     enPassant = enPassant == noSquare ? noSquare : flipSquare(enPassant);
 	// Then reflect the castling rights
@@ -1552,8 +1555,7 @@ UndoInfo::UndoInfo(Position& position){
     totalPly = position.totalPly;
     plyFromNull = position.plyFromNull;
     side = position.side;
-    psqtScore[0] = position.psqtScore[0];
-    psqtScore[1] = position.psqtScore[1];
+    psqtScore = position.psqtScore;
     checkers = position.checkers;
     memcpy(bitboards, position.bitboards, sizeof(BitBoard) * 12);
     memcpy(occupancies, position.occupancies, sizeof(BitBoard) * 3);
@@ -1566,8 +1568,7 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.fiftyMove = fiftyMove;
     position.totalPly = totalPly;
     position.plyFromNull = plyFromNull;
-    position.psqtScore[0] = psqtScore[0];
-    position.psqtScore[1] = psqtScore[1];
+    position.psqtScore = psqtScore;
     position.side = side;
     
     Piece piece = movePiece(move);
@@ -1594,8 +1595,7 @@ void UndoInfo::undoNullMove(Position& position){
     position.fiftyMove = fiftyMove;
     position.totalPly = totalPly;
     position.plyFromNull = plyFromNull;
-    position.psqtScore[0] = psqtScore[0];
-    position.psqtScore[1] = psqtScore[1];
+    position.psqtScore = psqtScore;
     position.side = side;
     position.checkers = checkers;
 }
