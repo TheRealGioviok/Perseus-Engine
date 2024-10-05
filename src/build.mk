@@ -5,7 +5,7 @@ CPP_FILES := $(wildcard *.cpp)
 OBJ_FILES = $(addprefix $(OBJ_DIR)/, $(CPP_FILES:.cpp=.o))
 
 CXX ?= g++
-CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++17 -Wno-implicit-fallthrough
+CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough
 NATIVE := -march=native -mpopcnt
 EXE ?= Perseus
 

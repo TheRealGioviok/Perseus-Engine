@@ -1,4 +1,3 @@
-
 #include "evaluation.h"
 #include "tables.h"
 #include "tt.h"
@@ -9,101 +8,64 @@
 #include <cstring>
 #include <fstream>
 
-Score mgTables[12][64] = { {0} };
-Score egTables[12][64] = { {0} };
+PScore PSQTs[12][64];
 
-Score* mgPestoTables[6] = {
-    (Score*)mgPawnTable,
-    (Score*)mgKnightTable,
-    (Score*)mgBishopTable,
-    (Score*)mgRookTable,
-    (Score*)mgQueenTable,
-    (Score*)mgKingTable };
+const PScore* pestoTables[6] = {
+    pawnTable,
+    knightTable,
+    bishopTable,
+    rookTable,
+    queenTable,
+    kingTable 
+};
 
-Score* egPestoTables[6] = {
-    (Score*)egPawnTable,
-    (Score*)mgKnightTable,
-    (Score*)mgBishopTable,
-    (Score*)mgRookTable,
-    (Score*)mgQueenTable,
-    (Score*)egKingTable };
 
 void initTables() {
-
-    for (Piece piece = P; piece <= K; piece++) {
-        for(Square square = a8; square < noSquare; square++) {
-            // White
-            mgTables[piece][square] = mgPestoTables[piece][square] + mgValues[piece];
-            egTables[piece][square] = egPestoTables[piece][square] + egValues[piece];
-            // Black
-            mgTables[piece + 6][square] = mgPestoTables[piece][flipSquare(square)] + mgValues[piece];
-            egTables[piece + 6][square] = egPestoTables[piece][flipSquare(square)] + egValues[piece];
-        }
+    for(Square square = a8; square < noSquare; square++) {
+        // White
+        PSQTs[P][square] = pawnTable[square] + materialValues[P];
+        PSQTs[N][square] = knightTable[square] + materialValues[N];
+        PSQTs[B][square] = bishopTable[square] + materialValues[B];
+        PSQTs[R][square] = rookTable[square] + materialValues[R];
+        PSQTs[Q][square] = queenTable[square] + materialValues[Q];
+        PSQTs[K][square] = kingTable[square] + materialValues[K];
+        // Black
+        PSQTs[p][flipSquare(square)] = -PSQTs[P][square];
+        PSQTs[n][flipSquare(square)] = -PSQTs[N][square];
+        PSQTs[b][flipSquare(square)] = -PSQTs[B][square];
+        PSQTs[r][flipSquare(square)] = -PSQTs[R][square];
+        PSQTs[q][flipSquare(square)] = -PSQTs[Q][square];
+        PSQTs[k][flipSquare(square)] = -PSQTs[K][square];
     }
 }
 
-
-
-constexpr Score DOUBLEDEARLYMG = 11;
-constexpr Score DOUBLEDEARLYEG = 4;
-
-// (MG)
-constexpr Score DOUBLEISOLATEDPENMG = 10;
-constexpr Score ISOLATEDPENMG = 17;
-constexpr Score BACKWARDPENMG = 2;
-constexpr Score DOUBLEDPENMG = 15;
-constexpr Score SUPPORTEDPHALANXMG = 1;
-constexpr Score ADVANCABLEPHALANXMG = 10;
-constexpr Score R_SUPPORTEDPHALANXMG = 4;
-constexpr Score R_ADVANCABLEPHALANXMG = 1;
-constexpr Score passedRankBonusMg [7] = {0, -7, -34, -27, 8, 13, 86, };
-constexpr Score PASSEDPATHBONUSMG = -1;
-constexpr Score SUPPORTEDPASSERMG = 31;
-constexpr Score INNERSHELTERMG = 30;
-constexpr Score OUTERSHELTERMG = 26;
-constexpr Score BISHOPPAIRMG = 32;
-constexpr Score ROOKONOPENFILEMG = 24;
-constexpr Score ROOKONSEMIOPENFILEMG = 17;
-constexpr Score KNIGHTONEXTOUTPOSTMG = 24;
-constexpr Score BISHOPONEXTOUTPOSTMG = 35;
-constexpr Score KNIGHTONINTOUTPOSTMG = 23;
-constexpr Score BISHOPONINTOUTPOSTMG = 45;
-constexpr Score BISHOPPAWNSMG = 0;
-constexpr Score THREATSAFEPAWNMG = 60;
-constexpr Score THREATPAWNPUSHMG = 22;
-constexpr Score PAWNHANGINGMG = 5;
-constexpr Score NONPAWNHANGINGMG = -29;
-constexpr Score KINGTHREATMG = -2;
-constexpr Score TEMPOMG = 27;
-// (EG)
-constexpr Score DOUBLEISOLATEDPENEG = 49;
-constexpr Score ISOLATEDPENEG = 18;
-constexpr Score BACKWARDPENEG = 17;
-constexpr Score DOUBLEDPENEG = 19;
-constexpr Score SUPPORTEDPHALANXEG = 6;
-constexpr Score ADVANCABLEPHALANXEG = 23;
-constexpr Score R_SUPPORTEDPHALANXEG = 9;
-constexpr Score R_ADVANCABLEPHALANXEG = 17;
-constexpr Score passedRankBonusEg [7] = {0, -71, -48, -3, 38, 128, 192, };
-constexpr Score PASSEDPATHBONUSEG = 13;
-constexpr Score SUPPORTEDPASSEREG = 1;
-constexpr Score INNERSHELTEREG = -11;
-constexpr Score OUTERSHELTEREG = -1;
-constexpr Score BISHOPPAIREG = 103;
-constexpr Score ROOKONOPENFILEEG = -2;
-constexpr Score ROOKONSEMIOPENFILEEG = 18;
-constexpr Score KNIGHTONEXTOUTPOSTEG = 33;
-constexpr Score BISHOPONEXTOUTPOSTEG = 0;
-constexpr Score KNIGHTONINTOUTPOSTEG = 33;
-constexpr Score BISHOPONINTOUTPOSTEG = -6;
-constexpr Score BISHOPPAWNSEG = -3;
-constexpr Score THREATSAFEPAWNEG = 41;
-constexpr Score THREATPAWNPUSHEG = 26;
-constexpr Score PAWNHANGINGEG = -57;
-constexpr Score NONPAWNHANGINGEG = -27;
-constexpr Score KINGTHREATEG = 8;
-constexpr Score TEMPOEG = 27;
-
+constexpr PScore DOUBLEISOLATEDPEN = S(10, 49);
+constexpr PScore ISOLATEDPEN = S(17, 18);
+constexpr PScore BACKWARDPEN = S(2, 17);
+constexpr PScore DOUBLEDPEN = S(15, 19);
+constexpr PScore SUPPORTEDPHALANX = S(1, 6);
+constexpr PScore ADVANCABLEPHALANX = S(10, 23);
+constexpr PScore R_SUPPORTEDPHALANX = S(4, 9);
+constexpr PScore R_ADVANCABLEPHALANX = S(1, 17);
+constexpr PScore passedRankBonus[7] = { S(0,0), S(-7,-71), S(-34,-48), S(-27,-3), S(8,38), S(13,128), S(86,192) };
+constexpr PScore PASSEDPATHBONUS = S(-1, 13);
+constexpr PScore SUPPORTEDPASSER = S(31, 1);
+constexpr PScore INNERSHELTER = S(30, -11);
+constexpr PScore OUTERSHELTER = S(26, -1);
+constexpr PScore BISHOPPAIR = S(32, 103);
+constexpr PScore ROOKONOPENFILE = S(24, -2);
+constexpr PScore ROOKONSEMIOPENFILE = S(17, 18);
+constexpr PScore KNIGHTONEXTOUTPOST = S(24, 33);
+constexpr PScore BISHOPONEXTOUTPOST = S(35, 0);
+constexpr PScore KNIGHTONINTOUTPOST = S(23, 33);
+constexpr PScore BISHOPONINTOUTPOST = S(45, -6);
+constexpr PScore BISHOPPAWNS = S(0, -3);
+constexpr PScore THREATSAFEPAWN = S(60, 41);
+constexpr PScore THREATPAWNPUSH = S(22, 26);
+constexpr PScore PAWNHANGING = S(5, -57);
+constexpr PScore NONPAWNHANGING = S(-29, -27);
+constexpr PScore KINGTHREAT = S(-2, 8);
+constexpr PScore TEMPO = S(27, 27);
 
 constexpr Score KNIGHTATTACKOUTERRING = 9;
 constexpr Score KNIGHTATTACKINNERRING = 11;
@@ -116,91 +78,6 @@ constexpr Score QUEENATTACKINNERRING = 34;
 
 constexpr Score NOQUEENDANGER = -65;
 constexpr Score PINNEDSHELTERDANGER = 11;
-
-constexpr Score OWNPIECEBLOCKEDPAWNMG = 0;
-constexpr Score OWNPIECEBLOCKEDPAWNEG = 8;
-
-
-
-constexpr Score WEAKUNOPPOSEDMG = 9;
-constexpr Score WEAKUNOPPOSEDPENEG = 11;
-
-constexpr Score WEAKLEVEREG = 36;
-
-constexpr Score MG_PAWN_PASSER_BONUS = 3;
-constexpr Score EG_PAWN_PASSER_BONUS = 12;
-
-constexpr Score SUPPORTEDCONNECTEDMG = 21;
-
-constexpr Score ROOKONQUEENFILEMG = 4;
-constexpr Score ROOKONQUEENFILEEG = 8;
-
-constexpr Score MG_ROOKCLOSEDFILE = 6;
-constexpr Score EG_ROOKCLOSEDFILE = 3;
-constexpr Score MG_ROOKSEMIOPENFILE = 13;
-constexpr Score MG_ROOKOPENFILE = 20;
-constexpr Score MG_ROOKCLEARFILE = 1;
-constexpr Score EG_ROOKSEMIOPENFILE = 5;
-constexpr Score EG_ROOKOPENFILE = 15;
-constexpr Score EG_ROOKCLEARFILE = 1;
-constexpr Score MG_ROOKSEVENTH = 2;
-constexpr Score EG_ROOKSEVENTH = 1;
-constexpr Score TRAPPEDROOKMG = 35;
-constexpr Score TRAPPEDROOKEG = 8;
-
-constexpr Score MG_KINGINREARSPAN = 4;
-constexpr Score EG_KINGINREARSPAN = 1;
-
-constexpr Score MG_PAWNMINORSUPPORTED = 11;
-constexpr Score EG_PAWNMINORSUPPORTED = 2;
-constexpr Score MG_MINORBEHINDPAWN = 11;
-constexpr Score EG_MINORBEHINDPAWN = 2;
-
-constexpr Score MG_KNIGHTKINGPROTECTOR = 6;
-constexpr Score MG_BISHOPKINGPROTECTOR = 4;
-constexpr Score EG_KNIGHTKINGPROTECTOR = 6;
-constexpr Score EG_BISHOPKINGPROTECTOR = 6;
-
-constexpr Score PAWNTHREATMG = 99;
-constexpr Score PAWNTHREATEG = 50;
-
-constexpr Score PAWNSHELTERVALUE = 5;
-constexpr Score KNIGHTSHELTERVALUE = 2;
-constexpr Score BISHOPSHELTERVALUE = 1;
-
-constexpr Score OPENFILEONKINGMG = -18;
-constexpr Score OPENFILEONKINGEG = -12;
-
-constexpr Score PAWNSTORM = 1;
-
-#define MOBILITYEVAL true
-#define PAWNEVAL true
-
-Score noutpostEg[5] = { 2, 6, 12, 14, 18 };
-Score noutpostMg[5] = { 2, 4, 8, 9, 11 };
-Score boutpostEg[5] = { 2, 5, 10, 8, 3 };
-Score boutpostMg[5] = { 2, 3, 6, 4, 2 };
-
-// Sf formula, tuned parameters
-static inline constexpr Score connectedBonus(U8 rank, bool op, bool ph, bool su) {
-    return connectedSeed[rank] * (2 + ph - op) + SUPPORTEDCONNECTEDMG * su;
-}
-
-static inline constexpr Score knightOutpostMg(BitBoard pAttacks, U8 pSupport){
-    return pAttacks ? 0 : noutpostMg[pSupport];
-}
-
-static inline constexpr Score knightOutpostEg(BitBoard pAttacks, U8 pSupport) {
-    return pAttacks ? 0 : noutpostEg[pSupport];
-}
-
-static inline constexpr Score bishopOutpostMg(BitBoard pAttacks, U8 pSupport) {
-    return pAttacks ? 0 : boutpostMg[pSupport];
-}
-
-static inline constexpr Score bishopOutpostEg(BitBoard pAttacks, U8 pSupport) {
-    return pAttacks ? 0 : boutpostEg[pSupport];
-}
 
 static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) | files(5);
 
@@ -258,7 +135,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoard pinned, const BitBoard mobilityArea, Score (&mobilityScore)[2], BitBoard &attackedByUs, BitBoard &ourMultiAttacks, const BitBoard kingRing, const BitBoard kingOuter, S32 &innerAttacks, S32 &outerAttacks){
+static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoard pinned, const BitBoard mobilityArea, PScore &score, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, const BitBoard kingRing, const BitBoard kingOuter, S32 &innerAttacks, S32 &outerAttacks){
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard pieces = bb[pt] & ~pinned; // TODO: try to exclude xray through pinned pieces
 
@@ -279,8 +156,7 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves);
             // Add the mobility score
-            mobilityScore[0] += knightMobMg[moveCount];
-            mobilityScore[1] += knightMobEg[moveCount];
+            score += knightMob[moveCount];
             innerAttacks += popcount(mobMoves & kingRing) * KNIGHTATTACKINNERRING;
             outerAttacks += popcount(mobMoves & kingOuter) * KNIGHTATTACKOUTERRING;
         }
@@ -289,8 +165,7 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens
             // Add the mobility score
-            mobilityScore[0] += bishopMobMg[moveCount];
-            mobilityScore[1] += bishopMobEg[moveCount];
+            score += bishopMob[moveCount];
             innerAttacks += popcount(mobMoves & kingRing) * BISHOPATTACKINNERRING;
             outerAttacks += popcount(mobMoves & kingOuter) * BISHOPATTACKOUTERRING;
         }
@@ -299,8 +174,7 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens and rooks
             // Add the mobility score
-            mobilityScore[0] += rookMobMg[moveCount];
-            mobilityScore[1] += rookMobEg[moveCount];
+            score += rookMob[moveCount];
             innerAttacks += popcount(mobMoves & kingRing) * ROOKATTACKINNERRING;
             outerAttacks += popcount(mobMoves & kingOuter) * ROOKATTACKOUTERRING;
         }
@@ -309,8 +183,7 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens
             // Add the mobility score
-            mobilityScore[0] += queenMobMg[moveCount];
-            mobilityScore[1] += queenMobEg[moveCount];
+            score += queenMob[moveCount];
             innerAttacks += popcount(mobMoves & kingRing) * QUEENATTACKINNERRING;
             outerAttacks += popcount(mobMoves & kingOuter) * QUEENATTACKOUTERRING;   
         }
@@ -369,7 +242,6 @@ Score pestoEval(Position *pos){
                     gamephaseInc[K] * popcount(bb[K] | bb[k]);
     gamePhase = std::min(gamePhase, (S32)24); // If we have a lot of pieces, we don't want to go over 24
 
-    Score mgScore = 0, egScore = 0;
     const Square whiteKing = lsb(bb[K]);
     const Square blackKing = lsb(bb[k]);
 
@@ -385,7 +257,6 @@ Score pestoEval(Position *pos){
         0,
         0
     };
-
 
     BitBoard multiAttacks[2] = {
         0ULL,
@@ -457,7 +328,6 @@ Score pestoEval(Position *pos){
     };
 
     // Calculate the mobility scores (index by phase and color)
-    Score mobilityScore[2] = {0,0};
     const BitBoard pawnSpan[2] = {
         advancePathMasked<WHITE>(bb[P], ~(bb[p] | pawnAttackedSquares[BLACK])),
         advancePathMasked<BLACK>(bb[p], ~(bb[P] | pawnAttackedSquares[WHITE]))
@@ -486,21 +356,26 @@ Score pestoEval(Position *pos){
     S32 innerAttacks[2] = {0,0};
     S32 outerAttacks[2] = {0,0};
 
+    PScore score = -pos->psqtScore;
+
+    // std::cout << "PSQT scores are :\t"<<-score.mg()<<"\t"<<-score.eg()<<std::endl;
+    
     // Black mobility
-    mobility<N>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<B>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<R>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<Q>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], mobilityScore, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<N>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<B>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<R>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<Q>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
 
     // Flip
-    mobilityScore[0] *= -1;
-    mobilityScore[1] *= -1;
+    score = -score;
 
     // White mobility
-    mobility<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], mobilityScore, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    
+    // std::cout << "PSQT scores are :\t"<<score.mg()<<"\t"<<score.eg()<<std::endl;
 
     // Weak pieces
     BitBoard weakPieces[2] = {
@@ -554,47 +429,29 @@ Score pestoEval(Position *pos){
         );
         // Check if the pawn is doubled
         if (isolated){
-            if (doubled && pawnOpposed){
-                mgScore -= DOUBLEISOLATEDPENMG;
-                egScore -= DOUBLEISOLATEDPENEG;
-            }
-            else{
-                mgScore -= ISOLATEDPENMG;
-                egScore -= ISOLATEDPENEG;
-            }
+            if (doubled && pawnOpposed) score -= DOUBLEISOLATEDPEN;
+            else score -= ISOLATEDPEN;
         }
-        else if (backward){
-            mgScore -= BACKWARDPENMG;
-            egScore -= BACKWARDPENEG;
-        }
-        if (doubled && !supported){
-            mgScore -= DOUBLEDPENMG;
-            egScore -= DOUBLEDPENEG;
-        }
+        else if (backward) score -= BACKWARDPEN;
+
+        if (doubled && !supported) score -= DOUBLEDPEN;
         else if (supported && phal){
-            mgScore += SUPPORTEDPHALANXMG;
-            mgScore += R_SUPPORTEDPHALANXMG * (rank - 2);
-            egScore += SUPPORTEDPHALANXEG;
-            egScore += R_SUPPORTEDPHALANXEG * (rank - 2);
+            score += SUPPORTEDPHALANX;
+            score += R_SUPPORTEDPHALANX * (rank - 2);
         }
         else if (advancable && phal){
-            mgScore += ADVANCABLEPHALANXMG;
-            mgScore += R_ADVANCABLEPHALANXMG * (rank - 2);
-            egScore += ADVANCABLEPHALANXEG;
-            egScore += R_ADVANCABLEPHALANXEG * (rank - 2);
+            score += ADVANCABLEPHALANX;
+            score += R_ADVANCABLEPHALANX * (rank - 2);
         }
         if (candidatePassed){
             BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
             // Give bonus for how close the pawn is to the promotion square
-            mgScore += passedRankBonusMg[rank];
-            egScore += passedRankBonusEg[rank];
+            score += passedRankBonus[rank];
             // Give bonus for how many squares the pawn can advance
-            mgScore += popcount(passedPath) * PASSEDPATHBONUSMG;
-            egScore += popcount(passedPath) * PASSEDPATHBONUSEG;
+            score += PASSEDPATHBONUS * popcount(passedPath);
             // Bonus for connected or supported passed pawns
             if (supported){
-                mgScore += SUPPORTEDPASSERMG;
-                egScore += SUPPORTEDPASSEREG;
+                score += SUPPORTEDPASSER;
             }
         }
     }
@@ -620,48 +477,29 @@ Score pestoEval(Position *pos){
         );
         // Check if the pawn is doubled
         if (isolated){
-            if (doubled && pawnOpposed){
-                mgScore += DOUBLEISOLATEDPENMG;
-                egScore += DOUBLEISOLATEDPENEG;
-            }
-            else{
-                mgScore += ISOLATEDPENMG;
-                egScore += ISOLATEDPENEG;
-            }
+            if (doubled && pawnOpposed) score += DOUBLEISOLATEDPEN;
+            else score += ISOLATEDPEN;
         }
-        else if (backward){
-            mgScore += BACKWARDPENMG;
-            egScore += BACKWARDPENEG;
-        }
-        if (doubled && !supported){
-            mgScore += DOUBLEDPENMG;
-            egScore += DOUBLEDPENEG;
-        }
+        else if (backward) score += BACKWARDPEN;
+
+        if (doubled && !supported) score += DOUBLEDPEN;
         else if (supported && phal){
-            mgScore -= SUPPORTEDPHALANXMG;
-            mgScore -= R_SUPPORTEDPHALANXMG * (rank - 2);
-            egScore -= SUPPORTEDPHALANXEG;
-            egScore -= R_SUPPORTEDPHALANXEG * (rank - 2);
+            score -= SUPPORTEDPHALANX;
+            score -= R_SUPPORTEDPHALANX * (rank - 2);
         }
         else if (advancable && phal){
-            mgScore -= ADVANCABLEPHALANXMG;
-            mgScore -= R_ADVANCABLEPHALANXMG * (rank - 2);
-            egScore -= ADVANCABLEPHALANXEG;
-            egScore -= R_ADVANCABLEPHALANXEG * (rank - 2);
+            score -= ADVANCABLEPHALANX;
+            score -= R_ADVANCABLEPHALANX * (rank - 2);
         }
         if (candidatePassed){
             BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
             // Give bonus for how close the pawn is to the promotion square
-            mgScore -= passedRankBonusMg[rank];
-            egScore -= passedRankBonusEg[rank];
+            score -= passedRankBonus[rank];
             // Give bonus for how many squares the pawn can advance
-            mgScore -= popcount(passedPath) * PASSEDPATHBONUSMG;
-            egScore -= popcount(passedPath) * PASSEDPATHBONUSEG;
+            score -= PASSEDPATHBONUS * popcount(passedPath);
             // Bonus for connected or supported passed pawns
-            if (supported){
-                mgScore -= SUPPORTEDPASSERMG;
-                egScore -= SUPPORTEDPASSEREG;
-            }
+            if (supported) score -= SUPPORTEDPASSER;
+
         }
     }
 
@@ -686,14 +524,11 @@ Score pestoEval(Position *pos){
     // Add the shelter bonus
     const Score innerShelterDiff = popcount(innerShelters[WHITE]) - popcount(innerShelters[BLACK]);
     const Score outerShelterDiff = popcount(outerShelters[WHITE]) - popcount(outerShelters[BLACK]);
-    mgScore += INNERSHELTERMG * innerShelterDiff;
-    egScore += INNERSHELTEREG * innerShelterDiff;
-    mgScore += OUTERSHELTERMG * outerShelterDiff;
-    egScore += OUTERSHELTEREG * outerShelterDiff;
+    score += INNERSHELTER * innerShelterDiff;
+    score += OUTERSHELTER * outerShelterDiff;
 
     // Add bonus for bishop pairs
-    mgScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIRMG;
-    egScore += ((popcount(bb[B])>=2) - (popcount(bb[b])>=2)) * BISHOPPAIREG;
+    score += BISHOPPAIR * ((popcount(bb[B])>=2) - (popcount(bb[b])>=2));
 
     // Add bonus for rooks on open files
     const BitBoard openFiles = ~(pawnFiles[WHITE] | pawnFiles[BLACK]);
@@ -703,24 +538,18 @@ Score pestoEval(Position *pos){
     };
     const Score openDiff = popcount(bb[R] & openFiles) - popcount(bb[r] & openFiles);
     const Score semiOpenDiff = popcount(bb[R] & semiOpenFor[WHITE]) - popcount(bb[r] & semiOpenFor[BLACK]);
-    mgScore += openDiff * ROOKONOPENFILEMG;
-    egScore += openDiff * ROOKONOPENFILEEG;
-    mgScore += semiOpenDiff * ROOKONSEMIOPENFILEMG;
-    egScore += semiOpenDiff * ROOKONSEMIOPENFILEEG;
+    score += ROOKONOPENFILE * openDiff;
+    score += ROOKONSEMIOPENFILE * semiOpenDiff;
 
     // Add outpost squares bonus for knights and bishops
     const Score extKnightOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[n]);
-    mgScore += extKnightOutpostDiff * KNIGHTONEXTOUTPOSTMG;
-    egScore += extKnightOutpostDiff * KNIGHTONEXTOUTPOSTEG;
+    score += KNIGHTONEXTOUTPOST * extKnightOutpostDiff;
     const Score extBishopOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[b]);
-    mgScore += extBishopOutpostDiff * BISHOPONEXTOUTPOSTMG;
-    egScore += extBishopOutpostDiff * BISHOPONEXTOUTPOSTEG;
+    score += BISHOPONEXTOUTPOST * extBishopOutpostDiff;
     const Score intKnightOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[n]);
-    mgScore += intKnightOutpostDiff * KNIGHTONINTOUTPOSTMG;
-    egScore += intKnightOutpostDiff * KNIGHTONINTOUTPOSTEG;
+    score += KNIGHTONINTOUTPOST * intKnightOutpostDiff;
     const Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
-    mgScore += intBishopOutpostDiff * BISHOPONINTOUTPOSTMG;
-    egScore += intBishopOutpostDiff * BISHOPONINTOUTPOSTEG;
+    score += BISHOPONINTOUTPOST * intBishopOutpostDiff;
 
     // Add bonus for bishop-pawn concordance
     const Score bishopPawnsDiff =
@@ -729,8 +558,7 @@ Score pestoEval(Position *pos){
         popcount(bb[B] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[BLACK] & bb[B])) -
         popcount(bb[b] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[p]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[BLACK] & bb[b])) ;
     
-    mgScore += bishopPawnsDiff * BISHOPPAWNSMG;
-    egScore += bishopPawnsDiff * BISHOPPAWNSEG;
+    score += BISHOPPAWNS * bishopPawnsDiff;
 
     // Threats
     const BitBoard threatSafePawns[2] = {
@@ -753,25 +581,16 @@ Score pestoEval(Position *pos){
     const Score safePawnThreatDiff = popcount(threatSafePawns[WHITE]) - popcount(threatSafePawns[BLACK]);
     const Score pawnPushThreatDiff = popcount(threatPawnPush[WHITE]) - popcount(threatPawnPush[BLACK]);
 
-    mgScore += THREATSAFEPAWNMG * safePawnThreatDiff;
-    egScore += THREATSAFEPAWNEG * safePawnThreatDiff;
-    mgScore += THREATPAWNPUSHMG * pawnPushThreatDiff;
-    egScore += THREATPAWNPUSHMG * pawnPushThreatDiff;
+    score += THREATSAFEPAWN * safePawnThreatDiff;
+    score += THREATPAWNPUSH * pawnPushThreatDiff;
 
     const Score pawnHangingDiff = popcount(hanging[WHITE] & bb[P]) - popcount(hanging[BLACK] & bb[p]);
     const Score nonPawnHangingDiff = popcount(hanging[WHITE] & nonPawns[WHITE]) - popcount(hanging[BLACK] & nonPawns[BLACK]);
-    mgScore += PAWNHANGINGMG * pawnHangingDiff;
-    egScore += PAWNHANGINGEG * pawnHangingDiff;
-    mgScore += NONPAWNHANGINGMG * nonPawnHangingDiff;
-    egScore += NONPAWNHANGINGEG * nonPawnHangingDiff;
+    score += PAWNHANGING * pawnHangingDiff;
+    score += NONPAWNHANGING * nonPawnHangingDiff;
 
     const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
-    mgScore += KINGTHREATMG * kingThreatsDiff;
-    egScore += KINGTHREATEG * kingThreatsDiff;
-
-    // Calculate the total score
-    mgScore += mobilityScore[0];
-    egScore += mobilityScore[1];
+    score += KINGTHREAT * kingThreatsDiff;
 
     // Add kingDanger index eval
     // Calcuate danger score
@@ -789,162 +608,165 @@ Score pestoEval(Position *pos){
     dangerIndex[WHITE] = std::max(0,std::min(63, dangerIndex[WHITE] >> 3));
     dangerIndex[BLACK] = std::max(0,std::min(63, dangerIndex[BLACK] >> 3));
 
-    mgScore += kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
-    egScore += kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
-
+    Score safety = kingSafety[dangerIndex[WHITE]] - kingSafety[dangerIndex[BLACK]];
+    score += S(safety, safety);
 
     // Calculate mg and eg scores
-    const Score sign = 1 - 2 * pos->side;
-    mgScore += sign * TEMPOMG;
-    egScore += sign * TEMPOEG;
-    
-    return sign * 
+    const S32 sign = 1 - 2 * pos->side;
+    score += TEMPO * sign;
+
+    S32 mgScore = score.mg();
+    S32 egScore = score.eg();
+
+    return Score(
+        sign * 
         (
-            (pos->psqtScore[0] + mgScore) * gamePhase +
-            (pos->psqtScore[1] + egScore) * (24 - gamePhase)
-        ) / 24;
+            mgScore * gamePhase +
+            egScore * (24 - gamePhase)
+        ) / 24
+    );
 }
 
 std::vector<Score> getCurrentEvalWeights(){
     std::vector<Score> weights;
     // Add the material weights
     for (Piece piece = P; piece <= Q; piece++){
-        weights.push_back(mgValues[piece]);
+        weights.push_back(materialValues[piece].mg());
     }
     // Add the psqt weights
     for (Piece piece = P; piece <= K; piece++){
         for (Square square = a8; square < noSquare; square++){
-            weights.push_back(mgTables[piece][square]);
+            weights.push_back(pestoTables[piece][square].mg());
         }
     }
     // Add the mobility weights
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
-        weights.push_back(knightMobMg[mobcount]);
+        weights.push_back(knightMob[mobcount].mg());
     }
     for (U8 mobcount = 0; mobcount < 14; mobcount++){
-        weights.push_back(bishopMobMg[mobcount]);
+        weights.push_back(bishopMob[mobcount].mg());
     }
     for (U8 mobcount = 0; mobcount < 15; mobcount++){
-        weights.push_back(rookMobMg[mobcount]);
+        weights.push_back(rookMob[mobcount].mg());
     }
     for (U8 mobcount = 0; mobcount < 28; mobcount++){
-        weights.push_back(queenMobMg[mobcount]);
+        weights.push_back(queenMob[mobcount].mg());
     }
     // Add the pawn evaluation weights
-    weights.push_back(DOUBLEISOLATEDPENMG);
-    weights.push_back(ISOLATEDPENMG);
-    weights.push_back(BACKWARDPENMG);
-    weights.push_back(DOUBLEDPENMG);
-    weights.push_back(SUPPORTEDPHALANXMG);
-    weights.push_back(R_SUPPORTEDPHALANXMG);
-    weights.push_back(ADVANCABLEPHALANXMG);
-    weights.push_back(R_ADVANCABLEPHALANXMG);
+    weights.push_back(DOUBLEISOLATEDPEN.mg());
+    weights.push_back(ISOLATEDPEN.mg());
+    weights.push_back(BACKWARDPEN.mg());
+    weights.push_back(DOUBLEDPEN.mg());
+    weights.push_back(SUPPORTEDPHALANX.mg());
+    weights.push_back(R_SUPPORTEDPHALANX.mg());
+    weights.push_back(ADVANCABLEPHALANX.mg());
+    weights.push_back(R_ADVANCABLEPHALANX.mg());
     // Add the passed pawn bonus list
     for (U8 rank = 0; rank < 7; rank++){
-        weights.push_back(passedRankBonusMg[rank]);
+        weights.push_back(passedRankBonus[rank].mg());
     }
-    weights.push_back(PASSEDPATHBONUSMG);
-    weights.push_back(SUPPORTEDPASSERMG);
+    weights.push_back(PASSEDPATHBONUS.mg());
+    weights.push_back(SUPPORTEDPASSER.mg());
 
     // Add the shelter weights
-    weights.push_back(INNERSHELTERMG);
-    weights.push_back(OUTERSHELTERMG);
+    weights.push_back(INNERSHELTER.mg());
+    weights.push_back(OUTERSHELTER.mg());
     
     // Add the bishop pair bonus
-    weights.push_back(BISHOPPAIRMG);
+    weights.push_back(BISHOPPAIR.mg());
 
     // Add the rook and queen on open file bonus
-    weights.push_back(ROOKONOPENFILEMG);
-    weights.push_back(ROOKONSEMIOPENFILEMG);
+    weights.push_back(ROOKONOPENFILE.mg());
+    weights.push_back(ROOKONSEMIOPENFILE.mg());
 
     // Now, outpost
-    weights.push_back(KNIGHTONEXTOUTPOSTMG);
-    weights.push_back(BISHOPONEXTOUTPOSTMG);
-    weights.push_back(KNIGHTONINTOUTPOSTMG);
-    weights.push_back(BISHOPONINTOUTPOSTMG);
+    weights.push_back(KNIGHTONEXTOUTPOST.mg());
+    weights.push_back(BISHOPONEXTOUTPOST.mg());
+    weights.push_back(KNIGHTONINTOUTPOST.mg());
+    weights.push_back(BISHOPONINTOUTPOST.mg());
 
     // Now, bishop pawns
-    weights.push_back(BISHOPPAWNSMG);
+    weights.push_back(BISHOPPAWNS.mg());
 
     // Now, threats
-    weights.push_back(THREATSAFEPAWNMG);
-    weights.push_back(THREATPAWNPUSHMG);
-    weights.push_back(PAWNHANGINGMG);
-    weights.push_back(NONPAWNHANGINGMG);
-    weights.push_back(KINGTHREATMG);
+    weights.push_back(THREATSAFEPAWN.mg());
+    weights.push_back(THREATPAWNPUSH.mg());
+    weights.push_back(PAWNHANGING.mg());
+    weights.push_back(NONPAWNHANGING.mg());
+    weights.push_back(KINGTHREAT.mg());
 
     // Add the tempo bonus
-    weights.push_back(TEMPOMG);
+    weights.push_back(TEMPO.mg());
 
     // Now, EG
     // Add the material weights
-    for (Piece piece = P; piece <= K; piece++){
-        weights.push_back(egValues[piece]);
+    for (Piece piece = P; piece <= Q; piece++){
+        weights.push_back(materialValues[piece].eg());
     }
     // Add the psqt weights
     for (Piece piece = P; piece <= K; piece++){
         for (Square square = a8; square < noSquare; square++){
-            weights.push_back(egTables[piece][square]);
+            weights.push_back(pestoTables[piece][square].eg());
         }
     }
     // Add the mobility weights
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
-        weights.push_back(knightMobEg[mobcount]);
+        weights.push_back(knightMob[mobcount].eg());
     }
     for (U8 mobcount = 0; mobcount < 14; mobcount++){
-        weights.push_back(bishopMobEg[mobcount]);
+        weights.push_back(bishopMob[mobcount].eg());
     }
     for (U8 mobcount = 0; mobcount < 15; mobcount++){
-        weights.push_back(rookMobEg[mobcount]);
+        weights.push_back(rookMob[mobcount].eg());
     }
     for (U8 mobcount = 0; mobcount < 28; mobcount++){
-        weights.push_back(queenMobEg[mobcount]);
+        weights.push_back(queenMob[mobcount].eg());
     }
     // Add the pawn evaluation weights
-    weights.push_back(DOUBLEISOLATEDPENEG);
-    weights.push_back(ISOLATEDPENEG);
-    weights.push_back(BACKWARDPENEG);
-    weights.push_back(DOUBLEDPENEG);
-    weights.push_back(SUPPORTEDPHALANXEG);
-    weights.push_back(R_SUPPORTEDPHALANXEG);
-    weights.push_back(ADVANCABLEPHALANXEG);
-    weights.push_back(R_ADVANCABLEPHALANXEG);
+    weights.push_back(DOUBLEISOLATEDPEN.eg());
+    weights.push_back(ISOLATEDPEN.eg());
+    weights.push_back(BACKWARDPEN.eg());
+    weights.push_back(DOUBLEDPEN.eg());
+    weights.push_back(SUPPORTEDPHALANX.eg());
+    weights.push_back(R_SUPPORTEDPHALANX.eg());
+    weights.push_back(ADVANCABLEPHALANX.eg());
+    weights.push_back(R_ADVANCABLEPHALANX.eg());
     // Add the passed pawn bonus list
     for (U8 rank = 0; rank < 7; rank++){
-        weights.push_back(passedRankBonusEg[rank]);
+        weights.push_back(passedRankBonus[rank].eg());
     }
-    weights.push_back(PASSEDPATHBONUSEG);
-    weights.push_back(SUPPORTEDPASSEREG);
+    weights.push_back(PASSEDPATHBONUS.eg());
+    weights.push_back(SUPPORTEDPASSER.eg());
 
     // Add the shelter weights
-    weights.push_back(INNERSHELTEREG);
-    weights.push_back(OUTERSHELTEREG);
-
+    weights.push_back(INNERSHELTER.eg());
+    weights.push_back(OUTERSHELTER.eg());
+    
     // Add the bishop pair bonus
-    weights.push_back(BISHOPPAIREG);
+    weights.push_back(BISHOPPAIR.eg());
 
     // Add the rook and queen on open file bonus
-    weights.push_back(ROOKONOPENFILEEG);
-    weights.push_back(ROOKONSEMIOPENFILEEG);
+    weights.push_back(ROOKONOPENFILE.eg());
+    weights.push_back(ROOKONSEMIOPENFILE.eg());
 
     // Now, outpost
-    weights.push_back(KNIGHTONEXTOUTPOSTEG);
-    weights.push_back(BISHOPONEXTOUTPOSTEG);
-    weights.push_back(KNIGHTONINTOUTPOSTEG);
-    weights.push_back(BISHOPONINTOUTPOSTEG);
+    weights.push_back(KNIGHTONEXTOUTPOST.eg());
+    weights.push_back(BISHOPONEXTOUTPOST.eg());
+    weights.push_back(KNIGHTONINTOUTPOST.eg());
+    weights.push_back(BISHOPONINTOUTPOST.eg());
 
     // Now, bishop pawns
-    weights.push_back(BISHOPPAWNSEG);
-    
+    weights.push_back(BISHOPPAWNS.eg());
+
     // Now, threats
-    weights.push_back(THREATSAFEPAWNEG);
-    weights.push_back(THREATPAWNPUSHEG);
-    weights.push_back(PAWNHANGINGEG);
-    weights.push_back(NONPAWNHANGINGEG);
-    weights.push_back(KINGTHREATEG);
+    weights.push_back(THREATSAFEPAWN.eg());
+    weights.push_back(THREATPAWNPUSH.eg());
+    weights.push_back(PAWNHANGING.eg());
+    weights.push_back(NONPAWNHANGING.eg());
+    weights.push_back(KINGTHREAT.eg());
 
     // Add the tempo bonus
-    weights.push_back(TEMPOEG);
+    weights.push_back(TEMPO.eg());
 
     return weights;
 }
