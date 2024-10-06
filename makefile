@@ -7,14 +7,23 @@ all: release
 # Release target
 release:
 	$(MAKE) -C src release EXE=$(EXE)
-	mv src/$(EXE) .
+	ifeq ($(OS),Windows_NT)
+		move src/$(EXE) .
+	else
+		mv src/$(EXE) .
 
 # Debug target
 debug:
 	$(MAKE) -C src debug EXE=$(EXE)
-	mv src/$(EXE) .
+	ifeq ($(OS),Windows_NT)
+		move src/$(EXE) .
+	else
+		mv src/$(EXE) .
 
 # Clean target
 clean:
 	$(MAKE) -C src clean EXE=$(EXE)
-	rm -f $(EXE)
+	ifeq ($(OS),Windows_NT)
+		move src/$(EXE) .
+	else
+		mv src/$(EXE) .
