@@ -336,7 +336,7 @@ skipPruning:
             else noisy[noisyCount++] = currMove;
             if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
 
-            if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
+            if (moveSearched >= 1 + PVNode * 2 && depth >= 3 && (isQuiet || !ttPv))
             {
                 Depth R = reduction(depth, moveSearched, isQuiet, ttPv, improving);
                 if (currMoveScore >= COUNTERSCORE) R -= 1;
@@ -685,8 +685,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.720148 ) calculated with bench @24
-             nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.388603454;
+            // Percentage ( 0.688716 ) calculated with bench @24
+             nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.451977303;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
