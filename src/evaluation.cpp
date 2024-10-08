@@ -39,40 +39,52 @@ void initTables() {
     }
 }
 
-
-constexpr PScore DOUBLEISOLATEDPEN = S(14, 50);
-constexpr PScore ISOLATEDPEN = S(18, 19);
-constexpr PScore BACKWARDPEN = S(2, 17);
-constexpr PScore DOUBLEDPEN = S(13, 19);
-constexpr PScore SUPPORTEDPHALANX = S(1, 7);
-constexpr PScore ADVANCABLEPHALANX = S(11, 24);
+constexpr PScore DOUBLEISOLATEDPEN = S(10, 52);
+constexpr PScore ISOLATEDPEN = S(17, 19);
+constexpr PScore BACKWARDPEN = S(1, 16);
+constexpr PScore DOUBLEDPEN = S(12, 20);
+constexpr PScore SUPPORTEDPHALANX = S(0, 6);
+constexpr PScore ADVANCABLEPHALANX = S(10, 23);
 constexpr PScore R_SUPPORTEDPHALANX = S(4, 9);
-constexpr PScore R_ADVANCABLEPHALANX = S(1, 17);
+constexpr PScore R_ADVANCABLEPHALANX = S(0, 17);
 constexpr PScore passedRankBonus[7] = {
-    S(0,0), S(-10,-79), S(-38,-54), S(-29,-7), S(7,34), S(12,131), S(88,180)
+    S(0,0), S(-5,-76), S(-34,-51), S(-28,-4), S(5,36), S(9,128), S(78,183)
 };
 constexpr PScore PASSEDPATHBONUS = S(-1, 14);
-constexpr PScore SUPPORTEDPASSER = S(33, 1);
-constexpr PScore INNERSHELTER = S(32, -11);
-constexpr PScore OUTERSHELTER = S(27, -1);
-constexpr PScore BISHOPPAIR = S(32, 107);
-constexpr PScore ROOKONOPENFILE = S(24, -2);
-constexpr PScore ROOKONSEMIOPENFILE = S(17, 18);
-constexpr PScore KNIGHTONEXTOUTPOST = S(26, 33);
+constexpr PScore SUPPORTEDPASSER = S(32, 0);
+constexpr PScore INNERSHELTER = S(33, -11);
+constexpr PScore OUTERSHELTER = S(27, 0);
+constexpr PScore BISHOPPAIR = S(26, 106);
+constexpr PScore ROOKONOPENFILE = S(25, -2);
+constexpr PScore ROOKONSEMIOPENFILE = S(17, 17);
+constexpr PScore KNIGHTONEXTOUTPOST = S(24, 34);
 constexpr PScore BISHOPONEXTOUTPOST = S(38, 0);
-constexpr PScore KNIGHTONINTOUTPOST = S(25, 34);
-constexpr PScore BISHOPONINTOUTPOST = S(46, -4);
-constexpr PScore KNIGHTPROTECTOR = S(-11, -3);
-constexpr PScore BISHOPPROTECTOR = S(-7, -2);
-constexpr PScore BISHOPPAWNS = S(0, -3);
-constexpr PScore THREATSAFEPAWN = S(64, 42);
-constexpr PScore THREATPAWNPUSH = S(24, 26);
-constexpr PScore PAWNHANGING = S(5, -58);
-constexpr PScore NONPAWNHANGING = S(-26, -25);
-constexpr PScore KINGTHREAT = S(-4, 10);
-constexpr PScore QUEENINFILTRATION = S(-36, 116);
-constexpr PScore RESTRICTEDSQUARES = S(4, 2);
-constexpr PScore TEMPO = S(28, 27);
+constexpr PScore KNIGHTONINTOUTPOST = S(22, 34);
+constexpr PScore BISHOPONINTOUTPOST = S(47, -6);
+constexpr PScore KNIGHTPROTECTOR = S(-10, -3);
+constexpr PScore BISHOPPROTECTOR = S(-6, -1);
+constexpr PScore BISHOPPAWNS = S(1, -3);
+constexpr PScore THREATSAFEPAWN = S(62, 40);
+constexpr PScore THREATPAWNPUSH = S(22, 26);
+constexpr PScore PAWNHANGING = S(5, -56);
+constexpr PScore NONPAWNHANGING = S(-25, -28);
+constexpr PScore KINGTHREAT = S(-5, 8);
+constexpr PScore QUEENINFILTRATION = S(-39, 99);
+constexpr PScore RESTRICTEDSQUARES = S(4, 3);
+constexpr PScore TEMPO = S(27, 27);
+
+constexpr Score COMPLEXITYGRAIN = 100;
+
+constexpr Score COMPLEXITYPASSERS = 58;
+constexpr Score COMPLEXITYPAWNS = 166;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -49;
+constexpr Score COMPLEXITYPAWNTENSION = -303;
+constexpr Score COMPLEXITYOUTFLANKING = 70;
+constexpr Score COMPLEXITYINFILTRATION = -1360;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS = 6915;
+constexpr Score COMPLEXITYPAWNENDING = 9840;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -2760;
+constexpr Score COMPLEXITYBIAS = -6884;
 
 
 constexpr Score KNIGHTATTACKOUTERRING = 9;
@@ -647,16 +659,16 @@ Score pestoEval(Position *pos){
     bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
     bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
     bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
-    Score complexity =     6 * passedCount
-                        +  9 * popcount(pawns)
-                        -  2 * blockedPairs
-                        +  2 * pawnTension
-                        +  6 * outflanking
-                        +  16 * infiltration
-                        +  14 * pawnsOnBothFlanks
-                        + 34 * !(nonPawns[WHITE] | nonPawns[BLACK])
-                        - 28 * almostUnwinnable
-                        - 90;
+    Score complexity = (   COMPLEXITYPASSERS * passedCount
+                        +  COMPLEXITYPAWNS * popcount(pawns)
+                        +  COMPLEXITYBLOCKEDPAIRS * blockedPairs
+                        +  COMPLEXITYPAWNTENSION * pawnTension
+                        +  COMPLEXITYOUTFLANKING * outflanking
+                        +  COMPLEXITYINFILTRATION * infiltration
+                        +  COMPLEXITYPAWNBOTHFLANKS * pawnsOnBothFlanks
+                        +  COMPLEXITYPAWNENDING * !(nonPawns[WHITE] | nonPawns[BLACK])
+                        +  COMPLEXITYALMOSTUNWINNABLE * almostUnwinnable
+                        +  COMPLEXITYBIAS) / COMPLEXITYGRAIN;
     
     Score v = ((egScore > 0) - (egScore < 0)) * std::max(complexity, Score(-std::abs(egScore)));
     egScore += v;
@@ -1235,22 +1247,28 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     S32 pinnedShelter[2] = {popcount(pinned[BLACK] & innerShelters[BLACK]), popcount(pinned[WHITE] & innerShelters[WHITE])};
 
 #define KINGSAFETYCOLOREDPARAMS 0 // Not tuning them for now
-#define COMPLEXITYFEATURES 7
+#define COMPLEXITYFEATURES 9
 
+// Complexity adjustment, so we avoid going into drawish barely better endgames
     Score outflanking = std::abs(fileOf(whiteKing)- fileOf(blackKing)) - std::abs(rankOf(whiteKing)- rankOf(blackKing));
+    Score blockedPairs = popcount(north(bb[P]) & bb[p]) * 2;
+    Score pawnTension = popcount(pawnAttackedSquares[WHITE] & bb[p]) + popcount(pawnAttackedSquares[BLACK] & bb[P]);
     BitBoard pawns = bb[P] | bb[p];
     bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
     bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
     bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
+    
     tensor[0] = passedCount;
     tensor[1] = popcount(pawns);
-    tensor[2] = outflanking;
-    tensor[3] = pawnsOnBothFlanks;
-    tensor[4] = infiltration;
-    tensor[5] = !(nonPawns[WHITE] | nonPawns[BLACK]);
-    tensor[6] = almostUnwinnable;
+    tensor[2] = blockedPairs;
+    tensor[3] = pawnTension;
+    tensor[4] = outflanking;
+    tensor[5] = infiltration;
+    tensor[6] = pawnsOnBothFlanks;
+    tensor[7] = !(nonPawns[WHITE] | nonPawns[BLACK]);
+    tensor[8] = almostUnwinnable;
 
-    tensor += 6;
+    tensor += 9;
 
 /*
 #define KINGSAFETYCOLOREDPARAMS 24
