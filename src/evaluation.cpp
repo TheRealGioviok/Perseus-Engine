@@ -641,18 +641,22 @@ Score pestoEval(Position *pos){
 
     // Complexity adjustment, so we avoid going into drawish barely better endgames
     Score outflanking = std::abs(fileOf(whiteKing)- fileOf(blackKing)) - std::abs(rankOf(whiteKing)- rankOf(blackKing));
+    Score blockedPairs = popcount(north(bb[P]) & bb[p]) * 2;
+    Score pawnTension = popcount(pawnAttackedSquares[WHITE] & bb[p]) + popcount(pawnAttackedSquares[BLACK] & bb[P]);
     BitBoard pawns = bb[P] | bb[p];
     bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
     bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
     bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
-    Score complexity =     3 * passedCount
-                        +  4 * popcount(pawns)
-                        +  3 * outflanking
-                        +  7 * pawnsOnBothFlanks
-                        +  8 * infiltration
-                        + 17 * !(nonPawns[WHITE] | nonPawns[BLACK])
-                        - 14 * almostUnwinnable
-                        - 38;
+    Score complexity =     6 * passedCount
+                        +  9 * popcount(pawns)
+                        -  2 * blockedPairs
+                        +  2 * pawnTension
+                        +  6 * outflanking
+                        +  16 * infiltration
+                        +  14 * pawnsOnBothFlanks
+                        + 34 * !(nonPawns[WHITE] | nonPawns[BLACK])
+                        - 28 * almostUnwinnable
+                        - 90;
     
     Score v = ((egScore > 0) - (egScore < 0)) * std::max(complexity, Score(-std::abs(egScore)));
     egScore += v;
@@ -1011,6 +1015,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         bb[P] | bb[p] | pawnAttackedSquares[WHITE]
     };
 
+    S32 passedCount = 0;
+
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
     // White pawns
@@ -1047,6 +1053,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
             tensor[7] += rank - 2;
         }
         if (candidatePassed){
+            ++passedCount;
             BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
             // Give bonus for how close the pawn is to the promotion square
             tensor[8 + rank] += 1;
@@ -1090,6 +1097,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
             tensor[7] -= rank - 2;
         }
         if (candidatePassed){
+            ++passedCount;
             BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
             // Give bonus for how close the pawn is to the promotion square
             tensor[8 + rank]--;
@@ -1226,6 +1234,25 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     Score noQueenDanger[2] = {!bb[Q], !bb[q]};
     S32 pinnedShelter[2] = {popcount(pinned[BLACK] & innerShelters[BLACK]), popcount(pinned[WHITE] & innerShelters[WHITE])};
 
+#define KINGSAFETYCOLOREDPARAMS 0 // Not tuning them for now
+#define COMPLEXITYFEATURES 7
+
+    Score outflanking = std::abs(fileOf(whiteKing)- fileOf(blackKing)) - std::abs(rankOf(whiteKing)- rankOf(blackKing));
+    BitBoard pawns = bb[P] | bb[p];
+    bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
+    bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
+    bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
+    tensor[0] = passedCount;
+    tensor[1] = popcount(pawns);
+    tensor[2] = outflanking;
+    tensor[3] = pawnsOnBothFlanks;
+    tensor[4] = infiltration;
+    tensor[5] = !(nonPawns[WHITE] | nonPawns[BLACK]);
+    tensor[6] = almostUnwinnable;
+
+    tensor += 6;
+
+/*
 #define KINGSAFETYCOLOREDPARAMS 24
     tensor[P] = innerAttacks[WHITE][P];
     tensor[N] = innerAttacks[WHITE][N];
@@ -1258,7 +1285,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[0] = noQueenDanger[BLACK];
     tensor[1] = pinnedShelter[BLACK];
     tensor += 2;
-
+*/
     // Also assert the last element we wrote is the penultimate element
     // assert(tensorStart + tensorSize - 2 == tensor);
 }
@@ -1284,7 +1311,9 @@ void convertToFeatures(std::string filename, std::string output) {
     std::cout << "Allocating for " << weightCount << " weights: " << 1 + weightCount / 2 + 1 << " bytes per entry" << std::endl;
     U32 entrySize = 1 + weightCount / 2 + 1; // The entry size is the 1 (gamephase) + number of weights divided by 2 + 1, since we add the result at the end, but we don't need to write the features twice for each side
     entrySize += KINGSAFETYCOLOREDPARAMS;
+    entrySize += COMPLEXITYFEATURES;
     std::cout << "Additional colored params: " << KINGSAFETYCOLOREDPARAMS / 2 << " x 2 = " << KINGSAFETYCOLOREDPARAMS << std::endl;
+    std::cout << "Additional complexity features: " << COMPLEXITYFEATURES << std::endl;
     // Create buffer to store the features
     S8* features = new S8[entrySize];
     // For each line in the file
