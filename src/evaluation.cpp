@@ -416,6 +416,8 @@ Score pestoEval(Position *pos){
         bb[P] | bb[p] | pawnAttackedSquares[WHITE]
     };
 
+    S32 passedCount = 0;
+
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
     // White pawns
@@ -463,6 +465,7 @@ Score pestoEval(Position *pos){
             if (supported){
                 score += SUPPORTEDPASSER;
             }
+            ++passedCount;
         }
     }
 
@@ -509,7 +512,7 @@ Score pestoEval(Position *pos){
             score -= PASSEDPATHBONUS * popcount(passedPath);
             // Bonus for connected or supported passed pawns
             if (supported) score -= SUPPORTEDPASSER;
-
+            ++passedCount;
         }
     }
 
@@ -635,6 +638,24 @@ Score pestoEval(Position *pos){
 
     S32 mgScore = score.mg();
     S32 egScore = score.eg();
+
+    // Complexity adjustment, so we avoid going into drawish barely better endgames
+    Score outflanking = std::abs(fileOf(whiteKing)- fileOf(blackKing)) - std::abs(rankOf(whiteKing)- rankOf(blackKing));
+    BitBoard pawns = bb[P] | bb[p];
+    bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
+    bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
+    bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
+    Score complexity =     3 * passedCount
+                        +  4 * popcount(pawns)
+                        +  3 * outflanking
+                        +  7 * pawnsOnBothFlanks
+                        +  8 * infiltration
+                        + 17 * !(nonPawns[WHITE] | nonPawns[BLACK])
+                        - 14 * almostUnwinnable
+                        - 38;
+    
+    Score v = ((egScore > 0) - (egScore < 0)) * std::max(complexity, Score(-std::abs(egScore)));
+    egScore += v;
 
     return Score(
         sign * 

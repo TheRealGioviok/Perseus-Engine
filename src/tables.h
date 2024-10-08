@@ -58,6 +58,11 @@ constexpr S8 colorCornerDistance[2][64] = {
 	}
 };
 
+constexpr BitBoard boardSide[2] = {
+	1085102592571150095ULL, 
+	17361641481138401520ULL
+};
+
 constexpr U64 MvvLva[12][12] = {
 	// Aggressor - Victim
 	{105, 205, 305, 405, 505, 605,	105, 205, 305, 405, 505, 605},
