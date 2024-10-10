@@ -36,6 +36,7 @@ struct Position{
     Ply plyFromNull; // Ply from the last null move (see Null Move Pruning for more information)
     U8 castle;
     HashKey hashKey;
+    HashKey pawnHashKey;
     PScore psqtScore; // PSQT score, incrementally updated
 
     // The default constructor instantiates the position with the standard chess starting position.
@@ -216,7 +217,7 @@ struct Position{
 struct UndoInfo {
     // Irreversible information
     HashKey hashKey;
-    // HashKey pawnHashKey;
+    HashKey pawnHashKey;
     Square enPassant;
     U8 castle;
     U8 fiftyMove;

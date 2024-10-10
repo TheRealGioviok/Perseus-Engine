@@ -28,7 +28,7 @@ void initTables() {
         PSQTs[B][square] = bishopTable[square] + materialValues[B];
         PSQTs[R][square] = rookTable[square] + materialValues[R];
         PSQTs[Q][square] = queenTable[square] + materialValues[Q];
-        PSQTs[K][square] = kingTable[square] + materialValues[K];
+        PSQTs[K][square] = kingTable[square];
         // Black
         PSQTs[p][flipSquare(square)] = -PSQTs[P][square];
         PSQTs[n][flipSquare(square)] = -PSQTs[N][square];

@@ -86,6 +86,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             return 0;
     }
     assert(pos.hashKey == pos.generateHashKey());
+    assert(pos.pawnHashKey == pos.generatePawnHashKey());
     // Ply overflow
     if (ply >= maxPly)
         return evaluate();
@@ -94,6 +95,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     const bool PVNode = (beta - alpha) > 1;
 
     Score eval;
+    Score rawEval; // for corrhist
     bool improving = true;
     // const Move excludedMove = ss->excludedMove;
     // Guard from pvlen editing when in singular extension
@@ -179,7 +181,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     if (ttHit)
     {
         // Check if the eval is stored in the TT
-        eval = ss->staticEval = tte->eval != noScore ? tte->eval : evaluate();
+        rawEval = tte->eval != noScore ? tte->eval : evaluate();
+        eval = ss->staticEval = correctStaticEval(rawEval, pos.side, pos.pawnHashKey);
         // Also, we might be able to use the score as a better eval
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
             eval = ttScore;
@@ -188,7 +191,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     //     eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
     // }
     else {
-        eval = ss->staticEval = evaluate();
+        rawEval = evaluate();
+        eval = ss->staticEval = correctStaticEval(rawEval, pos.side, pos.pawnHashKey);
         // Store the eval in the TT if not in exclusion mode (in which we might already have the entry)
         writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
@@ -417,6 +421,12 @@ skipPruning:
         // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
     if (!stopped){ // && !excludedMove){
+        if (!inCheck
+            && (!bestMove || !okToReduce(bestMove))
+            && !(ttBound == hashLOWER && bestScore <= ss->staticEval)
+            && !(ttBound == hashUPPER && bestScore >= ss->staticEval)){
+                updateCorrHist(bestScore - ss->staticEval, depth, pos.side, pos.pawnHashKey);
+        }
         U8 ttStoreFlag = bestScore >= beta ? hashLOWER : alpha != origAlpha ? hashEXACT : hashUPPER;
         writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, PVNode, ttPv);
         // writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, false, PVNode);
@@ -433,6 +443,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
             return randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
     Score bestScore;
+    Score rawEval;
 
     if (ply >= maxPly - 1)
         return inCheck ? 0 : evaluate();
@@ -474,12 +485,14 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
         ss->staticEval = noScore;
     }
     else if (ttHit){
-        ss->staticEval = bestScore = tte->eval != noScore ? tte->eval : evaluate();
+        rawEval = tte->eval != noScore ? tte->eval : evaluate();
+        ss->staticEval = bestScore = correctStaticEval(rawEval, pos.side, pos.pawnHashKey);
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < bestScore) || (ttBound == hashLOWER && ttScore > bestScore)))
             bestScore = ttScore;
     }
     else {
-        ss->staticEval = bestScore = evaluate();
+        rawEval = evaluate();
+        ss->staticEval = bestScore = correctStaticEval(rawEval, pos.side, pos.pawnHashKey);
         writeTT(pos.hashKey, noScore, bestScore, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
 
@@ -686,7 +699,7 @@ void Game::startSearch(bool halveTT = true)
         }
         if (currSearch >= 6){
             // Percentage ( 0.682945 ) calculated with bench @24
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.440857829;    
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.462471518;    
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
