@@ -84,6 +84,9 @@ constexpr Score COMPLEXITYPAWNENDING = 34;
 constexpr Score COMPLEXITYALMOSTUNWINNABLE = -28;
 constexpr Score COMPLEXITYBIAS = -90;
 
+constexpr Score SCALEBASE = 80;
+constexpr Score SCALESTRONGPAWNS = 7;
+
 
 constexpr Score KNIGHTATTACKOUTERRING = 9;
 constexpr Score KNIGHTATTACKINNERRING = 11;
@@ -650,13 +653,13 @@ Score pestoEval(Position *pos){
     S32 egScore = score.eg();
 
     // Complexity adjustment, so we avoid going into drawish barely better endgames
-    Score outflanking = std::abs(fileOf(whiteKing)- fileOf(blackKing)) - std::abs(rankOf(whiteKing)- rankOf(blackKing));
-    Score blockedPairs = popcount(north(bb[P]) & bb[p]) * 2;
-    Score pawnTension = popcount(pawnAttackedSquares[WHITE] & bb[p]) + popcount(pawnAttackedSquares[BLACK] & bb[P]);
-    BitBoard pawns = bb[P] | bb[p];
-    bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
-    bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
-    bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
+    const Score outflanking = std::abs(fileOf(whiteKing)- fileOf(blackKing)) - std::abs(rankOf(whiteKing)- rankOf(blackKing));
+    const Score blockedPairs = popcount(north(bb[P]) & bb[p]) * 2;
+    const Score pawnTension = popcount(pawnAttackedSquares[WHITE] & bb[p]) + popcount(pawnAttackedSquares[BLACK] & bb[P]);
+    const BitBoard pawns = bb[P] | bb[p];
+    const bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
+    const bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
+    const bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
     Score complexity = COMPLEXITYPASSERS * passedCount
                         +  COMPLEXITYPAWNS * popcount(pawns)
                         +  COMPLEXITYBLOCKEDPAIRS * blockedPairs
@@ -667,9 +670,12 @@ Score pestoEval(Position *pos){
                         +  COMPLEXITYPAWNENDING * !(nonPawns[WHITE] | nonPawns[BLACK])
                         +  COMPLEXITYALMOSTUNWINNABLE * almostUnwinnable
                         +  COMPLEXITYBIAS;
-    
+
     Score v = ((egScore > 0) - (egScore < 0)) * std::max(complexity, Score(-std::abs(egScore)));
     egScore += v;
+
+    // Eg scale (TODO: add some more pawn / piece scalings, like count of passers, doubled etc...)
+    egScore = S32(egScore) * (SCALEBASE + SCALESTRONGPAWNS * popcount(bb[p * (egScore < 0)])) / 100;
 
     return Score(
         sign * 
