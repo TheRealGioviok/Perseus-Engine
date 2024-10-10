@@ -481,8 +481,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     const bool ttPv = PVNode || (ttFlags & hashPVMove); 
 
     if (inCheck){
-        bestScore = noScore;
-        ss->staticEval = noScore;
+        ss->staticEval = bestScore = rawEval = noScore;
     }
     else if (ttHit){
         rawEval = tte->eval != noScore ? tte->eval : evaluate();

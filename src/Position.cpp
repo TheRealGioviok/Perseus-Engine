@@ -48,7 +48,7 @@ HashKey Position::generatePawnHashKey() {
         BitBoard pieceBB = bitboards[i];
         while (pieceBB) {
             Square square = popLsb(pieceBB);
-            h ^= pieceKeys[i][square];
+            h ^= pawnKeys[i][square];
         }
     }
     return h;
