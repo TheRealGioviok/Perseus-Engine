@@ -422,7 +422,7 @@ skipPruning:
 
     if (!stopped){ // && !excludedMove){
         if (!inCheck
-            && (!bestMove || !okToReduce(bestMove))
+            && (!bestMove || okToReduce(bestMove))
             && !(ttBound == hashLOWER && bestScore <= ss->staticEval)
             && !(ttBound == hashUPPER && bestScore >= ss->staticEval)){
                 updateCorrHist(bestScore - ss->staticEval, depth, pos.side, pos.pawnHashKey);
@@ -698,8 +698,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.664961 ) calculated with bench @24
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.503847594;    
+            // Percentage ( 0.72742 ) calculated with bench @24
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.374721619;    
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
