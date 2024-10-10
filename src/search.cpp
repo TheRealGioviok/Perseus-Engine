@@ -171,7 +171,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
 
     if (inCheck)
     {
-        ss->staticEval = eval = noScore;
+        ss->staticEval = eval = rawEval = noScore;
         // improving = false;
         goto skipPruning;
     }
@@ -428,7 +428,7 @@ skipPruning:
                 updateCorrHist(bestScore - ss->staticEval, depth, pos.side, pos.pawnHashKey);
         }
         U8 ttStoreFlag = bestScore >= beta ? hashLOWER : alpha != origAlpha ? hashEXACT : hashUPPER;
-        writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, PVNode, ttPv);
+        writeTT(pos.hashKey, bestScore, rawEval, depth, ttStoreFlag, bestMove, ply, PVNode, ttPv);
         // writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, false, PVNode);
     }
 
@@ -543,7 +543,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     
     U8 ttStoreFlag = bestScore >= beta ? hashLOWER : hashUPPER; // No exact bounds in qsearch
     ttStoreFlag |= ttPv ? hashPVMove : 0;
-    writeTT(pos.hashKey, bestScore, ss->staticEval, 0, ttStoreFlag, bestMove, ply, PVNode, ttPv);
+    writeTT(pos.hashKey, bestScore, rawEval, 0, ttStoreFlag, bestMove, ply, PVNode, ttPv);
 
     return bestScore;
 }
@@ -698,8 +698,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.682945 ) calculated with bench @24
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.462471518;    
+            // Percentage ( 0.664961 ) calculated with bench @24
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.503847594;    
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
