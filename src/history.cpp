@@ -64,16 +64,16 @@ void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMove
 }
 
 Score correctStaticEval(Score eval, bool side, HashKey pawnHash) {
-    Score bonus = pawnCorrHist[side][pawnHash % CORRHISTSIZE];
-    Score corrected = eval + bonus / CORRHISTSCALE;
-    return std::clamp<S32>(corrected, -mateValue, +mateValue);
+    const S32 bonus = pawnCorrHist[side][pawnHash % CORRHISTSIZE];
+    const S32 corrected = eval + bonus / CORRHISTSCALE;
+    return static_cast<Score>(std::clamp<S32>(corrected, -mateValue, +mateValue));
 }
 
 void updateCorrHist(Score bonus, Depth depth, bool side, HashKey pawnHash){
     auto& ph = pawnCorrHist[side][pawnHash % CORRHISTSIZE];
-    Score scaledBonus = bonus * CORRHISTSCALE;
-    Score weight = std::min(1+depth, 16);
+    const S32 scaledBonus = bonus * CORRHISTSCALE;
+    const S32 weight = std::min(1+depth, 16);
 
     ph = (ph * (256 - weight) + scaledBonus * weight) / 256;
-    ph = std::clamp<S32>(ph, -MAXCORRHIST, MAXCORRHIST);
+    ph = static_cast<Score>(std::clamp<S32>(ph, -MAXCORRHIST, MAXCORRHIST));
 }
