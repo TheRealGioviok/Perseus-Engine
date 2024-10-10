@@ -73,8 +73,6 @@ constexpr PScore QUEENINFILTRATION = S(-36, 116);
 constexpr PScore RESTRICTEDSQUARES = S(4, 2);
 constexpr PScore TEMPO = S(28, 27);
 
-constexpr Score COMPLEXITYGRAIN = 100;
-
 constexpr Score COMPLEXITYPASSERS = 6;
 constexpr Score COMPLEXITYPAWNS = 9;
 constexpr Score COMPLEXITYBLOCKEDPAIRS = -2;
@@ -659,7 +657,7 @@ Score pestoEval(Position *pos){
     bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
     bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
     bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
-    Score complexity = (   COMPLEXITYPASSERS * passedCount
+    Score complexity = COMPLEXITYPASSERS * passedCount
                         +  COMPLEXITYPAWNS * popcount(pawns)
                         +  COMPLEXITYBLOCKEDPAIRS * blockedPairs
                         +  COMPLEXITYPAWNTENSION * pawnTension
@@ -668,7 +666,7 @@ Score pestoEval(Position *pos){
                         +  COMPLEXITYPAWNBOTHFLANKS * pawnsOnBothFlanks
                         +  COMPLEXITYPAWNENDING * !(nonPawns[WHITE] | nonPawns[BLACK])
                         +  COMPLEXITYALMOSTUNWINNABLE * almostUnwinnable
-                        +  COMPLEXITYBIAS) / COMPLEXITYGRAIN;
+                        +  COMPLEXITYBIAS;
     
     Score v = ((egScore > 0) - (egScore < 0)) * std::max(complexity, Score(-std::abs(egScore)));
     egScore += v;
