@@ -19,7 +19,8 @@ extern S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_S
 #define CORRHISTSCALE 256
 #define MAXCORRHIST (CORRHISTSCALE * 64)
 // Correction History
-extern S32 pawnCorrHist[2][CORRHISTSIZE];
+extern S32 pawnsCorrHist[2][CORRHISTSIZE];
+extern S32 piecesCorrHist[2][CORRHISTSIZE];
 
 struct SStack {
     Move excludedMove = 0;
@@ -69,6 +70,6 @@ static inline S32 stat_bonus(int depth) {
 #define MAXHISTORYABS 16384LL
 void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);
 
-Score correctStaticEval(Score eval, bool side, HashKey pawnHash);
+Score correctStaticEval(Score eval, bool side, HashKey hashKey, HashKey pawnHash);
 
-void updateCorrHist(Score bonus, Depth depth, bool side, HashKey pawnHash);
+void updateCorrHist(Score bonus, Depth depth, bool side, HashKey hashKey, HashKey pawnHash);

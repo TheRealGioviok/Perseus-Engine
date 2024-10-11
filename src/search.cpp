@@ -182,7 +182,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     {
         // Check if the eval is stored in the TT
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
-        eval = ss->staticEval = correctStaticEval(rawEval, pos.side, pos.pawnHashKey);
+        eval = ss->staticEval = correctStaticEval(rawEval, pos.side, pos.hashKey, pos.pawnHashKey);
         // Also, we might be able to use the score as a better eval
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
             eval = ttScore;
@@ -192,7 +192,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     // }
     else {
         rawEval = evaluate();
-        eval = ss->staticEval = correctStaticEval(rawEval, pos.side, pos.pawnHashKey);
+        eval = ss->staticEval = correctStaticEval(rawEval, pos.side, pos.hashKey, pos.pawnHashKey);
         // Store the eval in the TT if not in exclusion mode (in which we might already have the entry)
         writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
@@ -425,7 +425,7 @@ skipPruning:
             && (!bestMove || okToReduce(bestMove))
             && !(ttBound == hashLOWER && bestScore <= ss->staticEval)
             && !(ttBound == hashUPPER && bestScore >= ss->staticEval)){
-                updateCorrHist(bestScore - ss->staticEval, depth, pos.side, pos.pawnHashKey);
+                updateCorrHist(bestScore - ss->staticEval, depth, pos.side, pos.hashKey, pos.pawnHashKey);
         }
         U8 ttStoreFlag = bestScore >= beta ? hashLOWER : alpha != origAlpha ? hashEXACT : hashUPPER;
         writeTT(pos.hashKey, bestScore, rawEval, depth, ttStoreFlag, bestMove, ply, PVNode, ttPv);
@@ -485,13 +485,13 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     }
     else if (ttHit){
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
-        ss->staticEval = bestScore = correctStaticEval(rawEval, pos.side, pos.pawnHashKey);
+        ss->staticEval = bestScore = correctStaticEval(rawEval, pos.side, pos.hashKey, pos.pawnHashKey);
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < bestScore) || (ttBound == hashLOWER && ttScore > bestScore)))
             bestScore = ttScore;
     }
     else {
         rawEval = evaluate();
-        ss->staticEval = bestScore = correctStaticEval(rawEval, pos.side, pos.pawnHashKey);
+        ss->staticEval = bestScore = correctStaticEval(rawEval, pos.side, pos.hashKey, pos.pawnHashKey);
         writeTT(pos.hashKey, noScore, bestScore, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
 
@@ -697,8 +697,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.701213 ) calculated with bench @24
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.426100201;    
+            // Percentage ( 0.71709 ) calculated with bench @24
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.405068645;        
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
