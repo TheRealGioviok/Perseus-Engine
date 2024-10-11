@@ -697,8 +697,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.701213 ) calculated with bench @24
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.426100201;    
+            // Percentage ( 0.680863 ) calculated with bench @24
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.468724251;    
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;

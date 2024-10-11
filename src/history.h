@@ -17,7 +17,7 @@ extern S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_S
 
 #define CORRHISTSIZE 16384
 #define CORRHISTSCALE 256
-#define MAXCORRHIST (CORRHISTSCALE * 64)
+#define MAXCORRHIST (CORRHISTSCALE * 32)
 // Correction History
 extern S32 pawnCorrHist[2][CORRHISTSIZE];
 
