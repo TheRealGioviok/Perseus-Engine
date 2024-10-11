@@ -2,12 +2,13 @@
 #include "types.h"
 
 // random piece keys
-extern HashKey pieceKeys[12][64];
-extern HashKey pawnKeys[12][64];
+extern HashKey pieceKeysTable[12][64];
+extern HashKey pawnKeysTable[12][64];
+extern HashKey nonPawnKeysTable[12][64];
 // random enPassant keys
-extern HashKey enPassantKeys[65];
+extern HashKey enPassantKeysTable[65];
 // random castling keys
-extern HashKey castleKeys[16];
+extern HashKey castleKeysTable[16];
 // random side key
 extern HashKey sideKey;
 

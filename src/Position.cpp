@@ -29,11 +29,11 @@ HashKey Position::generateHashKey() {
         BitBoard pieceBB = bitboards[i];
         while (pieceBB) {
             Square square = popLsb(pieceBB);
-            h ^= pieceKeys[i][square];
+            h ^= pieceKeysTable[i][square];
         }
     }
-    h ^= enPassantKeys[enPassant];
-    h ^= castleKeys[castle];
+    h ^= enPassantKeysTable[enPassant];
+    h ^= castleKeysTable[castle];
     if (side == Side::BLACK) h ^= sideKey;
     return h;
 }
@@ -48,7 +48,25 @@ HashKey Position::generatePawnHashKey() {
         BitBoard pieceBB = bitboards[i];
         while (pieceBB) {
             Square square = popLsb(pieceBB);
-            h ^= pawnKeys[i][square];
+            h ^= pawnKeysTable[i][square];
+        }
+    }
+    h ^= enPassantKeysTable[enPassant];
+    return h;
+}
+
+/** 
+ * @brief The Position::generateNonPawnHashKey function generates the hash key of the non pawn structure from scratch, for a given side.
+ * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
+ */
+HashKey Position::generateNonPawnHashKey(const bool side) {
+    const S32 offset = side ? 6 : 0;
+    HashKey h = 0ULL;
+    for (int i = Pieces::N + offset ; i <= Pieces::K + offset; i++) {
+        BitBoard pieceBB = bitboards[i];
+        while (pieceBB) {
+            Square square = popLsb(pieceBB);
+            h ^= nonPawnKeysTable[i][square];
         }
     }
     return h;
@@ -104,53 +122,53 @@ void Position::wipe(){
     castle = 0;
     hashKey = 0;
     pawnHashKey = 0;
+    nonPawnKeys[0] = nonPawnKeys[1] = 0;
     psqtScore = SCORE_ZERO;
 }
 
 /**
- * @brief The removePiece function removes a piece from the board.
- * 
+ * @brief The addPiece function removes a piece from the board. It also incrementally updates psqt and various hash keys
+ * @param pos the Position object to update
  * @param square The square where the piece is.
  * @param piece The piece to remove.
- * @param hashKey The hash key of the position, to update.
- * @param psqt The psqt score of the position, to update.
  */
-static inline void removePiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, HashKey& hashKey, HashKey& pawnHashKey, PScore &psqt){
+static inline void removePiece(Position& pos, const Piece piece, const Square square){
     // Remove the piece from the bitboard
-    clearBit(bbs[piece], square);
-    // Remove it also from the side and both bitboard
-    clearBit(occ[piece >= 6], square);
-    clearBit(occ[BOTH], square);
+    clearBit(pos.bitboards[piece], square);
+    // Add it also to the side and both bitboard
+    clearBit(pos.occupancies[piece >= p], square);
+    clearBit(pos.occupancies[BOTH], square);
     // Update the hash key
-    hashKey ^= pieceKeys[piece][square];
-    pawnHashKey ^= pawnKeys[piece][square];
+    pos.hashKey ^= pieceKeysTable[piece][square];
+    pos.pawnHashKey ^= pawnKeysTable[piece][square];
+    pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
+    //std::cout << "Removing key from side " << int(piece >= p) << "for piece " << getPieceChar(piece) << " and square " << coords[square] << std::endl;
     // Update the psqt score
-    psqt -= PSQTs[piece][square];
+    pos.psqtScore -= PSQTs[piece][square];
 }
 
 /**l
- * @brief The addPiece function adds a piece to the board.
- *
- * @param square The square where the piece is.
+ * @brief The addPiece function adds a piece to the board. It also incrementally updates psqt and various hash keys
+ * @param pos the Position object to update
+ * @param square The square to add the piece to.
  * @param piece The piece to add.
- * @param hashKey The hash key of the position, to update.
- * @param psqt The psqt score of the position, to update.
  */
-static inline void addPiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, HashKey& hashKey, HashKey& pawnHashKey, PScore &psqt){
+static inline void addPiece(Position& pos, const Piece piece, const Square square){
     // Add the piece to the bitboard
-    setBit(bbs[piece], square);
+    setBit(pos.bitboards[piece], square);
     // Add it also to the side and both bitboard
-    setBit(occ[piece >= 6], square);
-    setBit(occ[BOTH], square);
+    setBit(pos.occupancies[piece >= p], square);
+    setBit(pos.occupancies[BOTH], square);
     // Update the hash key
-    hashKey ^= pieceKeys[piece][square];
-    pawnHashKey ^= pawnKeys[piece][square];
-    assert(psqt.mg() + PSQTs[piece][square].mg() < 0xFFFF);
+    pos.hashKey ^= pieceKeysTable[piece][square];
+    pos.pawnHashKey ^= pawnKeysTable[piece][square];
+    pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
+    //std::cout << "Adding key from side " << int(piece >= p) << "for piece " << getPieceChar(piece) << " and square " << coords[square] << std::endl;
+    assert(pos.psqtScore.mg() + PSQTs[piece][square].mg() < 0xFFFF);
     // std::cout << "Previous psqt score was " << psqt << " and we are adding " << PSQTs[piece][square] << "\n";
     // Update the psqt score
-    psqt += PSQTs[piece][square];
+    pos.psqtScore += PSQTs[piece][square];
 }
-
 
 bool Position::parseFEN(char *fen) {
 
@@ -192,7 +210,7 @@ bool Position::parseFEN(char *fen) {
                 std::cout << "Error: Invalid character in Piece Placement '" << fen[0] << "'. Can't parse FEN string" << std::endl;
                 return false;
             }
-            addPiece(bitboards, occupancies, piece, square, hashKey, pawnHashKey, psqtScore);
+            addPiece(*this, piece, square);
             // std::cout << "After addition of piece " << getPieceChar(piece) << " on square " << coords[square] << " the psqt score is now: " << psqtScore.mg() << "\t" << psqtScore.eg() << std::endl;
             fen++;
             square++;
@@ -292,6 +310,8 @@ FENkeyEval:
     // If everything is alright, generate the hash key for the current position
     hashKey = generateHashKey();
     pawnHashKey = generatePawnHashKey();
+    nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
+    nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
     checkers = calculateCheckers();
     return true;
 }
@@ -410,35 +430,37 @@ bool Position::makeMove(Move move)
     bool isCastle = isCastling(move) > 0;
 
     // First, we remove the piece from the source square
-    removePiece(bitboards, occupancies, piece, from, hashKey, pawnHashKey, psqtScore);
+    removePiece(*this, piece, from);
 
     // If the move is a capture, we remove the captured piece from the target square
     // If the move is a enpassant, we remove the captured pawn from the enPassant square
     if (isEnPass){
-        removePiece(bitboards, occupancies, captured, (side == WHITE ? to + 8 : to - 8), hashKey, pawnHashKey, psqtScore);
-        addPiece(bitboards, occupancies, piece, to, hashKey, pawnHashKey, psqtScore);
+        removePiece(*this, captured, (side == WHITE ? to + 8 : to - 8));
+        addPiece(*this, piece, to);
     }
     else {
         if (captures)
-            removePiece(bitboards, occupancies, captured, to, hashKey, pawnHashKey, psqtScore);
+            removePiece(*this, captured, to);
 
         // If the move is a promotion, we replace the piece with the promoted piece
         if (promotes)
-            addPiece(bitboards, occupancies, promotion, to, hashKey, pawnHashKey, psqtScore);
+            addPiece(*this, promotion, to);
         // Otherwise, we move the piece to the target square
         else
-            addPiece(bitboards, occupancies, piece, to, hashKey, pawnHashKey, psqtScore);
+            addPiece(*this, piece, to);
     }
 
     // Remove the current en passant square from the hash key, as it is no longer valid
-    hashKey ^= enPassantKeys[enPassant];
+    hashKey ^= enPassantKeysTable[enPassant];
+    pawnHashKey ^= enPassantKeysTable[enPassant];
     enPassant = noSquare;
 
     
     // If the move is a double pawn push, we set the en passant square and hash it back in. If not, we don't need to do anything, since the noSquare hash is 0
     if (doublePawnPush)
         enPassant = to + 8 * (1 - 2 * side);
-    hashKey ^= enPassantKeys[enPassant];
+    hashKey ^= enPassantKeysTable[enPassant];
+    pawnHashKey ^= enPassantKeysTable[enPassant];
 
     // If the move is a castle, we move the rook
     if (isCastle)
@@ -450,8 +472,8 @@ bool Position::makeMove(Move move)
             // Check if squares between the king and the rook are attacked
             if (isSquareAttacked(e1, BLACK) || isSquareAttacked(f1, BLACK) || isSquareAttacked(g1, BLACK))
                 return false;
-            removePiece(bitboards, occupancies, R, h1, hashKey, pawnHashKey, psqtScore);
-            addPiece(bitboards, occupancies, R, f1, hashKey, pawnHashKey, psqtScore);
+            removePiece(*this, R, h1);
+            addPiece(*this, R, f1);
             break;
         }
         case c1:
@@ -459,8 +481,8 @@ bool Position::makeMove(Move move)
             // Check if squares between the king and the rook are attacked
             if (isSquareAttacked(e1, BLACK) || isSquareAttacked(d1, BLACK) || isSquareAttacked(c1, BLACK))
                 return false;
-            removePiece(bitboards, occupancies, R, a1, hashKey, pawnHashKey, psqtScore);
-            addPiece(bitboards, occupancies, R, d1, hashKey, pawnHashKey, psqtScore);
+            removePiece(*this, R, a1);
+            addPiece(*this, R, d1);
             break;
         }
         case g8:
@@ -468,8 +490,8 @@ bool Position::makeMove(Move move)
             // Check if squares between the king and the rook are attacked
             if (isSquareAttacked(e8, WHITE) || isSquareAttacked(f8, WHITE) || isSquareAttacked(g8, WHITE))
                 return false;
-            removePiece(bitboards, occupancies, r, h8, hashKey, pawnHashKey, psqtScore);
-            addPiece(bitboards, occupancies, r, f8, hashKey, pawnHashKey, psqtScore);
+            removePiece(*this, r, h8);
+            addPiece(*this, r, f8);
             break;
         }
         case c8:
@@ -477,8 +499,8 @@ bool Position::makeMove(Move move)
             // Check if squares between the king and the rook are attacked
             if (isSquareAttacked(e8, WHITE) || isSquareAttacked(d8, WHITE) || isSquareAttacked(c8, WHITE))
                 return false;
-            removePiece(bitboards, occupancies, r, a8, hashKey, pawnHashKey, psqtScore);
-            addPiece(bitboards, occupancies, r, d8, hashKey, pawnHashKey, psqtScore);
+            removePiece(*this, r, a8);
+            addPiece(*this, r, d8);
             break;
         }
         }
@@ -494,12 +516,12 @@ bool Position::makeMove(Move move)
     hashKey ^= sideKey;
 
     // Remove previous castle rights
-    hashKey ^= castleKeys[castle];
+    hashKey ^= castleKeysTable[castle];
     
     // Add new castle rights
     castle &= castlingRights[from];
     castle &= castlingRights[to];
-    hashKey ^= castleKeys[castle];
+    hashKey ^= castleKeysTable[castle];
     // Change side to move
     side ^= 1;
 
@@ -704,6 +726,8 @@ void Position::reflect() {
 	// Recalculate hash
     hashKey = generateHashKey();
     pawnHashKey = generatePawnHashKey();
+    nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
+    nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
 }
 
 std::string Position::getFEN() {
@@ -1544,7 +1568,8 @@ void Position::generateUnsortedMoves(MoveList& moveList) {
 void Position::makeNullMove(){
     side ^= 1;
     hashKey ^= sideKey;
-    hashKey ^= enPassantKeys[enPassant];
+    hashKey ^= enPassantKeysTable[enPassant];
+    pawnHashKey ^= enPassantKeysTable[enPassant];
     enPassant = noSquare;
     fiftyMove++;
     totalPly++;
@@ -1554,7 +1579,9 @@ void Position::makeNullMove(){
 
 UndoInfo::UndoInfo(Position& position){
     hashKey = position.hashKey;
-    pawnHashKey = position.pawnHashKey;
+    pawnsHashKey = position.pawnHashKey;
+    nonPawnsHashKey[WHITE] = position.nonPawnKeys[WHITE];
+    nonPawnsHashKey[BLACK] = position.nonPawnKeys[BLACK];
     enPassant = position.enPassant;
     castle = position.castle;
     fiftyMove = position.fiftyMove;
@@ -1569,7 +1596,9 @@ UndoInfo::UndoInfo(Position& position){
 
 void UndoInfo::undoMove(Position& position, Move move){
     position.hashKey = hashKey;
-    position.pawnHashKey = pawnHashKey;
+    position.pawnHashKey = pawnsHashKey;
+    position.nonPawnKeys[WHITE] = nonPawnsHashKey[WHITE];
+    position.nonPawnKeys[BLACK] = nonPawnsHashKey[BLACK];
     position.enPassant = enPassant;
     position.castle = castle;
     position.fiftyMove = fiftyMove;
@@ -1597,7 +1626,9 @@ void UndoInfo::undoMove(Position& position, Move move){
 
 void UndoInfo::undoNullMove(Position& position){
     position.hashKey = hashKey;
-    position.pawnHashKey = pawnHashKey;
+    position.pawnHashKey = pawnsHashKey;
+    position.nonPawnKeys[WHITE] = nonPawnsHashKey[WHITE];
+    position.nonPawnKeys[BLACK] = nonPawnsHashKey[BLACK];
     position.enPassant = enPassant;
     position.castle = castle;
     position.fiftyMove = fiftyMove;

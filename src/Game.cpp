@@ -116,7 +116,7 @@ void Game::reset(){
     memset(captureHistoryTable, 0, sizeof(captureHistoryTable));
     memset(continuationHistoryTable, 0, sizeof(continuationHistoryTable));
     memset(pawnsCorrHist, 0, sizeof(pawnsCorrHist));
-    memset(piecesCorrHist, 0, sizeof(piecesCorrHist));
+    memset(nonPawnsCorrHist, 0, sizeof(nonPawnsCorrHist));
 
 
     // Clear pv len and pv table
