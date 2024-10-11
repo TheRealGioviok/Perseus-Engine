@@ -3,6 +3,7 @@
 #include "BBmacros.h"
 #include "move.h"
 #include "Game.h"
+#include <algorithm>
 // history table
 S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
 
@@ -14,6 +15,10 @@ Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
 
 // Continuation History table
 S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
+
+// Correction History
+S32 pawnCorrHist[2][CORRHISTSIZE];
+
 
 void updateHistoryMove(bool side, Move move, S32 delta) {
     S32 *current = &historyTable[side][indexFromTo(moveSource(move),moveTarget(move))];
@@ -56,4 +61,19 @@ void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMove
         if (noisyMoves[i] == bestMove) continue;
         updateCaptureHistory(noisyMoves[i], -delta);
     }
+}
+
+Score correctStaticEval(Score eval, bool side, HashKey pawnHash) {
+    const S32 bonus = pawnCorrHist[side][pawnHash % CORRHISTSIZE];
+    const S32 corrected = eval + bonus / CORRHISTSCALE;
+    return static_cast<Score>(std::clamp<S32>(corrected, -mateValue, +mateValue));
+}
+
+void updateCorrHist(Score bonus, Depth depth, bool side, HashKey pawnHash){
+    auto& ph = pawnCorrHist[side][pawnHash % CORRHISTSIZE];
+    const S32 scaledBonus = bonus * CORRHISTSCALE;
+    const S32 weight = std::min(1+depth, 16);
+
+    ph = (ph * (256 - weight) + scaledBonus * weight) / 256;
+    ph = static_cast<Score>(std::clamp<S32>(ph, -MAXCORRHIST, MAXCORRHIST));
 }

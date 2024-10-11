@@ -48,7 +48,7 @@ HashKey Position::generatePawnHashKey() {
         BitBoard pieceBB = bitboards[i];
         while (pieceBB) {
             Square square = popLsb(pieceBB);
-            h ^= pieceKeys[i][square];
+            h ^= pawnKeys[i][square];
         }
     }
     return h;
@@ -103,6 +103,7 @@ void Position::wipe(){
     plyFromNull = 0;
     castle = 0;
     hashKey = 0;
+    pawnHashKey = 0;
     psqtScore = SCORE_ZERO;
 }
 
@@ -114,7 +115,7 @@ void Position::wipe(){
  * @param hashKey The hash key of the position, to update.
  * @param psqt The psqt score of the position, to update.
  */
-static inline void removePiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, U64& hashKey, PScore &psqt){
+static inline void removePiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, HashKey& hashKey, HashKey& pawnHashKey, PScore &psqt){
     // Remove the piece from the bitboard
     clearBit(bbs[piece], square);
     // Remove it also from the side and both bitboard
@@ -122,6 +123,7 @@ static inline void removePiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square
     clearBit(occ[BOTH], square);
     // Update the hash key
     hashKey ^= pieceKeys[piece][square];
+    pawnHashKey ^= pawnKeys[piece][square];
     // Update the psqt score
     psqt -= PSQTs[piece][square];
 }
@@ -134,7 +136,7 @@ static inline void removePiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square
  * @param hashKey The hash key of the position, to update.
  * @param psqt The psqt score of the position, to update.
  */
-static inline void addPiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, U64& hashKey, PScore &psqt){
+static inline void addPiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square square, HashKey& hashKey, HashKey& pawnHashKey, PScore &psqt){
     // Add the piece to the bitboard
     setBit(bbs[piece], square);
     // Add it also to the side and both bitboard
@@ -142,6 +144,7 @@ static inline void addPiece(BitBoard* bbs, BitBoard* occ, Piece piece, Square sq
     setBit(occ[BOTH], square);
     // Update the hash key
     hashKey ^= pieceKeys[piece][square];
+    pawnHashKey ^= pawnKeys[piece][square];
     assert(psqt.mg() + PSQTs[piece][square].mg() < 0xFFFF);
     // std::cout << "Previous psqt score was " << psqt << " and we are adding " << PSQTs[piece][square] << "\n";
     // Update the psqt score
@@ -189,7 +192,7 @@ bool Position::parseFEN(char *fen) {
                 std::cout << "Error: Invalid character in Piece Placement '" << fen[0] << "'. Can't parse FEN string" << std::endl;
                 return false;
             }
-            addPiece(bitboards, occupancies, piece, square, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, piece, square, hashKey, pawnHashKey, psqtScore);
             // std::cout << "After addition of piece " << getPieceChar(piece) << " on square " << coords[square] << " the psqt score is now: " << psqtScore.mg() << "\t" << psqtScore.eg() << std::endl;
             fen++;
             square++;
@@ -288,6 +291,7 @@ bool Position::parseFEN(char *fen) {
 FENkeyEval:
     // If everything is alright, generate the hash key for the current position
     hashKey = generateHashKey();
+    pawnHashKey = generatePawnHashKey();
     checkers = calculateCheckers();
     return true;
 }
@@ -406,24 +410,24 @@ bool Position::makeMove(Move move)
     bool isCastle = isCastling(move) > 0;
 
     // First, we remove the piece from the source square
-    removePiece(bitboards, occupancies, piece, from, hashKey, psqtScore);
+    removePiece(bitboards, occupancies, piece, from, hashKey, pawnHashKey, psqtScore);
 
     // If the move is a capture, we remove the captured piece from the target square
     // If the move is a enpassant, we remove the captured pawn from the enPassant square
     if (isEnPass){
-        removePiece(bitboards, occupancies, captured, (side == WHITE ? to + 8 : to - 8), hashKey, psqtScore);
-        addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+        removePiece(bitboards, occupancies, captured, (side == WHITE ? to + 8 : to - 8), hashKey, pawnHashKey, psqtScore);
+        addPiece(bitboards, occupancies, piece, to, hashKey, pawnHashKey, psqtScore);
     }
     else {
         if (captures)
-            removePiece(bitboards, occupancies, captured, to, hashKey, psqtScore);
+            removePiece(bitboards, occupancies, captured, to, hashKey, pawnHashKey, psqtScore);
 
         // If the move is a promotion, we replace the piece with the promoted piece
         if (promotes)
-            addPiece(bitboards, occupancies, promotion, to, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, promotion, to, hashKey, pawnHashKey, psqtScore);
         // Otherwise, we move the piece to the target square
         else
-            addPiece(bitboards, occupancies, piece, to, hashKey, psqtScore);
+            addPiece(bitboards, occupancies, piece, to, hashKey, pawnHashKey, psqtScore);
     }
 
     // Remove the current en passant square from the hash key, as it is no longer valid
@@ -446,8 +450,8 @@ bool Position::makeMove(Move move)
             // Check if squares between the king and the rook are attacked
             if (isSquareAttacked(e1, BLACK) || isSquareAttacked(f1, BLACK) || isSquareAttacked(g1, BLACK))
                 return false;
-            removePiece(bitboards, occupancies, R, h1, hashKey, psqtScore);
-            addPiece(bitboards, occupancies, R, f1, hashKey, psqtScore);
+            removePiece(bitboards, occupancies, R, h1, hashKey, pawnHashKey, psqtScore);
+            addPiece(bitboards, occupancies, R, f1, hashKey, pawnHashKey, psqtScore);
             break;
         }
         case c1:
@@ -455,8 +459,8 @@ bool Position::makeMove(Move move)
             // Check if squares between the king and the rook are attacked
             if (isSquareAttacked(e1, BLACK) || isSquareAttacked(d1, BLACK) || isSquareAttacked(c1, BLACK))
                 return false;
-            removePiece(bitboards, occupancies, R, a1, hashKey, psqtScore);
-            addPiece(bitboards, occupancies, R, d1, hashKey, psqtScore);
+            removePiece(bitboards, occupancies, R, a1, hashKey, pawnHashKey, psqtScore);
+            addPiece(bitboards, occupancies, R, d1, hashKey, pawnHashKey, psqtScore);
             break;
         }
         case g8:
@@ -464,8 +468,8 @@ bool Position::makeMove(Move move)
             // Check if squares between the king and the rook are attacked
             if (isSquareAttacked(e8, WHITE) || isSquareAttacked(f8, WHITE) || isSquareAttacked(g8, WHITE))
                 return false;
-            removePiece(bitboards, occupancies, r, h8, hashKey, psqtScore);
-            addPiece(bitboards, occupancies, r, f8, hashKey, psqtScore);
+            removePiece(bitboards, occupancies, r, h8, hashKey, pawnHashKey, psqtScore);
+            addPiece(bitboards, occupancies, r, f8, hashKey, pawnHashKey, psqtScore);
             break;
         }
         case c8:
@@ -473,8 +477,8 @@ bool Position::makeMove(Move move)
             // Check if squares between the king and the rook are attacked
             if (isSquareAttacked(e8, WHITE) || isSquareAttacked(d8, WHITE) || isSquareAttacked(c8, WHITE))
                 return false;
-            removePiece(bitboards, occupancies, r, a8, hashKey, psqtScore);
-            addPiece(bitboards, occupancies, r, d8, hashKey, psqtScore);
+            removePiece(bitboards, occupancies, r, a8, hashKey, pawnHashKey, psqtScore);
+            addPiece(bitboards, occupancies, r, d8, hashKey, pawnHashKey, psqtScore);
             break;
         }
         }
@@ -699,6 +703,7 @@ void Position::reflect() {
 	side = side == WHITE ? BLACK : WHITE;
 	// Recalculate hash
     hashKey = generateHashKey();
+    pawnHashKey = generatePawnHashKey();
 }
 
 std::string Position::getFEN() {
@@ -1549,6 +1554,7 @@ void Position::makeNullMove(){
 
 UndoInfo::UndoInfo(Position& position){
     hashKey = position.hashKey;
+    pawnHashKey = position.pawnHashKey;
     enPassant = position.enPassant;
     castle = position.castle;
     fiftyMove = position.fiftyMove;
@@ -1563,6 +1569,7 @@ UndoInfo::UndoInfo(Position& position){
 
 void UndoInfo::undoMove(Position& position, Move move){
     position.hashKey = hashKey;
+    position.pawnHashKey = pawnHashKey;
     position.enPassant = enPassant;
     position.castle = castle;
     position.fiftyMove = fiftyMove;
@@ -1590,6 +1597,7 @@ void UndoInfo::undoMove(Position& position, Move move){
 
 void UndoInfo::undoNullMove(Position& position){
     position.hashKey = hashKey;
+    position.pawnHashKey = pawnHashKey;
     position.enPassant = enPassant;
     position.castle = castle;
     position.fiftyMove = fiftyMove;

@@ -3,6 +3,7 @@
 
 // random piece keys
 extern HashKey pieceKeys[12][64];
+extern HashKey pawnKeys[12][64];
 // random enPassant keys
 extern HashKey enPassantKeys[65];
 // random castling keys
