@@ -70,10 +70,10 @@ Score correctStaticEval(Position& pos, const Score eval) {
 
     const S32 pawnBonus = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE];
 
-    const S32 nonPawnBonus = (
+    const S32 nonPawnBonus = 
         nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE] 
         + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
-    ) / 2;
+    ;
 
     const S32 bonus = pawnBonus + nonPawnBonus;
     const S32 corrected = eval + bonus / CORRHISTSCALE;
