@@ -85,17 +85,17 @@ constexpr Score COMPLEXITYALMOSTUNWINNABLE = -28;
 constexpr Score COMPLEXITYBIAS = -90;
 
 
-constexpr Score KNIGHTATTACKOUTERRING = 9;
-constexpr Score KNIGHTATTACKINNERRING = 11;
-constexpr Score BISHOPATTACKOUTERRING = 8;
-constexpr Score BISHOPATTACKINNERRING = 11;
-constexpr Score ROOKATTACKOUTERRING = 12;
-constexpr Score ROOKATTACKINNERRING = 17;
-constexpr Score QUEENATTACKOUTERRING = 24;
-constexpr Score QUEENATTACKINNERRING = 34;
+constexpr Score KNIGHTATTACKOUTERRING = 14;
+constexpr Score KNIGHTATTACKINNERRING = 18;
+constexpr Score BISHOPATTACKOUTERRING = 13;
+constexpr Score BISHOPATTACKINNERRING = 18;
+constexpr Score ROOKATTACKOUTERRING = 17;
+constexpr Score ROOKATTACKINNERRING = 20;
+constexpr Score QUEENATTACKOUTERRING = 33;
+constexpr Score QUEENATTACKINNERRING = 35;
 
-constexpr Score NOQUEENDANGER = -65;
-constexpr Score PINNEDSHELTERDANGER = 11;
+constexpr Score NOQUEENDANGER = -54;
+constexpr Score PINNEDSHELTERDANGER = 16;
 
 static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) | files(5);
 
