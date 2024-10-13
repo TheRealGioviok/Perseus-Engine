@@ -25,7 +25,7 @@ extern S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_S
 // Correction History
 extern S32 pawnsCorrHist[2][CORRHISTSIZE];
 extern S32 nonPawnsCorrHist[2][2][CORRHISTSIZE];
-extern S32 continuationHistoryCorrectionTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
+extern S32 continuationHistoryCorrectionTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES]; // Index by ply-1 and ply-2 move
 
 struct SStack {
     Move excludedMove = 0;
