@@ -5,6 +5,9 @@
 #include "history.h"
 #include "movegen.h"
 
+// We love forward decl
+struct SStack;
+
 // TTmove is always first
 
 // Followed by captures / promotions / promocaptures / enpassants
@@ -37,6 +40,7 @@ struct Position{
     U8 castle;
     HashKey hashKey;
     HashKey pawnHashKey;
+    HashKey nonPawnKeys[2];
     PScore psqtScore; // PSQT score, incrementally updated
 
     // The default constructor instantiates the position with the standard chess starting position.
@@ -57,6 +61,12 @@ struct Position{
      * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
      */
     HashKey generatePawnHashKey();
+
+    /** 
+     * @brief The Position::generateNonPawnHashKey function generates the hash key of the non pawn structure from scratch, for a given side.
+     * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
+     */
+    HashKey generateNonPawnHashKey(const bool side);
 
     /**
      * @brief The Position::print function prints the position to stdout.
@@ -217,7 +227,8 @@ struct Position{
 struct UndoInfo {
     // Irreversible information
     HashKey hashKey;
-    HashKey pawnHashKey;
+    HashKey pawnsHashKey;
+    HashKey nonPawnsHashKey[2];
     Square enPassant;
     U8 castle;
     U8 fiftyMove;
