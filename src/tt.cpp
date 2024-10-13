@@ -41,7 +41,7 @@ ttEntry* probeTT(HashKey key) {
 void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv, bool wasPv) {
 
     ttEntry *entry = &tt[hashEntryFor(key)];
-    if (((flags & hashEXACT) > (entry->flags & hashEXACT)) || (entry->flags & hashOLD) || depth + 2 * isPv + 3 * (entry->hashKey != key) >= entry->depth) {
+    if ((flags == hashEXACT) || ((flags & hashEXACT) > (entry->flags & hashEXACT)) || (entry->flags & hashOLD) || depth + 2 * isPv + 3 * (entry->hashKey != key) >= entry->depth) {
         score -= ply * (score < -mateValue);
         score += ply * (score > mateValue);
 
