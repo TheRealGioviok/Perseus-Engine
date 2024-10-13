@@ -229,6 +229,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
 
             // make null move
             makeNullMove();
+            prefetch(&tt[hashEntryFor(pos.hashKey)]);
             ss->move = noMove;
             ss->contHistEntry = continuationHistoryTable[0];
 
@@ -302,6 +303,7 @@ skipPruning:
         
         if (makeMove(currMove))
         {
+            prefetch(&tt[hashEntryFor(pos.hashKey)]);
             U64 nodesBefore = nodes;
             // // Singular extension
             // Depth extension = 0;
@@ -524,6 +526,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
             break;
         if (makeMove(move))
         {
+            prefetch(&tt[hashEntryFor(pos.hashKey)]);
             ss->move = move;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))];
             moveCount++;
