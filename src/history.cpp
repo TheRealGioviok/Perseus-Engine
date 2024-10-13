@@ -19,6 +19,7 @@ S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES]
 // Correction History
 S32 pawnsCorrHist[2][CORRHISTSIZE]; // stm - hash
 S32 nonPawnsCorrHist[2][2][CORRHISTSIZE]; // stm - side - hash
+S32 continuationHistoryCorrectionTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
 
 
 void updateHistoryMove(bool side, Move move, S32 delta) {
@@ -65,7 +66,7 @@ void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMove
 }
 
 
-Score correctStaticEval(Position& pos, const Score eval) {
+Score correctStaticEval(const SStack* ss, const Position& pos, const Score eval) {
     const bool side = pos.side;
 
     const S32 pawnBonus = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE];
@@ -75,7 +76,9 @@ Score correctStaticEval(Position& pos, const Score eval) {
         + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
     ;
 
-    const S32 bonus = pawnBonus + nonPawnBonus;
+    const S32 contHistBonus = continuationHistoryCorrectionTable[indexMovePieceTo((ss-1)->move)][indexMovePieceTo((ss-2)->move)];
+
+    const S32 bonus = pawnBonus + nonPawnBonus + contHistBonus;
     const S32 corrected = eval + bonus / CORRHISTSCALE;
 
     return static_cast<Score>(std::clamp(corrected, -mateValue, +mateValue));
@@ -86,7 +89,7 @@ void updateSingleCorrHist(S32& entry, const S32 bonus, const S32 weight){
     entry = static_cast<Score>(std::clamp(entry, -MAXCORRHIST, MAXCORRHIST));
 }
 
-void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
+void updateCorrHist(const SStack* ss, const Position& pos, const Score bonus, const Depth depth){
     const bool side = pos.side;
     const S32 scaledBonus = bonus * CORRHISTSCALE; 
     const S32 weight = std::min(1 + depth, 16);
@@ -94,8 +97,10 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
     auto& pawnEntry = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE];
     auto& wNonPawnEntry = nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE];
     auto& bNonPawnEntry = nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE];
+    auto& contHistEntry = continuationHistoryCorrectionTable[indexMovePieceTo((ss-1)->move)][indexMovePieceTo((ss-2)->move)];
     
     updateSingleCorrHist(pawnEntry, scaledBonus, weight);
     updateSingleCorrHist(wNonPawnEntry, scaledBonus, weight);
     updateSingleCorrHist(bNonPawnEntry, scaledBonus, weight);
+    updateSingleCorrHist(contHistEntry, scaledBonus, weight);
 }

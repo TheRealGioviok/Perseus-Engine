@@ -61,6 +61,10 @@ inline S32 indexPieceTo(Piece piece, Square to) {
 	return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
 }
 
+inline S32 indexMovePieceTo(Move move){
+    return indexPieceTo(movePiece(move), moveTarget(move));
+}
+
 static inline S32 stat_bonus(int depth) {
 #if ENABLEBETTERHISTORYFORMULA
 	// Approximately verbatim stat bonus formula from Stockfish // Formula from Ethereal, who took it from stockfish. I love chess programming.
@@ -73,6 +77,6 @@ static inline S32 stat_bonus(int depth) {
 #define MAXHISTORYABS 16384LL
 void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);
 
-Score correctStaticEval(Position& pos, const Score eval);
+Score correctStaticEval(const SStack* ss, const Position& pos, const Score eval);
 
-void updateCorrHist(Position& pos, const Score bonus, const Depth depth);
+void updateCorrHist(const SStack* ss, const Position& pos, const Score bonus, const Depth depth);
