@@ -288,17 +288,18 @@ skipPruning:
     {
         S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
         Move currMove = onlyMove(moveList.moves[i]);
+        const bool isQuiet = okToReduce(currMove);
         if (!skipQuiets) { 
             if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
         }
-        else if (currMoveScore < COUNTERSCORE) continue;
+        else if (isQuiet || (!PVNode && (currMoveScore <= BADNOISYMOVE))) continue;
         // assert (
         //     i != 0 || !excludedMove ||
         //     (excludedMove == currMove)
         // );
         if (!currMove) continue; // || currMove == excludedMove
 
-        const bool isQuiet = okToReduce(currMove);
+        
         // const bool givesCheck = isCheck(currMove) || pos.inCheck();
         
         if (makeMove(currMove))
@@ -708,8 +709,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.700609 ) calculated with bench @24
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.427329652;    
+            // Percentage ( 0.701478 ) calculated with bench @24
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.425561457;    
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
