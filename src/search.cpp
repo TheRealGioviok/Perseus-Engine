@@ -105,9 +105,9 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     Score eval;
     Score rawEval; // for corrhist
     bool improving = true;
-    // const Move excludedMove = ss->excludedMove;
+    const Move excludedMove = ss->excludedMove;
     // Guard from pvlen editing when in singular extension
-    // if (!excludedMove) 
+    if (!excludedMove) 
         pvLen[ply] = ply;
 
     // Update seldepth
@@ -129,7 +129,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     }
 
     //// TT probe
-    ttEntry *tte = probeTT(pos.hashKey); //excludedMove ? nullptr : probeTT(pos.hashKey);
+    ttEntry *tte = excludedMove ? nullptr : probeTT(pos.hashKey);
     const bool ttHit = tte;
     const Score ttScore = ttHit ? adjustMateScore(tte->score, ply) : noScore;
     const PackedMove ttMove = ttHit ? tte->bestMove : 0;
@@ -163,9 +163,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     clearKillers(ss+1);
     // Clear excluded move
     (ss+1)->excludedMove = noMove;
-    
-    if (inCheck && (depth <= 0 || ply < currSearch * (1 + PVNode)))
-        depth++;
 
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta, ss);
@@ -195,9 +192,9 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
             eval = ttScore;
     }
-    // else if (excludedMove){
-    //     eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
-    // }
+    else if (excludedMove){
+        eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
+    }
     else {
         rawEval = evaluate();
         eval = ss->staticEval = correctStaticEval(pos, rawEval);
@@ -212,7 +209,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         improving = ss->staticEval > (ss - 4)->staticEval;
 
     // Pruning time
-    if (!PVNode) // && !excludedMove)
+    if (!PVNode && !excludedMove)
     {
         // RFP
         if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, improving) >= beta) // && !excludedMove)
@@ -288,6 +285,7 @@ skipPruning:
     {
         S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
         Move currMove = onlyMove(moveList.moves[i]);
+        if (sameMovePos(currMove, excludedMove)) continue;
         if (!skipQuiets) { 
             if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
         }
@@ -303,42 +301,46 @@ skipPruning:
         
         if (makeMove(currMove))
         {
+            // Prefetch tt
             prefetch(&tt[hashEntryFor(pos.hashKey)]);
             U64 nodesBefore = nodes;
             // // Singular extension
-            // Depth extension = 0;
-            // if (i == 0 // Can only happen on ttMove
-            //     && ply < currSearch * 2  
-            //     && !RootNode 
-            //     && depth >= singularSearchDepth
-            //     && !excludedMove 
-            //     && (ttBound & hashLOWER) 
-            //     && abs(ttScore) < mateValue 
-            //     && ttDepth >= depth - 3
-            // ){
-            //     // Increase singular candidates
-            //     ++seCandidates;
-            //     const Score singularBeta = ttScore - singularDepthMultiplier * depth;
-            //     const Depth singularDepth = (depth - 1) / 2;
+            Depth extension = 0;
+            if (!excludedMove && ply < currSearch * (1 + PVNode)){
+                if (inCheck)
+                    extension = 1;
+                else if (i == 0 // Can only happen on ttMove
+                    && ply < currSearch * 2  
+                    && !RootNode 
+                    && depth >= singularSearchDepth
+                    && (ttBound & hashLOWER) 
+                    && abs(ttScore) < mateValue 
+                    && ttDepth >= depth - 3
+                ){
+                    // Increase singular candidates
+                    ++seCandidates;
+                    const Score singularBeta = ttScore - singularDepthMultiplier * depth;
+                    const Depth singularDepth = (depth - 1) / 2;
+                    ss->excludedMove = currMove;
+                    undo(undoer, currMove);
+                    const Score singularScore = search(singularBeta - 1, singularBeta, singularDepth, cutNode, ss);
+                    makeMove(currMove);
+                    ss->excludedMove = noMove;
 
-            //     ss->excludedMove = currMove;
-            //     const Score singularScore = search(singularBeta - 1, singularBeta, singularDepth, cutNode, ss);
-            //     ss->excludedMove = noMove;
+                    if (singularScore < singularBeta) {
+                        extension = 1;
+                        // Increase singular activations
+                        ++seActivations;
+                    }
+                    // else{
+                    //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
+                    // }
+                    // Update avg dist
+                    avgDist += singularScore - singularBeta;
+                }
+            }
 
-            //     if (singularScore < singularBeta) {
-            //         extension = 1;
-            //         // Increase singular activations
-            //         ++seActivations;
-            //     }
-            //     // else{
-            //     //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
-            //     // }
-
-            //     // Update avg dist
-            //     avgDist += abs(singularScore - singularBeta);
-            // }
-
-            Depth newDepth = depth - 1; // + extension;
+            Depth newDepth = depth - 1 + extension;
 
             ss->move = currMove;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
@@ -424,13 +426,13 @@ skipPruning:
 
     //// Check for checkmate /
     if (moveSearched == 0){
-        // return excludedMove ? alpha : (inCheck ? matedIn(ply) : randomizedDrawScore(nodes)); // Randomize draw score so that we try to explore different lines
-        return inCheck ? matedIn(ply) : randomizedDrawScore(nodes);
+        return excludedMove ? alpha : (inCheck ? matedIn(ply) : randomizedDrawScore(nodes)); // Randomize draw score so that we try to explore different lines
+        // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes);
     }
         // 
         // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
-    if (!stopped){ // && !excludedMove){
+    if (!stopped && !excludedMove){
         if (!inCheck
             && (!bestMove || okToReduce(bestMove))
             && !(ttBound == hashLOWER && bestScore <= ss->staticEval)
@@ -526,6 +528,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
             break;
         if (makeMove(move))
         {
+            // Prefetch tt
             prefetch(&tt[hashEntryFor(pos.hashKey)]);
             ss->move = move;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))];
@@ -708,8 +711,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.700609 ) calculated with bench @24
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.427329652;    
+            // Percentage ( 0.695748 ) calculated with bench @20
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.437302012;    
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
