@@ -213,7 +213,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     {
         // RFP
         if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, improving) >= beta) // && !excludedMove)
-            return eval;
+            return beta + (eval - beta) / 3;
 
         // Null move pruning
         if (eval >= ss->staticEval &&
@@ -325,6 +325,7 @@ skipPruning:
                     undo(undoer, currMove);
                     const Score singularScore = search(singularBeta - 1, singularBeta, singularDepth, cutNode, ss);
                     makeMove(currMove);
+                    prefetch(&tt[hashEntryFor(pos.hashKey)]);
                     ss->excludedMove = noMove;
 
                     if (singularScore < singularBeta) {
@@ -711,8 +712,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.695748 ) calculated with bench @20
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.437302012;    
+            // Percentage ( 0.707985 ) calculated with bench @20
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.412459304;
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
