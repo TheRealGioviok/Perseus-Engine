@@ -307,9 +307,8 @@ skipPruning:
             // // Singular extension
             Depth extension = 0;
             if (!excludedMove && ply < currSearch * (1 + PVNode)){
-                if (inCheck)
-                    extension = 1;
-                else if (i == 0 // Can only happen on ttMove
+                
+                if (i == 0 // Can only happen on ttMove
                     && ply < currSearch * 2  
                     && !RootNode 
                     && depth >= singularSearchDepth
@@ -329,15 +328,19 @@ skipPruning:
 
                     if (singularScore < singularBeta) {
                         extension = 1;
+                        if (singularScore + 100 < singularBeta) extension = 2;
                         // Increase singular activations
                         ++seActivations;
                     }
+                    
                     // else{
                     //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
                     // }
                     // Update avg dist
                     avgDist += singularScore - singularBeta;
                 }
+                else if (inCheck)
+                    extension = 1;
             }
 
             Depth newDepth = depth - 1 + extension;
@@ -711,8 +714,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.695748 ) calculated with bench @20
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.437302012;    
+            // Percentage ( 0.73734 ) calculated with bench @20
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.356226436;    
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
