@@ -329,7 +329,11 @@ skipPruning:
 
                     if (singularScore < singularBeta) {
                         extension = 1;
-                        if (!PVNode && ss->doubleExtensions < maximumDoubleExtensions && singularScore + doubleExtensionMargin < singularBeta) extension = 2;
+                        if (!PVNode && ss->doubleExtensions < maximumDoubleExtensions && singularScore + doubleExtensionMargin < singularBeta) {
+                            ++ss->doubleExtensions;
+                            //std::cout << "Double extension counter "<<ss->doubleExtensions<<std::endl;
+                            extension = 2;
+                        }
                         // Increase singular activations
                         ++seActivations;
                     }
