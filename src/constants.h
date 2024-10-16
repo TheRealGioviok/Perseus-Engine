@@ -123,6 +123,8 @@ extern int nmpQ2;
 extern int razorQ1;
 extern int razorQ2;
 extern int singularDepthMultiplier;	 // [1, 6]
+extern int maximumDoubleExtensions;
+extern int doubleExtensionMargin;
 extern Depth IIRdepth;				 // [3, 7]
 extern Depth razorDepth;			 // [2, 5]
 extern Depth singularSearchDepth;	 // [4, 8]
