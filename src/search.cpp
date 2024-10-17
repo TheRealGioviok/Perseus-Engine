@@ -167,6 +167,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta, ss);
 
+    (ss)->doubleExtensions = (ss-1)->doubleExtensions;
+
     // else if (depth < ttDepth && (ttBound & hashLOWER)){
     //     if (ply == 1) depth += std::min(3, ttDepth - depth);
     //     else depth++; // Principled iterative extensions: If the tt entry is a lower bound (or exact), we don't search shallower than the tt depth
@@ -309,7 +311,6 @@ skipPruning:
             if (!excludedMove && ply < currSearch * (1 + PVNode)){
                 
                 if (i == 0 // Can only happen on ttMove
-                    && ply < currSearch * 2  
                     && !RootNode 
                     && depth >= singularSearchDepth
                     && (ttBound & hashLOWER) 
@@ -328,7 +329,11 @@ skipPruning:
 
                     if (singularScore < singularBeta) {
                         extension = 1;
-                        if (singularScore + 100 < singularBeta) extension = 2;
+                        if (!PVNode && ss->doubleExtensions < maximumDoubleExtensions && singularScore + doubleExtensionMargin < singularBeta) {
+                            ++ss->doubleExtensions;
+                            //std::cout << "Double extension counter "<<ss->doubleExtensions<<std::endl;
+                            extension = 2;
+                        }
                         // Increase singular activations
                         ++seActivations;
                     }
@@ -714,8 +719,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.73734 ) calculated with bench @20
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.356226436;    
+            // Percentage ( 0.711742 ) calculated with bench @22
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.405003498;    
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
