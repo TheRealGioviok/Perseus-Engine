@@ -95,6 +95,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     assert(pos.pawnHashKey == pos.generatePawnHashKey());
     assert(pos.nonPawnKeys[WHITE] == pos.generateNonPawnHashKey(WHITE));
     assert(pos.nonPawnKeys[BLACK] == pos.generateNonPawnHashKey(BLACK));
+    assert(pos.minorKey == pos.generateMinorHashKey());
     // Ply overflow
     if (ply >= maxPly)
         return evaluate();
@@ -602,12 +603,12 @@ void Game::startSearch(bool halveTT = true)
     U64 optim = 0xffffffffffffffffULL;
     switch (searchMode)
     {
-    case 0: case 3:               // Infinite search
+    case 0:               // Infinite search
         depth = maxPly - 1; // Avoid overflow
     case 1: // Fixed depth
         optim = moveTime = 0xffffffffffffffffULL;
         break;
-#define UCILATENCYMS 20
+#define UCILATENCYMS 50
     case 2: // Time control
         moveTime = getTime64();
         U64 totalTime;
@@ -619,8 +620,12 @@ void Game::startSearch(bool halveTT = true)
         moveTime += totalTime;
         depth = maxPly - 1;
         break;
+    case 3:
+        moveTime -= UCILATENCYMS;
+        optim = moveTime;
+        depth = maxPly - 1;
+        break;
     }
-
     double nodesTmScale = 1.0;
 
     // Clear nodePerMoveTable
@@ -640,7 +645,7 @@ void Game::startSearch(bool halveTT = true)
     Score score = search(noScore, infinity, 1, false, ss);
     Move bestMove = pvTable[0][0];
 
-    std::cout << "info score depth 1 cp " << score << " nodes " << nodes << " moves ";
+    std::cout << "info depth 1 score cp " << score << " nodes " << nodes << " moves ";
     printMove(bestMove);
     std::cout << std::endl;
     depth = std::min(depth, Depth(maxPly - 3));
