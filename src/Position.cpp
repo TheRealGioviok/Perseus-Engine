@@ -77,9 +77,15 @@ HashKey Position::generateNonPawnHashKey(const bool side) {
  * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
  */
 HashKey Position::generateMinorHashKey() {
-    const S32 offset = side ? 6 : 0;
     HashKey h = 0ULL;
-    for (int i = Pieces::N + offset ; i <= Pieces::K + offset; i++) {
+    for (int i = Pieces::N ; i <= Pieces::B; i++) {
+        BitBoard pieceBB = bitboards[i];
+        while (pieceBB) {
+            Square square = popLsb(pieceBB);
+            h ^= minorKeysTable[i][square];
+        }
+    }
+    for (int i = Pieces::n ; i <= Pieces::b; i++) {
         BitBoard pieceBB = bitboards[i];
         while (pieceBB) {
             Square square = popLsb(pieceBB);

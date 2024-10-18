@@ -2,9 +2,9 @@
 #include "Position.h"
 #include "history.h"
 
-extern U64 seCandidates;
+extern S64 seCandidates;
 extern U64 seActivations;
-extern U64 avgDist;
+extern S64 avgDist;
 
 class Game {
 public:
