@@ -25,7 +25,7 @@ void initHashKeys(){
                 minorKeysTable[i][j] = 0;
                 nonPawnKeysTable[i][j] = 0;
             }
-            else if ((i%6) == 1 || (i%6) == 2){
+            else if ((i%6) == 1 || (i%6) == 2 || (i%6) == 5){
                 pawnKeysTable[i][j] = 0;
                 minorKeysTable[i][j] = pieceKeysTable[i][j];
                 nonPawnKeysTable[i][j] = pieceKeysTable[i][j];

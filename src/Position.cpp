@@ -78,6 +78,13 @@ HashKey Position::generateNonPawnHashKey(const bool side) {
  */
 HashKey Position::generateMinorHashKey() {
     HashKey h = 0ULL;
+    for (int i = Pieces::K ; i <= Pieces::k; i+=6) {
+        BitBoard pieceBB = bitboards[i];
+        while (pieceBB) {
+            Square square = popLsb(pieceBB);
+            h ^= minorKeysTable[i][square];
+        }
+    }
     for (int i = Pieces::N ; i <= Pieces::B; i++) {
         BitBoard pieceBB = bitboards[i];
         while (pieceBB) {
