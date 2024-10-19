@@ -651,6 +651,7 @@ void Game::startSearch(bool halveTT = true)
 
     for (currSearch = 2; (currSearch <= depth) && currSearch >= 2 && !stopped; currSearch++)
     {
+        delta = ASPIRATIONWINDOW;
         if (currSearch >= 4)
         {
             alpha = std::max(S32(noScore), score - delta);
@@ -719,8 +720,8 @@ void Game::startSearch(bool halveTT = true)
             }
         }
         if (currSearch >= 6){
-            // Percentage ( 0.711742 ) calculated with bench @22
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.405003498;    
+            // Percentage ( 0.732323 ) calculated with bench @22
+            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.365517675;    
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
