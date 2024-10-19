@@ -610,6 +610,11 @@ void Game::startSearch(bool halveTT = true)
         case 2: // Time control
             moveTime = getTime64();
             U64 totalTime;
+            if (pos.side == WHITE) totalTime = (U64)(wtime / 10) + winc;
+            else totalTime = (U64)(btime / 10) + binc;
+            totalTime -= UCILATENCYMS;
+            optim = totalTime / 4;
+
             moveTime += totalTime;
             depth = maxPly - 1;
             break;
@@ -619,6 +624,7 @@ void Game::startSearch(bool halveTT = true)
             depth = maxPly - 1;
             break;
     }
+
 
     double nodesTmScale = 1.0;
 
