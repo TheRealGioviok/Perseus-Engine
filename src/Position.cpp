@@ -72,6 +72,36 @@ HashKey Position::generateNonPawnHashKey(const bool side) {
     return h;
 }
 
+/** 
+ * @brief The Position::generateMinorHashKey function generates the hash key of the non pawn structure from scratch, for a given side.
+ * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
+ */
+HashKey Position::generateMinorHashKey() {
+    HashKey h = 0ULL;
+    for (int i = Pieces::K ; i <= Pieces::k; i+=6) {
+        BitBoard pieceBB = bitboards[i];
+        while (pieceBB) {
+            Square square = popLsb(pieceBB);
+            h ^= minorKeysTable[i][square];
+        }
+    }
+    for (int i = Pieces::N ; i <= Pieces::B; i++) {
+        BitBoard pieceBB = bitboards[i];
+        while (pieceBB) {
+            Square square = popLsb(pieceBB);
+            h ^= minorKeysTable[i][square];
+        }
+    }
+    for (int i = Pieces::n ; i <= Pieces::b; i++) {
+        BitBoard pieceBB = bitboards[i];
+        while (pieceBB) {
+            Square square = popLsb(pieceBB);
+            h ^= minorKeysTable[i][square];
+        }
+    }
+    return h;
+}
+
 /**
  * @brief The Position::print function prints the position to stdout.
  */
@@ -123,6 +153,7 @@ void Position::wipe(){
     hashKey = 0;
     pawnHashKey = 0;
     nonPawnKeys[0] = nonPawnKeys[1] = 0;
+    minorKey = 0;
     psqtScore = SCORE_ZERO;
 }
 
@@ -142,6 +173,7 @@ static inline void removePiece(Position& pos, const Piece piece, const Square sq
     pos.hashKey ^= pieceKeysTable[piece][square];
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
+    pos.minorKey ^= minorKeysTable[piece][square];
     //std::cout << "Removing key from side " << int(piece >= p) << "for piece " << getPieceChar(piece) << " and square " << coords[square] << std::endl;
     // Update the psqt score
     pos.psqtScore -= PSQTs[piece][square];
@@ -163,6 +195,7 @@ static inline void addPiece(Position& pos, const Piece piece, const Square squar
     pos.hashKey ^= pieceKeysTable[piece][square];
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
+    pos.minorKey ^= minorKeysTable[piece][square];
     //std::cout << "Adding key from side " << int(piece >= p) << "for piece " << getPieceChar(piece) << " and square " << coords[square] << std::endl;
     assert(pos.psqtScore.mg() + PSQTs[piece][square].mg() < 0xFFFF);
     // std::cout << "Previous psqt score was " << psqt << " and we are adding " << PSQTs[piece][square] << "\n";
@@ -312,6 +345,7 @@ FENkeyEval:
     pawnHashKey = generatePawnHashKey();
     nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
+    minorKey = generateMinorHashKey();
     checkers = calculateCheckers();
     return true;
 }
@@ -728,6 +762,7 @@ void Position::reflect() {
     pawnHashKey = generatePawnHashKey();
     nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
+    minorKey = generateMinorHashKey();
 }
 
 std::string Position::getFEN() {
@@ -1582,6 +1617,7 @@ UndoInfo::UndoInfo(Position& position){
     pawnsHashKey = position.pawnHashKey;
     nonPawnsHashKey[WHITE] = position.nonPawnKeys[WHITE];
     nonPawnsHashKey[BLACK] = position.nonPawnKeys[BLACK];
+    minorHashKey = position.minorKey;
     enPassant = position.enPassant;
     castle = position.castle;
     fiftyMove = position.fiftyMove;
@@ -1599,6 +1635,7 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.pawnHashKey = pawnsHashKey;
     position.nonPawnKeys[WHITE] = nonPawnsHashKey[WHITE];
     position.nonPawnKeys[BLACK] = nonPawnsHashKey[BLACK];
+    position.minorKey = minorHashKey;
     position.enPassant = enPassant;
     position.castle = castle;
     position.fiftyMove = fiftyMove;
@@ -1629,6 +1666,7 @@ void UndoInfo::undoNullMove(Position& position){
     position.pawnHashKey = pawnsHashKey;
     position.nonPawnKeys[WHITE] = nonPawnsHashKey[WHITE];
     position.nonPawnKeys[BLACK] = nonPawnsHashKey[BLACK];
+    position.minorKey = minorHashKey;
     position.enPassant = enPassant;
     position.castle = castle;
     position.fiftyMove = fiftyMove;
