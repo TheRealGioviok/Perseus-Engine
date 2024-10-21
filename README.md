@@ -36,4 +36,4 @@ Perseus is distributed under the GNU General Public License. See the LICENSE fil
 ## Credits
 
 Perseus is developed and maintained by me. Special thanks to BluefeverSoftware and CodeMonkeyKing for their evergreen videos that are the starting point for nearly anyone that approaches Computer Chess Programming, the whole Stockfish Discord whose users are always polite and ready to help, and PGG106 for both his help and a lot of the ideas which are (heavily) inspired from his engine. 
-Also Cie is a is a strange individual. Just saying. But gives ELO. So we will tolerate. 
+Also Cie is a strange individual. Just saying. But gives ELO. So we will tolerate. Viren does not give ELO.
