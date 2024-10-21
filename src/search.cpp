@@ -291,7 +291,14 @@ skipPruning:
         const bool isQuiet = okToReduce(currMove);
         if (!skipQuiets) { 
             if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
-            if (!PVNode && depth <= 8 && !inCheck && bestScore > -KNOWNWIN && std::abs(alpha) < KNOWNWIN && isQuiet && ss->staticEval + 250 + 60 * depth <= alpha) {
+            if (!PVNode
+                && depth <= 8
+                && !inCheck
+                && bestScore > -KNOWNWIN
+                && std::abs(alpha) < KNOWNWIN
+                && isQuiet
+                && ss->staticEval + futPruningAdd + futPruningMultiplier * depth <= alpha)
+            {
                 skipQuiets = true;
                 continue;
             }
