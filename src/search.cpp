@@ -179,7 +179,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     if (inCheck)
     {
         ss->staticEval = eval = rawEval = noScore;
-        // improving = false;
+        improving = false;
         goto skipPruning;
     }
     
@@ -196,6 +196,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     }
     else if (excludedMove){
         eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
+        improving = false;
+        goto skipPruning;
     }
     else {
         rawEval = evaluate();
