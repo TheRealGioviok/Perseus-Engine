@@ -299,7 +299,7 @@ skipPruning:
                 && bestScore > -KNOWNWIN
                 && std::abs(alpha) < KNOWNWIN
                 && isQuiet
-                && ss->staticEval + futPruningAdd + futPruningMultiplier * depth <= alpha)
+                && ss->staticEval + futPruningAdd + futPruningMultiplier * (depth - !improving) <= alpha)
             {
                 skipQuiets = true;
                 continue;
