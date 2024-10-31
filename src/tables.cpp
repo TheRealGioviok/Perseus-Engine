@@ -50,9 +50,8 @@ BitBoard fiveSquare[64]; // The 5x5 square
 BitBoard kingShelter[2][64]; // The king shelter
 
 // The LMR reduction table
-Ply reductionTable[2][64][64] = {{0}};
-S16 lmpMargin[128][2] = {{0}};
-#define RESOLUTION 1000
+S32 reductionTable[2][64][64] = {{0}};
+S32 lmpMargin[128][2] = {{0}};
 double lmrDepthValue = 1000;
 double lmrMoveValue = 1000;
 double lmrA0 = 763;
@@ -71,18 +70,18 @@ void initLMRTable(){
         for (int move = 0; move < 64; move++) {
             reductionTable[0][depth][move] = std::max(0, 
                 int(
-                    lmrA0 / RESOLUTION *
+                    lmrA0 *
                     log(depth * lmrDepthValue / RESOLUTION) *
                     log(move * lmrMoveValue / RESOLUTION) +
-                    lmrC0 / RESOLUTION
+                    lmrC0
                 )
             );
             reductionTable[1][depth][move] = std::max(0, 
                 int(
-                    lmrA1 / RESOLUTION *
+                    lmrA1 *
                     log(depth * lmrDepthValue / RESOLUTION) *
                     log(move * lmrMoveValue / RESOLUTION) +
-                    lmrC1 / RESOLUTION
+                    lmrC1
                 )
             );
         }
