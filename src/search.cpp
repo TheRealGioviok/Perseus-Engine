@@ -379,16 +379,16 @@ skipPruning:
                 if (currMoveScore >= COUNTERSCORE) granularR -= 1 * RESOLUTION;
                 if (isQuiet){
                     // R -= givesCheck;
-                    granularR -= (S8)std::clamp((currMoveScore - QUIETSCORE) / 8LL, -2000LL, 2000LL);
+                    granularR -= (S8)std::clamp((currMoveScore - QUIETSCORE), -2000LL, 2000LL) / 8LL;
                     if (cutNode) granularR += 2 * RESOLUTION;
                     if (ttPv) granularR -= cutNode * RESOLUTION;
                 }
                 else {
                     if (currMoveScore < GOODNOISYMOVE) {
-                        if (cutNode) granularR += 1;
-                        granularR -= (S8)std::clamp((currMoveScore - BADNOISYMOVE) / 6LL, -1000LL, 2000LL);
+                        if (cutNode) granularR += 1 * RESOLUTION;
+                        granularR -= (S8)std::clamp((currMoveScore - BADNOISYMOVE), -1000LL, 2000LL) / 6LL;
                     }
-                    granularR -= (S8)std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) / 6LL, -1000LL, 2000LL);
+                    granularR -= (S8)std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE), -1000LL, 2000LL) / 6LL;
                 }
                 Depth R = granularR / RESOLUTION;
                 R = std::max(Depth(0), R);
