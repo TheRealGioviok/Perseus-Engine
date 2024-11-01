@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "constants.h"
+#define RESOLUTION 1000
 
 //tropism
 extern int distBonus[64][64];
@@ -27,8 +28,8 @@ extern Ply pvLen[maxPly];
 // Repetition Table
 extern HashKey repetitionTable[512];
 // The LMR reduction table
-extern Ply reductionTable[2][64][64];
-extern S16 lmpMargin[128][2];
+extern S32 reductionTable[2][64][64];
+extern S32 lmpMargin[128][2];
 
 /**
  * @brief The initLMRTable function initializes the LMR reduction table

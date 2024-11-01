@@ -25,9 +25,9 @@ inline bool okToReducePacked(Position &pos, PackedMove move)
     return !((movePiece(move) != NOPIECE) | (pos.pieceOn(moveTarget(move)) != NOPIECE));
 }
 
-static inline Depth reduction(Depth d, U16 m, bool isQuiet, bool isPv, bool improving)
+static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv, bool improving)
 {
-    return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - isPv - improving;
+    return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - isPv * RESOLUTION - improving * RESOLUTION;
 }
 
 static inline Score futilityMargin(Depth depth, bool improving)
@@ -375,25 +375,24 @@ skipPruning:
 
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
-                Depth R = reduction(depth, moveSearched, isQuiet, ttPv, improving);
-                if (currMoveScore >= COUNTERSCORE) R -= 1;
+                S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv, improving);
+                if (currMoveScore >= COUNTERSCORE) granularR -= 1 * RESOLUTION;
                 if (isQuiet){
                     // R -= givesCheck;
-                    R -= (S8)std::clamp((currMoveScore - QUIETSCORE) / 8192LL, -2LL, 2LL);
-                    if (cutNode) R += 2;
-                    if (ttPv) R -= cutNode;
+                    granularR -= std::clamp((currMoveScore - QUIETSCORE), -16000LL, 16000LL) / 8LL;
+                    if (cutNode) granularR += 2 * RESOLUTION;
+                    if (ttPv) granularR -= cutNode * RESOLUTION;
                 }
                 else {
                     if (currMoveScore < GOODNOISYMOVE) {
-                        if (cutNode) R += 1;
-                        R -= (S8)std::clamp((currMoveScore - BADNOISYMOVE) / 6144LL, -1LL, 2LL);
+                        if (cutNode) granularR += 1 * RESOLUTION;
+                        granularR -= std::clamp((currMoveScore - BADNOISYMOVE), -6000LL, 12000LL) / 6LL;
                     }
-                    R -= (S8)std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) / 6144LL, -1LL, 2LL);
+                    granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE), -6000LL, 12000LL) / 6LL;
                 }
+                Depth R = granularR / RESOLUTION;
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
-                
-
                 Depth reducedDepth = newDepth - R;
                 // Search at reduced depth
                 score = -search(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
