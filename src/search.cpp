@@ -25,9 +25,9 @@ inline bool okToReducePacked(Position &pos, PackedMove move)
     return !((movePiece(move) != NOPIECE) | (pos.pieceOn(moveTarget(move)) != NOPIECE));
 }
 
-static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv, bool improving)
+static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv)
 {
-    return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - isPv * RESOLUTION - improving * RESOLUTION;
+    return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - isPv * RESOLUTION;
 }
 
 static inline Score futilityMargin(Depth depth, bool improving)
@@ -383,7 +383,7 @@ skipPruning:
 
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
-                S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv, improving);
+                S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
                 if (currMoveScore >= COUNTERSCORE) granularR -= 1 * RESOLUTION;
                 if (isQuiet){
                     // R -= givesCheck;
@@ -399,7 +399,7 @@ skipPruning:
                     granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE), -6000LL, 12000LL) / 6LL;
                 }
                 // The function looked cool on desmos
-                granularR -= 4096 * improvement / (std::abs(improvement) + 720);
+                granularR -= 4096 * improvement / (std::abs(improvement * 3 / 2) + 720);
                 Depth R = granularR / RESOLUTION;
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
