@@ -185,7 +185,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         goto skipPruning;
     }
     
-
     // Get static eval of the position
     if (ttHit)
     {
