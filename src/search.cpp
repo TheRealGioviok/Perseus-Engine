@@ -25,9 +25,9 @@ inline bool okToReducePacked(Position &pos, PackedMove move)
     return !((movePiece(move) != NOPIECE) | (pos.pieceOn(moveTarget(move)) != NOPIECE));
 }
 
-static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv, bool improving)
+static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv)
 {
-    return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - isPv * RESOLUTION - improving * RESOLUTION;
+    return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - isPv * RESOLUTION;
 }
 
 static inline Score futilityMargin(Depth depth, bool improving)
@@ -104,6 +104,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
 
     Score eval;
     Score rawEval; // for corrhist
+    Score improvement;
     bool improving = true;
     const Move excludedMove = ss->excludedMove;
     // Guard from pvlen editing when in singular extension
@@ -179,6 +180,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     if (inCheck)
     {
         ss->staticEval = eval = rawEval = noScore;
+        improvement = 0;
         improving = false;
         goto skipPruning;
     }
@@ -196,6 +198,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     }
     else if (excludedMove){
         eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
+        improvement = 0;
         improving = false;
         goto skipPruning;
     }
@@ -206,11 +209,16 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
 
-    // // Calculate the improving flag
-    if ((ss - 2)->staticEval != noScore)
-        improving = ss->staticEval > (ss - 2)->staticEval;
-    else if ((ss - 4)->staticEval != noScore)
-        improving = ss->staticEval > (ss - 4)->staticEval;
+    improvement = [&](){
+        if ((ss - 2)->staticEval != noScore)
+            return ss->staticEval - (ss - 2)->staticEval;
+        else if ((ss - 4)->staticEval != noScore)
+            return ss->staticEval - (ss - 4)->staticEval;
+        return 1; // speculative improvement to cut less
+    }();
+
+    // Calculate the improving flag
+    improving = improvement > 0;
 
     // Pruning time
     if (!PVNode && !excludedMove)
@@ -375,7 +383,7 @@ skipPruning:
 
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
-                S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv, improving);
+                S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
                 if (currMoveScore >= COUNTERSCORE) granularR -= 1 * RESOLUTION;
                 if (isQuiet){
                     // R -= givesCheck;
@@ -384,12 +392,14 @@ skipPruning:
                     if (ttPv) granularR -= cutNode * RESOLUTION;
                 }
                 else {
-                    if (currMoveScore < GOODNOISYMOVE) {
+                    if (currMoveScore < GOODNOISYMOVE) { 
                         if (cutNode) granularR += 1 * RESOLUTION;
                         granularR -= std::clamp((currMoveScore - BADNOISYMOVE), -6000LL, 12000LL) / 6LL;
                     }
                     granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE), -6000LL, 12000LL) / 6LL;
                 }
+                // The function looked cool on desmos
+                granularR -= 4096 * improvement / (std::abs(improvement * 3 / 2) + 720);
                 Depth R = granularR / RESOLUTION;
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
