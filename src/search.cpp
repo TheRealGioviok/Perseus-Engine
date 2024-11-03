@@ -614,12 +614,6 @@ void Game::startSearch(bool halveTT = true)
 
     lastScore = 0;
 
-    // Clear nodesPerMoveTable
-    
-
-    // killerCutoffs = 0;
-    // posKillerSearches = 0;
-
     startTime = getTime64();
     U64 optim = 0xffffffffffffffffULL;
 #define UCILATENCYMS 20
