@@ -39,4 +39,5 @@ Perseus is developed and maintained by me. Special thanks to BluefeverSoftware a
 Also Cie is a strange individual. Just saying. But gives ELO. So we will tolerate.  
 Viz is an amazing source of ancient HCE druid knowledge, pretty wholesome.  
 Viren does not give ELO. In fact Viren owes us ELO.  
+Ty cj for the lmr granularity idea. Very wholesome
 Yes, I capitalize ELO not because it is an acronym, but because it sounds funny.  
