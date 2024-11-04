@@ -96,6 +96,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     assert(pos.nonPawnKeys[WHITE] == pos.generateNonPawnHashKey(WHITE));
     assert(pos.nonPawnKeys[BLACK] == pos.generateNonPawnHashKey(BLACK));
     assert(pos.minorKey == pos.generateMinorHashKey());
+    assert(pos.majorKey == pos.generateMajorHashKey());
+    
     // Ply overflow
     if (ply >= maxPly)
         return evaluate();
@@ -185,13 +187,14 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         goto skipPruning;
     }
     
+
     // Get static eval of the position
     if (ttHit)
     {
         // Check if the eval is stored in the TT
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
-        bool isTTCapture = pos.pieceOn(ttMove) != NOPIECE;
-        eval = ss->staticEval = isTTCapture ? rawEval : correctStaticEval(pos, rawEval);
+        bool noisyTTMove = pos.isPackedNoisy(ttMove);
+        eval = ss->staticEval = noisyTTMove ? rawEval : correctStaticEval(pos, rawEval);
         // Also, we might be able to use the score as a better eval
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
             eval = ttScore;
@@ -527,8 +530,8 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     }
     else if (ttHit){
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
-        bool isTTCapture = pos.pieceOn(ttMove) != NOPIECE;
-        ss->staticEval = bestScore = isTTCapture ? rawEval : correctStaticEval(pos, rawEval);
+        bool noisyTTMove = pos.isPackedNoisy(ttMove);
+        ss->staticEval = bestScore = noisyTTMove ? rawEval : correctStaticEval(pos, rawEval);
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < bestScore) || (ttBound == hashLOWER && ttScore > bestScore)))
             bestScore = ttScore;
     }
@@ -614,6 +617,12 @@ void Game::startSearch(bool halveTT = true)
     std::cin.clear();
 
     lastScore = 0;
+
+    // Clear nodesPerMoveTable
+    
+
+    // killerCutoffs = 0;
+    // posKillerSearches = 0;
 
     startTime = getTime64();
     U64 optim = 0xffffffffffffffffULL;
