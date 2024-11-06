@@ -30,10 +30,10 @@ static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv)
     return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - isPv * RESOLUTION;
 }
 
-static inline Score futilityMargin(Depth depth, S32 improvement)
+static inline Score futilityMargin(Depth depth, S32 improvement, bool improving)
 {
     const S32 cieck = 128 * improvement / (std::abs(improvement) + 720);
-    return futilityMarginDelta * (depth + (improvement > 0)) + cieck;
+    return futilityMarginDelta * (depth - improving) - cieck;
 }
 
 static inline int sortTTUp(MoveList &ml, PackedMove ttMove)
@@ -225,7 +225,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     if (!PVNode && !excludedMove)
     {
         // RFP
-        if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, improvement) >= beta) // && !excludedMove)
+        if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, improvement, improving) >= beta) // && !excludedMove)
             return eval;
 
         // Null move pruning
