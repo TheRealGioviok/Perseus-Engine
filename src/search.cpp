@@ -33,7 +33,7 @@ static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv)
 static inline Score futilityMargin(Depth depth, S32 improvement)
 {
     const S32 cieck = improvement > 0 ? 1536 * improvement / (std::abs(improvement) + 64) : 0;
-    return (futilityMarginDelta * std::max(1,(depth * RESOLUTION - cieck))) / RESOLUTION;
+    return (futilityMarginDelta * std::max(1000,(depth * RESOLUTION - cieck))) / RESOLUTION;
 }
 
 static inline int sortTTUp(MoveList &ml, PackedMove ttMove)
