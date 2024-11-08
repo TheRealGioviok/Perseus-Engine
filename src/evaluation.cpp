@@ -7,6 +7,8 @@
 #include <vector>
 #include <cstring>
 #include <fstream>
+#include <algorithm>
+#include <cmath>
 
 PScore PSQTs[12][64];
 
@@ -103,37 +105,55 @@ constexpr PScore RESTRICTEDSQUARES = S(5, 3);
 
 constexpr PScore TEMPO = S(20, 30);
 
-constexpr Score COMPLEXITYPASSERS = 210;
+constexpr Score COMPLEXITYPASSERS = 209;
 constexpr Score COMPLEXITYPAWNS = 879;
 constexpr Score COMPLEXITYBLOCKEDPAIRS = -343;
 constexpr Score COMPLEXITYPAWNTENSION = -891;
-constexpr Score COMPLEXITYOUTFLANKING = 37; // Interesting tune
+constexpr Score COMPLEXITYOUTFLANKING = -37; // Interesting tune
 constexpr Score COMPLEXITYINFILTRATION = -771;
 constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9443;
 constexpr Score COMPLEXITYPAWNENDING = 12447;
 constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3843;
-constexpr Score COMPLEXITYBIAS = -18218;
+constexpr Score COMPLEXITYBIAS = -18219;
 
-constexpr PScore PAWNATTACKINNERRING   = S( 23, -23);
-constexpr PScore KNIGHTATTACKINNERRING = S( 20,  -4);
-constexpr PScore BISHOPATTACKINNERRING = S( 48,   1);
-constexpr PScore ROOKATTACKINNERRING   = S( 53,   1);
-constexpr PScore QUEENATTACKINNERRING  = S( 32,   3);
-constexpr PScore PAWNATTACKOUTERRING   = S( 29,  -5);
-constexpr PScore KNIGHTATTACKOUTERRING = S( 60,   1);
-constexpr PScore BISHOPATTACKOUTERRING = S( 37,   4);
-constexpr PScore ROOKATTACKOUTERRING   = S( 27,   1);
-constexpr PScore QUEENATTACKOUTERRING  = S( 49,  12);
+constexpr PScore PAWNATTACKINNERRING   = S( 45, -35);
+constexpr PScore KNIGHTATTACKINNERRING = S( 26,  -7);
+constexpr PScore BISHOPATTACKINNERRING = S( 56,   0);
+constexpr PScore ROOKATTACKINNERRING   = S( 60,  -1);
+constexpr PScore QUEENATTACKINNERRING  = S( 43, -11);
+constexpr PScore PAWNATTACKOUTERRING   = S( 39,  -9);
+constexpr PScore KNIGHTATTACKOUTERRING = S( 59,  10);
+constexpr PScore BISHOPATTACKOUTERRING = S( 37,  10);
+constexpr PScore ROOKATTACKOUTERRING   = S( 29,   2);
+constexpr PScore QUEENATTACKOUTERRING  = S( 44,  18);
 
-constexpr PScore NOQUEENDANGER         = S(-216,-209);
-constexpr PScore PINNEDSHELTERDANGER   = S( 34, 1);
+constexpr PScore NOQUEENDANGER         = S(-279,-402);
+constexpr PScore PINNEDSHELTERDANGER   = S( 38, -1);
 
 //constexpr Score KSAMG = -2;
-constexpr Score KSBMG = 31;
-constexpr Score KSCMG = -34;
+constexpr double KSCALEMG = 572.7255249023438;
+constexpr double KSBMG = 3.0822055339813232;
+constexpr double KSCMG = -3.4098544120788574;
 // constexpr Score KSAEG = -71;
-constexpr Score KSBEG = 33;
-constexpr Score KSCEG = 9;
+constexpr double KSCALEEG = 840.6375732421875;
+constexpr double KSBEG = 3.349806547164917;
+constexpr double KSCEG = 0.9148159027099609;
+
+static inline S32 getKingSafetyMg(S32 x){
+    double f = x;
+    f /= 480;
+    f = KSBMG*f + KSCMG;
+    f = KSCALEMG / (std::exp(-f) + 1);
+    return S32(f);
+}
+
+static inline S32 getKingSafetyEg(S32 x){
+    double f = x;
+    f /= 480;
+    f = KSBEG*f + KSCEG;
+    f = KSCALEEG / (std::exp(-f) + 1);
+    return S32(f);
+}
 
 static inline S32 getKingSafetyIndexMg(S32 x){
     x = (
@@ -702,10 +722,10 @@ Score pestoEval(Position *pos){
     dangerIndex[WHITE] += PINNEDSHELTERDANGER * popcount(pinned[BLACK] & innerShelters[BLACK]);
     dangerIndex[BLACK] += PINNEDSHELTERDANGER * popcount(pinned[WHITE] & innerShelters[WHITE]);
 
-    const S32 mgWhiteDanger = getKingSafetyIndexMg(dangerIndex[WHITE].mg());
-    const S32 egWhiteDanger = getKingSafetyIndexEg(dangerIndex[WHITE].eg());
-    const S32 mgBlackDanger = getKingSafetyIndexMg(dangerIndex[BLACK].mg());
-    const S32 egBlackDanger = getKingSafetyIndexEg(dangerIndex[BLACK].eg());
+    const S32 mgWhiteDanger = getKingSafetyMg(dangerIndex[WHITE].mg());
+    const S32 egWhiteDanger = getKingSafetyEg(dangerIndex[WHITE].eg());
+    const S32 mgBlackDanger = getKingSafetyMg(dangerIndex[BLACK].mg());
+    const S32 egBlackDanger = getKingSafetyEg(dangerIndex[BLACK].eg());
     
     const PScore safety = PScore(mgWhiteDanger - mgBlackDanger, egWhiteDanger - egBlackDanger);
     score += safety;
