@@ -28,30 +28,7 @@ void uciStr() {
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
     std::cout << "option name Hash type spin default 64 min 8 max 1024" << std::endl;
-    // std::cout << "option name lmrDepthValue type spin default 1000 min 500 max 1500" << std::endl;
-    std::cout << "option name lmrMoveValue type spin default 1000 min 500 max 1500" << std::endl;
-    std::cout << "option name lmrA0 type spin default 763 min 0 max 2000" << std::endl;
-    std::cout << "option name lmrC0 type spin default -275 min -2000 max 2000" << std::endl;
-    std::cout << "option name lmrA1 type spin default 775 min 0 max 2000" << std::endl;
-    std::cout << "option name lmrC1 type spin default 625 min -2000 max 2000" << std::endl;
-    std::cout << "option name lmpA0 type spin default 500 min 0 max 2000" << std::endl;
-    std::cout << "option name lmpC0 type spin default 1500 min -5000 max 5000" << std::endl;
-    std::cout << "option name lmpA1 type spin default 1000 min 0 max 5000" << std::endl;
-    std::cout << "option name lmpC1 type spin default 3000 min -5000 max 5000" << std::endl;
-    std::cout << "option name futilityMarginDelta type spin default 91 min 75 max 125" << std::endl;
-    std::cout << "option name nmpDepthDivisor type spin default 3 min 2 max 6" << std::endl;
-    std::cout << "option name nmpScoreDivisor type spin default 200 min 100 max 300" << std::endl;
-    std::cout << "option name nmpQ1 type spin default 3 min 1 max 4" << std::endl;
-    std::cout << "option name nmpQ2 type spin default 3 min 0 max 4" << std::endl;
-    std::cout << "option name razorQ1 type spin default 128 min 75 max 275" << std::endl;
-    std::cout << "option name razorQ2 type spin default 192 min 75 max 275" << std::endl;
-    std::cout << "option name singularDepthMultiplier type spin default 1 min 1 max 6" << std::endl;
-    std::cout << "option name IIRdepth type spin default 4 min 3 max 7" << std::endl;
-    std::cout << "option name razorDepth type spin default 4 min 2 max 5" << std::endl;
-    // std::cout << "option name singularSearchDepth type spin default 7 min 4 max 8" << std::endl;
-    std::cout << "option name RFPDepth type spin default 7 min 5 max 10" << std::endl;
-    std::cout << "option name captScoreMvvMultiplier type spin default 16 min 8 max 32" << std::endl;
-
+    
     for(const TunableParam& param : tunableParams())
         std::cout << "option name " << param.name << " type spin default " << param.defaultValue << " min " << param.minValue << " max " << param.maxValue << " cend " << param.cEnd << " rend " << param.rEnd << std::endl;
 
@@ -272,76 +249,17 @@ int setOptionCommand(Game* game, char* command) {
         }
         resizeTT(hashSize);
     }
-    // else if (optionName == "lmrDepthValue"){
-    //     tuned_lmrDepthValue.value = double(atoi(arg.c_str()));
-    //     initLMRTable();
-    // }
-    else if (optionName == "lmrMoveValue"){
-        lmrMoveValue = double(atoi(arg.c_str()));
-        initLMRTable();
-    }
-    else if (optionName == "lmrA0"){
-        lmrA0 = double(atoi(arg.c_str()));
-        initLMRTable();
-    }
-    else if (optionName == "lmrC0"){
-        lmrC0 = double(atoi(arg.c_str()));
-        initLMRTable();
-    }
-    else if (optionName == "lmrA1"){
-        lmrA1 = double(atoi(arg.c_str()));
-        initLMRTable();
-    }
-    else if (optionName == "lmrC1"){
-        lmrC1 = double(atoi(arg.c_str()));
-        initLMRTable();
-    }
-    else if (optionName == "lmpA0"){
-        lmpA0 = double(atoi(arg.c_str()));
-        initLMRTable();
-    }
-    else if (optionName == "lmpC0"){
-        lmpC0 = double(atoi(arg.c_str()));
-        initLMRTable();
-    }
-    else if (optionName == "lmpA1"){
-        lmpA1 = double(atoi(arg.c_str()));
-        initLMRTable();
-    }
-    else if (optionName == "lmpC1"){
-        lmpC1 = double(atoi(arg.c_str()));
-        initLMRTable();
-    }
-    else if (optionName == "futilityMarginDelta")
-        futilityMarginDelta = atoi(arg.c_str());
-    else if (optionName == "nmpDepthDivisor")
-        nmpDepthDivisor = atoi(arg.c_str());
-    else if (optionName == "nmpScoreDivisor")
-        nmpScoreDivisor = atoi(arg.c_str());
-    else if (optionName == "nmpQ1")
-        nmpQ1 = atoi(arg.c_str());
-    else if (optionName == "nmpQ2")
-        nmpQ2 = atoi(arg.c_str());
-    else if (optionName == "razorQ1")
-        razorQ1 = atoi(arg.c_str());
-    else if (optionName == "razorQ2")
-        razorQ2 = atoi(arg.c_str());
-    else if (optionName == "singularDepthMultiplier")
-        singularDepthMultiplier = atoi(arg.c_str());
-    else if (optionName == "IIRdepth")
-        IIRdepth = atoi(arg.c_str());
-    else if (optionName == "razorDepth")
-        razorDepth = atoi(arg.c_str());
-    else if (optionName == "singularSearchDepth")
-        singularSearchDepth = atoi(arg.c_str());
-    else if (optionName == "RFPDepth")
-        RFPDepth = atoi(arg.c_str());
-    else if (optionName == "futPruningMultiplier")
-        futPruningMultiplier = atoi(arg.c_str());
-    else if (optionName == "futPruningAdd")
-        futPruningAdd = atoi(arg.c_str());
-    else if (optionName == "captScoreMvvMultiplier")
-        captScoreMvvMultiplier = atoi(arg.c_str());
+    else if (optionName == "lmrDepthValue" 
+            || optionName == "lmrMoveValue" 
+            || optionName == "lmrA0" 
+            || optionName == "lmrC0" 
+            || optionName == "lmrA1" 
+            || optionName == "lmrC1" 
+            || optionName == "lmpA0" 
+            || optionName == "lmpC0" 
+            || optionName == "lmpA1" 
+            || optionName == "lmpC1"
+        ) initLMRTable();
     else {
         std::cout << "Option " << optionName << " not recognized!\n";
     }

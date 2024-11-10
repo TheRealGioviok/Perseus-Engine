@@ -27,12 +27,12 @@ inline bool okToReducePacked(Position &pos, PackedMove move)
 
 static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv)
 {
-    return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - isPv * RESOLUTION;
+    return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - lmrPV() * isPv;
 }
 
 static inline Score futilityMargin(Depth depth, bool improving)
 {
-    return futilityMarginDelta * (depth - improving);
+    return futilityMarginDelta() * (depth - improving);
 }
 
 static inline int sortTTUp(MoveList &ml, PackedMove ttMove)
@@ -224,7 +224,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     if (!PVNode && !excludedMove)
     {
         // RFP
-        if (depth <= RFPDepth && abs(eval) < mateScore && eval - futilityMargin(depth, improving) >= beta) // && !excludedMove)
+        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - futilityMargin(depth, improving) >= beta) // && !excludedMove)
             return eval;
 
         // Null move pruning
@@ -242,7 +242,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             ss->move = noMove;
             ss->contHistEntry = continuationHistoryTable[0];
 
-            Depth R = nmpQ1 + (depth / nmpDepthDivisor) + std::min((eval - beta) / nmpScoreDivisor, nmpQ2);
+            Depth R = nmpQ1() + (depth / nmpDepthDivisor()) + std::min((eval - beta) / nmpScoreDivisor(), nmpQ2());
             Score nullScore = -search(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
 
             undoNullMove(undoer);
@@ -268,7 +268,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         }
     
         // Razoring
-        if (depth <= razorDepth && abs(eval) < mateScore && eval + razorQ1 + depth * razorQ2 < alpha)
+        if (depth <= razorDepth() && abs(eval) < mateValue && eval + razorQ1() + depth * razorQ2() < alpha)
         {
             const Score razorScore = quiescence(alpha, beta, ss);
             if (razorScore <= alpha) return razorScore;
@@ -277,8 +277,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     }
 
 skipPruning:
-    if (depth >= IIRdepth && ttBound == hashNONE)
-        --depth; // && !excludedMove
+    if (depth >= IIRDepth() && ttBound == hashNONE)
+        --depth; 
 
     // Search
     const Score origAlpha = alpha;
@@ -307,7 +307,7 @@ skipPruning:
                 && bestScore > -KNOWNWIN
                 && std::abs(alpha) < KNOWNWIN
                 && isQuiet
-                && ss->staticEval + futPruningAdd + futPruningMultiplier * depth <= alpha)
+                && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
             {
                 skipQuiets = true;
                 continue;
@@ -333,14 +333,14 @@ skipPruning:
                 
                 if (i == 0 // Can only happen on ttMove
                     && !RootNode 
-                    && depth >= singularSearchDepth
+                    && depth >= singularSearchDepth()
                     && (ttBound & hashLOWER) 
                     && abs(ttScore) < mateValue 
                     && ttDepth >= depth - 3
                 ){
                     // Increase singular candidates
                     ++seCandidates;
-                    const Score singularBeta = ttScore - singularDepthMultiplier * depth;
+                    const Score singularBeta = ttScore - singularDepthMultiplier() * depth / 10;
                     const Depth singularDepth = (depth - 1) / 2;
                     ss->excludedMove = currMove;
                     undo(undoer, currMove);
@@ -350,7 +350,7 @@ skipPruning:
 
                     if (singularScore < singularBeta) {
                         extension = 1;
-                        if (!PVNode && ss->doubleExtensions < maximumDoubleExtensions && singularScore + doubleExtensionMargin < singularBeta) {
+                        if (!PVNode && ss->doubleExtensions < maximumDoubleExtensions() && singularScore + doubleExtensionMargin() < singularBeta) {
                             ++ss->doubleExtensions;
                             //std::cout << "Double extension counter "<<ss->doubleExtensions<<std::endl;
                             extension = 2;
@@ -384,22 +384,22 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
-                if (currMoveScore >= COUNTERSCORE) granularR -= 1 * RESOLUTION;
+                if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
-                    granularR -= std::clamp((currMoveScore - QUIETSCORE), -16000LL, 16000LL) / 8LL;
-                    if (cutNode) granularR += 2 * RESOLUTION;
-                    if (ttPv) granularR -= cutNode * RESOLUTION;
+                    granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
+                    if (cutNode) granularR += lmrQuietCutNode();
+                    if (ttPv) granularR -= cutNode * lmrQuietTTPV();
                 }
                 else {
-                    if (currMoveScore < GOODNOISYMOVE) { 
-                        if (cutNode) granularR += 1 * RESOLUTION;
-                        granularR -= std::clamp((currMoveScore - BADNOISYMOVE), -6000LL, 12000LL) / 6LL;
+                    if (currMoveScore < QUIETSCORE) { 
+                        if (cutNode) granularR += lmrBadNoisyCutNode();
+                        granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
                     }
-                    granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE), -6000LL, 12000LL) / 6LL;
+                    else granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
                 }
                 // The function looked cool on desmos
-                granularR -= 4096 * improvement / (std::abs(improvement * 3 / 2) + 720);
+                granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 200) + lmrCieckC());
                 Depth R = granularR / RESOLUTION;
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
@@ -626,10 +626,10 @@ void Game::startSearch(bool halveTT = true)
         case 2: // Time control
             moveTime = getTime64();
             U64 totalTime;
-            if (pos.side == WHITE) totalTime = (U64)(wtime / 10) + winc;
-            else totalTime = (U64)(btime / 10) + binc;
+            if (pos.side == WHITE) totalTime = (U64)(wtime * timeTmA() / RESOLUTION) + winc * timeTmB() / RESOLUTION;
+            else totalTime = (U64)(btime * timeTmA() / RESOLUTION) + binc * timeTmB() / RESOLUTION;
             totalTime -= UCILATENCYMS;
-            optim = totalTime / 4;
+            optim = totalTime * timeTmOptimScale() / 1000;
 
             moveTime += totalTime;
             depth = maxPly - 1;
@@ -743,7 +743,7 @@ void Game::startSearch(bool halveTT = true)
         }
         if (currSearch >= 6){
             // 1.242 felt cute, maybe it gains
-            nodesTmScale = 2.0 - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * 1.242;    
+            nodesTmScale = ((S64)nodesTmMax() - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * (S64)nodesTmMul()) / RESOLUTION;    
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
