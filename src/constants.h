@@ -1,6 +1,8 @@
 #pragma once
 #include "types.h"
 
+#include <vector>
+
 // The search-uci communication frequency.
 
 constexpr U64 comfrequency = 2047LL; // The search-uci communication frequency is expressed as 2^n - 1, and it will make the search communicate with the uci every 2^n nodes.
@@ -105,7 +107,42 @@ enum Squares {
 #define ASSERTS                         true // If true the asserts are used. The asserts are automatically implemented in the code if this is true.
 #define LOGROOTMOVEDEPTH                12 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
 
-extern double lmrDepthValue;
+struct TunableParam {
+    std::string name;
+    S32 defaultValue;
+    S32 minValue;
+    S32 maxValue;
+	float cEnd;
+	float rEnd;
+	S32 value;
+
+    inline TunableParam(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd)
+        : name(name), defaultValue(defaultValue), minValue(minValue), maxValue(maxValue), cEnd(cEnd), rEnd(rEnd), value(defaultValue) {}
+    
+    inline operator int() const { return value; }
+	inline TunableParam& operator=(int value) {
+		this->value = value;
+		return *this;
+	}
+};
+
+std::vector<TunableParam>&  tunableParams();
+TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd);
+
+#define TUNE
+
+#ifdef TUNE
+	#define TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd) \
+		inline const TunableParam& tuned_##name = addTune(#name, defaultValue, minValue, maxValue, cEnd, rEnd); \
+		inline S32 name() { return tuned_##name.value; }
+#else
+	#define TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd); \
+		constexpr S32 name() { return defaultValue; }
+#endif
+
+TUNE_PARAM(lmrDepthValue, 1000, 500, 1500, 50, 0.002);
+
+// extern double lmrDepthValue;
 extern double lmrMoveValue;
 extern double lmrA0;
 extern double lmrC0;

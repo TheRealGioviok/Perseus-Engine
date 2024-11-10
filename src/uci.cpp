@@ -28,7 +28,7 @@ void uciStr() {
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
     std::cout << "option name Hash type spin default 64 min 8 max 1024" << std::endl;
-    std::cout << "option name lmrDepthValue type spin default 1000 min 500 max 1500" << std::endl;
+    // std::cout << "option name lmrDepthValue type spin default 1000 min 500 max 1500" << std::endl;
     std::cout << "option name lmrMoveValue type spin default 1000 min 500 max 1500" << std::endl;
     std::cout << "option name lmrA0 type spin default 763 min 0 max 2000" << std::endl;
     std::cout << "option name lmrC0 type spin default -275 min -2000 max 2000" << std::endl;
@@ -51,7 +51,10 @@ void uciStr() {
     // std::cout << "option name singularSearchDepth type spin default 7 min 4 max 8" << std::endl;
     std::cout << "option name RFPDepth type spin default 7 min 5 max 10" << std::endl;
     std::cout << "option name captScoreMvvMultiplier type spin default 16 min 8 max 32" << std::endl;
-    
+
+    for(const TunableParam& param : tunableParams())
+        std::cout << "option name " << param.name << " type spin default " << param.defaultValue << " min " << param.minValue << " max " << param.maxValue << " cend " << param.cEnd << " rend " << param.rEnd << std::endl;
+
     std::cout << "uciok" << std::endl;
 }
 
@@ -241,6 +244,19 @@ int setOptionCommand(Game* game, char* command) {
     // remove last characters from optionName
     optionName.erase(space);
 	// Depending on optionName
+
+    for (TunableParam& param : tunableParams()) {
+        if (param.name == optionName) {
+            int value = atoi(arg.c_str());
+            if (value < param.minValue || value > param.maxValue) {
+                std::cout << "Invalid value for option " << optionName << "!\n";
+                return 0;
+            }
+            param = value;
+            return 0;
+        }
+    }
+
     if (optionName == "stposHashDump") {
         // Set hashDumpFile to arg
         hashDumpFile = arg;
@@ -256,10 +272,10 @@ int setOptionCommand(Game* game, char* command) {
         }
         resizeTT(hashSize);
     }
-    else if (optionName == "lmrDepthValue"){
-        lmrDepthValue = double(atoi(arg.c_str()));
-        initLMRTable();
-    }
+    // else if (optionName == "lmrDepthValue"){
+    //     tuned_lmrDepthValue.value = double(atoi(arg.c_str()));
+    //     initLMRTable();
+    // }
     else if (optionName == "lmrMoveValue"){
         lmrMoveValue = double(atoi(arg.c_str()));
         initLMRTable();
