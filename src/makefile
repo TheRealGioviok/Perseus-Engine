@@ -9,4 +9,5 @@ debug:
 	@$(MAKE) -sf build.mk TARGET=Debug
 
 clean:
-	@$(MAKE) -sf build.mk clean
+	@$(MAKE) -sf build.mk TARGET=Release clean
+	@$(MAKE) -sf build.mk TARGET=Debug clean

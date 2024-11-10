@@ -1,5 +1,28 @@
 #include "constants.h"
 #include "types.h"
+#include <string>
+
+std::vector<TunableParam>&  tunableParams() {
+    static std::vector<TunableParam> tunableParams{};
+    return tunableParams;
+}
+
+TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd) {
+    tunableParams().emplace_back(name, defaultValue, minValue, maxValue, cEnd, rEnd);
+	return tunableParams().back();
+}
+
+
+// double lmrDepthValue = 1000;
+double lmrMoveValue = 1000;
+double lmrA0 = 763;
+double lmrC0 = -275;
+double lmrA1 = 775;
+double lmrC1 = 625;
+int lmpA0 = 500;
+int lmpC0 = 1500;
+int lmpA1 = 1000;
+int lmpC1 = 3000;
 
 int futilityMarginDelta = 91;       // [55, 125]
 int nmpDepthDivisor = 3;            // [2, 6]

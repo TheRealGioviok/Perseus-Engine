@@ -52,16 +52,6 @@ BitBoard kingShelter[2][64]; // The king shelter
 // The LMR reduction table
 S32 reductionTable[2][64][64] = {{0}};
 S32 lmpMargin[128][2] = {{0}};
-double lmrDepthValue = 1000;
-double lmrMoveValue = 1000;
-double lmrA0 = 763;
-double lmrC0 = -275;
-double lmrA1 = 775;
-double lmrC1 = 625;
-int lmpA0 = 500;
-int lmpC0 = 1500;
-int lmpA1 = 1000;
-int lmpC1 = 3000;
 /**
  * @brief The initLMRTable function initializes the LMR reduction table
  */
@@ -71,7 +61,7 @@ void initLMRTable(){
             reductionTable[0][depth][move] = std::max(0, 
                 int(
                     lmrA0 *
-                    log(depth * lmrDepthValue / RESOLUTION) *
+                    log(depth * (float)lmrDepthValue() / RESOLUTION) *
                     log(move * lmrMoveValue / RESOLUTION) +
                     lmrC0
                 )
@@ -79,7 +69,7 @@ void initLMRTable(){
             reductionTable[1][depth][move] = std::max(0, 
                 int(
                     lmrA1 *
-                    log(depth * lmrDepthValue / RESOLUTION) *
+                    log(depth * (float)lmrDepthValue() / RESOLUTION) *
                     log(move * lmrMoveValue / RESOLUTION) +
                     lmrC1
                 )
