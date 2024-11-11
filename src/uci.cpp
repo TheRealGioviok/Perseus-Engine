@@ -30,7 +30,7 @@ void uciStr() {
     std::cout << "option name Hash type spin default 64 min 8 max 1024" << std::endl;
     
     for(const TunableParam& param : tunableParams())
-        std::cout << "option name " << param.name << " type spin default " << param.defaultValue << " min " << param.minValue << " max " << param.maxValue << " cend " << param.cEnd << " rend " << param.rEnd << std::endl;
+        std::cout  << param.name << ", " << param.defaultValue << ", " << param.minValue << ", " << param.maxValue << ", " << param.cEnd << ", " << param.rEnd << std::endl;
 
     std::cout << "uciok" << std::endl;
 }

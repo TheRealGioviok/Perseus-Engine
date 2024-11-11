@@ -144,12 +144,12 @@ TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxV
 TUNE_PARAM(lmrDepthValue, 1000, 500, 1500, 50, 0.002);
 TUNE_PARAM(lmrMoveValue, 1000, 500, 1500, 50, 0.002);
 TUNE_PARAM(lmrA0, 763, 500, 1500, 50, 0.002);
-TUNE_PARAM(lmrC0, -275, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrC0, -275, -1000, 1000, 100, 0.002);
 TUNE_PARAM(lmrA1, 775, 500, 1500, 50, 0.002);
 TUNE_PARAM(lmrC1, 625, 500, 1500, 50, 0.002);
 // LMR additionals
 TUNE_PARAM(lmrCieckA, 4096, 2048, 8192, 308, 0.002)
-TUNE_PARAM(lmrCieckB, 300, 100, 500, 20, 0.002)
+TUNE_PARAM(lmrCieckB, 1500, 500, 2500, 100, 0.002)
 TUNE_PARAM(lmrCieckC, 720, 128, 1024, 45, 0.002)
 TUNE_PARAM(lmrPV, 1000, 250, 1750, 75, 0.002)
 TUNE_PARAM(lmrExpectedDecent, 1000, 250, 2750, 150, 0.002)

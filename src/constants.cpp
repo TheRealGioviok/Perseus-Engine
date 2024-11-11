@@ -10,6 +10,5 @@ std::vector<TunableParam>&  tunableParams() {
 
 TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd) {
     tunableParams().emplace_back(name, defaultValue, minValue, maxValue, cEnd, rEnd);
-    std::cout << "Added param " << name << std::endl;
 	return tunableParams().back();
 }
