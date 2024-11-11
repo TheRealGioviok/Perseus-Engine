@@ -129,7 +129,7 @@ struct TunableParam {
 std::vector<TunableParam>&  tunableParams();
 TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd);
 
-// #define TUNE
+#define TUNE
 
 #ifdef TUNE
 	#define TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd) \
