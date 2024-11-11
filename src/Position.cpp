@@ -573,7 +573,7 @@ bool Position::makeMove(Move move)
 inline void Position::addEp(MoveList* ml, ScoredMove move){
     ml->moves[ml->count++] = ((
         GOODNOISYMOVE * SEE(move, -107) 
-        + pieceValues[P] * captScoreMvvMultiplier 
+        + pieceValues[P] * captScoreMvvMultiplier()
         + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P]
         + BADNOISYMOVE
     ) << 32) | move;
@@ -582,7 +582,7 @@ inline void Position::addEp(MoveList* ml, ScoredMove move){
 inline void Position::addPromoCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece, Piece promotion){
     ml->moves[ml->count++] = ((
         GOODNOISYMOVE * SEE(move, -107) 
-        + pieceValues[capturedPiece] * captScoreMvvMultiplier 
+        + pieceValues[capturedPiece] * captScoreMvvMultiplier()
         + pieceValues[promotion]
         + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)] // Piece captured can't be NOPIECE (12), so this works
         + BADNOISYMOVE
@@ -592,7 +592,7 @@ inline void Position::addPromoCapture(MoveList* ml, ScoredMove move, Piece moved
 inline void Position::addCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece){
     ml->moves[ml->count++] = ((
         GOODNOISYMOVE * SEE(move, -107) 
-        + pieceValues[capturedPiece] * captScoreMvvMultiplier 
+        + pieceValues[capturedPiece] * captScoreMvvMultiplier()
         + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)] // Piece captured can't be NOPIECE (12), so this works
         + BADNOISYMOVE
     ) << 32) | move;

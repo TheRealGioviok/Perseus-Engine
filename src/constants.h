@@ -117,7 +117,7 @@ struct TunableParam {
 	S32 value;
 
     inline TunableParam(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd)
-        : name(name), defaultValue(defaultValue), minValue(minValue), maxValue(maxValue), cEnd(cEnd), rEnd(rEnd), value(defaultValue) {}
+        : name(name), defaultValue(defaultValue), minValue(minValue), maxValue(maxValue), cEnd(cEnd), rEnd(rEnd), value(defaultValue){}
     
     inline operator int() const { return value; }
 	inline TunableParam& operator=(int value) {
@@ -129,7 +129,7 @@ struct TunableParam {
 std::vector<TunableParam>&  tunableParams();
 TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd);
 
-#define TUNE
+// #define TUNE
 
 #ifdef TUNE
 	#define TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd) \
@@ -140,32 +140,67 @@ TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxV
 		constexpr S32 name() { return defaultValue; }
 #endif
 
+// LMR table values
 TUNE_PARAM(lmrDepthValue, 1000, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrMoveValue, 1000, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrA0, 763, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrC0, -275, -1000, 1000, 100, 0.002);
+TUNE_PARAM(lmrA1, 775, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrC1, 625, 500, 1500, 50, 0.002);
+// LMR additionals
+TUNE_PARAM(lmrCieckA, 4096, 2048, 8192, 308, 0.002)
+TUNE_PARAM(lmrCieckB, 1500, 500, 2500, 100, 0.002)
+TUNE_PARAM(lmrCieckC, 720, 128, 1024, 45, 0.002)
+TUNE_PARAM(lmrPV, 1000, 250, 1750, 75, 0.002)
+TUNE_PARAM(lmrExpectedDecent, 1000, 250, 2750, 150, 0.002)
+TUNE_PARAM(lmrQuietHistoryDivisor, 8000, 2000, 16000, 700, 0.002)
+TUNE_PARAM(lmrQuietCutNode, 2000, 250, 2750, 150, 0.002);
+TUNE_PARAM(lmrQuietTTPV, 1000, 250, 2750, 150, 0.002)
+TUNE_PARAM(lmrBadNoisyCutNode, 1000, 250, 750, 150, 0.002);
+TUNE_PARAM(lmrNoisyHistoryDivisorA, 6000, 2000, 16000, 700, 0.002)
+TUNE_PARAM(lmrNoisyHistoryDivisorB, 6000, 2000, 16000, 700, 0.002)
 
-// extern double lmrDepthValue;
-extern double lmrMoveValue;
-extern double lmrA0;
-extern double lmrC0;
-extern double lmrA1;
-extern double lmrC1;
-extern int lmpA0;
-extern int lmpC0;
-extern int lmpA1;
-extern int lmpC1;
-extern int futilityMarginDelta;
-extern int nmpDepthDivisor;
-extern int nmpScoreDivisor;
-extern int nmpQ1;
-extern int nmpQ2;
-extern int razorQ1;
-extern int razorQ2;
-extern int singularDepthMultiplier;	 // [1, 6]
-extern int maximumDoubleExtensions;
-extern int doubleExtensionMargin;
-extern Depth IIRdepth;				 // [3, 7]
-extern Depth razorDepth;			 // [2, 5]
-extern Depth singularSearchDepth;	 // [4, 8]
-extern Depth RFPDepth;
-extern int futPruningMultiplier; // [50, 300]
-extern int futPruningAdd;		 // [50, 300]
-extern int captScoreMvvMultiplier; // [8, 32]
+// LMP values
+TUNE_PARAM(lmpA0, 500, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmpC0, 1500, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmpA1, 1000, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmpC1, 3000, 500, 1500, 50, 0.002);
+
+// RFP values
+TUNE_PARAM(futilityMarginDelta, 91, 55, 155, 5, 0.002);
+TUNE_PARAM(RFPDepth, 7, 5, 10, .5, 0.002);
+
+// NMP values
+TUNE_PARAM(nmpDepthDivisor, 3, 2, 6, .5, 0.002);
+TUNE_PARAM(nmpScoreDivisor, 200, 100, 300, 10, 0.002);
+TUNE_PARAM(nmpQ1, 3, 1, 5, .5, 0.002);
+TUNE_PARAM(nmpQ2, 3, 0, 5, .5, 0.002);
+
+// Razoring value
+TUNE_PARAM(razorQ1, 128, -200, 200, 20, 0.002);
+TUNE_PARAM(razorQ2, 192,  100, 500, 20, 0.002);
+TUNE_PARAM(razorDepth, 4, 2, 5, .5, 0.002);
+
+// Singular Extensions
+TUNE_PARAM(singularDepthMultiplier, 10, 1, 30, 2, 0.002);
+TUNE_PARAM(maximumDoubleExtensions, 6, 1, 9, 1, 0.002);
+TUNE_PARAM(doubleExtensionMargin, 24, 1, 50, 2.5, 0.002);
+TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
+
+// IIR values
+TUNE_PARAM(IIRDepth, 4, 3, 8, .5, 0.002);
+
+// FFP values
+TUNE_PARAM(futPruningMultiplier, 60, 30, 130, 5, 0.002);
+TUNE_PARAM(futPruningAdd, 250, 150, 350, 10, 0.002);
+TUNE_PARAM(futPruningDepth, 8, 6, 10, 0.5, 0.002);
+
+// Move ordering values
+TUNE_PARAM(captScoreMvvMultiplier, 16, 8, 32, 1, 0.002)
+
+// Time management values
+TUNE_PARAM(timeTmA, 100, 10, 200, 9, 0.002)
+TUNE_PARAM(timeTmB, 1000, 0, 1000, 50, 0.002)
+TUNE_PARAM(timeTmOptimScale, 250, 100, 1000, 45, 0.002)
+TUNE_PARAM(nodesTmMax, 2000, 1000, 3000, 100, 0.002)
+TUNE_PARAM(nodesTmMul, 1242, 750, 1500, 38, 0.002)

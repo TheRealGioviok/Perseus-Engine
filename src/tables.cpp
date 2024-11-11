@@ -56,22 +56,23 @@ S32 lmpMargin[128][2] = {{0}};
  * @brief The initLMRTable function initializes the LMR reduction table
  */
 void initLMRTable(){
+    // std::cout << "Initializing lmrlmp tables" << std::endl;
     for (int depth = 0; depth < 64; depth++) {
         for (int move = 0; move < 64; move++) {
             reductionTable[0][depth][move] = std::max(0, 
                 int(
-                    lmrA0 *
-                    log(depth * (float)lmrDepthValue() / RESOLUTION) *
-                    log(move * lmrMoveValue / RESOLUTION) +
-                    lmrC0
+                    lmrA0() *
+                    log(depth * (double)lmrDepthValue() / RESOLUTION) *
+                    log(move * (double)lmrMoveValue() / RESOLUTION) +
+                    lmrC0()
                 )
             );
             reductionTable[1][depth][move] = std::max(0, 
                 int(
-                    lmrA1 *
-                    log(depth * (float)lmrDepthValue() / RESOLUTION) *
-                    log(move * lmrMoveValue / RESOLUTION) +
-                    lmrC1
+                    lmrA1() *
+                    log(depth * (double)lmrDepthValue() / RESOLUTION) *
+                    log(move * (double)lmrMoveValue() / RESOLUTION) +
+                    lmrC1()
                 )
             );
         }
@@ -79,8 +80,8 @@ void initLMRTable(){
     // Init lmpMargin
     for (int depth = 0; depth < 128; depth++) {
         for (int improving = 0; improving < 2; improving++) {
-            lmpMargin[depth][0] = (lmpC0 + lmpA0 * depth * depth) / RESOLUTION; // 1.5 + 0.5 * std::pow(depth, 2.0); // Not improving
-            lmpMargin[depth][1] = (lmpC1 + lmpA1 * depth * depth) / RESOLUTION; // 3.0 + 1.0 * std::pow(depth, 2.0); // improving
+            lmpMargin[depth][0] = (lmpC0() + lmpA0() * depth * depth) / RESOLUTION; // 1.5 + 0.5 * std::pow(depth, 2.0); // Not improving
+            lmpMargin[depth][1] = (lmpC1() + lmpA1() * depth * depth) / RESOLUTION; // 3.0 + 1.0 * std::pow(depth, 2.0); // improving
         }
     }
 }
