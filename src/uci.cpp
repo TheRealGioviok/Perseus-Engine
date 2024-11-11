@@ -77,7 +77,7 @@ int executeCommand(Game* game, char* command) {
     char* extract = strstr((char*)command, "extract");
     if (tuneStr){
         for(const TunableParam& param : tunableParams())
-            std::cout  << param.name << ", " << param.defaultValue << ", " << param.minValue << ", " << param.maxValue << ", " << param.cEnd << ", " << param.rEnd << std::endl;
+            std::cout  << param.name << ", int, " << param.defaultValue << ", " << param.minValue << ", " << param.maxValue << ", " << param.cEnd << ", " << param.rEnd << std::endl;
         return 0;
     }
     if (uciNewGame){
