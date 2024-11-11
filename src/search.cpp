@@ -339,7 +339,7 @@ skipPruning:
                     && ttDepth >= depth - 3
                 ){
                     // Increase singular candidates
-                    ++seCandidates;
+                    //++seCandidates;
                     const Score singularBeta = ttScore - singularDepthMultiplier() * depth / 10;
                     const Depth singularDepth = (depth - 1) / 2;
                     ss->excludedMove = currMove;
@@ -356,14 +356,14 @@ skipPruning:
                             extension = 2;
                         }
                         // Increase singular activations
-                        ++seActivations;
+                        // ++seActivations;
                     }
                     
                     // else{
                     //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
                     // }
                     // Update avg dist
-                    avgDist += singularScore - singularBeta;
+                    //avgDist += singularScore - singularBeta;
                 }
                 else if (inCheck)
                     extension = 1;
@@ -379,7 +379,7 @@ skipPruning:
             ++nodes;
             if (isQuiet) quiets[quietsCount++] = currMove;
             else noisy[noisyCount++] = currMove;
-            if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
+            // if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
 
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {

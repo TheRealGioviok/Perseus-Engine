@@ -30,7 +30,7 @@ void uciStr() {
     std::cout << "option name Hash type spin default 64 min 8 max 1024" << std::endl;
     
     for(const TunableParam& param : tunableParams())
-        std::cout  << param.name << ", " << param.defaultValue << ", " << param.minValue << ", " << param.maxValue << ", " << param.cEnd << ", " << param.rEnd << std::endl;
+        std::cout << "option name " << param.name << " type spin default " << param.defaultValue << " min " << param.minValue << " max " << param.maxValue << std::endl;
 
     std::cout << "uciok" << std::endl;
 }
@@ -55,6 +55,7 @@ int executeCommand(Game* game, char* command) {
     // - movelist : wrapper for "divide 1"
     // - exec <command> : executes the given command ( no context is assumed, unless specified (this = game))
     // we will search for the first occurrence of a command
+    char* tuneStr = strstr((char*)command, "tunestr");
     char* ttt = strstr((char*)command, "tt");
     char* sanity = strstr((char*)command, "sanity");
     char* isReady = strstr((char*)command, "isready");
@@ -74,7 +75,11 @@ int executeCommand(Game* game, char* command) {
     char* flip = strstr((char*)command, "flip");
     char* bench = strstr((char*)command, "bench");
     char* extract = strstr((char*)command, "extract");
-
+    if (tuneStr){
+        for(const TunableParam& param : tunableParams())
+            std::cout  << param.name << ", " << param.defaultValue << ", " << param.minValue << ", " << param.maxValue << ", " << param.cEnd << ", " << param.rEnd << std::endl;
+        return 0;
+    }
     if (uciNewGame){
         initTT();
         game->reset();
