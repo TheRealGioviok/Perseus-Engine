@@ -364,12 +364,19 @@ Score pestoEval(Position *pos){
         0ULL
     };
     
+    BitBoard doublePawnAttackedSquares[2] = {
+        0ULL,
+        0ULL
+    };
+    
     {
         // Left Attacks
         BitBoard sidePawnAttacks[2] = {
             ((bb[P] & notFile(0)) >> 9),
             ((bb[p] & notFile(0)) << 7)
         }; 
+        doublePawnAttackedSquares[WHITE] = sidePawnAttacks[WHITE];
+        doublePawnAttackedSquares[BLACK] = sidePawnAttacks[BLACK];
         // Update Multi attacks
         multiAttacks[WHITE] |= attackedBy[WHITE] & sidePawnAttacks[WHITE];
         multiAttacks[BLACK] |= attackedBy[BLACK] & sidePawnAttacks[BLACK];
@@ -382,6 +389,8 @@ Score pestoEval(Position *pos){
         // Right Attacks
         sidePawnAttacks[WHITE] = ((bb[P] & notFile(7)) >> 7); 
         sidePawnAttacks[BLACK] = ((bb[p] & notFile(7)) << 9);
+        doublePawnAttackedSquares[WHITE] &= sidePawnAttacks[WHITE];
+        doublePawnAttackedSquares[BLACK] &= sidePawnAttacks[BLACK];
         // Update multi attacks
         multiAttacks[WHITE] |= attackedBy[WHITE] & sidePawnAttacks[WHITE];
         multiAttacks[BLACK] |= attackedBy[BLACK] & sidePawnAttacks[BLACK];
@@ -445,13 +454,13 @@ Score pestoEval(Position *pos){
     };
 
     const BitBoard kingRing[2] = {
-        kingAttacks[whiteKing],
-        kingAttacks[blackKing]
+        kingAttacks[whiteKing] & ~doublePawnAttackedSquares[WHITE],
+        kingAttacks[blackKing] & ~doublePawnAttackedSquares[BLACK]
     };
 
     const BitBoard kingOuter[2] = {
-        fiveSquare[whiteKing],
-        fiveSquare[blackKing]
+        fiveSquare[whiteKing] & ~doublePawnAttackedSquares[WHITE],
+        fiveSquare[blackKing] & ~doublePawnAttackedSquares[BLACK]
     };
 
     PScore innerAttacks[2] = {PScore(0,0), PScore(0,0)};
@@ -980,6 +989,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         0ULL,
         0ULL
     };
+
+    BitBoard doublePawnAttackedSquares[2] = {
+        0ULL,
+        0ULL
+    };
     
     {
         // Left Attacks
@@ -987,6 +1001,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
             ((bb[P] & notFile(0)) >> 9),
             ((bb[p] & notFile(0)) << 7)
         }; 
+        doublePawnAttackedSquares[WHITE] = sidePawnAttacks[WHITE];
+        doublePawnAttackedSquares[BLACK] = sidePawnAttacks[BLACK];
         // Update Multi attacks
         multiAttacks[WHITE] |= attackedBy[WHITE] & sidePawnAttacks[WHITE];
         multiAttacks[BLACK] |= attackedBy[BLACK] & sidePawnAttacks[BLACK];
@@ -999,6 +1015,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         // Right Attacks
         sidePawnAttacks[WHITE] = ((bb[P] & notFile(7)) >> 7); 
         sidePawnAttacks[BLACK] = ((bb[p] & notFile(7)) << 9);
+        doublePawnAttackedSquares[WHITE] &= sidePawnAttacks[WHITE];
+        doublePawnAttackedSquares[BLACK] &= sidePawnAttacks[BLACK];
         // Update multi attacks
         multiAttacks[WHITE] |= attackedBy[WHITE] & sidePawnAttacks[WHITE];
         multiAttacks[BLACK] |= attackedBy[BLACK] & sidePawnAttacks[BLACK];
@@ -1051,13 +1069,13 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     };
 
     const BitBoard kingRing[2] = {
-        kingAttacks[whiteKing],
-        kingAttacks[blackKing]
+        kingAttacks[whiteKing] & ~doublePawnAttackedSquares[WHITE],
+        kingAttacks[blackKing] & ~doublePawnAttackedSquares[BLACK]
     };
 
     const BitBoard kingOuter[2] = {
-        fiveSquare[whiteKing],
-        fiveSquare[blackKing]
+        fiveSquare[whiteKing] & ~doublePawnAttackedSquares[WHITE],
+        fiveSquare[blackKing] & ~doublePawnAttackedSquares[BLACK]
     };
 
     S32 innerAttacks[2][5] = {{0}}; 
