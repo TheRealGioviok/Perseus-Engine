@@ -288,8 +288,8 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             innerAttacks += QUEENATTACKINNERRING * popcount(mobMoves & kingRing);
             outerAttacks += QUEENATTACKOUTERRING * popcount(mobMoves & kingOuter);
         }
-        ourMultiAttacks |= attackedByUs & mobMoves;
-        attackedByUs |= mobMoves;
+        ourMultiAttacks |= attackedByUs & moves;
+        attackedByUs |= moves;
     }
 } 
 
