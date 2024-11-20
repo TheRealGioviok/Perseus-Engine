@@ -1021,8 +1021,6 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     }
     tensor += 5;
 
-
-
     // Add the psqt weights
     for (Square square = a8; square < noSquare; square++){
         Piece piece = pos->pieceOn(square);
