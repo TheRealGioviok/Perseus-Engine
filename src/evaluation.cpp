@@ -42,7 +42,7 @@ void initTables() {
 }
 
 const PScore passedRankBonus[7] = {
-    S(0,0), S(2,-105), S(-20,-74), S(-14,-16), S(21,36), S(40,141), S(114,199)
+    S(0,0), S(2,-105), S(-20,-74), S(-15,-16), S(21,36), S(40,141), S(120,209)
 };
 
 constexpr PScore DOUBLEISOLATEDPEN = S(11, 65);
@@ -51,7 +51,7 @@ constexpr PScore ISOLATEDPEN = S(17, 23);
 
 constexpr PScore BACKWARDPEN = S(3, 19);
 
-constexpr PScore DOUBLEDPEN = S(15, 21);
+constexpr PScore DOUBLEDPEN = S(14, 21);
 
 constexpr PScore SUPPORTEDPHALANX = S(0, 5);
 
@@ -89,7 +89,7 @@ constexpr PScore BISHOPPROTECTOR = S(-4, -2);
 
 constexpr PScore BISHOPPAWNS = S(1, -4);
 
-constexpr PScore THREATSAFEPAWN = S(49, 59);
+constexpr PScore THREATSAFEPAWN = S(49, 60);
 
 constexpr PScore THREATPAWNPUSH = S(20, 33);
 
@@ -105,57 +105,55 @@ constexpr PScore RESTRICTEDSQUARES = S(5, 3);
 
 constexpr PScore TEMPO = S(20, 29);
 
-constexpr PScore PAWNATTACKINNERRING = S(16, -37);
+constexpr PScore PAWNATTACKINNERRING = S(15, -42);
 
-constexpr PScore KNIGHTATTACKINNERRING = S(34, -8);
+constexpr PScore KNIGHTATTACKINNERRING = S(36, -9);
 
 constexpr PScore BISHOPATTACKINNERRING = S(47, -1);
 
-constexpr PScore ROOKATTACKINNERRING = S(54, 0);
+constexpr PScore ROOKATTACKINNERRING = S(55, 0);
 
-constexpr PScore QUEENATTACKINNERRING = S(45, -44);
+constexpr PScore QUEENATTACKINNERRING = S(46, -48);
 
-constexpr PScore PAWNATTACKOUTERRING = S(24, -8);
+constexpr PScore PAWNATTACKOUTERRING = S(24, -7);
 
-constexpr PScore KNIGHTATTACKOUTERRING = S(42, -2);
+constexpr PScore KNIGHTATTACKOUTERRING = S(43, -3);
 
-constexpr PScore BISHOPATTACKOUTERRING = S(36, 2);
+constexpr PScore BISHOPATTACKOUTERRING = S(36, 3);
 
-constexpr PScore ROOKATTACKOUTERRING = S(21, -3);
+constexpr PScore ROOKATTACKOUTERRING = S(22, -3);
 
-constexpr PScore QUEENATTACKOUTERRING = S(37, -1);
+constexpr PScore QUEENATTACKOUTERRING = S(38, -1);
 
-constexpr PScore NOQUEENDANGER = S(-223, -538);
+constexpr PScore NOQUEENDANGER = S(-227, -563);
 
-constexpr PScore PINNEDSHELTERDANGER = S(42, 2);
-
-constexpr PScore SAFETYINNERSHELTER = S(-26, -15);
-
-constexpr PScore SAFETYOUTERSHELTER = S(-19, -3);
+constexpr PScore PINNEDSHELTERDANGER = S(41, 1);
 
 const PScore SAFECHECK[4] = {
-    S(139,-11),S(38,13),S(103,8),S(82,64)
+    S(141,-12),S(37,14),S(106,8),S(83,73)
 };
 
-constexpr Score COMPLEXITYPASSERS  =  222;
-constexpr Score COMPLEXITYPAWNS  =  894;
-constexpr Score COMPLEXITYBLOCKEDPAIRS  =  -338;
-constexpr Score COMPLEXITYPAWNTENSION  =  -814;
-constexpr Score COMPLEXITYOUTFLANKING  =  -16;
-constexpr Score COMPLEXITYINFILTRATION  =  -734;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS  =  9612;
-constexpr Score COMPLEXITYPAWNENDING  =  12797;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE  =  -3814;
-constexpr Score COMPLEXITYBIAS  =  -18506;
+constexpr PScore SAFETYINNERSHELTER = S(-26, -15);
+constexpr PScore SAFETYOUTERSHELTER = S(-18, -3);
 
+constexpr Score COMPLEXITYPASSERS  =  219;
+constexpr Score COMPLEXITYPAWNS  =  898;
+constexpr Score COMPLEXITYBLOCKEDPAIRS  =  -339;
+constexpr Score COMPLEXITYPAWNTENSION  =  -796;
+constexpr Score COMPLEXITYOUTFLANKING  =  -13;
+constexpr Score COMPLEXITYINFILTRATION  =  -708;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS  =  9622;
+constexpr Score COMPLEXITYPAWNENDING  =  12823;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE  =  -3860;
+constexpr Score COMPLEXITYBIAS  =  -18529;
 //constexpr Score KSAMG = -2;
-constexpr double KSCALEMG = 883.9401245117188;
-constexpr double KSBMG = 2.4603099822998047;
-constexpr double KSCMG = -2.8806324005126953;
+constexpr double KSCALEMG = 887.0237426757812;
+constexpr double KSBMG = 2.4812660217285156;
+constexpr double KSCMG = -2.835286855697632;
 // constexpr Score KSAEG = -71;
-constexpr double KSCALEEG = 1235.963134765625;
-constexpr double KSBEG = 8.537221908569336;
-constexpr double KSCEG = 6.787712574005127;
+constexpr double KSCALEEG = 1102.09130859375;
+constexpr double KSBEG = 8.078956604003906;
+constexpr double KSCEG = 6.812503814697266;
 
 static inline S32 getKingSafetyMg(S32 x){
     double f = x;
@@ -804,10 +802,10 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += SAFECHECK[R-1] * popcount(safeChecks[BLACK][R-1]);
     dangerIndex[BLACK] += SAFECHECK[Q-1] * popcount(safeChecks[BLACK][Q-1]);
 
-    dangerIndex[WHITE] += SAFETYINNERSHELTER * popcount(innerShelters[BLACK]);
-    dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
-    dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
-    dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
+    dangerIndex[WHITE] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
+    dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
+    dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[BLACK]);
+    dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
 
     const S32 mgWhiteDanger = getKingSafetyMg(dangerIndex[WHITE].mg());
     const S32 egWhiteDanger = getKingSafetyEg(dangerIndex[WHITE].eg());
@@ -1540,7 +1538,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[3] += popcount(safeChecks[BLACK][Q-1]);
     tensor += 4;
     tensor[0] = popcount(innerShelters[WHITE]);
-    tensor[1] = popcount(outerShelters[WHITE]);
+    tensor[1] = popcount(outerShelters[BLACK]);
     tensor += 2;
 
     // Also assert the last element we wrote is the penultimate element
