@@ -1471,7 +1471,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
 
 #define COMPLEXITYFEATURES 9
 
-// Complexity adjustment, so we avoid going into drawish barely better endgames
+    // Complexity adjustment, so we avoid going into drawish barely better endgames
     Score outflanking = std::abs(fileOf(whiteKing)- fileOf(blackKing)) - std::abs(rankOf(whiteKing)- rankOf(blackKing));
     Score blockedPairs = popcount(north(bb[P]) & bb[p]) * 2;
     Score pawnTension = popcount(pawnAttackedSquares[WHITE] & bb[p]) + popcount(pawnAttackedSquares[BLACK] & bb[P]);
