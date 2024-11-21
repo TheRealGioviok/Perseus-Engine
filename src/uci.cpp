@@ -204,11 +204,28 @@ int executeCommand(Game* game, char* command) {
         benchmark(depth);
     }
 
-    if (extract){
-        // Get the filename
-        char* filename = extract + 8;
-        convertToFeatures(filename, "out.bin");
+    if (extract) {
+    // Get the filename
+    char* filename = extract + 8;
+
+    // Convert the C-style string to a C++ std::string for easier manipulation
+    std::string inputFilename(filename);
+    std::string outputFilename;
+
+    // Find the last '.' in the filename
+    size_t dotPos = inputFilename.find_last_of('.');
+
+    if (dotPos != std::string::npos) {
+        // If there's an extension, replace it with ".feat"
+        outputFilename = inputFilename.substr(0, dotPos) + ".feat";
+    } else {
+        // If no extension, just add ".feat"
+        outputFilename = inputFilename + ".feat";
     }
+
+    // Convert back to C-style string if needed for the function call
+    convertToFeatures(inputFilename.c_str(), outputFilename.c_str());
+}
 
     return 0;
 }
