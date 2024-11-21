@@ -127,12 +127,15 @@ constexpr PScore BISHOPATTACKOUTERRING = S( 53,   63);
 constexpr PScore ROOKATTACKOUTERRING   = S( 29,   30);
 constexpr PScore QUEENATTACKOUTERRING  = S( 47,   50);
 
+constexpr PScore NOQUEENDANGER         = S(-219,-6145);
+constexpr PScore PINNEDSHELTERDANGER   = S( 63, -6);
+
 const PScore SAFECHECK[4] = {
     S(174,218), S(78,-43), S(157,-20), S(111,32)
 };
 
-constexpr PScore NOQUEENDANGER         = S(-219,-6145);
-constexpr PScore PINNEDSHELTERDANGER   = S( 63, -6);
+constexpr PScore SAFETYINNERSHELTER = S(10, 10);
+constexpr PScore SAFETYOUTERSHELTER = S(7, 6);
 
 //constexpr Score KSAMG = -2;
 constexpr double KSCALEMG = 689.7962036132812;
@@ -789,6 +792,11 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += SAFECHECK[B-1] * popcount(safeChecks[BLACK][B-1]);
     dangerIndex[BLACK] += SAFECHECK[R-1] * popcount(safeChecks[BLACK][R-1]);
     dangerIndex[BLACK] += SAFECHECK[Q-1] * popcount(safeChecks[BLACK][Q-1]);
+
+    dangerIndex[WHITE] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
+    dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
+    dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[BLACK]);
+    dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
 
     const S32 mgWhiteDanger = getKingSafetyMg(dangerIndex[WHITE].mg());
     const S32 egWhiteDanger = getKingSafetyEg(dangerIndex[WHITE].eg());
@@ -1475,7 +1483,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor += 9;
 
 
-#define KINGSAFETYCOLOREDPARAMS 32
+#define KINGSAFETYCOLOREDPARAMS 36
     tensor[P] = innerAttacks[WHITE][P];
     tensor[N] = innerAttacks[WHITE][N];
     tensor[B] = innerAttacks[WHITE][B];
@@ -1496,6 +1504,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[2] = popcount(safeChecks[WHITE][R-1]);
     tensor[3] = popcount(safeChecks[WHITE][Q-1]);
     tensor += 4;
+    tensor[0] = popcount(innerShelters[WHITE]);
+    tensor[1] = popcount(outerShelters[WHITE]);
+    tensor += 2;
 
     tensor[P] = innerAttacks[BLACK][P];
     tensor[N] = innerAttacks[BLACK][N];
@@ -1517,6 +1528,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[2] += popcount(safeChecks[BLACK][R-1]);
     tensor[3] += popcount(safeChecks[BLACK][Q-1]);
     tensor += 4;
+    tensor[0] = popcount(innerShelters[BLACK]);
+    tensor[1] = popcount(outerShelters[BLACK]);
+    tensor += 2;
 
     // Also assert the last element we wrote is the penultimate element
     // assert(tensorStart + tensorSize - 2 == tensor);
