@@ -41,6 +41,7 @@ void initTables() {
     }
 }
 
+
 const PScore passedRankBonus[7] = {
     S(0,0), S(2,-105), S(-20,-74), S(-15,-16), S(21,36), S(40,141), S(120,209)
 };
@@ -770,7 +771,7 @@ Score pestoEval(Position *pos){
     };
 
     safeChecks[WHITE][B-1] &= ~safeChecks[WHITE][Q-1];
-    safeChecks[WHITE][B-1] &= ~safeChecks[WHITE][Q-1];
+    safeChecks[BLACK][B-1] &= ~safeChecks[BLACK][Q-1];
 
     safeChecks[WHITE][Q-1] &= ~safeChecks[WHITE][R-1];
     safeChecks[BLACK][Q-1] &= ~safeChecks[BLACK][R-1];
@@ -802,10 +803,10 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += SAFECHECK[R-1] * popcount(safeChecks[BLACK][R-1]);
     dangerIndex[BLACK] += SAFECHECK[Q-1] * popcount(safeChecks[BLACK][Q-1]);
 
-    dangerIndex[WHITE] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
-    dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
-    dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[BLACK]);
-    dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
+    dangerIndex[WHITE] += SAFETYINNERSHELTER * popcount(innerShelters[BLACK]);
+    dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
+    dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
+    dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
 
     const S32 mgWhiteDanger = getKingSafetyMg(dangerIndex[WHITE].mg());
     const S32 egWhiteDanger = getKingSafetyEg(dangerIndex[WHITE].eg());
@@ -1463,7 +1464,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     };
 
     safeChecks[WHITE][B-1] &= ~safeChecks[WHITE][Q-1];
-    safeChecks[WHITE][B-1] &= ~safeChecks[WHITE][Q-1];
+    safeChecks[BLACK][B-1] &= ~safeChecks[BLACK][Q-1];
 
     safeChecks[WHITE][Q-1] &= ~safeChecks[WHITE][R-1];
     safeChecks[BLACK][Q-1] &= ~safeChecks[BLACK][R-1];
@@ -1538,7 +1539,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[3] += popcount(safeChecks[BLACK][Q-1]);
     tensor += 4;
     tensor[0] = popcount(innerShelters[WHITE]);
-    tensor[1] = popcount(outerShelters[BLACK]);
+    tensor[1] = popcount(outerShelters[WHITE]);
     tensor += 2;
 
     // Also assert the last element we wrote is the penultimate element
