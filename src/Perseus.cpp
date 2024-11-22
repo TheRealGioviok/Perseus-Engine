@@ -1,6 +1,7 @@
 #include "uci.h"
 #include "tables.h"
 #include "bench.h"
+#include "evaluation.h"
 #include <cstdlib>
 #include <vector>
 #include <string>
@@ -75,11 +76,35 @@ int main(int argc, char* argv[]){
     Game game;
 
     // Check if the first argument is "bench"
-    if (argc > 1 && std::string(argv[1]) == "bench") {
-        // If the second argument is provided, parse it; otherwise, use the default value 12
-        int depth = (argc > 2) ? std::atoi(argv[2]) : 12;
-        benchmark(depth);
-        return 0;
+    if (argc > 1){
+        if (std::string(argv[1]) == "bench") {
+            // If the second argument is provided, parse it; otherwise, use the default value 12
+            int depth = (argc > 2) ? std::atoi(argv[2]) : 12;
+            benchmark(depth);
+            return 0;
+        }
+        else if (std::string(argv[1]) == "extract") {
+            // If the second argument is provided, parse it; otherwise, return error
+            if (argc < 3) {
+                std::cerr << "Usage " << argv[0] << " extract <filename>\n";
+                return 1;
+            }
+            std::string inputFilename(argv[2]);
+            std::string outputFilename;
+
+            // Find the last '.' in the filename
+            size_t dotPos = inputFilename.find_last_of('.');
+
+            if (dotPos != std::string::npos) {
+                // If there's an extension, replace it with ".feat"
+                outputFilename = inputFilename.substr(0, dotPos) + ".feat";
+            } else {
+                // If no extension, just add ".feat"
+                outputFilename = inputFilename + ".feat";
+            }
+            convertToFeatures(inputFilename, outputFilename);
+            return 0;
+        }
     }
     uciLoop(&game);
     return 0;
