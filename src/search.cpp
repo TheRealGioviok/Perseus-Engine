@@ -312,6 +312,10 @@ skipPruning:
                 skipQuiets = true;
                 continue;
             }
+            if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( -2048 * depth)){
+                skipQuiets = true;
+                continue;
+            }
         }
         else if (currMoveScore < COUNTERSCORE) continue;
         // assert (
