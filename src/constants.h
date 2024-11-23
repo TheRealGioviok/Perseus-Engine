@@ -188,7 +188,7 @@ TUNE_PARAM(doubleExtensionMargin, 26, 1, 50, 2.5, 0.002);
 TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
 
 // IIR values
-TUNE_PARAM(IIRDepth, 5, 3, 8, .5, 0.002);
+TUNE_PARAM(IIRDepth, 4, 3, 8, .5, 0.002);
 
 // FFP values
 TUNE_PARAM(futPruningMultiplier, 56, 30, 130, 5, 0.002);
