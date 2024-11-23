@@ -43,8 +43,8 @@ void updateContHist(SStack* ss, const Move move, const S32 delta){
     updateContHistOffset(ss, move, delta, 2);
 }
 
-void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount) {
-    const S32 delta = stat_bonus(depth);
+void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount, Score beta, Score bestScore) {
+    const S32 delta = stat_bonus(depth + (bestScore > beta + hhBonusMargin()));
     if (okToReduce(bestMove)) {
         // If bestMove is not noisy, we reduce the bonus of all other moves and increase the bonus of the bestMove
         updateHistoryMove(side, bestMove, delta);
