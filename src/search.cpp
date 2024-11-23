@@ -177,6 +177,11 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     // Initialize the undoer
     UndoInfo undoer = UndoInfo(pos);
 
+    if (!excludedMove){
+        if (PVNode && depth >= IIRDepth() && !ttMove) --depth; 
+        if (cutNode && depth >= IIRDepth() && !ttMove) --depth; 
+    }
+
     if (inCheck)
     {
         ss->staticEval = eval = rawEval = noScore;
@@ -277,8 +282,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     }
 
 skipPruning:
-    if (depth >= IIRDepth() && ttBound == hashNONE)
-        --depth; 
+    
 
     // Search
     const Score origAlpha = alpha;
