@@ -105,7 +105,7 @@ enum Squares {
 // DEBUGGING SYMBOL DEFINITIONS
 #define DEBUG                           false // If true the debugging is used. The debugging is automatically implemented in the code if this is true.
 #define ASSERTS                         true // If true the asserts are used. The asserts are automatically implemented in the code if this is true.
-#define LOGROOTMOVEDEPTH                12 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
+#define LOGROOTMOVEDEPTH                127 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
 
 struct TunableParam {
     std::string name;
@@ -129,7 +129,7 @@ struct TunableParam {
 std::vector<TunableParam>&  tunableParams();
 TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd);
 
-// #define TUNE
+#define TUNE
 
 #ifdef TUNE
 	#define TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd) \
@@ -186,6 +186,10 @@ TUNE_PARAM(singularDepthMultiplier, 10, 1, 30, 2, 0.002);
 TUNE_PARAM(maximumDoubleExtensions, 6, 1, 9, 1, 0.002);
 TUNE_PARAM(doubleExtensionMargin, 26, 1, 50, 2.5, 0.002);
 TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
+
+// History Pruning values
+TUNE_PARAM(historyPruningMultiplier, -2048, -5120, -1024, 205, 0.002);
+TUNE_PARAM(historyPruningBias, 0, -2048, 2048, 205, 0.002);
 
 // IIR values
 TUNE_PARAM(IIRDepth, 4, 3, 8, .5, 0.002);
