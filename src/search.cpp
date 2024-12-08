@@ -316,7 +316,7 @@ skipPruning:
                 skipQuiets = true;
                 continue;
             }
-            if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( -2048 * depth)){
+            if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
                 skipQuiets = true;
                 continue;
             }
