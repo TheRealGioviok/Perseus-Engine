@@ -238,8 +238,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             depth >= 3 &&
             eval >= beta &&
             ss->staticEval >= beta + 175 - 25 * depth
-        )
-        {
+        ){
 
             // make null move
             makeNullMove();
