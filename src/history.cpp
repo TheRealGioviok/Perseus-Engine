@@ -20,6 +20,7 @@ S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES]
 S32 pawnsCorrHist[2][CORRHISTSIZE]; // stm - hash
 S32 nonPawnsCorrHist[2][2][CORRHISTSIZE]; // stm - side - hash
 S32 minorCorrHist[2][CORRHISTSIZE]; // stm - hash
+S32 majorCorrHist[2][CORRHISTSIZE]; // stm - hash
 
 
 void updateHistoryMove(bool side, Move move, S32 delta) {
@@ -77,8 +78,9 @@ Score correctStaticEval(Position& pos, const Score eval) {
     ;
 
     const S32 minorBonus = minorCorrHist[side][pos.minorKey % CORRHISTSIZE];
+    const S32 majorBonus = majorCorrHist[side][pos.majorKey % CORRHISTSIZE];
 
-    const S32 bonus = pawnBonus + nonPawnBonus + minorBonus;
+    const S32 bonus = pawnBonus + nonPawnBonus + minorBonus + majorBonus;
     const S32 corrected = eval + bonus / CORRHISTSCALE;
 
     return static_cast<Score>(std::clamp(corrected, -mateValue, +mateValue));
@@ -98,9 +100,11 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
     auto& wNonPawnEntry = nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE];
     auto& bNonPawnEntry = nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE];
     auto& minorEntry = minorCorrHist[side][pos.minorKey % CORRHISTSIZE];
+    auto& majorEntry = majorCorrHist[side][pos.majorKey % CORRHISTSIZE];
 
     updateSingleCorrHist(pawnEntry, scaledBonus, weight);
     updateSingleCorrHist(wNonPawnEntry, scaledBonus, weight);
     updateSingleCorrHist(bNonPawnEntry, scaledBonus, weight);
     updateSingleCorrHist(minorEntry, scaledBonus, weight);
+    updateSingleCorrHist(majorEntry, scaledBonus, weight);
 }

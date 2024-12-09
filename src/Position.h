@@ -42,6 +42,7 @@ struct Position{
     HashKey pawnHashKey;
     HashKey nonPawnKeys[2];
     HashKey minorKey;
+    HashKey majorKey;
     PScore psqtScore; // PSQT score, incrementally updated
 
     // The default constructor instantiates the position with the standard chess starting position.
@@ -64,16 +65,22 @@ struct Position{
     HashKey generatePawnHashKey();
 
     /** 
-     * @brief The Position::generateNonPawnHashKey function generates the hash key of the non pawn structure from scratch, for a given side.
+     * @brief The Position::generateNonPawnHashKey function generates the hash key of the non pawn structure from scratch.
      * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
      */
     HashKey generateNonPawnHashKey(const bool side);
 
     /**
-     * @brief The Position::generateMinorHashKey function generates the hash key of the minor pieces from scratch.
+     * @brief The Position::generateMinorHashKey function generates the hash key of minor structure from scratch.
      * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
      */
     HashKey generateMinorHashKey();
+
+    /** 
+     * @brief The Position::generateMinorHashKey function generates the hash key of the major structure from scratch.
+     * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
+     */
+    HashKey generateMajorHashKey();
 
     /**
      * @brief The Position::print function prints the position to stdout.
@@ -237,6 +244,7 @@ struct UndoInfo {
     HashKey pawnsHashKey;
     HashKey nonPawnsHashKey[2];
     HashKey minorHashKey;
+    HashKey majorHashKey;
     Square enPassant;
     U8 castle;
     U8 fiftyMove;
