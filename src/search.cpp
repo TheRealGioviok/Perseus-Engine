@@ -169,7 +169,10 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     if (depth <= 0) return quiescence(alpha, beta, ss);
 
     (ss)->doubleExtensions = (ss-1)->doubleExtensions;
-
+    
+    if (depth < ttDepth && !cutNode){
+        depth++; // Principled iterative extensions: If the tt entry is a lower bound (or exact), we don't search shallower than the tt depth
+    }
     // else if (depth < ttDepth && (ttBound & hashLOWER)){
     //     if (ply == 1) depth += std::min(3, ttDepth - depth);
     //     else depth++; // Principled iterative extensions: If the tt entry is a lower bound (or exact), we don't search shallower than the tt depth
