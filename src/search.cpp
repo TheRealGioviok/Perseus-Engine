@@ -239,7 +239,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             eval >= beta &&
             ss->staticEval >= beta + 175 - 25 * depth &&
             pos.hasNonPawns()
-        ){
+        )
+        {
 
             // make null move
             makeNullMove();
