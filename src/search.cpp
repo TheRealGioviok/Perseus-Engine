@@ -367,6 +367,7 @@ skipPruning:
                         // ++seActivations;
                     }
                     else if (singularBeta >= beta){ // Multicut
+                        undo(undoer, currMove);
                         return singularBeta;
                     }
                     
