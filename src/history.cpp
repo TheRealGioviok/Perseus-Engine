@@ -77,10 +77,17 @@ Score correctStaticEval(Position& pos, const Score eval) {
         + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
     ;
 
+    bool minors = pos.bitboards[N] | pos.bitboards[n] | pos.bitboards[B] | pos.bitboards[b];
+    bool majors = pos.bitboards[R] | pos.bitboards[r] | pos.bitboards[Q] | pos.bitboards[q];
+
     const S32 minorBonus = minorCorrHist[side][pos.minorKey % CORRHISTSIZE];
     const S32 majorBonus = majorCorrHist[side][pos.majorKey % CORRHISTSIZE];
 
-    const S32 bonus = pawnBonus + nonPawnBonus + minorBonus + majorBonus;
+    const S32 bonus = pawnBonus 
+                    + nonPawnBonus 
+                    + minors ? minorBonus : 0
+                    + majors ? majorBonus : 0;
+
     const S32 corrected = eval + bonus / CORRHISTSCALE;
 
     return static_cast<Score>(std::clamp(corrected, -mateValue, +mateValue));
@@ -96,6 +103,9 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
     const S32 scaledBonus = bonus * CORRHISTSCALE; 
     const S32 weight = std::min(1 + depth, 16);
 
+    bool minors = pos.bitboards[N] | pos.bitboards[n] | pos.bitboards[B] | pos.bitboards[b];
+    bool majors = pos.bitboards[R] | pos.bitboards[r] | pos.bitboards[Q] | pos.bitboards[q];
+
     auto& pawnEntry = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE];
     auto& wNonPawnEntry = nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE];
     auto& bNonPawnEntry = nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE];
@@ -105,6 +115,6 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
     updateSingleCorrHist(pawnEntry, scaledBonus, weight);
     updateSingleCorrHist(wNonPawnEntry, scaledBonus, weight);
     updateSingleCorrHist(bNonPawnEntry, scaledBonus, weight);
-    updateSingleCorrHist(minorEntry, scaledBonus, weight);
-    updateSingleCorrHist(majorEntry, scaledBonus, weight);
+    if (minors) updateSingleCorrHist(minorEntry, scaledBonus, weight);
+    if (majors) updateSingleCorrHist(majorEntry, scaledBonus, weight);
 }
