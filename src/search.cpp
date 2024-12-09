@@ -236,8 +236,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
         if (
             ply >= nmpPlies &&
             depth >= 3 &&
-            ss->staticEval >= beta &&
-            eval >= beta + 175 - 25 * depth
+            eval >= beta &&
+            ss->staticEval >= beta + 175 - 25 * depth
         )
         {
 
