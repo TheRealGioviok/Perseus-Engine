@@ -371,7 +371,7 @@ skipPruning:
                         return singularBeta;
                     }
                     else if (ttScore >= beta){
-                        extension = -1;
+                        extension = -2;
                     }
                     
                     // else{
