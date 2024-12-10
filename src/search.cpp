@@ -366,6 +366,10 @@ skipPruning:
                         // Increase singular activations
                         // ++seActivations;
                     }
+                    else if (singularBeta >= beta){ // Multicut
+                        undo(undoer, currMove);
+                        return singularBeta;
+                    }
                     
                     // else{
                     //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
