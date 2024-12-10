@@ -370,6 +370,9 @@ skipPruning:
                         undo(undoer, currMove);
                         return singularBeta;
                     }
+                    else if (ttScore >= beta){
+                        extension = -1;
+                    }
                     
                     // else{
                     //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
@@ -381,7 +384,7 @@ skipPruning:
                     extension = 1;
             }
 
-            Depth newDepth = depth - 1 + extension;
+            Depth newDepth = std::max(0,depth - 1 + extension);
 
             ss->move = currMove;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
