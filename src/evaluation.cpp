@@ -92,7 +92,7 @@ const PScore SAFECHECK[4] = {
     S(161,-17),S(40,24),S(111,17),S(89,17)
 };
 const PScore UNSAFECHECK[4] = {
-    S(16, -2),S(4, 2),S(11, 2),S(9, 2)
+    S(16,-2),S(4,2),S(11,2),S(9,2)
 };
 constexpr PScore SAFETYINNERSHELTER = S(-26, -50);
 constexpr PScore SAFETYOUTERSHELTER = S(-22, -47);
@@ -734,15 +734,15 @@ Score pestoEval(Position *pos){
     BitBoard safeChecks[2][4] = {
         {
             checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][B-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][R-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][Q-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
         },
         {
             checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][B-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][R-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][Q-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
         }
     };
 
@@ -1454,15 +1454,15 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     BitBoard safeChecks[2][4] = {
         {
             checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][B-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][R-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][Q-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
         },
         {
             checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][B-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][R-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][Q-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
         }
     };
 
