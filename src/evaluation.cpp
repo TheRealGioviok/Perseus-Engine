@@ -91,6 +91,9 @@ constexpr PScore PINNEDSHELTERDANGER = S(49, 1);
 const PScore SAFECHECK[4] = {
     S(161,-17),S(40,24),S(111,17),S(89,17)
 };
+const PScore UNSAFECHECK[4] = {
+    S(16, -2),S(4, 2),S(11, 2),S(9, 2)
+};
 constexpr PScore SAFETYINNERSHELTER = S(-26, -50);
 constexpr PScore SAFETYOUTERSHELTER = S(-22, -47);
 
@@ -712,18 +715,34 @@ Score pestoEval(Position *pos){
         attackedBy[BLACK] & (~attackedBy[WHITE] | ((kingAttacks[whiteKing] | ptAttacks[WHITE][Q-1]) & ~multiAttacks[WHITE])),
         attackedBy[WHITE] & (~attackedBy[BLACK] | ((kingAttacks[blackKing] | ptAttacks[BLACK][Q-1]) & ~multiAttacks[BLACK])),
     };
-    BitBoard safeChecks[2][4] = {
+
+    const BitBoard checks[2][4] = {
         {
-            ptAttacks[WHITE][N-1] & kingCheckers[BLACK][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][B-1] & kingCheckers[BLACK][B-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][R-1] & kingCheckers[BLACK][R-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][Q-1] & kingCheckers[BLACK][Q-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            ptAttacks[WHITE][N-1] & kingCheckers[BLACK][N-1],
+            ptAttacks[WHITE][B-1] & kingCheckers[BLACK][B-1],
+            ptAttacks[WHITE][R-1] & kingCheckers[BLACK][R-1],
+            ptAttacks[WHITE][Q-1] & kingCheckers[BLACK][Q-1],
         },
         {
-            ptAttacks[BLACK][N-1] & kingCheckers[WHITE][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][B-1] & kingCheckers[WHITE][B-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][R-1] & kingCheckers[WHITE][R-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][Q-1] & kingCheckers[WHITE][Q-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            ptAttacks[BLACK][N-1] & kingCheckers[WHITE][N-1],
+            ptAttacks[BLACK][B-1] & kingCheckers[WHITE][B-1],
+            ptAttacks[BLACK][R-1] & kingCheckers[WHITE][R-1],
+            ptAttacks[BLACK][Q-1] & kingCheckers[WHITE][Q-1],
+        }
+    };
+
+    BitBoard safeChecks[2][4] = {
+        {
+            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+        },
+        {
+            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
         }
     };
 
@@ -751,6 +770,7 @@ Score pestoEval(Position *pos){
     dangerIndex[WHITE] += PINNEDSHELTERDANGER * popcount(pinned[BLACK] & innerShelters[BLACK]);
     dangerIndex[BLACK] += PINNEDSHELTERDANGER * popcount(pinned[WHITE] & innerShelters[WHITE]);
 
+    // Safe checks
     dangerIndex[WHITE] += SAFECHECK[N-1] * popcount(safeChecks[WHITE][N-1]);
     dangerIndex[WHITE] += SAFECHECK[B-1] * popcount(safeChecks[WHITE][B-1]);
     dangerIndex[WHITE] += SAFECHECK[R-1] * popcount(safeChecks[WHITE][R-1]);
@@ -759,6 +779,16 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += SAFECHECK[B-1] * popcount(safeChecks[BLACK][B-1]);
     dangerIndex[BLACK] += SAFECHECK[R-1] * popcount(safeChecks[BLACK][R-1]);
     dangerIndex[BLACK] += SAFECHECK[Q-1] * popcount(safeChecks[BLACK][Q-1]);
+
+    // All checks
+    dangerIndex[WHITE] += UNSAFECHECK[N-1] * popcount(checks[WHITE][N-1]);
+    dangerIndex[WHITE] += UNSAFECHECK[B-1] * popcount(checks[WHITE][B-1]);
+    dangerIndex[WHITE] += UNSAFECHECK[R-1] * popcount(checks[WHITE][R-1]);
+    dangerIndex[WHITE] += UNSAFECHECK[Q-1] * popcount(checks[WHITE][Q-1]);
+    dangerIndex[BLACK] += UNSAFECHECK[N-1] * popcount(checks[BLACK][N-1]);
+    dangerIndex[BLACK] += UNSAFECHECK[B-1] * popcount(checks[BLACK][B-1]);
+    dangerIndex[BLACK] += UNSAFECHECK[R-1] * popcount(checks[BLACK][R-1]);
+    dangerIndex[BLACK] += UNSAFECHECK[Q-1] * popcount(checks[BLACK][Q-1]);
 
     dangerIndex[WHITE] += SAFETYINNERSHELTER * popcount(innerShelters[BLACK]);
     dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
@@ -1405,20 +1435,37 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         attackedBy[BLACK] & (~attackedBy[WHITE] | ((kingAttacks[whiteKing] | ptAttacks[WHITE][Q-1]) & ~multiAttacks[WHITE])),
         attackedBy[WHITE] & (~attackedBy[BLACK] | ((kingAttacks[blackKing] | ptAttacks[BLACK][Q-1]) & ~multiAttacks[BLACK])),
     };
-    BitBoard safeChecks[2][4] = {
+    
+    const BitBoard checks[2][4] = {
         {
-            ptAttacks[WHITE][N-1] & kingCheckers[BLACK][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][B-1] & kingCheckers[BLACK][B-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][R-1] & kingCheckers[BLACK][R-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][Q-1] & kingCheckers[BLACK][Q-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            ptAttacks[WHITE][N-1] & kingCheckers[BLACK][N-1],
+            ptAttacks[WHITE][B-1] & kingCheckers[BLACK][B-1],
+            ptAttacks[WHITE][R-1] & kingCheckers[BLACK][R-1],
+            ptAttacks[WHITE][Q-1] & kingCheckers[BLACK][Q-1],
         },
         {
-            ptAttacks[BLACK][N-1] & kingCheckers[WHITE][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][B-1] & kingCheckers[WHITE][B-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][R-1] & kingCheckers[WHITE][R-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][Q-1] & kingCheckers[WHITE][Q-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            ptAttacks[BLACK][N-1] & kingCheckers[WHITE][N-1],
+            ptAttacks[BLACK][B-1] & kingCheckers[WHITE][B-1],
+            ptAttacks[BLACK][R-1] & kingCheckers[WHITE][R-1],
+            ptAttacks[BLACK][Q-1] & kingCheckers[WHITE][Q-1],
         }
     };
+
+    BitBoard safeChecks[2][4] = {
+        {
+            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+        },
+        {
+            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+        }
+    };
+
 
     safeChecks[WHITE][B-1] &= ~safeChecks[WHITE][Q-1];
     safeChecks[BLACK][B-1] &= ~safeChecks[BLACK][Q-1];
@@ -1450,7 +1497,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor += 9;
 
 
-#define KINGSAFETYCOLOREDPARAMS 36
+#define KINGSAFETYCOLOREDPARAMS 44
     tensor[P] = innerAttacks[WHITE][P];
     tensor[N] = innerAttacks[WHITE][N];
     tensor[B] = innerAttacks[WHITE][B];
@@ -1466,6 +1513,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[0] = noQueenDanger[WHITE];
     tensor[1] = pinnedShelter[WHITE];
     tensor += 2;
+    tensor[0] = popcount(checks[WHITE][N-1]);
+    tensor[1] = popcount(checks[WHITE][B-1]);
+    tensor[2] = popcount(checks[WHITE][R-1]);
+    tensor[3] = popcount(checks[WHITE][Q-1]);
+    tensor += 4;
     tensor[0] = popcount(safeChecks[WHITE][N-1]);
     tensor[1] = popcount(safeChecks[WHITE][B-1]);
     tensor[2] = popcount(safeChecks[WHITE][R-1]);
@@ -1494,6 +1546,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[1] += popcount(safeChecks[BLACK][B-1]);
     tensor[2] += popcount(safeChecks[BLACK][R-1]);
     tensor[3] += popcount(safeChecks[BLACK][Q-1]);
+    tensor += 4;
+    tensor[0] = popcount(checks[BLACK][N-1]);
+    tensor[1] = popcount(checks[BLACK][B-1]);
+    tensor[2] = popcount(checks[BLACK][R-1]);
+    tensor[3] = popcount(checks[BLACK][Q-1]);
     tensor += 4;
     tensor[0] = popcount(innerShelters[WHITE]);
     tensor[1] = popcount(outerShelters[WHITE]);
