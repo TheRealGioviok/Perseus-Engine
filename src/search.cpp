@@ -686,8 +686,9 @@ void Game::startSearch(bool halveTT = true)
     if (stopped)
         goto bmove;
 
-    for (currSearch = 2; (currSearch <= depth) && currSearch >= 2 && !stopped; currSearch++)
+    for (Depth searchDepth = 2; (searchDepth <= depth) && searchDepth >= 2 && !stopped; searchDepth++)
     {
+        currSearch = searchDepth;
         delta = ASPIRATIONWINDOW;
         if (currSearch >= 4)
         {
@@ -737,6 +738,7 @@ void Game::startSearch(bool halveTT = true)
                 printMove(pvTable[0][0]);
                 std::cout << " nps " << (((nodes - locNodes) * 1000) / (timer2 - timer1 + 1)) << std::endl;
                 delta *= 1.44;
+                currSearch = std::max(searchDepth - 5, currSearch - 1);
             }
             else
             {
