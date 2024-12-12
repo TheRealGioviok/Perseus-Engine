@@ -42,76 +42,81 @@ void initTables() {
 }
 
 const PScore passedRankBonus[7] = {
-    S(0,0), S(3,-106), S(-20,-76), S(-15,-16), S(20,36), S(38,141), S(128,223)
+    S(0,0), S(3,-107), S(-20,-76), S(-14,-17), S(21,35), S(39,141), S(128,223)
 };
 
-constexpr PScore DOUBLEISOLATEDPEN = S(11, 64);
+const PScore SAFECHECK[4] = {
+    S(139,22), S(32,-2), S(86,-16), S(87,-2)
+};
+
+const PScore ALLCHECKS[4] = {
+    S(34,-4), S(10,-20), S(38,1), S(7,-14)
+};
+
+constexpr PScore DOUBLEISOLATEDPEN = S(10, 64);
 constexpr PScore ISOLATEDPEN = S(17, 23);
 constexpr PScore BACKWARDPEN = S(3, 18);
 constexpr PScore DOUBLEDPEN = S(15, 21);
 constexpr PScore SUPPORTEDPHALANX = S(0, 5);
 constexpr PScore ADVANCABLEPHALANX = S(8, 27);
 constexpr PScore R_SUPPORTEDPHALANX = S(2, 12);
-constexpr PScore R_ADVANCABLEPHALANX = S(0, 20);
+constexpr PScore R_ADVANCABLEPHALANX = S(1, 20);
 constexpr PScore PASSEDPATHBONUS = S(-3, 19);
-constexpr PScore SUPPORTEDPASSER = S(29, 0);
-constexpr PScore INNERSHELTER = S(10, -33);
-constexpr PScore OUTERSHELTER = S(12, -16);
-constexpr PScore BISHOPPAIR = S(18, 132);
-constexpr PScore ROOKONOPENFILE = S(25, 0);
-constexpr PScore ROOKONSEMIOPENFILE = S(15, 21);
-constexpr PScore KNIGHTONEXTOUTPOST = S(25, 34);
+constexpr PScore SUPPORTEDPASSER = S(29, 1);
+constexpr PScore INNERSHELTER = S(10, -35);
+constexpr PScore OUTERSHELTER = S(12, -19);
+constexpr PScore BISHOPPAIR = S(19, 129);
+constexpr PScore ROOKONOPENFILE = S(24, 0);
+constexpr PScore ROOKONSEMIOPENFILE = S(16, 21);
+constexpr PScore KNIGHTONEXTOUTPOST = S(26, 33);
 constexpr PScore BISHOPONEXTOUTPOST = S(29, -2);
 constexpr PScore KNIGHTONINTOUTPOST = S(24, 39);
 constexpr PScore BISHOPONINTOUTPOST = S(35, -9);
 constexpr PScore KNIGHTPROTECTOR = S(-6, -3);
 constexpr PScore BISHOPPROTECTOR = S(-4, -2);
 constexpr PScore BISHOPPAWNS = S(1, -4);
-constexpr PScore THREATSAFEPAWN = S(49, 59);
-constexpr PScore THREATPAWNPUSH = S(20, 33);
-constexpr PScore PAWNHANGING = S(-4, -58);
-constexpr PScore NONPAWNHANGING = S(-23, -33);
-constexpr PScore KINGTHREAT = S(-7, 4);
+constexpr PScore THREATSAFEPAWN = S(49, 60);
+constexpr PScore THREATPAWNPUSH = S(20, 34);
+constexpr PScore PAWNHANGING = S(-5, -59);
+constexpr PScore NONPAWNHANGING = S(-24, -33);
+constexpr PScore KINGTHREAT = S(-8, 4);
 constexpr PScore QUEENINFILTRATION = S(1, -17);
 constexpr PScore RESTRICTEDSQUARES = S(5, 3);
 constexpr PScore TEMPO = S(20, 29);
 
-constexpr PScore PAWNATTACKINNERRING = S(31, -44);
-constexpr PScore KNIGHTATTACKINNERRING = S(41, -9);
-constexpr PScore BISHOPATTACKINNERRING = S(53, -2);
-constexpr PScore ROOKATTACKINNERRING = S(60, 0);
-constexpr PScore QUEENATTACKINNERRING = S(51, -13);
-constexpr PScore PAWNATTACKOUTERRING = S(31, -11);
-constexpr PScore KNIGHTATTACKOUTERRING = S(46, 3);
-constexpr PScore BISHOPATTACKOUTERRING = S(40, 4);
-constexpr PScore ROOKATTACKOUTERRING = S(25, -4);
-constexpr PScore QUEENATTACKOUTERRING = S(37, 16);
-constexpr PScore NOQUEENDANGER = S(-273, -713);
-constexpr PScore PINNEDSHELTERDANGER = S(49, 1);
-const PScore SAFECHECK[4] = {
-    S(161,-17),S(40,24),S(111,17),S(89,17)
-};
-constexpr PScore SAFETYINNERSHELTER = S(-26, -50);
-constexpr PScore SAFETYOUTERSHELTER = S(-22, -47);
+constexpr PScore PAWNATTACKINNERRING = S(33, 38);
+constexpr PScore KNIGHTATTACKINNERRING = S(55, 10);
+constexpr PScore BISHOPATTACKINNERRING = S(54, 4);
+constexpr PScore ROOKATTACKINNERRING = S(54, -2);
+constexpr PScore QUEENATTACKINNERRING = S(48, 21);
+constexpr PScore PAWNATTACKOUTERRING = S(32, 9);
+constexpr PScore KNIGHTATTACKOUTERRING = S(37, -2);
+constexpr PScore BISHOPATTACKOUTERRING = S(42, -2);
+constexpr PScore ROOKATTACKOUTERRING = S(23, 3);
+constexpr PScore QUEENATTACKOUTERRING = S(37, -14);
+constexpr PScore NOQUEENDANGER = S(-276, 702);
+constexpr PScore PINNEDSHELTERDANGER = S(47, 3);
+constexpr PScore SAFETYINNERSHELTER = S(-27, 49);
+constexpr PScore SAFETYOUTERSHELTER = S(-21, 49);
 
-constexpr Score COMPLEXITYPASSERS  =  221;
-constexpr Score COMPLEXITYPAWNS  =  895;
-constexpr Score COMPLEXITYBLOCKEDPAIRS  =  -350;
-constexpr Score COMPLEXITYPAWNTENSION  =  -848;
-constexpr Score COMPLEXITYOUTFLANKING  =  -22;
-constexpr Score COMPLEXITYINFILTRATION  =  -740;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS  =  9647;
-constexpr Score COMPLEXITYPAWNENDING  =  12823;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE  =  -3863;
-constexpr Score COMPLEXITYBIAS  =  -18553;
+constexpr Score COMPLEXITYPASSERS  =  210;
+constexpr Score COMPLEXITYPAWNS  =  899;
+constexpr Score COMPLEXITYBLOCKEDPAIRS  =  -352;
+constexpr Score COMPLEXITYPAWNTENSION  =  -855;
+constexpr Score COMPLEXITYOUTFLANKING  =  -19;
+constexpr Score COMPLEXITYINFILTRATION  =  -736;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS  =  9717;
+constexpr Score COMPLEXITYPAWNENDING  =  12876;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE  =  -3859;
+constexpr Score COMPLEXITYBIAS  =  -18704;
 //constexpr Score KSAMG = -2;
-constexpr double KSCALEMG = 853.6488037109375;
-constexpr double KSBMG = 2.256626844406128;
-constexpr double KSCMG = -2.9176840782165527;
+constexpr double KSCALEMG = 888.0465698242188;
+constexpr double KSBMG = 2.1462602615356445;
+constexpr double KSCMG = -2.9338715076446533;
 // constexpr Score KSAEG = -71;
-constexpr double KSCALEEG = 1059.370849609375;
-constexpr double KSBEG = 3.4129538536071777;
-constexpr double KSCEG = 3.008497476577759;
+constexpr double KSCALEEG = 1105.0986328125;
+constexpr double KSBEG = -3.1928510665893555;
+constexpr double KSCEG = 2.7242066860198975;
 
 static inline S32 getKingSafetyMg(S32 x){
     double f = x;
@@ -712,18 +717,34 @@ Score pestoEval(Position *pos){
         attackedBy[BLACK] & (~attackedBy[WHITE] | ((kingAttacks[whiteKing] | ptAttacks[WHITE][Q-1]) & ~multiAttacks[WHITE])),
         attackedBy[WHITE] & (~attackedBy[BLACK] | ((kingAttacks[blackKing] | ptAttacks[BLACK][Q-1]) & ~multiAttacks[BLACK])),
     };
-    BitBoard safeChecks[2][4] = {
+
+    const BitBoard checks[2][4] = {
         {
-            ptAttacks[WHITE][N-1] & kingCheckers[BLACK][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][B-1] & kingCheckers[BLACK][B-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][R-1] & kingCheckers[BLACK][R-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][Q-1] & kingCheckers[BLACK][Q-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            ptAttacks[WHITE][N-1] & kingCheckers[BLACK][N-1],
+            ptAttacks[WHITE][B-1] & kingCheckers[BLACK][B-1],
+            ptAttacks[WHITE][R-1] & kingCheckers[BLACK][R-1],
+            ptAttacks[WHITE][Q-1] & kingCheckers[BLACK][Q-1],
         },
         {
-            ptAttacks[BLACK][N-1] & kingCheckers[WHITE][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][B-1] & kingCheckers[WHITE][B-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][R-1] & kingCheckers[WHITE][R-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][Q-1] & kingCheckers[WHITE][Q-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            ptAttacks[BLACK][N-1] & kingCheckers[WHITE][N-1],
+            ptAttacks[BLACK][B-1] & kingCheckers[WHITE][B-1],
+            ptAttacks[BLACK][R-1] & kingCheckers[WHITE][R-1],
+            ptAttacks[BLACK][Q-1] & kingCheckers[WHITE][Q-1],
+        }
+    };
+
+    BitBoard safeChecks[2][4] = {
+        {
+            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][B-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][R-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][Q-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+        },
+        {
+            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][B-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][R-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][Q-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
         }
     };
 
@@ -751,6 +772,7 @@ Score pestoEval(Position *pos){
     dangerIndex[WHITE] += PINNEDSHELTERDANGER * popcount(pinned[BLACK] & innerShelters[BLACK]);
     dangerIndex[BLACK] += PINNEDSHELTERDANGER * popcount(pinned[WHITE] & innerShelters[WHITE]);
 
+    // Safe checks
     dangerIndex[WHITE] += SAFECHECK[N-1] * popcount(safeChecks[WHITE][N-1]);
     dangerIndex[WHITE] += SAFECHECK[B-1] * popcount(safeChecks[WHITE][B-1]);
     dangerIndex[WHITE] += SAFECHECK[R-1] * popcount(safeChecks[WHITE][R-1]);
@@ -759,6 +781,16 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += SAFECHECK[B-1] * popcount(safeChecks[BLACK][B-1]);
     dangerIndex[BLACK] += SAFECHECK[R-1] * popcount(safeChecks[BLACK][R-1]);
     dangerIndex[BLACK] += SAFECHECK[Q-1] * popcount(safeChecks[BLACK][Q-1]);
+
+    // All checks
+    dangerIndex[WHITE] += ALLCHECKS[N-1] * popcount(checks[WHITE][N-1]);
+    dangerIndex[WHITE] += ALLCHECKS[B-1] * popcount(checks[WHITE][B-1]);
+    dangerIndex[WHITE] += ALLCHECKS[R-1] * popcount(checks[WHITE][R-1]);
+    dangerIndex[WHITE] += ALLCHECKS[Q-1] * popcount(checks[WHITE][Q-1]);
+    dangerIndex[BLACK] += ALLCHECKS[N-1] * popcount(checks[BLACK][N-1]);
+    dangerIndex[BLACK] += ALLCHECKS[B-1] * popcount(checks[BLACK][B-1]);
+    dangerIndex[BLACK] += ALLCHECKS[R-1] * popcount(checks[BLACK][R-1]);
+    dangerIndex[BLACK] += ALLCHECKS[Q-1] * popcount(checks[BLACK][Q-1]);
 
     dangerIndex[WHITE] += SAFETYINNERSHELTER * popcount(innerShelters[BLACK]);
     dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
@@ -1405,20 +1437,37 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         attackedBy[BLACK] & (~attackedBy[WHITE] | ((kingAttacks[whiteKing] | ptAttacks[WHITE][Q-1]) & ~multiAttacks[WHITE])),
         attackedBy[WHITE] & (~attackedBy[BLACK] | ((kingAttacks[blackKing] | ptAttacks[BLACK][Q-1]) & ~multiAttacks[BLACK])),
     };
-    BitBoard safeChecks[2][4] = {
+    
+    const BitBoard checks[2][4] = {
         {
-            ptAttacks[WHITE][N-1] & kingCheckers[BLACK][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][B-1] & kingCheckers[BLACK][B-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][R-1] & kingCheckers[BLACK][R-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
-            ptAttacks[WHITE][Q-1] & kingCheckers[BLACK][Q-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            ptAttacks[WHITE][N-1] & kingCheckers[BLACK][N-1],
+            ptAttacks[WHITE][B-1] & kingCheckers[BLACK][B-1],
+            ptAttacks[WHITE][R-1] & kingCheckers[BLACK][R-1],
+            ptAttacks[WHITE][Q-1] & kingCheckers[BLACK][Q-1],
         },
         {
-            ptAttacks[BLACK][N-1] & kingCheckers[WHITE][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][B-1] & kingCheckers[WHITE][B-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][R-1] & kingCheckers[WHITE][R-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
-            ptAttacks[BLACK][Q-1] & kingCheckers[WHITE][Q-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            ptAttacks[BLACK][N-1] & kingCheckers[WHITE][N-1],
+            ptAttacks[BLACK][B-1] & kingCheckers[WHITE][B-1],
+            ptAttacks[BLACK][R-1] & kingCheckers[WHITE][R-1],
+            ptAttacks[BLACK][Q-1] & kingCheckers[WHITE][Q-1],
         }
     };
+
+    BitBoard safeChecks[2][4] = {
+        {
+            checks[WHITE][N-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][B-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][R-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+            checks[WHITE][Q-1] & (~attackedBy[BLACK] | (weakSquares[BLACK] & multiAttacks[WHITE])),
+        },
+        {
+            checks[BLACK][N-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][B-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][R-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+            checks[BLACK][Q-1] & (~attackedBy[WHITE] | (weakSquares[WHITE] & multiAttacks[BLACK])),
+        }
+    };
+
 
     safeChecks[WHITE][B-1] &= ~safeChecks[WHITE][Q-1];
     safeChecks[BLACK][B-1] &= ~safeChecks[BLACK][Q-1];
@@ -1450,7 +1499,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor += 9;
 
 
-#define KINGSAFETYCOLOREDPARAMS 36
+#define KINGSAFETYCOLOREDPARAMS 44
     tensor[P] = innerAttacks[WHITE][P];
     tensor[N] = innerAttacks[WHITE][N];
     tensor[B] = innerAttacks[WHITE][B];
@@ -1470,6 +1519,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[1] = popcount(safeChecks[WHITE][B-1]);
     tensor[2] = popcount(safeChecks[WHITE][R-1]);
     tensor[3] = popcount(safeChecks[WHITE][Q-1]);
+    tensor += 4;
+    tensor[0] = popcount(checks[WHITE][N-1]);
+    tensor[1] = popcount(checks[WHITE][B-1]);
+    tensor[2] = popcount(checks[WHITE][R-1]);
+    tensor[3] = popcount(checks[WHITE][Q-1]);
     tensor += 4;
     tensor[0] = popcount(innerShelters[BLACK]);
     tensor[1] = popcount(outerShelters[BLACK]);
@@ -1494,6 +1548,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[1] += popcount(safeChecks[BLACK][B-1]);
     tensor[2] += popcount(safeChecks[BLACK][R-1]);
     tensor[3] += popcount(safeChecks[BLACK][Q-1]);
+    tensor += 4;
+    tensor[0] = popcount(checks[BLACK][N-1]);
+    tensor[1] = popcount(checks[BLACK][B-1]);
+    tensor[2] = popcount(checks[BLACK][R-1]);
+    tensor[3] = popcount(checks[BLACK][Q-1]);
     tensor += 4;
     tensor[0] = popcount(innerShelters[WHITE]);
     tensor[1] = popcount(outerShelters[WHITE]);
