@@ -98,6 +98,8 @@ constexpr PScore NOQUEENDANGER = S(-276, 702);
 constexpr PScore PINNEDSHELTERDANGER = S(47, 3);
 constexpr PScore SAFETYINNERSHELTER = S(-27, 49);
 constexpr PScore SAFETYOUTERSHELTER = S(-21, 49);
+constexpr PScore INNERWEAKNESS = S(7,7);
+constexpr PScore OUTERWEAKNESS = S(3,3);
 
 constexpr Score COMPLEXITYPASSERS  =  210;
 constexpr Score COMPLEXITYPAWNS  =  899;
@@ -781,6 +783,12 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += SAFECHECK[B-1] * popcount(safeChecks[BLACK][B-1]);
     dangerIndex[BLACK] += SAFECHECK[R-1] * popcount(safeChecks[BLACK][R-1]);
     dangerIndex[BLACK] += SAFECHECK[Q-1] * popcount(safeChecks[BLACK][Q-1]);
+
+    // Ring weakness attacks
+    dangerIndex[WHITE] += INNERWEAKNESS * popcount(kingRing[BLACK] & weakSquares[BLACK]);
+    dangerIndex[WHITE] += OUTERWEAKNESS * popcount(outerRing[BLACK] & weakSquares[BLACK]);
+    dangerIndex[BLACK] += INNERWEAKNESS * popcount(kingRing[WHITE] & weakSquares[WHITE]);
+    dangerIndex[BLACK] += OUTERWEAKNESS * popcount(outerRing[WHITE] & weakSquares[WHITE]);
 
     // All checks
     dangerIndex[WHITE] += ALLCHECKS[N-1] * popcount(checks[WHITE][N-1]);
@@ -1499,7 +1507,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor += 9;
 
 
-#define KINGSAFETYCOLOREDPARAMS 44
+#define KINGSAFETYCOLOREDPARAMS 48
     tensor[P] = innerAttacks[WHITE][P];
     tensor[N] = innerAttacks[WHITE][N];
     tensor[B] = innerAttacks[WHITE][B];
@@ -1527,6 +1535,10 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor += 4;
     tensor[0] = popcount(innerShelters[BLACK]);
     tensor[1] = popcount(outerShelters[BLACK]);
+    tensor += 2;
+    // Ring weakness attacks
+    tensor[0] += popcount(kingRing[BLACK] & weakSquares[BLACK]);
+    tensor[1] += popcount(outerRing[BLACK] & weakSquares[BLACK]);
     tensor += 2;
 
     tensor[P] = innerAttacks[BLACK][P];
@@ -1556,6 +1568,10 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor += 4;
     tensor[0] = popcount(innerShelters[WHITE]);
     tensor[1] = popcount(outerShelters[WHITE]);
+    tensor += 2;
+    // Ring weakness attacks
+    tensor[0] += popcount(kingRing[WHITE] & weakSquares[WHITE]);
+    tensor[1] += popcount(outerRing[WHITE] & weakSquares[WHITE]);
     tensor += 2;
 
     // Also assert the last element we wrote is the penultimate element
