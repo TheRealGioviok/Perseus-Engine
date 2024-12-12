@@ -98,6 +98,7 @@ constexpr PScore NOQUEENDANGER = S(-276, 702);
 constexpr PScore PINNEDSHELTERDANGER = S(47, 3);
 constexpr PScore SAFETYINNERSHELTER = S(-27, 49);
 constexpr PScore SAFETYOUTERSHELTER = S(-21, 49);
+constexpr PScore KINGINNERMOB = S(-10,-10);
 
 constexpr Score COMPLEXITYPASSERS  =  210;
 constexpr Score COMPLEXITYPAWNS  =  899;
@@ -792,10 +793,15 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += ALLCHECKS[R-1] * popcount(checks[BLACK][R-1]);
     dangerIndex[BLACK] += ALLCHECKS[Q-1] * popcount(checks[BLACK][Q-1]);
 
+    // Shelter
     dangerIndex[WHITE] += SAFETYINNERSHELTER * popcount(innerShelters[BLACK]);
     dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
     dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
     dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
+
+    // King inner mobility
+    dangerIndex[WHITE] += KINGINNERMOB * popcount(kingRing[BLACK] & ~attackedBy[WHITE]);
+    dangerIndex[BLACK] += KINGINNERMOB * popcount(kingRing[WHITE] & ~attackedBy[WHITE]);
 
     const S32 mgWhiteDanger = getKingSafetyMg(dangerIndex[WHITE].mg());
     const S32 egWhiteDanger = getKingSafetyEg(dangerIndex[WHITE].eg());
@@ -1528,6 +1534,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[0] = popcount(innerShelters[BLACK]);
     tensor[1] = popcount(outerShelters[BLACK]);
     tensor += 2;
+    tensor[0] += popcount(kingRing[BLACK] & ~attackedBy[WHITE]);
+    tensor += 1;
 
     tensor[P] = innerAttacks[BLACK][P];
     tensor[N] = innerAttacks[BLACK][N];
@@ -1557,6 +1565,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[0] = popcount(innerShelters[WHITE]);
     tensor[1] = popcount(outerShelters[WHITE]);
     tensor += 2;
+    tensor[0] += popcount(kingRing[WHITE] & ~attackedBy[WHITE]);
+    tensor += 1;
 
     // Also assert the last element we wrote is the penultimate element
     // assert(tensorStart + tensorSize - 2 == tensor);
