@@ -40,85 +40,85 @@ void initTables() {
         PSQTs[k][flipSquare(square)] = -PSQTs[K][square];
     }
 }
-
 const PScore passedRankBonus[7] = {
-    S(0,0), S(-7,-103), S(-28,-72), S(-22,-15), S(15,37), S(35,141), S(126,220)
+    S(0,0), S(-22,-96), S(-36,-69), S(-24,-12), S(14,39), S(43,142), S(129,220)
 };
 
 const PScore SAFECHECK[4] = {
-    S(178,-34), S(39,0), S(107,24), S(109,11)
+    S(171,-18), S(37,0), S(117,20), S(108,19)
 };
 
 const PScore ALLCHECKS[4] = {
-    S(45,8), S(19,30), S(43,1), S(9,20)
+    S(43,1), S(18,22), S(38,1), S(10,19)
 };
 
-constexpr PScore DOUBLEISOLATEDPEN = S(10, 63);
-constexpr PScore ISOLATEDPEN = S(17, 23);
-constexpr PScore BACKWARDPEN = S(4, 19);
-constexpr PScore DOUBLEDPEN = S(15, 22);
-constexpr PScore SUPPORTEDPHALANX = S(0, 4);
-constexpr PScore ADVANCABLEPHALANX = S(7, 27);
+constexpr PScore DOUBLEISOLATEDPEN = S(14, 63);
+constexpr PScore ISOLATEDPEN = S(18, 23);
+constexpr PScore BACKWARDPEN = S(4, 18);
+constexpr PScore DOUBLEDPEN = S(16, 21);
+constexpr PScore SUPPORTEDPHALANX = S(0, 3);
+constexpr PScore ADVANCABLEPHALANX = S(9, 28);
 constexpr PScore R_SUPPORTEDPHALANX = S(2, 12);
-constexpr PScore R_ADVANCABLEPHALANX = S(1, 19);
-constexpr PScore PASSEDPATHBONUS = S(-1, 18);
-constexpr PScore SUPPORTEDPASSER = S(29, 1);
-constexpr PScore INNERSHELTER = S(10, -36);
-constexpr PScore OUTERSHELTER = S(12, -20);
-constexpr PScore BISHOPPAIR = S(19, 127);
-constexpr PScore ROOKONOPENFILE = S(24, 0);
-constexpr PScore ROOKONSEMIOPENFILE = S(16, 21);
-constexpr PScore KNIGHTONEXTOUTPOST = S(26, 34);
-constexpr PScore BISHOPONEXTOUTPOST = S(27, -2);
-constexpr PScore KNIGHTONINTOUTPOST = S(24, 38);
-constexpr PScore BISHOPONINTOUTPOST = S(35, -9);
+constexpr PScore R_ADVANCABLEPHALANX = S(2, 20);
+constexpr PScore PASSEDPATHBONUS = S(1, 17);
+constexpr PScore SUPPORTEDPASSER = S(26, 2);
+constexpr PScore INNERSHELTER = S(10, -32);
+constexpr PScore OUTERSHELTER = S(12, -17);
+constexpr PScore BISHOPPAIR = S(30, 125);
+constexpr PScore ROOKONOPENFILE = S(22, 0);
+constexpr PScore ROOKONSEMIOPENFILE = S(17, 20);
+constexpr PScore KNIGHTONEXTOUTPOST = S(26, 37);
+constexpr PScore BISHOPONEXTOUTPOST = S(26, 0);
+constexpr PScore KNIGHTONINTOUTPOST = S(24, 37);
+constexpr PScore BISHOPONINTOUTPOST = S(32, -9);
 constexpr PScore KNIGHTPROTECTOR = S(-6, -3);
-constexpr PScore BISHOPPROTECTOR = S(-4, -2);
-constexpr PScore BISHOPPAWNS = S(1, -4);
-constexpr PScore THREATSAFEPAWN = S(50, 59);
-constexpr PScore THREATPAWNPUSH = S(20, 33);
-constexpr PScore PAWNHANGING = S(-5, -59);
-constexpr PScore NONPAWNHANGING = S(-23, -33);
-constexpr PScore KINGTHREAT = S(-3, 2);
-constexpr PScore QUEENINFILTRATION = S(0, -14);
+constexpr PScore BISHOPPROTECTOR = S(-3, -2);
+constexpr PScore BISHOPPAWNS = S(0, -4);
+constexpr PScore THREATSAFEPAWN = S(51, 56);
+constexpr PScore THREATPAWNPUSH = S(21, 34);
+constexpr PScore PAWNHANGING = S(-9, -57);
+constexpr PScore NONPAWNHANGING = S(-24, -33);
+constexpr PScore KINGTHREAT = S(-1, 3);
+constexpr PScore QUEENINFILTRATION = S(0, -15);
 constexpr PScore RESTRICTEDSQUARES = S(5, 3);
 constexpr PScore TEMPO = S(21, 29);
 
-constexpr PScore PAWNATTACKINNERRING = S(13, -44);
-constexpr PScore KNIGHTATTACKINNERRING = S(55, -8);
-constexpr PScore BISHOPATTACKINNERRING = S(52, 4);
-constexpr PScore ROOKATTACKINNERRING = S(51, 13);
-constexpr PScore QUEENATTACKINNERRING = S(37, -31);
-constexpr PScore PAWNATTACKOUTERRING = S(38, -14);
-constexpr PScore KNIGHTATTACKOUTERRING = S(47, 6);
-constexpr PScore BISHOPATTACKOUTERRING = S(56, 3);
-constexpr PScore ROOKATTACKOUTERRING = S(30, -4);
-constexpr PScore QUEENATTACKOUTERRING = S(48, 20);
-constexpr PScore NOQUEENDANGER = S(-421, -1061);
-constexpr PScore PINNEDSHELTERDANGER = S(64, -1);
-constexpr PScore SAFETYINNERSHELTER = S(-33, -74);
-constexpr PScore SAFETYOUTERSHELTER = S(-28, -77);
-constexpr PScore INNERWEAKNESS = S(56, -18);
-constexpr PScore OUTERWEAKNESS = S(8, 5);
+constexpr PScore PAWNATTACKINNERRING = S(14, -45);
+constexpr PScore KNIGHTATTACKINNERRING = S(55, -7);
+constexpr PScore BISHOPATTACKINNERRING = S(50, 3);
+constexpr PScore ROOKATTACKINNERRING = S(51, 11);
+constexpr PScore QUEENATTACKINNERRING = S(35, -42);
+constexpr PScore PAWNATTACKOUTERRING = S(38, -13);
+constexpr PScore KNIGHTATTACKOUTERRING = S(50, 1);
+constexpr PScore BISHOPATTACKOUTERRING = S(56, 2);
+constexpr PScore ROOKATTACKOUTERRING = S(28, -4);
+constexpr PScore QUEENATTACKOUTERRING = S(48, 23);
+constexpr PScore NOQUEENDANGER = S(-344, -980);
+constexpr PScore PINNEDSHELTERDANGER = S(63, -13);
+constexpr PScore SAFETYINNERSHELTER = S(-33, -62);
+constexpr PScore SAFETYOUTERSHELTER = S(-34, -58);
+constexpr PScore INNERWEAKNESS = S(55, -13);
+constexpr PScore OUTERWEAKNESS = S(10, 2);
 
-constexpr Score COMPLEXITYPASSERS = 233;
-constexpr Score COMPLEXITYPAWNS = 884;
-constexpr Score COMPLEXITYBLOCKEDPAIRS = -351;
-constexpr Score COMPLEXITYPAWNTENSION = -881;
-constexpr Score COMPLEXITYOUTFLANKING = -36;
-constexpr Score COMPLEXITYINFILTRATION = -723;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9580;
-constexpr Score COMPLEXITYPAWNENDING = 12842;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3884;
-constexpr Score COMPLEXITYBIAS = -18393;
+constexpr Score COMPLEXITYPASSERS = 248;
+constexpr Score COMPLEXITYPAWNS = 1035;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -417;
+constexpr Score COMPLEXITYPAWNTENSION = -660;
+constexpr Score COMPLEXITYOUTFLANKING = -11;
+constexpr Score COMPLEXITYINFILTRATION = -467;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9136;
+constexpr Score COMPLEXITYPAWNENDING = 13828;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3762;
+constexpr Score COMPLEXITYBIAS = -18954;
+
 //constexpr Score KSAMG = -2;
-constexpr double KSCALEMG = 879.0322265625;
-constexpr double KSBMG = 1.7232096195220947;
-constexpr double KSCMG = -3.021970748901367;
+constexpr double KSCALEMG = 818.2340698242188;
+constexpr double KSBMG = 1.714651107788086;
+constexpr double KSCMG = -2.977332353591919;
 // constexpr Score KSAEG = -71;
-constexpr double KSCALEEG = 1079.464599609375;
-constexpr double KSBEG = 2.0799951553344727;
-constexpr double KSCEG = 2.7020320892333984;
+constexpr double KSCALEEG = 1208.5206298828125;
+constexpr double KSBEG = 2.5650699138641357;
+constexpr double KSCEG = 3.112884998321533;
 
 static inline S32 getKingSafetyMg(S32 x){
     double f = x;
@@ -845,9 +845,9 @@ Score pestoEval(Position *pos){
     return Score(
         sign * 
         (
-            mgScore * gamePhase +
-            egScore * (24 - gamePhase)
-        ) / 24
+            mgScore * phaseScale[gamePhase] +
+            egScore * (10000 - phaseScale[gamePhase])
+        ) / 10000
     );
 }
 
