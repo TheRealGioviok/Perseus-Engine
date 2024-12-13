@@ -321,7 +321,7 @@ skipPruning:
                 continue;
             }
         }
-        else if (currMoveScore < COUNTERSCORE) continue;
+        else if (isQuiet || currMoveScore < BADNOISYMOVE) continue;
         // assert (
         //     i != 0 || !excludedMove ||
         //     (excludedMove == currMove)
