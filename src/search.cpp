@@ -6,6 +6,7 @@
 #include "evaluation.h"
 #include "uci.h"
 #include "tt.h"
+#include <cmath>
 #include <iostream>
 #include <cstdlib>
 
@@ -202,7 +203,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             eval = ttScore;
     }
     else if (excludedMove){
-        rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
+        rawEval = ss->staticEval;
+        eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
         improvement = 0;
         improving = false;
         goto skipPruning;
@@ -415,8 +417,10 @@ skipPruning:
                 }
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
+                // Complexity lmr
+                S32 diff2 = std::pow(ss->staticEval - rawEval,2);
+                granularR -= diff2 * 1000 / lmrComplexity();
                 Depth R = granularR / RESOLUTION;
-                R -= abs(rawEval - ss->staticEval) >= lmrComplexity();
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
                 Depth reducedDepth = newDepth - R;
