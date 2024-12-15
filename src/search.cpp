@@ -9,7 +9,6 @@
 #include <cmath>
 #include <iostream>
 #include <cstdlib>
-
 // Global var to debug the SE implementation
 S64 seCandidates = 0;
 U64 seActivations = 0;
@@ -203,7 +202,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             eval = ttScore;
     }
     else if (excludedMove){
-        rawEval = ss->staticEval;
         eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
         improvement = 0;
         improving = false;
@@ -418,8 +416,7 @@ skipPruning:
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
                 // Complexity lmr
-                S32 diff2 = std::pow(ss->staticEval - rawEval,2);
-                granularR -= diff2 * 1000 / lmrComplexity();
+                if (std::abs(eval - rawEval) * 2 > std::abs(eval)) granularR -= lmrComplexity();
                 Depth R = granularR / RESOLUTION;
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
