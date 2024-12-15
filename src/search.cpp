@@ -202,7 +202,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             eval = ttScore;
     }
     else if (excludedMove){
-        eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
+        rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
         improvement = 0;
         improving = false;
         goto skipPruning;
