@@ -415,8 +415,8 @@ skipPruning:
                 }
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
+                granularR -= std::clamp(abs(rawEval - ss->staticEval) * lmrComplexity() - 280, -280, 1000);
                 Depth R = granularR / RESOLUTION;
-                R -= abs(rawEval - ss->staticEval) >= lmrComplexity();
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
                 Depth reducedDepth = newDepth - R;

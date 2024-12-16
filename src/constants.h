@@ -159,7 +159,7 @@ TUNE_PARAM(lmrQuietTTPV, 919, 250, 2750, 150, 0.002)
 TUNE_PARAM(lmrBadNoisyCutNode, 766, 250, 2750, 150, 0.002);
 TUNE_PARAM(lmrNoisyHistoryDivisorA, 5338, 2000, 16000, 700, 0.002)
 TUNE_PARAM(lmrNoisyHistoryDivisorB, 6521, 2000, 16000, 700, 0.002)
-TUNE_PARAM(lmrComplexity, 62, 10, 210, 10, 0.002)
+TUNE_PARAM(lmrComplexity, 16, 10, 210, 10, 0.002)
 
 // LMP values
 TUNE_PARAM(lmpA0, 528, 500, 1500, 50, 0.002);
