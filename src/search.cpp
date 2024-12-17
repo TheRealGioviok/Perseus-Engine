@@ -6,9 +6,9 @@
 #include "evaluation.h"
 #include "uci.h"
 #include "tt.h"
+#include <cmath>
 #include <iostream>
 #include <cstdlib>
-
 // Global var to debug the SE implementation
 S64 seCandidates = 0;
 U64 seActivations = 0;
@@ -202,7 +202,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             eval = ttScore;
     }
     else if (excludedMove){
-        eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
+        rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
         improvement = 0;
         improving = false;
         goto skipPruning;
@@ -399,6 +399,7 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
+                granularR -= 2000 * popcount(pos.checkers) >= 2;
                 if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
