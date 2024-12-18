@@ -114,32 +114,18 @@ constexpr Score COMPLEXITYBIAS = -18393;
 
 
 // Function to access the table values
-template <bool Interpolate>
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
     // Map x to the table index range
-    int index = ((x - MIN_X) * (KSTABLESIZE - 1) + (MAX_X - MIN_X)/2) / (MAX_X - MIN_X);
-    if (index < 0) return table[0];
-    if (index >= KSTABLESIZE - 1) return table[KSTABLESIZE - 1];
-
-    if constexpr (!Interpolate) {
-        return table[index];
-    } else {
-        // Linear interpolation
-        int nextIndex = index + 1;
-        double factor = static_cast<double>(x - (MIN_X + index * (MAX_X - MIN_X) / (KSTABLESIZE - 1))) /
-                        ((MAX_X - MIN_X) / (KSTABLESIZE - 1));
-        return static_cast<int>(table[index] * (1 - factor) + table[nextIndex] * factor);
-    }
+    S32 index = ((x - MIN_X) * (KSTABLESIZE - 1) + (MAX_X - MIN_X)/2) / (MAX_X - MIN_X);
+    return table[std::clamp(index, 0, KSTABLESIZE-1)];
 }
 
-template <bool Interpolate>
 int getKingSafetyMg(int x) {
-    return getKingSafetyFromTable<Interpolate>(kingSafetyMgTable, x);
+    return getKingSafetyFromTable(kingSafetyMgTable, x);
 }
 
-template <bool Interpolate>
 int getKingSafetyEg(int x) {
-    return getKingSafetyFromTable<Interpolate>(kingSafetyEgTable, x);
+    return getKingSafetyFromTable(kingSafetyEgTable, x);
 }
 
 static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) | files(5);
@@ -788,10 +774,10 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
     dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
 
-    const S32 mgWhiteDanger = getKingSafetyMg<false>(dangerIndex[WHITE].mg());
-    const S32 egWhiteDanger = getKingSafetyEg<false>(dangerIndex[WHITE].eg());
-    const S32 mgBlackDanger = getKingSafetyMg<false>(dangerIndex[BLACK].mg());
-    const S32 egBlackDanger = getKingSafetyEg<false>(dangerIndex[BLACK].eg());
+    const S32 mgWhiteDanger = getKingSafetyMg(dangerIndex[WHITE].mg());
+    const S32 egWhiteDanger = getKingSafetyEg(dangerIndex[WHITE].eg());
+    const S32 mgBlackDanger = getKingSafetyMg(dangerIndex[BLACK].mg());
+    const S32 egBlackDanger = getKingSafetyEg(dangerIndex[BLACK].eg());
     
     const PScore safety = PScore(mgWhiteDanger - mgBlackDanger, egWhiteDanger - egBlackDanger);
     score += safety;

@@ -33,9 +33,9 @@ extern S32 reductionTable[2][64][64];
 extern S32 lmpMargin[128][2];
 
 
-constexpr S32 KSTABLESIZE = 64;
-constexpr S32 MIN_X = -12000;
-constexpr S32 MAX_X = 6000;
+constexpr S32 KSTABLESIZE = 128;
+constexpr S32 MIN_X = -2500;
+constexpr S32 MAX_X = 16500;
 extern std::array<S32, KSTABLESIZE> kingSafetyMgTable;
 extern std::array<S32, KSTABLESIZE> kingSafetyEgTable;
 
