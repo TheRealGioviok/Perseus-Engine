@@ -618,10 +618,8 @@ inline void Position::addPromotion(MoveList* ml, ScoredMove move){
             + pieceValues[promotion]
             - pieceValues[P]
             + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P];
-
         ml->moves[ml->count++] = ((
             score 
-            + GOODNOISYMOVE * SEE(move, -score / (captScoreMvvMultiplier() * 4))  
             + BADNOISYMOVE
         ) << 32) | move;
     }
@@ -633,6 +631,7 @@ inline void Position::addPromotion(MoveList* ml, ScoredMove move){
 
         ml->moves[ml->count++] = ((
             score 
+            + GOODNOISYMOVE * SEE(move, -score / (captScoreMvvMultiplier() * 4))  
             + BADNOISYMOVE
         ) << 32) | move;
     }
