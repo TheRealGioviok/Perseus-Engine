@@ -92,6 +92,16 @@ const PScore queenMob[28] = {
 extern const PScore* pestoTables[6];
 
 constexpr Score gamephaseInc[12] = { 0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0 };
+
+//constexpr Score KSAMG = -2;
+constexpr double KSCALEMG = 879.0322265625;
+constexpr double KSBMG = 1.7232096195220947;
+constexpr double KSCMG = -3.021970748901367;
+// constexpr Score KSAEG = -71;
+constexpr double KSCALEEG = 1079.464599609375;
+constexpr double KSBEG = 2.0799951553344727;
+constexpr double KSCEG = 2.7020320892333984;
+
 extern PScore PSQTs[12][64];
 /**
 * @brief The initTables function initializes the material - positional tables

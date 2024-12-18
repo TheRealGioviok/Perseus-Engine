@@ -49,6 +49,36 @@ BitBoard outerRing[64];
 BitBoard fiveSquare[64]; // The 5x5 square
 BitBoard kingShelter[2][64]; // The king shelter
 
+// Precomputed king safety tables
+
+std::array<S32, KSTABLESIZE> kingSafetyMgTable;
+std::array<S32, KSTABLESIZE> kingSafetyEgTable;
+
+// Helper function to compute the King Safety for Middlegame
+static inline int computeKingSafetyMg(double x) {
+    double f = x / (480.0 * 8.0);
+    f = KSBMG * f + KSCMG;
+    f = KSCALEMG / (std::exp(-f) + 1.0);
+    return static_cast<int>(f);
+}
+
+// Helper function to compute the King Safety for Endgame
+static inline int computeKingSafetyEg(double x) {
+    double f = x / (480.0 * 8.0);
+    f = KSBEG * f + KSCEG;
+    f = KSCALEEG / (std::exp(-f) + 1.0);
+    return static_cast<int>(f);
+}
+
+// Function to initialize the precomputed tables
+void initializeKingSafetyTables() {
+    for (int i = 0; i < KSTABLESIZE; ++i) {
+        double x = MIN_X + i * (MAX_X - MIN_X) / (KSTABLESIZE - 1);
+        kingSafetyMgTable[i] = computeKingSafetyMg(x);
+        kingSafetyEgTable[i] = computeKingSafetyEg(x);
+    }
+}
+
 // The LMR reduction table
 S32 reductionTable[2][64][64] = {{0}};
 S32 lmpMargin[128][2] = {{0}};
@@ -90,6 +120,8 @@ void initLMRTable(){
  * @brief The initEvalTables function initializes the evaluation tables.
  */
 void initEvalTables() {
+    // Initialize king safety tables
+    initializeKingSafetyTables();
     //BitBoard squaresToLeft[64];
     for (Square square = a8; square < noSquare; square++) {
         BitBoard res = ranks(rankOf(square));
