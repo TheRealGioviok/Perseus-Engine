@@ -117,14 +117,13 @@ constexpr Score COMPLEXITYBIAS = -18393;
 template <bool Interpolate>
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
     // Map x to the table index range
-    int index = ((x - MIN_X) * (KSTABLESIZE - 1)) / (MAX_X - MIN_X);
-    if (index < 0) index = 0;
-    if (index >= KSTABLESIZE - 1) index = KSTABLESIZE - 1;
+    int index = ((x - MIN_X) * (KSTABLESIZE - 1) + (MAX_X - MIN_X)/2) / (MAX_X - MIN_X);
+    if (index < 0) return table[0];
+    if (index >= KSTABLESIZE - 1) return table[KSTABLESIZE - 1];
 
     if constexpr (!Interpolate) {
         return table[index];
     } else {
-        if (index == KSTABLESIZE - 1) return table[index];
         // Linear interpolation
         int nextIndex = index + 1;
         double factor = static_cast<double>(x - (MIN_X + index * (MAX_X - MIN_X) / (KSTABLESIZE - 1))) /
