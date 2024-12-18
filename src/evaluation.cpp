@@ -111,52 +111,21 @@ constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9580;
 constexpr Score COMPLEXITYPAWNENDING = 12842;
 constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3884;
 constexpr Score COMPLEXITYBIAS = -18393;
-//constexpr Score KSAMG = -2;
-constexpr double KSCALEMG = 879.0322265625;
-constexpr double KSBMG = 1.7232096195220947;
-constexpr double KSCMG = -3.021970748901367;
-// constexpr Score KSAEG = -71;
-constexpr double KSCALEEG = 1079.464599609375;
-constexpr double KSBEG = 2.0799951553344727;
-constexpr double KSCEG = 2.7020320892333984;
 
-static inline S32 getKingSafetyMg(S32 x){
-    double f = x;
-    f /= 480;
-    f = KSBMG*f + KSCMG;
-    f = KSCALEMG / (std::exp(-f) + 1);
-    return S32(f);
+
+// Function to access the table values
+static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
+    // Map x to the table index range
+    S32 index = ((x - MIN_X) * (KSTABLESIZE - 1) + (MAX_X - MIN_X)/2) / (MAX_X - MIN_X);
+    return table[std::clamp(index, 0, KSTABLESIZE-1)];
 }
 
-static inline S32 getKingSafetyEg(S32 x){
-    double f = x;
-    f /= 480;
-    f = KSBEG*f + KSCEG;
-    f = KSCALEEG / (std::exp(-f) + 1);
-    return S32(f);
+int getKingSafetyMg(int x) {
+    return getKingSafetyFromTable(kingSafetyMgTable, x);
 }
 
-static inline S32 getKingSafetyIndexMg(S32 x){
-    x = (
-                          // KSAMG * (x * x) + 
-                          KSBMG * (x) +
-                          KSCMG * 480
-                         ) / 600;
-    // std::cout << "index is " << x << std::endl;
-    x += 32;
-    x = std::max(0, std::min(63, x));
-    return x;
-}
-
-static inline S32 getKingSafetyIndexEg(S32 x){
-    x = (
-                          // KSAMG * (x * x) + 
-                          KSBEG * (x) +
-                          KSCEG * 480
-                         ) / 600;
-    x += 32;
-    x = std::max(0, std::min(63, x));
-    return x;
+int getKingSafetyEg(int x) {
+    return getKingSafetyFromTable(kingSafetyEgTable, x);
 }
 
 static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) | files(5);

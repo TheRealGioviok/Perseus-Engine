@@ -6,9 +6,9 @@
 #include "evaluation.h"
 #include "uci.h"
 #include "tt.h"
+#include <cmath>
 #include <iostream>
 #include <cstdlib>
-
 // Global var to debug the SE implementation
 S64 seCandidates = 0;
 U64 seActivations = 0;
@@ -202,7 +202,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             eval = ttScore;
     }
     else if (excludedMove){
-        eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
+        rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
         improvement = 0;
         improving = false;
         goto skipPruning;
@@ -410,8 +410,8 @@ skipPruning:
                     if (currMoveScore < QUIETSCORE) { 
                         if (cutNode) granularR += lmrBadNoisyCutNode();
                         granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
-                    }
-                    granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
+                                        }
+granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
                 }
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());

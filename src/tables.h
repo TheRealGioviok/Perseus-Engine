@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "constants.h"
+#include <array>
 #define RESOLUTION 1000
 
 //tropism
@@ -30,6 +31,14 @@ extern HashKey repetitionTable[512];
 // The LMR reduction table
 extern S32 reductionTable[2][64][64];
 extern S32 lmpMargin[128][2];
+
+
+constexpr S32 KSTABLESIZE = 256;
+constexpr S32 MIN_X = -16000;
+constexpr S32 MAX_X = 18000;
+extern std::array<S32, KSTABLESIZE> kingSafetyMgTable;
+extern std::array<S32, KSTABLESIZE> kingSafetyEgTable;
+
 
 /**
  * @brief The initLMRTable function initializes the LMR reduction table
