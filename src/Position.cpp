@@ -584,18 +584,31 @@ inline void Position::addEp(MoveList* ml, ScoredMove move){
 
 template <Piece promotion>
 inline void Position::addPromoCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece){
-    
-    const S32 score = + pieceValues[capturedPiece] * captScoreMvvMultiplier()
-        + pieceValues[promotion]
-        + pieceValues[capturedPiece]
-        - pieceValues[P]
-        + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)]; // Piece captured can't be NOPIECE (12), so this works
-    
-    ml->moves[ml->count++] = ((
-        score
-        + GOODNOISYMOVE * SEE(move, -score / (captScoreMvvMultiplier() * 4)) 
-        + BADNOISYMOVE
-    ) << 32) | move;
+    if constexpr (promotion == R || promotion == B || promotion == r || promotion == b){
+        const S32 score = + pieceValues[capturedPiece] * captScoreMvvMultiplier()
+            + pieceValues[promotion]
+            + pieceValues[capturedPiece]
+            - pieceValues[P]
+            + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)]; // Piece captured can't be NOPIECE (12), so this works
+        
+        ml->moves[ml->count++] = ((
+            score
+            + BADNOISYMOVE
+        ) << 32) | move;
+    }
+    else {
+            const S32 score = + pieceValues[capturedPiece] * captScoreMvvMultiplier()
+            + pieceValues[promotion]
+            + pieceValues[capturedPiece]
+            - pieceValues[P]
+            + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)]; // Piece captured can't be NOPIECE (12), so this works
+        
+        ml->moves[ml->count++] = ((
+            score
+            + GOODNOISYMOVE * SEE(move, -score / (captScoreMvvMultiplier() * 4)) 
+            + BADNOISYMOVE
+        ) << 32) | move;
+    }
 }
 
 inline void Position::addCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece){
