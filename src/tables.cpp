@@ -56,7 +56,7 @@ std::array<S32, KSTABLESIZE> kingSafetyEgTable;
 
 // Helper function to compute the King Safety for Middlegame
 static inline int computeKingSafetyMg(double x) {
-    double f = x / (480.0 * 8.0);
+    double f = x / 480.0;
     f = KSBMG * f + KSCMG;
     f = KSCALEMG / (std::exp(-f) + 1.0);
     return static_cast<int>(f);
@@ -64,7 +64,7 @@ static inline int computeKingSafetyMg(double x) {
 
 // Helper function to compute the King Safety for Endgame
 static inline int computeKingSafetyEg(double x) {
-    double f = x / (480.0 * 8.0);
+    double f = x / 480.0;
     f = KSBEG * f + KSCEG;
     f = KSCALEEG / (std::exp(-f) + 1.0);
     return static_cast<int>(f);
