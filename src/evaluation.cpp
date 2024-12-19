@@ -42,75 +42,79 @@ void initTables() {
 }
 
 const PScore passedRankBonus[7] = {
-    S(0,0), S(-7,-103), S(-28,-72), S(-22,-15), S(15,37), S(35,141), S(126,220)
+    S(0,0), S(-7,-103), S(-28,-73), S(-22,-15), S(15,37), S(36,141), S(127,220)
 };
 
 const PScore SAFECHECK[4] = {
-    S(178,-34), S(39,0), S(107,24), S(109,11)
+    S(184,-29), S(43,4), S(113,23), S(112,11)
 };
 
 const PScore ALLCHECKS[4] = {
-    S(45,8), S(19,30), S(43,1), S(9,20)
+    S(46,6), S(14,27), S(46,1), S(9,18)
 };
 
-constexpr PScore DOUBLEISOLATEDPEN = S(10, 63);
+constexpr PScore DOUBLEISOLATEDPEN = S(11, 63);
 constexpr PScore ISOLATEDPEN = S(17, 23);
-constexpr PScore BACKWARDPEN = S(4, 19);
+constexpr PScore BACKWARDPEN = S(3, 18);
 constexpr PScore DOUBLEDPEN = S(15, 22);
 constexpr PScore SUPPORTEDPHALANX = S(0, 4);
-constexpr PScore ADVANCABLEPHALANX = S(7, 27);
+constexpr PScore ADVANCABLEPHALANX = S(8, 27);
 constexpr PScore R_SUPPORTEDPHALANX = S(2, 12);
-constexpr PScore R_ADVANCABLEPHALANX = S(1, 19);
+constexpr PScore R_ADVANCABLEPHALANX = S(0, 20);
 constexpr PScore PASSEDPATHBONUS = S(-1, 18);
 constexpr PScore SUPPORTEDPASSER = S(29, 1);
 constexpr PScore INNERSHELTER = S(10, -36);
-constexpr PScore OUTERSHELTER = S(12, -20);
-constexpr PScore BISHOPPAIR = S(19, 127);
+constexpr PScore OUTERSHELTER = S(12, -21);
+constexpr PScore BISHOPPAIR = S(18, 125);
 constexpr PScore ROOKONOPENFILE = S(24, 0);
 constexpr PScore ROOKONSEMIOPENFILE = S(16, 21);
-constexpr PScore KNIGHTONEXTOUTPOST = S(26, 34);
-constexpr PScore BISHOPONEXTOUTPOST = S(27, -2);
-constexpr PScore KNIGHTONINTOUTPOST = S(24, 38);
-constexpr PScore BISHOPONINTOUTPOST = S(35, -9);
+constexpr PScore KNIGHTONEXTOUTPOST = S(32, 36);
+constexpr PScore BISHOPONEXTOUTPOST = S(31, 1);
+constexpr PScore KNIGHTONINTOUTPOST = S(37, 40);
+constexpr PScore BISHOPONINTOUTPOST = S(40, -6);
+constexpr PScore KNIGHTONWEXTOUTPOST = S(-25, -61);
+constexpr PScore BISHOPONWEXTOUTPOST = S(-18, -46);
+constexpr PScore KNIGHTONWINTOUTPOST = S(-30, -56);
+constexpr PScore BISHOPONWINTOUTPOST = S(-24, -39);
 constexpr PScore KNIGHTPROTECTOR = S(-6, -3);
 constexpr PScore BISHOPPROTECTOR = S(-4, -2);
 constexpr PScore BISHOPPAWNS = S(1, -4);
-constexpr PScore THREATSAFEPAWN = S(50, 59);
-constexpr PScore THREATPAWNPUSH = S(20, 33);
-constexpr PScore PAWNHANGING = S(-5, -59);
-constexpr PScore NONPAWNHANGING = S(-23, -33);
-constexpr PScore KINGTHREAT = S(-3, 2);
-constexpr PScore QUEENINFILTRATION = S(0, -14);
+constexpr PScore THREATSAFEPAWN = S(49, 59);
+constexpr PScore THREATPAWNPUSH = S(20, 34);
+constexpr PScore PAWNHANGING = S(-4, -58);
+constexpr PScore NONPAWNHANGING = S(-24, -34);
+constexpr PScore KINGTHREAT = S(-2, 3);
+constexpr PScore QUEENINFILTRATION = S(0, -15);
 constexpr PScore RESTRICTEDSQUARES = S(5, 3);
-constexpr PScore TEMPO = S(21, 29);
+constexpr PScore TEMPO = S(21, 28);
 
-constexpr PScore PAWNATTACKINNERRING = S(13, -44);
-constexpr PScore KNIGHTATTACKINNERRING = S(55, -8);
-constexpr PScore BISHOPATTACKINNERRING = S(52, 4);
-constexpr PScore ROOKATTACKINNERRING = S(51, 13);
-constexpr PScore QUEENATTACKINNERRING = S(37, -31);
-constexpr PScore PAWNATTACKOUTERRING = S(38, -14);
+constexpr PScore PAWNATTACKINNERRING = S(19, -41);
+constexpr PScore KNIGHTATTACKINNERRING = S(55, -6);
+constexpr PScore BISHOPATTACKINNERRING = S(53, 4);
+constexpr PScore ROOKATTACKINNERRING = S(55, 13);
+constexpr PScore QUEENATTACKINNERRING = S(39, -30);
+constexpr PScore PAWNATTACKOUTERRING = S(39, -11);
 constexpr PScore KNIGHTATTACKOUTERRING = S(47, 6);
-constexpr PScore BISHOPATTACKOUTERRING = S(56, 3);
-constexpr PScore ROOKATTACKOUTERRING = S(30, -4);
-constexpr PScore QUEENATTACKOUTERRING = S(48, 20);
-constexpr PScore NOQUEENDANGER = S(-421, -1061);
-constexpr PScore PINNEDSHELTERDANGER = S(64, -1);
-constexpr PScore SAFETYINNERSHELTER = S(-33, -74);
-constexpr PScore SAFETYOUTERSHELTER = S(-28, -77);
-constexpr PScore INNERWEAKNESS = S(56, -18);
-constexpr PScore OUTERWEAKNESS = S(8, 5);
+constexpr PScore BISHOPATTACKOUTERRING = S(58, 3);
+constexpr PScore ROOKATTACKOUTERRING = S(31, -4);
+constexpr PScore QUEENATTACKOUTERRING = S(50, 19);
+constexpr PScore NOQUEENDANGER = S(-441, -1035);
+constexpr PScore PINNEDSHELTERDANGER = S(66, -4);
+constexpr PScore SAFETYINNERSHELTER = S(-37, -72);
+constexpr PScore SAFETYOUTERSHELTER = S(-32, -75);
+constexpr PScore INNERWEAKNESS = S(60, -20);
+constexpr PScore OUTERWEAKNESS = S(8, 3);
 
-constexpr Score COMPLEXITYPASSERS = 233;
-constexpr Score COMPLEXITYPAWNS = 884;
-constexpr Score COMPLEXITYBLOCKEDPAIRS = -351;
-constexpr Score COMPLEXITYPAWNTENSION = -881;
-constexpr Score COMPLEXITYOUTFLANKING = -36;
-constexpr Score COMPLEXITYINFILTRATION = -723;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9580;
-constexpr Score COMPLEXITYPAWNENDING = 12842;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3884;
-constexpr Score COMPLEXITYBIAS = -18393;
+constexpr Score COMPLEXITYPASSERS = 213;
+constexpr Score COMPLEXITYPAWNS = 889;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -381;
+constexpr Score COMPLEXITYPAWNTENSION = -823;
+constexpr Score COMPLEXITYOUTFLANKING = -45;
+constexpr Score COMPLEXITYINFILTRATION = -802;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9598;
+constexpr Score COMPLEXITYPAWNENDING = 12784;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -4005;
+constexpr Score COMPLEXITYBIAS = -18450;
 
 
 // Function to access the table values
@@ -456,6 +460,10 @@ Score pestoEval(Position *pos){
     mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
     
     // std::cout << "PSQT scores are :\t"<<score.mg()<<"\t"<<score.eg()<<std::endl;
+    const BitBoard weakOutpostSquares[2] = {
+        outpostSquares[WHITE] & (ptAttacks[BLACK][N-1] | ptAttacks[BLACK][B-1]),
+        outpostSquares[BLACK] & (ptAttacks[WHITE][N-1] | ptAttacks[WHITE][B-1]),
+    };
 
     // Weak pieces
     const BitBoard weakPieces[2] = {
@@ -633,6 +641,16 @@ Score pestoEval(Position *pos){
     score += KNIGHTONINTOUTPOST * intKnightOutpostDiff;
     const Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
     score += BISHOPONINTOUTPOST * intBishopOutpostDiff;
+
+    // Add weak outpost squares bonus for knights and bishops
+    const Score wextKnightOutpostDiff = popcount(weakOutpostSquares[WHITE] & (files(1) | files(6)) & bb[N]) - popcount(weakOutpostSquares[BLACK] & (files(1) | files(6)) & bb[n]);
+    score += KNIGHTONWEXTOUTPOST * wextKnightOutpostDiff;
+    const Score wextBishopOutpostDiff = popcount(weakOutpostSquares[WHITE] & (files(1) | files(6)) & bb[B]) - popcount(weakOutpostSquares[BLACK] & (files(1) | files(6)) & bb[b]);
+    score += BISHOPONWEXTOUTPOST * wextBishopOutpostDiff;
+    const Score wintKnightOutpostDiff = popcount(weakOutpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[N]) - popcount(weakOutpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[n]);
+    score += KNIGHTONWINTOUTPOST * wintKnightOutpostDiff;
+    const Score wintBishopOutpostDiff = popcount(weakOutpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(weakOutpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
+    score += BISHOPONWINTOUTPOST * wintBishopOutpostDiff;
 
     // Add bonus for bishop-pawn concordance
     const Score bishopPawnsDiff =
@@ -877,6 +895,11 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(BISHOPONEXTOUTPOST.mg());
     weights.push_back(KNIGHTONINTOUTPOST.mg());
     weights.push_back(BISHOPONINTOUTPOST.mg());
+    weights.push_back(KNIGHTONWEXTOUTPOST.mg());
+    weights.push_back(BISHOPONWEXTOUTPOST.mg());
+    weights.push_back(KNIGHTONWINTOUTPOST.mg());
+    weights.push_back(BISHOPONWINTOUTPOST.mg());
+
 
     // Now, king protector
     weights.push_back(KNIGHTPROTECTOR.mg());
@@ -953,6 +976,10 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(BISHOPONEXTOUTPOST.eg());
     weights.push_back(KNIGHTONINTOUTPOST.eg());
     weights.push_back(BISHOPONINTOUTPOST.eg());
+    weights.push_back(KNIGHTONWEXTOUTPOST.eg());
+    weights.push_back(BISHOPONWEXTOUTPOST.eg());
+    weights.push_back(KNIGHTONWINTOUTPOST.eg());
+    weights.push_back(BISHOPONWINTOUTPOST.eg());
 
     // Now, king protector
     weights.push_back(KNIGHTPROTECTOR.eg());
@@ -1332,6 +1359,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         (ranks(5) | ranks(4) | ranks(3)) & pawnAttackedSquares[BLACK] & ~(makePawnAttacks<WHITE>(pawnSpan[WHITE]) | bb[P]) & notFile(0) & notFile(7)
     };
 
+    const BitBoard weakOutpostSquares[2] = {
+        outpostSquares[WHITE] & (ptAttacks[BLACK][N-1] | ptAttacks[BLACK][B-1]),
+        outpostSquares[BLACK] & (ptAttacks[WHITE][N-1] | ptAttacks[WHITE][B-1]),
+    };
+
     Score extKnightOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[N]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[n]);
     tensor[0] += extKnightOutpostDiff;
     Score extBishopOutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & bb[b]);
@@ -1340,6 +1372,18 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[2] += intKnightOutpostDiff;
     Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
     tensor[3] += intBishopOutpostDiff;
+    tensor += 4;
+
+    // Add weak outpost squares bonus for knights and bishops
+    const Score wextKnightOutpostDiff = popcount(weakOutpostSquares[WHITE] & (files(1) | files(6)) & bb[N]) - popcount(weakOutpostSquares[BLACK] & (files(1) | files(6)) & bb[n]);
+    tensor[0] = wextKnightOutpostDiff;
+    const Score wextBishopOutpostDiff = popcount(weakOutpostSquares[WHITE] & (files(1) | files(6)) & bb[B]) - popcount(weakOutpostSquares[BLACK] & (files(1) | files(6)) & bb[b]);
+    tensor[1] =  wextBishopOutpostDiff;
+    const Score wintKnightOutpostDiff = popcount(weakOutpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[N]) - popcount(weakOutpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[n]);
+    tensor[2] =  wintKnightOutpostDiff;
+    const Score wintBishopOutpostDiff = popcount(weakOutpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(weakOutpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
+    tensor[3] =  wintBishopOutpostDiff;
+
     tensor += 4;
 
     tensor[0] = kingDist[0];
