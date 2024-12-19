@@ -195,12 +195,12 @@ struct Position{
     Move legalizeTTMove(Move move);
 
     inline void addEp(MoveList *ml, ScoredMove move);
-
-    inline void addPromoCapture(MoveList *ml, ScoredMove move, Piece movedPiece, Piece capturedPiece, Piece promotion);
+    template <Piece promotion>
+    inline void addPromoCapture(MoveList *ml, ScoredMove move, Piece movedPiece, Piece capturedPiece);
 
     inline void addCapture(MoveList *ml, ScoredMove move, Piece movedPiece, Piece capturedPiece);
-
-    inline void addPromotion(MoveList *ml, ScoredMove move, Piece piece);
+    template <Piece promotion>
+    inline void addPromotion(MoveList *ml, ScoredMove move);
 
     inline void addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S32 *ply1contHist, const S32 *ply2contHist);
 
