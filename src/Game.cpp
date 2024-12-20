@@ -201,10 +201,17 @@ void Game::print(){
  * @param killer2 The second killer move.
  * @param counterMove The counter move.
  */
-void Game::generateMoves(MoveList &moves, SStack* ss){
+void Game::generateMoves(MoveList &moves, SStack* ss) {
     pos.generateMoves(moves, ss);
-    // We will sort the moves
-    std::sort(std::begin(moves.moves) + 1, std::begin(moves.moves) + moves.count, std::greater<ScoredMove>());
+    // We will sort the moves based on the upper 32 bits
+    std::stable_sort(
+        std::begin(moves.moves) + 1, 
+        std::begin(moves.moves) + moves.count,
+        [](const ScoredMove& a, const ScoredMove& b) {
+            // Extract upper 32 bits and compare
+            return static_cast<uint32_t>(a >> 32) > static_cast<uint32_t>(b >> 32);
+        }
+    );
 }
 
 /**
@@ -214,7 +221,14 @@ void Game::generateMoves(MoveList &moves, SStack* ss){
 void Game::generateCaptures(MoveList &moves){
     pos.generateCaptures(moves);
     // We will sort the moves
-    std::sort(std::begin(moves.moves) + 1, std::begin(moves.moves) + moves.count, std::greater<ScoredMove>());
+    std::stable_sort(
+        std::begin(moves.moves) + 1, 
+        std::begin(moves.moves) + moves.count,
+        [](const ScoredMove& a, const ScoredMove& b) {
+            // Extract upper 32 bits and compare
+            return static_cast<uint32_t>(a >> 32) > static_cast<uint32_t>(b >> 32);
+        }
+    );
 }
 
 /**
