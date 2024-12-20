@@ -72,6 +72,10 @@ constexpr PScore KNIGHTONEXTOUTPOST = S(26, 34);
 constexpr PScore BISHOPONEXTOUTPOST = S(27, -2);
 constexpr PScore KNIGHTONINTOUTPOST = S(24, 38);
 constexpr PScore BISHOPONINTOUTPOST = S(35, -9);
+constexpr PScore KNIGHTONREXTOUTPOST = S(2, 3);
+constexpr PScore BISHOPONREXTOUTPOST = S(2, 0);
+constexpr PScore KNIGHTONRINTOUTPOST = S(2, 4);
+constexpr PScore BISHOPONRINTOUTPOST = S(3,-1);
 constexpr PScore KNIGHTPROTECTOR = S(-6, -3);
 constexpr PScore BISHOPPROTECTOR = S(-4, -2);
 constexpr PScore BISHOPPAWNS = S(1, -4);
@@ -634,6 +638,16 @@ Score pestoEval(Position *pos){
     const Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
     score += BISHOPONINTOUTPOST * intBishopOutpostDiff;
 
+    // Now add bonus for reachable outposts
+    const Score extKnightROutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & ptAttacks[WHITE][N-1]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & ptAttacks[BLACK][N-1]);
+    score += KNIGHTONREXTOUTPOST * extKnightROutpostDiff;
+    const Score extBishopROutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & ptAttacks[WHITE][B-1]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & ptAttacks[BLACK][B-1]);
+    score += BISHOPONREXTOUTPOST * extBishopROutpostDiff;
+    const Score intKnightROutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & ptAttacks[WHITE][N-1]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & ptAttacks[BLACK][N-1]);
+    score += KNIGHTONRINTOUTPOST * intKnightROutpostDiff;
+    const Score intBishopROutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & ptAttacks[WHITE][B-1]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & ptAttacks[BLACK][B-1]);
+    score += BISHOPONRINTOUTPOST * intBishopROutpostDiff;
+
     // Add bonus for bishop-pawn concordance
     const Score bishopPawnsDiff =
         popcount(bb[B] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B])) -
@@ -877,6 +891,10 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(BISHOPONEXTOUTPOST.mg());
     weights.push_back(KNIGHTONINTOUTPOST.mg());
     weights.push_back(BISHOPONINTOUTPOST.mg());
+    weights.push_back(KNIGHTONREXTOUTPOST.mg());
+    weights.push_back(BISHOPONREXTOUTPOST.mg());
+    weights.push_back(KNIGHTONRINTOUTPOST.mg());
+    weights.push_back(BISHOPONRINTOUTPOST.mg());
 
     // Now, king protector
     weights.push_back(KNIGHTPROTECTOR.mg());
@@ -953,6 +971,10 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(BISHOPONEXTOUTPOST.eg());
     weights.push_back(KNIGHTONINTOUTPOST.eg());
     weights.push_back(BISHOPONINTOUTPOST.eg());
+    weights.push_back(KNIGHTONREXTOUTPOST.eg());
+    weights.push_back(BISHOPONREXTOUTPOST.eg());
+    weights.push_back(KNIGHTONRINTOUTPOST.eg());
+    weights.push_back(BISHOPONRINTOUTPOST.eg());
 
     // Now, king protector
     weights.push_back(KNIGHTPROTECTOR.eg());
@@ -1340,6 +1362,17 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[2] += intKnightOutpostDiff;
     Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
     tensor[3] += intBishopOutpostDiff;
+    tensor += 4;
+
+    // Now add bonus for reachable outposts
+    const Score extKnightROutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & ptAttacks[WHITE][N-1]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & ptAttacks[BLACK][N-1]);
+    tensor[0] += extKnightROutpostDiff;
+    const Score extBishopROutpostDiff = popcount(outpostSquares[WHITE] & (files(1) | files(6)) & ptAttacks[WHITE][B-1]) - popcount(outpostSquares[BLACK] & (files(1) | files(6)) & ptAttacks[BLACK][B-1]);
+    tensor[1] += extBishopROutpostDiff;
+    const Score intKnightROutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & ptAttacks[WHITE][N-1]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & ptAttacks[BLACK][N-1]);
+    tensor[2] += intKnightROutpostDiff;
+    const Score intBishopROutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & ptAttacks[WHITE][B-1]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & ptAttacks[BLACK][B-1]);
+    tensor[3] += intBishopROutpostDiff;
     tensor += 4;
 
     tensor[0] = kingDist[0];
