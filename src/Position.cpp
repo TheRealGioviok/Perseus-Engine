@@ -347,6 +347,14 @@ FENkeyEval:
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
     minorKey = generateMinorHashKey();
     checkers = calculateCheckers();
+    blockersForKing[WHITE] = getBlockerPieces(occupancies[BOTH], lsb(bitboards[K]), bitboards[q] | bitboards[r], bitboards[q] | bitboards[b]);
+    blockersForKing[BLACK] = getBlockerPieces(occupancies[BOTH], lsb(bitboards[k]), bitboards[Q] | bitboards[R], bitboards[Q] | bitboards[B]);
+    const Square theirKingPos = lsb(bitboards[K + 6 * side]);
+    ptCheckers[P] = pawnAttacks[side ^ 1][theirKingPos];
+    ptCheckers[N] = knightAttacks[theirKingPos];
+    ptCheckers[B] = getBishopAttack(theirKingPos, occupancies[BOTH]);
+    ptCheckers[R] = getRookAttack(theirKingPos, occupancies[BOTH]);
+    ptCheckers[Q] = ptCheckers[B] | ptCheckers[R];
     return true;
 }
 
@@ -567,6 +575,14 @@ bool Position::makeMove(Move move)
     else
         fiftyMove++;
     checkers = calculateCheckers();
+    blockersForKing[WHITE] = getBlockerPieces(occupancies[BOTH], lsb(bitboards[K]), bitboards[q] | bitboards[r], bitboards[q] | bitboards[b]);
+    blockersForKing[BLACK] = getBlockerPieces(occupancies[BOTH], lsb(bitboards[k]), bitboards[Q] | bitboards[R], bitboards[Q] | bitboards[B]);
+    const Square theirKingPos = lsb(bitboards[K + 6 * side]);
+    ptCheckers[P] = pawnAttacks[side ^ 1][theirKingPos];
+    ptCheckers[N] = knightAttacks[theirKingPos];
+    ptCheckers[B] = getBishopAttack(theirKingPos, occupancies[BOTH]);
+    ptCheckers[R] = getRookAttack(theirKingPos, occupancies[BOTH]);
+    ptCheckers[Q] = ptCheckers[B] | ptCheckers[R];
     return true;
 }
 
@@ -872,7 +888,6 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
 
     BitBoard theirPieces    = occupancies[side ^ 1];
     BitBoard occupancy      = occupancies[BOTH];
-
 
     Square theirKingPos     = lsb(theirKing);
 
@@ -1670,6 +1685,8 @@ UndoInfo::UndoInfo(Position& position){
     checkers = position.checkers;
     memcpy(bitboards, position.bitboards, sizeof(BitBoard) * 12);
     memcpy(occupancies, position.occupancies, sizeof(BitBoard) * 3);
+    memcpy(blockersForKing, position.blockersForKing, sizeof(BitBoard)*2);
+    memcpy(ptCheckers, position.ptCheckers, sizeof(BitBoard)*5);
 }
 
 void UndoInfo::undoMove(Position& position, Move move){
@@ -1699,8 +1716,11 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.bitboards[captured] = bitboards[captured];
     position.bitboards[aux] = bitboards[aux];
     position.checkers = checkers;
+    position.blockersForKing[WHITE] = blockersForKing[WHITE];
+    position.blockersForKing[BLACK] = blockersForKing[BLACK];
 
     memcpy(position.occupancies, occupancies, sizeof(BitBoard) * 3);
+    memcpy(position.ptCheckers, ptCheckers, sizeof(BitBoard)*5);
 }
 
 void UndoInfo::undoNullMove(Position& position){
@@ -1716,5 +1736,10 @@ void UndoInfo::undoNullMove(Position& position){
     position.plyFromNull = plyFromNull;
     position.psqtScore = psqtScore;
     position.side = side;
+    // These may be removed, TODO, check
     position.checkers = checkers;
+    position.blockersForKing[WHITE] = blockersForKing[WHITE];
+    position.blockersForKing[BLACK] = blockersForKing[BLACK];
+    // This is needed
+    memcpy(position.ptCheckers, ptCheckers, sizeof(BitBoard)*5);
 }

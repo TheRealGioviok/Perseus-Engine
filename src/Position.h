@@ -32,6 +32,7 @@ struct Position{
     BitBoard bitboards[12];
     BitBoard occupancies[3];
     BitBoard checkers;
+    BitBoard blockersForKing[2];
     U8 side;
     U8 enPassant;
     U8 fiftyMove; // 50 move rule counter, number of plies since the last irreversible move
@@ -43,6 +44,7 @@ struct Position{
     HashKey nonPawnKeys[2];
     HashKey minorKey;
     PScore psqtScore; // PSQT score, incrementally updated
+    BitBoard ptCheckers[5];
 
     // The default constructor instantiates the position with the standard chess starting position.
     Position();
@@ -194,6 +196,13 @@ struct Position{
     */
     Move legalizeTTMove(Move move);
 
+    /**
+     * @brief The givesCheck function checks whether a pseudolegal move gives check
+     * @param move The move to check
+     * @returns true if the move is a check, false otherwise
+     */
+    bool givesCheck(Move move);
+
     inline void addEp(MoveList *ml, ScoredMove move);
     template <Piece promotion>
     inline void addPromoCapture(MoveList *ml, ScoredMove move, Piece movedPiece, Piece capturedPiece);
@@ -248,6 +257,8 @@ struct UndoInfo {
     BitBoard bitboards[12];
     BitBoard occupancies[3];
     BitBoard checkers;
+    BitBoard blockersForKing[2];
+    BitBoard ptCheckers[5];
     /**
      * @brief The constructor of the UndoInfo class.
      * @param position The position to store the information from.

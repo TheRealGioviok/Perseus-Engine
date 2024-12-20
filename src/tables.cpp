@@ -31,7 +31,8 @@ U8 chebyshevDistance[64][64];
 // centerDistance
 U8 centerDistance[64];
 // squaresBetween
-BitBoard squaresBetween[64][64]; // TODO: squaresBetween doesn't quite work...
+BitBoard squaresBetween[64][64];
+BitBoard lineBetween[64][64] = {0};
 
 // pv table and pv length
 Move pvTable[maxPly][maxPly] = { {0} };
@@ -287,6 +288,30 @@ void initEvalTables() {
             BitBoard sq = squareBB(sq1);
             kingShelter[WHITE][sq1] = north(sq) | ne(sq) | nw(sq);
             kingShelter[BLACK][sq1] = south(sq) | se(sq) | sw(sq);
+        }
+    }
+
+    // lineBetween[64][64]
+    memset(lineBetween, 0, sizeof(lineBetween));
+    BitBoard iter1 = boardRim;
+    while (iter1){
+        Square sq1 = popLsb(iter1);
+        BitBoard iter2 = boardRim;
+        while (iter2) {
+            Square sq2 = popLsb(iter2);
+            if (sq1 <= sq2) continue;
+            BitBoard line = squaresBetween[sq1][sq2] ^ squareBB(sq1) ^ squareBB(sq2);
+            BitBoard pps1 = line;
+            while (pps1) {
+                Square ssq1 = popLsb(pps1);
+                BitBoard pps2 = line;
+                while (pps2){
+                    Square ssq2 = popLsb(pps2);
+                    if (ssq1 <= ssq2) continue;
+                    lineBetween[ssq1][ssq2] |= line;
+                    lineBetween[ssq2][ssq1] |= line;
+                }
+            }
         }
     }
 }
