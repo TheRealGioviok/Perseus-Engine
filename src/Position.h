@@ -114,6 +114,12 @@ struct Position{
     bool isSquareAttacked(U8 square, U8 side);
 
     /**
+     * @brief The isPackedNoisy function returns wether a packed move would be a capture in this context.
+     * @returns true if the move is noisy, false otherwise
+     */
+    bool isPackedNoisy(const PackedMove move);
+
+    /**
      * @brief The attacksToPre function returns a bitboard with all the attackers to a square.
      * @param square The square to check.
      * @param occupancy an already calculated occupancy

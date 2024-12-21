@@ -651,6 +651,13 @@ inline void Position::addPromotion(MoveList* ml, ScoredMove move){
     return;
 }
 
+bool Position::isPackedNoisy(const PackedMove move){
+    const Square piece = pieceOn(moveSource(move));
+    const Square to = moveTarget(move);
+    if (pieceOn(to) != NOPIECE || ((piece % 6 == P) && (to == enPassant)) || (move >> 12) != NOPIECE) return true;
+    return false;
+}
+
 inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S32 *ply1contHist, const S32 *ply2contHist) {
     if (sameMovePos(move, killer1)){
         ml->moves[ml->count++] = (KILLER1SCORE << 32) | move;

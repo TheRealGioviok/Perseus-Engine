@@ -195,7 +195,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     {
         // Check if the eval is stored in the TT
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
-        bool isTTCapture = pos.pieceOn(ttMove) != NOPIECE;
+        bool isTTCapture = pos.isPackedNoisy(ttMove);
         eval = ss->staticEval = isTTCapture ? rawEval : correctStaticEval(pos, rawEval);
         // Also, we might be able to use the score as a better eval
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
@@ -542,7 +542,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     }
     else if (ttHit){
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
-        bool isTTCapture = pos.pieceOn(ttMove) != NOPIECE;
+        bool isTTCapture = pos.isPackedNoisy(ttMove);
         ss->staticEval = bestScore = isTTCapture ? rawEval : correctStaticEval(pos, rawEval);
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < bestScore) || (ttBound == hashLOWER && ttScore > bestScore)))
             bestScore = ttScore;
