@@ -202,12 +202,7 @@ inline BitBoard xRayBishopAttacks(BitBoard occupancy, BitBoard blockers, Square 
  */
 inline BitBoard getBlockerPieces(BitBoard occupancy, Square pinSquare, BitBoard opRQ, BitBoard opBQ){
     BitBoard pinned = 0;
-    BitBoard pinner = xRayRookAttacks(occupancy, occupancy, pinSquare) & opRQ; // We generate the pinners for the rooks
-    while (pinner){
-        Square sq = popLsb(pinner);
-        pinned |= squaresBetween[sq][pinSquare]; // We add the squares between the pin square and the pinner to the pinned pieces
-    }
-    pinner = xRayBishopAttacks(occupancy, occupancy, pinSquare) & opBQ; // We generate the pinners for the bishops
+    BitBoard pinner = (xRayRookAttacks(occupancy, occupancy, pinSquare) & opRQ) | (xRayBishopAttacks(occupancy, occupancy, pinSquare) & opBQ); // We generate the pinners for the rooks
     while (pinner){
         Square sq = popLsb(pinner);
         pinned |= squaresBetween[sq][pinSquare]; // We add the squares between the pin square and the pinner to the pinned pieces
