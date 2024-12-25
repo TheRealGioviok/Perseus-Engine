@@ -303,7 +303,7 @@ skipPruning:
         Move currMove = onlyMove(moveList.moves[i]);
         if (sameMovePos(currMove, excludedMove)) continue;
         const bool isQuiet = okToReduce(currMove);
-        const bool givesCheck = pos.givesCheck(currMove);
+        //const bool givesCheck = pos.givesCheck(currMove);
         if (!skipQuiets) { 
             if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
             if (!PVNode
