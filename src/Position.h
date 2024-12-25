@@ -18,6 +18,8 @@ struct SStack;
 #define COUNTERSCORE 8999997LL
 // Followed by quiet moves
 #define QUIETSCORE 1000000LL
+// Bonus for checks
+#define CHECKSCORE 16384LL
 // Followed by bad noisy moves
 #define BADNOISYMOVE 16384LL
 
