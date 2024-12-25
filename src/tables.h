@@ -168,7 +168,7 @@ extern BitBoard outerRing[64]; // The ring of squares in a centered 5x5 square
 extern BitBoard fiveSquare[64]; // The 5x5 square
 extern BitBoard kingShelter[2][64]; // The king shelter
 
-inline bool aligned(Square sq1, Square sq2, Square sq3) { return lineBetween[sq1][sq2] & sq3; }
+inline bool aligned(Square sq1, Square sq2, Square sq3) { return lineBetween[sq1][sq2] & squareBB(sq3); }
 
 /**
  * @brief The initEvalTables function initializes the evaluation tables

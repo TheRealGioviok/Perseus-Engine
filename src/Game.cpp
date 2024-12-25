@@ -207,10 +207,7 @@ void Game::generateMoves(MoveList &moves, SStack* ss) {
     std::stable_sort(
         std::begin(moves.moves) + 1, 
         std::begin(moves.moves) + moves.count,
-        [](const ScoredMove& a, const ScoredMove& b) {
-            // Extract upper 32 bits and compare
-            return static_cast<uint32_t>(a >> 32) > static_cast<uint32_t>(b >> 32);
-        }
+        std::greater<ScoredMove>()
     );
 }
 
@@ -224,10 +221,7 @@ void Game::generateCaptures(MoveList &moves){
     std::stable_sort(
         std::begin(moves.moves) + 1, 
         std::begin(moves.moves) + moves.count,
-        [](const ScoredMove& a, const ScoredMove& b) {
-            // Extract upper 32 bits and compare
-            return static_cast<uint32_t>(a >> 32) > static_cast<uint32_t>(b >> 32);
-        }
+        std::greater<ScoredMove>()
     );
 }
 
