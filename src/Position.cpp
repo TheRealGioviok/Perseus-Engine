@@ -733,6 +733,7 @@ inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Squ
         + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
         + QUIETSCORE
+        + givesCheck(move) * CHECKSCORE
     ) << 32) | move;
 }
 

@@ -322,7 +322,7 @@ skipPruning:
                 continue;
             }
         }
-        else if (currMoveScore < COUNTERSCORE && !givesCheck) continue;
+        else if (currMoveScore < COUNTERSCORE) continue;
         // assert (
         //     i != 0 || !excludedMove ||
         //     (excludedMove == currMove)
