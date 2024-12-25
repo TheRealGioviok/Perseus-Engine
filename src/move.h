@@ -17,7 +17,7 @@
 */
 
 
-#define encodeMove(source, target, piece, capture, promotion, doubleP, enpassant, castle, check) \
+#define encodeMove(source, target, piece, capture, promotion, doubleP, enpassant, castle) \
 		((source)			|	\
 		((target) << 6)		|	\
 		((piece) << 12)		|	\
@@ -25,8 +25,7 @@
 		((promotion) << 20)	|	\
 		((doubleP) << 24)	|	\
 		((enpassant) << 25)	|	\
-		((castle) << 26)	|	\
-		((check) << 27))
+		((castle) << 26))
 
 #define moveSource(move)	((move) & 0x3f)
 #define moveTarget(move)	(((move) & 0xfc0) >> 6)
