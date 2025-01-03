@@ -62,13 +62,14 @@ inline S32 indexPieceTo(Piece piece, Square to) {
 	return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
 }
 
-static inline S32 stat_bonus(int depth) {
-#if ENABLEBETTERHISTORYFORMULA
-	// Approximately verbatim stat bonus formula from Stockfish // Formula from Ethereal, who took it from stockfish. I love chess programming.
-    return depth > 13 ? 32 : 16 * depth * depth + 128 * std::max(depth - 1, 0);
-#else
-	return std::min(16 * depth * depth + 32 * depth + 16, 1200);
-#endif
+static inline S32 statBonus(int depth) {
+	// Berserk fomula, sirius values yoink. Will tune.
+    return std::min(maxHistBonus(), histBonusA() * depth * depth + histBonusB() * depth + histBonusC());
+}
+
+static inline S32 statMalus(int depth) {
+	// Berserk fomula, sirius values yoink. Will tune.
+    return std::min(maxHistMalus(), histMalusA() * depth * depth + histMalusB() * depth + histMalusC());
 }
 
 #define MAXHISTORYABS 16384LL

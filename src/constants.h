@@ -202,6 +202,16 @@ TUNE_PARAM(futPruningDepth, 9, 6, 10, 0.5, 0.002);
 // Move ordering values
 TUNE_PARAM(captScoreMvvMultiplier, 14, 8, 32, 1, 0.002)
 
+// History related values (Ax**2 + Bx + C)
+TUNE_PARAM(maxHistBonus, 2136, 1024, 3072, 103, 0.002);
+TUNE_PARAM(histBonusA, 8, 1, 8, 1, 0.002);
+TUNE_PARAM(histBonusB, 204, 64, 384, 16, 0.002);
+TUNE_PARAM(histBonusC, -147, -64, -768, 36, 0.002);
+TUNE_PARAM(maxHistMalus, 1039, 1024, 3072, 256, 0.002);
+TUNE_PARAM(histMalusA, 5, 1, 8, 1, 0.002);
+TUNE_PARAM(histMalusB, 243, 64, 384, 16, 0.002);
+TUNE_PARAM(histMalusC, -66, -64, -768, 36, 0.002);
+
 // Time management values
 TUNE_PARAM(timeTmA, 135, 10, 200, 9, 0.002)
 TUNE_PARAM(timeTmB, 988, 0, 1000, 50, 0.002)
