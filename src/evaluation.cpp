@@ -45,76 +45,75 @@ void initTables() {
 }
 
 const PScore passedRankBonus[7] = {
-    S(0,0), S(-7,-103), S(-28,-72), S(-22,-15), S(15,37), S(35,141), S(126,220)
+    S(0,0), S(-15,-91), S(-33,-61), S(-25,-6), S(12,45), S(32,146), S(124,223)
 };
 
 const PScore SAFECHECK[4] = {
-    S(178,-34), S(39,0), S(107,24), S(109,11)
+    S(180,-32), S(38,0), S(110,25), S(110,11)
 };
 
 const PScore ALLCHECKS[4] = {
-    S(45,8), S(19,30), S(43,1), S(9,20)
+    S(43,5), S(15,34), S(45,0), S(8,21)
 };
 
-constexpr PScore DOUBLEISOLATEDPEN = S(10, 63);
+constexpr PScore DOUBLEISOLATEDPEN = S(13, 49);
 constexpr PScore ISOLATEDPEN = S(17, 23);
-constexpr PScore BACKWARDPEN = S(4, 19);
-constexpr PScore DOUBLEDPEN = S(15, 22);
-constexpr PScore SUPPORTEDPHALANX = S(0, 4);
-constexpr PScore ADVANCABLEPHALANX = S(7, 27);
-constexpr PScore R_SUPPORTEDPHALANX = S(2, 12);
+constexpr PScore BACKWARDPEN = S(3, 18);
+constexpr PScore DOUBLEDPEN = S(15, 20);
+constexpr PScore SUPPORTEDPHALANX = S(0, 5);
+constexpr PScore ADVANCABLEPHALANX = S(8, 27);
+constexpr PScore R_SUPPORTEDPHALANX = S(2, 11);
 constexpr PScore R_ADVANCABLEPHALANX = S(1, 19);
-constexpr PScore PASSEDPATHBONUS = S(-1, 18);
-constexpr PScore SUPPORTEDPASSER = S(29, 1);
-constexpr PScore INNERSHELTER = S(10, -36);
-constexpr PScore OUTERSHELTER = S(12, -20);
-constexpr PScore BISHOPPAIR = S(19, 127);
-constexpr PScore ROOKONOPENFILE = S(24, 0);
-constexpr PScore ROOKONSEMIOPENFILE = S(16, 21);
-constexpr PScore KNIGHTONEXTOUTPOST = S(26, 34);
-constexpr PScore BISHOPONEXTOUTPOST = S(27, -2);
-constexpr PScore KNIGHTONINTOUTPOST = S(24, 38);
-constexpr PScore BISHOPONINTOUTPOST = S(35, -9);
-constexpr PScore KNIGHTPROTECTOR = S(-6, -3);
+constexpr PScore PASSEDPATHBONUS = S(0, 20);
+constexpr PScore SUPPORTEDPASSER = S(29, -1);
+constexpr PScore INNERSHELTER = S(10, -33);
+constexpr PScore OUTERSHELTER = S(12, -17);
+constexpr PScore BISHOPPAIR = S(20, 127);
+constexpr PScore ROOKONOPENFILE = S(23, 4);
+constexpr PScore ROOKONSEMIOPENFILE = S(18, 13);
+constexpr PScore KNIGHTONEXTOUTPOST = S(26, 35);
+constexpr PScore BISHOPONEXTOUTPOST = S(29, 0);
+constexpr PScore KNIGHTONINTOUTPOST = S(24, 39);
+constexpr PScore BISHOPONINTOUTPOST = S(35, -8);
+constexpr PScore KNIGHTPROTECTOR = S(-7, -3);
 constexpr PScore BISHOPPROTECTOR = S(-4, -2);
 constexpr PScore BISHOPPAWNS = S(1, -4);
 constexpr PScore THREATSAFEPAWN = S(50, 59);
 constexpr PScore THREATPAWNPUSH = S(20, 33);
-constexpr PScore PAWNHANGING = S(-5, -59);
-constexpr PScore NONPAWNHANGING = S(-23, -33);
-constexpr PScore KINGTHREAT = S(-3, 2);
-constexpr PScore QUEENINFILTRATION = S(0, -14);
-constexpr PScore RESTRICTEDSQUARES = S(5, 3);
+constexpr PScore PAWNHANGING = S(-5, -58);
+constexpr PScore NONPAWNHANGING = S(-25, -34);
+constexpr PScore KINGTHREAT = S(-2, 3);
+constexpr PScore QUEENINFILTRATION = S(-1, -7);
+constexpr PScore RESTRICTEDSQUARES = S(4, 4);
 constexpr PScore TEMPO = S(21, 29);
 
-constexpr PScore PAWNATTACKINNERRING = S(13, -44);
-constexpr PScore KNIGHTATTACKINNERRING = S(55, -8);
-constexpr PScore BISHOPATTACKINNERRING = S(52, 4);
-constexpr PScore ROOKATTACKINNERRING = S(51, 13);
-constexpr PScore QUEENATTACKINNERRING = S(37, -31);
-constexpr PScore PAWNATTACKOUTERRING = S(38, -14);
-constexpr PScore KNIGHTATTACKOUTERRING = S(47, 6);
-constexpr PScore BISHOPATTACKOUTERRING = S(56, 3);
-constexpr PScore ROOKATTACKOUTERRING = S(30, -4);
-constexpr PScore QUEENATTACKOUTERRING = S(48, 20);
-constexpr PScore NOQUEENDANGER = S(-421, -1061);
-constexpr PScore PINNEDSHELTERDANGER = S(64, -1);
-constexpr PScore SAFETYINNERSHELTER = S(-33, -74);
-constexpr PScore SAFETYOUTERSHELTER = S(-28, -77);
-constexpr PScore INNERWEAKNESS = S(56, -18);
-constexpr PScore OUTERWEAKNESS = S(8, 5);
+constexpr PScore PAWNATTACKINNERRING = S(17, -40);
+constexpr PScore KNIGHTATTACKINNERRING = S(53, -7);
+constexpr PScore BISHOPATTACKINNERRING = S(49, 6);
+constexpr PScore ROOKATTACKINNERRING = S(53, 14);
+constexpr PScore QUEENATTACKINNERRING = S(38, -32);
+constexpr PScore PAWNATTACKOUTERRING = S(40, -10);
+constexpr PScore KNIGHTATTACKOUTERRING = S(46, 6);
+constexpr PScore BISHOPATTACKOUTERRING = S(55, 4);
+constexpr PScore ROOKATTACKOUTERRING = S(31, -5);
+constexpr PScore QUEENATTACKOUTERRING = S(49, 20);
+constexpr PScore NOQUEENDANGER = S(-429, -1056);
+constexpr PScore PINNEDSHELTERDANGER = S(66, -4);
+constexpr PScore SAFETYINNERSHELTER = S(-34, -71);
+constexpr PScore SAFETYOUTERSHELTER = S(-29, -73);
+constexpr PScore INNERWEAKNESS = S(57, -20);
+constexpr PScore OUTERWEAKNESS = S(8, 4);
 
-constexpr Score COMPLEXITYPASSERS = 233;
-constexpr Score COMPLEXITYPAWNS = 884;
-constexpr Score COMPLEXITYBLOCKEDPAIRS = -351;
-constexpr Score COMPLEXITYPAWNTENSION = -881;
-constexpr Score COMPLEXITYOUTFLANKING = -36;
-constexpr Score COMPLEXITYINFILTRATION = -723;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9580;
-constexpr Score COMPLEXITYPAWNENDING = 12842;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3884;
-constexpr Score COMPLEXITYBIAS = -18393;
-
+constexpr Score COMPLEXITYPASSERS = 223;
+constexpr Score COMPLEXITYPAWNS = 926;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -334;
+constexpr Score COMPLEXITYPAWNTENSION = -831;
+constexpr Score COMPLEXITYOUTFLANKING = -25;
+constexpr Score COMPLEXITYINFILTRATION = -760;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9588;
+constexpr Score COMPLEXITYPAWNENDING = 12854;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3889;
+constexpr Score COMPLEXITYBIAS = -18691;
 
 // Function to access the table values
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
@@ -301,14 +300,14 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
             Square sq = popLsb(whitePassers);
             BitBoard sqb = squareBB(sq);
             // Give bonus for how many squares the pawn can advance
-            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
+            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~occ[BOTH]);
             score += PASSEDPATHBONUS * popcount(passedPath);
         }
         while (blackPassers){
             Square sq = popLsb(blackPassers);
             BitBoard sqb = squareBB(sq);
             // Give bonus for how many squares the pawn can advance
-            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
+            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~occ[BOTH]);
             score -= PASSEDPATHBONUS * popcount(passedPath);
         }
         return score;
@@ -358,7 +357,7 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
                 ++passedCount;
                 passers |= sqb;
                 // Give bonus for how many squares the pawn can advance. This can't be stored into the entry, since it depends on the rest of the position.
-                BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
+                BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~occ[BOTH]);
                 extraScore += PASSEDPATHBONUS * popcount(passedPath);
             }
         }
@@ -406,7 +405,7 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
                 ++passedCount;
                 passers |= sqb;
                 // Give bonus for how many squares the pawn can advance. This can't be stored into the entry, since it depends on the rest of the position.
-                BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
+                BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~occ[BOTH]);
                 extraScore -= PASSEDPATHBONUS * popcount(passedPath);
             }
         }
@@ -1274,7 +1273,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         }
         if (candidatePassed){
             ++passedCount;
-            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
+            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~occ[BOTH]);
             // Give bonus for how close the pawn is to the promotion square
             tensor[8 + rank] += 1;
             tensor[8 + 7] += popcount(passedPath);
@@ -1318,7 +1317,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         }
         if (candidatePassed){
             ++passedCount;
-            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
+            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~occ[BOTH]);
             // Give bonus for how close the pawn is to the promotion square
             tensor[8 + rank]--;
             tensor[8 + 7] -= popcount(passedPath);
