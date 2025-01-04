@@ -110,8 +110,7 @@ struct PawnEvalHashEntry {
     BitBoard passers; // This can be shrinked to add more stuff and keep the alignement
 };
 
-extern PawnEvalHashEntry whitePawnEvalHash[PAWNHASHSIZE];
-extern PawnEvalHashEntry blackPawnEvalHash[PAWNHASHSIZE];
+extern PawnEvalHashEntry pawnEvalHash[PAWNHASHSIZE];
 
 extern PScore PSQTs[12][64];
 /**
