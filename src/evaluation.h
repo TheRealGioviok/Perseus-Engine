@@ -102,6 +102,16 @@ constexpr double KSCALEEG = 1079.464599609375;
 constexpr double KSBEG = 2.0799951553344727;
 constexpr double KSCEG = 2.7020320892333984;
 
+#define PAWNHASHSIZE 262144ULL
+
+struct PawnEvalHashEntry {
+    U64 hash;
+    PScore score;
+    BitBoard passers; // This can be shrinked to add more stuff and keep the alignement
+};
+
+extern PawnEvalHashEntry pawnEvalHash[PAWNHASHSIZE];
+
 extern PScore PSQTs[12][64];
 /**
 * @brief The initTables function initializes the material - positional tables

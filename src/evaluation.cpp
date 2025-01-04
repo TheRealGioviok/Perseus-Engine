@@ -2,6 +2,7 @@
 #include "tables.h"
 #include "tt.h"
 #include "movegen.h"
+#include "zobrist.h"
 #include "types.h"
 #include <iostream>
 #include <vector>
@@ -11,6 +12,8 @@
 #include <cmath>
 
 PScore PSQTs[12][64];
+
+PawnEvalHashEntry pawnEvalHash[PAWNHASHSIZE];
 
 const PScore* pestoTables[6] = {
     pawnTable,
@@ -283,6 +286,140 @@ static inline BitBoard pawnSpanPawns(BitBoard movers, BitBoard blockers){
     }
 }
 
+inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const BitBoard (&doubledPawns)[2], const BitBoard (&pawnFiles)[2], const BitBoard (&protectedPawns)[2], const BitBoard (&pawnBlockage)[2], const BitBoard (&occ)[3], S32& passedCount){
+    // Try probing for the correct side here
+    PawnEvalHashEntry& entry = pawnEvalHash[hashKey & 0x3FFFF];
+    // Init the score
+    PScore score = PScore(0,0);
+    // Check
+    if (entry.hash == hashKey){
+        BitBoard whitePassers = entry.passers & bb[P];
+        BitBoard blackPassers = entry.passers & bb[p];
+        passedCount += popcount(entry.passers); // May already be nonzero
+        score = entry.score;
+        while (whitePassers){
+            Square sq = popLsb(whitePassers);
+            BitBoard sqb = squareBB(sq);
+            // Give bonus for how many squares the pawn can advance
+            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
+            score += PASSEDPATHBONUS * popcount(passedPath);
+        }
+        while (blackPassers){
+            Square sq = popLsb(blackPassers);
+            BitBoard sqb = squareBB(sq);
+            // Give bonus for how many squares the pawn can advance
+            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
+            score -= PASSEDPATHBONUS * popcount(passedPath);
+        }
+        return score;
+    }
+    else {
+        PScore extraScore = PScore(0,0);
+        BitBoard passers = 0ULL;
+        BitBoard pieces = bb[P];
+        while (pieces){
+            // Evaluate isolated, backward, doubled pawns and connected pawns
+            const Square sq = popLsb(pieces);
+            const BitBoard sqb = squareBB(sq);
+            const U8 rank = 7 - rankOf(sq);
+            bool doubled = doubledPawns[WHITE] & sqb;
+            bool isolated = !(isolatedPawnMask[sq] & bb[P]);
+            bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
+            bool supported = protectedPawns[WHITE] & sqb;
+            bool advancable = !(pawnBlockage[WHITE] & north(sqb));
+            bool phal = phalanx[sq] & bb[P];
+            bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
+            
+            bool backward = !( // If the pawn
+                (backwardPawnMask[WHITE][sq] & bb[P]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
+                || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
+            );
+            // Check if the pawn is doubled
+            if (isolated){
+                if (doubled && pawnOpposed) score -= DOUBLEISOLATEDPEN;
+                else score -= ISOLATEDPEN;
+            }
+            else if (backward) score -= BACKWARDPEN;
+
+            if (doubled && !supported) score -= DOUBLEDPEN;
+            else if (supported && phal){
+                score += SUPPORTEDPHALANX;
+                score += R_SUPPORTEDPHALANX * (rank - 2);
+            }
+            else if (advancable && phal){
+                score += ADVANCABLEPHALANX;
+                score += R_ADVANCABLEPHALANX * (rank - 2);
+            }
+            if (candidatePassed){
+                // Give bonus for how close the pawn is to the promotion square
+                score += passedRankBonus[rank];
+                // Bonus for connected or supported passed pawns
+                if (supported) score += SUPPORTEDPASSER;
+                ++passedCount;
+                passers |= sqb;
+                // Give bonus for how many squares the pawn can advance. This can't be stored into the entry, since it depends on the rest of the position.
+                BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
+                extraScore += PASSEDPATHBONUS * popcount(passedPath);
+            }
+        }
+
+        // Black pawns
+        pieces = bb[p];
+        while (pieces){
+            // Evaluate isolated, backward, doubled pawns and connected pawns
+            const Square sq = popLsb(pieces);
+            const BitBoard sqb = squareBB(sq);
+            const U8 rank = rankOf(sq);
+            bool doubled = doubledPawns[BLACK] & sqb;
+            bool isolated = !(isolatedPawnMask[sq] & bb[p]);
+            bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
+            bool supported = protectedPawns[BLACK] & sqb;
+            bool advancable = !(pawnBlockage[BLACK] & south(sqb));
+            bool phal = phalanx[sq] & bb[p];
+            bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
+            
+            bool backward = !( // If the pawn
+                (backwardPawnMask[BLACK][sq] & bb[p]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
+                || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
+            );
+            // Check if the pawn is doubled
+            if (isolated){
+                if (doubled && pawnOpposed) score += DOUBLEISOLATEDPEN;
+                else score += ISOLATEDPEN;
+            }
+            else if (backward) score += BACKWARDPEN;
+
+            if (doubled && !supported) score += DOUBLEDPEN;
+            else if (supported && phal){
+                score -= SUPPORTEDPHALANX;
+                score -= R_SUPPORTEDPHALANX * (rank - 2);
+            }
+            else if (advancable && phal){
+                score -= ADVANCABLEPHALANX;
+                score -= R_ADVANCABLEPHALANX * (rank - 2);
+            }
+            if (candidatePassed){
+                // Give bonus for how close the pawn is to the promotion square
+                score -= passedRankBonus[rank];
+                // Bonus for connected or supported passed pawns
+                if (supported) score -= SUPPORTEDPASSER;
+                ++passedCount;
+                passers |= sqb;
+                // Give bonus for how many squares the pawn can advance. This can't be stored into the entry, since it depends on the rest of the position.
+                BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
+                extraScore -= PASSEDPATHBONUS * popcount(passedPath);
+            }
+        }
+
+        // Save
+        entry.hash = hashKey;
+        entry.score = score;
+        entry.passers = passers;
+        return score + extraScore;
+    }
+    
+}
+
 Score pestoEval(Position *pos){
     auto const& bb = pos->bitboards;
     auto const& occ = pos->occupancies;
@@ -490,102 +627,9 @@ Score pestoEval(Position *pos){
 
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
-    // White pawns
-    BitBoard pieces = bb[P];
-    while (pieces){
-        // Evaluate isolated, backward, doubled pawns and connected pawns
-        const Square sq = popLsb(pieces);
-        const BitBoard sqb = squareBB(sq);
-        const U8 rank = 7 - rankOf(sq);
-        bool doubled = doubledPawns[WHITE] & squareBB(sq);
-        bool isolated = !(isolatedPawnMask[sq] & bb[P]);
-        bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
-        bool supported = protectedPawns[WHITE] & sqb;
-        bool advancable = !(pawnBlockage[WHITE] & north(sqb));
-        bool phal = phalanx[sq] & bb[P];
-        bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
-        
-        bool backward = !( // If the pawn
-            (backwardPawnMask[WHITE][sq] & bb[P]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
-            || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
-        );
-        // Check if the pawn is doubled
-        if (isolated){
-            if (doubled && pawnOpposed) score -= DOUBLEISOLATEDPEN;
-            else score -= ISOLATEDPEN;
-        }
-        else if (backward) score -= BACKWARDPEN;
 
-        if (doubled && !supported) score -= DOUBLEDPEN;
-        else if (supported && phal){
-            score += SUPPORTEDPHALANX;
-            score += R_SUPPORTEDPHALANX * (rank - 2);
-        }
-        else if (advancable && phal){
-            score += ADVANCABLEPHALANX;
-            score += R_ADVANCABLEPHALANX * (rank - 2);
-        }
-        if (candidatePassed){
-            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
-            // Give bonus for how close the pawn is to the promotion square
-            score += passedRankBonus[rank];
-            // Give bonus for how many squares the pawn can advance
-            score += PASSEDPATHBONUS * popcount(passedPath);
-            // Bonus for connected or supported passed pawns
-            if (supported){
-                score += SUPPORTEDPASSER;
-            }
-            ++passedCount;
-        }
-    }
-
-    // Black pawns
-    pieces = bb[p];
-    while (pieces){
-        // Evaluate isolated, backward, doubled pawns and connected pawns
-        const Square sq = popLsb(pieces);
-        const BitBoard sqb = squareBB(sq);
-        const U8 rank = rankOf(sq);
-        bool doubled = doubledPawns[BLACK] & squareBB(sq);
-        bool isolated = !(isolatedPawnMask[sq] & bb[p]);
-        bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
-        bool supported = protectedPawns[BLACK] & sqb;
-        bool advancable = !(pawnBlockage[BLACK] & south(sqb));
-        bool phal = phalanx[sq] & bb[p];
-        bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
-        
-        bool backward = !( // If the pawn
-            (backwardPawnMask[BLACK][sq] & bb[p]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
-            || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
-        );
-        // Check if the pawn is doubled
-        if (isolated){
-            if (doubled && pawnOpposed) score += DOUBLEISOLATEDPEN;
-            else score += ISOLATEDPEN;
-        }
-        else if (backward) score += BACKWARDPEN;
-
-        if (doubled && !supported) score += DOUBLEDPEN;
-        else if (supported && phal){
-            score -= SUPPORTEDPHALANX;
-            score -= R_SUPPORTEDPHALANX * (rank - 2);
-        }
-        else if (advancable && phal){
-            score -= ADVANCABLEPHALANX;
-            score -= R_ADVANCABLEPHALANX * (rank - 2);
-        }
-        if (candidatePassed){
-            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
-            // Give bonus for how close the pawn is to the promotion square
-            score -= passedRankBonus[rank];
-            // Give bonus for how many squares the pawn can advance
-            score -= PASSEDPATHBONUS * popcount(passedPath);
-            // Bonus for connected or supported passed pawns
-            if (supported) score -= SUPPORTEDPASSER;
-            ++passedCount;
-        }
-    }
-
+    score += pawnEval(pos->pawnHashKey ^ enPassantKeysTable[pos->enPassant], bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, passedCount);
+    
     // Calculate king safety
     // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
     BitBoard innerShelters[2] = {

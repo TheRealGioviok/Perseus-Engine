@@ -56,6 +56,21 @@ HashKey Position::generatePawnHashKey() {
 }
 
 /** 
+ * @brief The Position::generateWhitePawnHashKey function generates the hash key of the white pawn structure from scratch.
+ * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
+ */
+HashKey Position::generateWhitePawnHashKey() {
+    HashKey h = 0ULL;
+    BitBoard pieceBB = bitboards[P];
+    while (pieceBB) {
+        Square square = popLsb(pieceBB);
+        h ^= pawnKeysTable[P][square];
+    }
+    // No enpass
+    return h;
+}
+
+/** 
  * @brief The Position::generateNonPawnHashKey function generates the hash key of the non pawn structure from scratch, for a given side.
  * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
  */
@@ -152,6 +167,7 @@ void Position::wipe(){
     castle = 0;
     hashKey = 0;
     pawnHashKey = 0;
+    whitePawnsHashKey = 0;
     nonPawnKeys[0] = nonPawnKeys[1] = 0;
     minorKey = 0;
     psqtScore = SCORE_ZERO;
@@ -172,6 +188,7 @@ static inline void removePiece(Position& pos, const Piece piece, const Square sq
     // Update the hash key
     pos.hashKey ^= pieceKeysTable[piece][square];
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
+    pos.whitePawnsHashKey ^= pawnKeysTable[piece][square] * (piece <= K);
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
     pos.minorKey ^= minorKeysTable[piece][square];
     //std::cout << "Removing key from side " << int(piece >= p) << "for piece " << getPieceChar(piece) << " and square " << coords[square] << std::endl;
@@ -194,6 +211,7 @@ static inline void addPiece(Position& pos, const Piece piece, const Square squar
     // Update the hash key
     pos.hashKey ^= pieceKeysTable[piece][square];
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
+    pos.whitePawnsHashKey ^= pawnKeysTable[piece][square] * (piece <= K);
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
     pos.minorKey ^= minorKeysTable[piece][square];
     //std::cout << "Adding key from side " << int(piece >= p) << "for piece " << getPieceChar(piece) << " and square " << coords[square] << std::endl;
@@ -343,6 +361,7 @@ FENkeyEval:
     // If everything is alright, generate the hash key for the current position
     hashKey = generateHashKey();
     pawnHashKey = generatePawnHashKey();
+    whitePawnsHashKey = generateWhitePawnHashKey();
     nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
     minorKey = generateMinorHashKey();
@@ -802,6 +821,7 @@ void Position::reflect() {
 	// Recalculate hash
     hashKey = generateHashKey();
     pawnHashKey = generatePawnHashKey();
+    whitePawnsHashKey = generateWhitePawnHashKey();
     nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
     minorKey = generateMinorHashKey();
@@ -1657,6 +1677,7 @@ void Position::makeNullMove(){
 UndoInfo::UndoInfo(Position& position){
     hashKey = position.hashKey;
     pawnsHashKey = position.pawnHashKey;
+    whitePawnsHashKey = position.whitePawnsHashKey;
     nonPawnsHashKey[WHITE] = position.nonPawnKeys[WHITE];
     nonPawnsHashKey[BLACK] = position.nonPawnKeys[BLACK];
     minorHashKey = position.minorKey;
@@ -1675,6 +1696,7 @@ UndoInfo::UndoInfo(Position& position){
 void UndoInfo::undoMove(Position& position, Move move){
     position.hashKey = hashKey;
     position.pawnHashKey = pawnsHashKey;
+    position.whitePawnsHashKey = whitePawnsHashKey;
     position.nonPawnKeys[WHITE] = nonPawnsHashKey[WHITE];
     position.nonPawnKeys[BLACK] = nonPawnsHashKey[BLACK];
     position.minorKey = minorHashKey;
@@ -1706,6 +1728,7 @@ void UndoInfo::undoMove(Position& position, Move move){
 void UndoInfo::undoNullMove(Position& position){
     position.hashKey = hashKey;
     position.pawnHashKey = pawnsHashKey;
+    position.whitePawnsHashKey = whitePawnsHashKey;
     position.nonPawnKeys[WHITE] = nonPawnsHashKey[WHITE];
     position.nonPawnKeys[BLACK] = nonPawnsHashKey[BLACK];
     position.minorKey = minorHashKey;

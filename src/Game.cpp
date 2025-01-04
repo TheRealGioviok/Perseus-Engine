@@ -135,6 +135,9 @@ void Game::reset(){
         tt[i].eval = noScore;
         tt[i].flags = hashINVALID;
     }
+
+    // Clear pawn hash table
+    memset(pawnEvalHash, 0, sizeof(pawnEvalHash));
 #endif
 
 }
