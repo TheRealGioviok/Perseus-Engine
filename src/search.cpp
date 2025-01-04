@@ -93,6 +93,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
 
     assert(pos.hashKey == pos.generateHashKey());
     assert(pos.pawnHashKey == pos.generatePawnHashKey());
+    assert(pos.whitePawnsHashKey == pos.generateWhitePawnHashKey());
     assert(pos.nonPawnKeys[WHITE] == pos.generateNonPawnHashKey(WHITE));
     assert(pos.nonPawnKeys[BLACK] == pos.generateNonPawnHashKey(BLACK));
     assert(pos.minorKey == pos.generateMinorHashKey());

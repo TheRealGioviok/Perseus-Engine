@@ -137,9 +137,8 @@ void Game::reset(){
     }
 
     // Clear pawn hash table
-    for (size_t i = 0; i < PAWNHASHSIZE; i++){
-        pawnEvalHash[i] = PawnEvalHashEntry();
-    }
+    memset(whitePawnEvalHash, 0, sizeof(whitePawnEvalHash));
+    memset(blackPawnEvalHash, 0, sizeof(whitePawnEvalHash));
 #endif
 
 }
