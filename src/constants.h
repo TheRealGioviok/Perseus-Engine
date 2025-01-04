@@ -202,6 +202,9 @@ TUNE_PARAM(futPruningDepth, 9, 6, 10, 0.5, 0.002);
 // Move ordering values
 TUNE_PARAM(captScoreMvvMultiplier, 14, 8, 32, 1, 0.002)
 
+// HH related values
+TUNE_PARAM(historyBetaMargin, 50, 20, 120, 5, 0.002);
+
 // Time management values
 TUNE_PARAM(timeTmA, 135, 10, 200, 9, 0.002)
 TUNE_PARAM(timeTmB, 988, 0, 1000, 50, 0.002)

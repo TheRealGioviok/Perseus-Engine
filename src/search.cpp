@@ -93,7 +93,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
 
     assert(pos.hashKey == pos.generateHashKey());
     assert(pos.pawnHashKey == pos.generatePawnHashKey());
-    assert(pos.whitePawnsHashKey == pos.generateWhitePawnHashKey());
     assert(pos.nonPawnKeys[WHITE] == pos.generateNonPawnHashKey(WHITE));
     assert(pos.nonPawnKeys[BLACK] == pos.generateNonPawnHashKey(BLACK));
     assert(pos.minorKey == pos.generateMinorHashKey());
@@ -458,7 +457,7 @@ granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUT
                             updateKillers(ss, currMove);
                             updateCounters(currMove, (ss - 1)->move);
                         }
-                        updateHH(ss, pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount);
+                        updateHH(ss, pos.side, depth + + (depth < 13 && bestScore > beta + historyBetaMargin()), currMove, quiets, quietsCount, noisy, noisyCount);
                         break;
                     }
                     alpha = score;
