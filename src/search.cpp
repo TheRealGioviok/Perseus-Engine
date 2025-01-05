@@ -686,8 +686,9 @@ void Game::startSearch(bool halveTT = true)
     if (stopped)
         goto bmove;
 
-    for (currSearch = 2; (currSearch <= depth) && currSearch >= 2 && !stopped; currSearch++)
+    for (Depth searchDepth = 2; (searchDepth <= depth) && searchDepth >= 2 && !stopped; searchDepth++)
     {
+        currSearch = searchDepth;
         delta = ASPIRATIONWINDOW;
         if (currSearch >= 4)
         {
@@ -716,36 +717,38 @@ void Game::startSearch(bool halveTT = true)
                 alpha = std::max(S32(noScore), score - delta);
 
                 if (score < -mateValue && score > -mateScore)
-                    std::cout << std::dec << "info depth " << (int)currSearch << " score mate " << -(mateScore + score + 2) / 2 << " lowerbound nodes " << nodes << " pv ";
+                    std::cout << std::dec << "info depth " << (int)searchDepth << " score mate " << -(mateScore + score + 2) / 2 << " lowerbound nodes " << nodes << " pv ";
                 else if (score > mateValue && score < mateScore)
-                    std::cout << std::dec << "info depth " << (int)currSearch << " score mate " << (mateScore + 1 - score) / 2 << " lowerbound nodes " << nodes << " pv ";
+                    std::cout << std::dec << "info depth " << (int)searchDepth << " score mate " << (mateScore + 1 - score) / 2 << " lowerbound nodes " << nodes << " pv ";
                 else
-                    std::cout << std::dec << "info depth " << (int)currSearch << " score cp " << (score >> 1) << " lowerbound nodes " << nodes << " pv ";
+                    std::cout << std::dec << "info depth " << (int)searchDepth << " score cp " << (score >> 1) << " lowerbound nodes " << nodes << " pv ";
                 printMove(pvTable[0][0]);
                 std::cout << " nps " << (((nodes - locNodes) * 1000) / (timer2 - timer1 + 1)) << std::endl;
                 delta *= 1.44;
+                currSearch = searchDepth;
             }
             else if (score >= beta)
             {
                 beta = std::min(S32(infinity), score + delta);
                 if (score < -mateValue && score > -mateScore)
-                    std::cout << std::dec << "info depth " << (int)currSearch << " score mate " << -(mateScore + score + 2) / 2 << " upperbound nodes " << nodes << " pv ";
+                    std::cout << std::dec << "info depth " << (int)searchDepth << " score mate " << -(mateScore + score + 2) / 2 << " upperbound nodes " << nodes << " pv ";
                 else if (score > mateValue && score < mateScore)
-                    std::cout << std::dec << "info depth " << (int)currSearch << " score mate " << (mateScore + 1 - score) / 2 << " upperbound nodes " << nodes << " pv ";
+                    std::cout << std::dec << "info depth " << (int)searchDepth << " score mate " << (mateScore + 1 - score) / 2 << " upperbound nodes " << nodes << " pv ";
                 else
-                    std::cout << std::dec << "info depth " << (int)currSearch << " score cp " << (score >> 1) << " upperbound nodes " << nodes << " pv ";
+                    std::cout << std::dec << "info depth " << (int)searchDepth << " score cp " << (score >> 1) << " upperbound nodes " << nodes << " pv ";
                 printMove(pvTable[0][0]);
                 std::cout << " nps " << (((nodes - locNodes) * 1000) / (timer2 - timer1 + 1)) << std::endl;
                 delta *= 1.44;
+                currSearch = std::max(4,std::max(searchDepth - 5, currSearch - 1));
             }
             else
             {
                 if (score < -mateValue && score > -mateScore)
-                    std::cout << std::dec << "info score mate " << -(mateScore + score + 2) / 2 << " depth " << (int)currSearch << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
+                    std::cout << std::dec << "info score mate " << -(mateScore + score + 2) / 2 << " depth " << (int)searchDepth << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
                 else if (score > mateValue && score < mateScore)
-                    std::cout << std::dec << "info score mate " << (mateScore + 1 - score) / 2 << " depth " << (int)currSearch << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
+                    std::cout << std::dec << "info score mate " << (mateScore + 1 - score) / 2 << " depth " << (int)searchDepth << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
                 else
-                    std::cout << std::dec << "info score cp " << (score >> 1) << " depth " << (int)currSearch << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
+                    std::cout << std::dec << "info score cp " << (score >> 1) << " depth " << (int)searchDepth << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
 
                 for (int i = 0; i < pvLen[0]; i++)
                 {
