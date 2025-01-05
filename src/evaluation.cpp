@@ -64,7 +64,7 @@ constexpr PScore SUPPORTEDPHALANX = S(0, 4);
 constexpr PScore ADVANCABLEPHALANX = S(7, 27);
 constexpr PScore R_SUPPORTEDPHALANX = S(2, 12);
 constexpr PScore R_ADVANCABLEPHALANX = S(1, 19);
-constexpr PScore PASSEDPATHBONUS = S(-1, 18);
+// constexpr PScore PASSEDPATHBONUS = S(-1, 18);
 constexpr PScore SUPPORTEDPASSER = S(29, 1);
 constexpr PScore INNERSHELTER = S(10, -36);
 constexpr PScore OUTERSHELTER = S(12, -20);
@@ -293,25 +293,8 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
     PScore score = PScore(0,0);
     // Check
     if (entry.hash == hashKey){
-        BitBoard whitePassers = entry.passers & bb[P];
-        BitBoard blackPassers = entry.passers & bb[p];
         passedCount += popcount(entry.passers); // May already be nonzero
-        score = entry.score;
-        while (whitePassers){
-            Square sq = popLsb(whitePassers);
-            BitBoard sqb = squareBB(sq);
-            // Give bonus for how many squares the pawn can advance
-            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
-            score += PASSEDPATHBONUS * popcount(passedPath);
-        }
-        while (blackPassers){
-            Square sq = popLsb(blackPassers);
-            BitBoard sqb = squareBB(sq);
-            // Give bonus for how many squares the pawn can advance
-            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
-            score -= PASSEDPATHBONUS * popcount(passedPath);
-        }
-        return score;
+        return entry.score;
     }
     else {
         PScore extraScore = PScore(0,0);
@@ -357,9 +340,6 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
                 if (supported) score += SUPPORTEDPASSER;
                 ++passedCount;
                 passers |= sqb;
-                // Give bonus for how many squares the pawn can advance. This can't be stored into the entry, since it depends on the rest of the position.
-                BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
-                extraScore += PASSEDPATHBONUS * popcount(passedPath);
             }
         }
 
@@ -405,9 +385,6 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
                 if (supported) score -= SUPPORTEDPASSER;
                 ++passedCount;
                 passers |= sqb;
-                // Give bonus for how many squares the pawn can advance. This can't be stored into the entry, since it depends on the rest of the position.
-                BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
-                extraScore -= PASSEDPATHBONUS * popcount(passedPath);
             }
         }
 
@@ -902,7 +879,6 @@ std::vector<Score> getCurrentEvalWeights(){
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(passedRankBonus[rank].mg());
     }
-    weights.push_back(PASSEDPATHBONUS.mg());
     weights.push_back(SUPPORTEDPASSER.mg());
 
     // Add the shelter weights
@@ -978,7 +954,6 @@ std::vector<Score> getCurrentEvalWeights(){
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(passedRankBonus[rank].eg());
     }
-    weights.push_back(PASSEDPATHBONUS.eg());
     weights.push_back(SUPPORTEDPASSER.eg());
 
     // Add the shelter weights
@@ -1277,9 +1252,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
             BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~bb[BOTH]);
             // Give bonus for how close the pawn is to the promotion square
             tensor[8 + rank] += 1;
-            tensor[8 + 7] += popcount(passedPath);
             // Bonus for connected or supported passed pawns
-            if (supported) tensor[8 + 7 + 1]++;
+            if (supported) tensor[8 + 7]++;
         }
     }
     
@@ -1318,15 +1292,13 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         }
         if (candidatePassed){
             ++passedCount;
-            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~bb[BOTH]);
             // Give bonus for how close the pawn is to the promotion square
             tensor[8 + rank]--;
-            tensor[8 + 7] -= popcount(passedPath);
             // Bonus for connected or supported passed pawns
-            if (supported) tensor[8 + 7 + 1]--;
+            if (supported) tensor[8 + 7]--;
         }
     }
-    tensor += 8 + 7 + 2;
+    tensor += 8 + 7 + 1;
 
     // Calculate king safety
     // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
