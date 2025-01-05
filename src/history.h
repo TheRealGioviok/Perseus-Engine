@@ -31,6 +31,7 @@ struct SStack {
     Move excludedMove = 0;
     Score staticEval = 0;
     Move move = 0;
+    S32 moveScore = 0;
     S16 doubleExtensions = 0;
     Move killers[2] = {0, 0};
     S32* contHistEntry = continuationHistoryTable[0];
@@ -39,6 +40,7 @@ struct SStack {
         excludedMove = noMove;
         staticEval = 0;
         move = noMove;
+        moveScore = 0;
         doubleExtensions = 0;
         killers[0] = killers[1] = noMove;
         contHistEntry = continuationHistoryTable[0];
@@ -48,6 +50,7 @@ struct SStack {
         excludedMove = noMove;
         staticEval = 0;
         move = noMove;
+        moveScore = 0;
         doubleExtensions = 0;
         killers[0] = killers[1] = noMove;
         contHistEntry = continuationHistoryTable[0];

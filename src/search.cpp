@@ -229,7 +229,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
     if (!PVNode && !excludedMove)
     {
         // RFP
-        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - futilityMargin(depth, improving) >= beta) // && !excludedMove)
+        if (depth <= RFPDepth() && abs(eval) < mateValue && eval >= beta + futilityMargin(depth, improving) + (ss-1)->moveScore / rfpHistoryDivisor()) // && !excludedMove)
             return eval;
 
         // Null move pruning
@@ -246,6 +246,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
             prefetch(&tt[hashEntryFor(pos.hashKey)]);
             ss->move = noMove;
             ss->contHistEntry = continuationHistoryTable[0];
+            ss->moveScore = 0;
 
             Depth R = nmpQ1() + (depth / nmpDepthDivisor()) + std::min((eval - beta) / nmpScoreDivisor(), nmpQ2());
             Score nullScore = -search(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
@@ -388,6 +389,18 @@ skipPruning:
 
             ss->move = currMove;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
+            ss->moveScore = isQuiet ? 
+                            (i == 0 ? 
+                                49152 : 
+                                (currMoveScore >= COUNTERSCORE ? 
+                                    32768 : 
+                                    currMoveScore - QUIETSCORE
+                                )
+                            ) :
+                            (currMoveScore > QUIETSCORE ? 
+                                currMoveScore - GOODNOISYMOVE - BADNOISYMOVE : 
+                                currMoveScore - BADNOISYMOVE
+                            );
             
             Score score;
         
@@ -410,8 +423,8 @@ skipPruning:
                     if (currMoveScore < QUIETSCORE) { 
                         if (cutNode) granularR += lmrBadNoisyCutNode();
                         granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
-                                        }
-granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
+                    }
+                    granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
                 }
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
