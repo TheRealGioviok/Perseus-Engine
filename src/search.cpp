@@ -390,13 +390,14 @@ skipPruning:
             ss->move = currMove;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
             ss->moveScore = isQuiet ? 
-                            (i == 0 ? 
-                                49152 : 
-                                (currMoveScore >= COUNTERSCORE ? 
-                                    32768 : 
-                                    currMoveScore - QUIETSCORE
-                                )
-                            ) :
+                            (currMoveScore >= COUNTERSCORE ? 
+                                (
+                                    (S64)(historyTable[!pos.side][indexFromTo(moveSource(currMove), moveTarget(currMove))]) 
+                                    + (S64)(ply >= 1 + 1 ? (ss - 1 - 1)->contHistEntry[indexPieceTo(movePiece(currMove), moveTarget(currMove))] : 0)
+                                    + (S64)(ply >= 2 + 1 ? (ss - 1 - 1)->contHistEntry[indexPieceTo(movePiece(currMove), moveTarget(currMove))] : 0)
+                                ) : 
+                                currMoveScore - QUIETSCORE
+                            ):
                             (currMoveScore > QUIETSCORE ? 
                                 currMoveScore - GOODNOISYMOVE - BADNOISYMOVE : 
                                 currMoveScore - BADNOISYMOVE
