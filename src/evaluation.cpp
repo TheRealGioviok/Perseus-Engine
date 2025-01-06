@@ -588,7 +588,7 @@ Score pestoEval(Position *pos){
     mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
     
     // std::cout << "PSQT scores are :\t"<<score.mg()<<"\t"<<score.eg()<<std::endl;
-    score += pos->psqtScores[indexColorSide(WHITE,(fileOf(whiteKing) >= 3))] + pos->psqtScores[indexColorSide(BLACK,(fileOf(blackKing) >= 3))];
+    score += pos->psqtScores[indexColorSide(WHITE,(fileOf(whiteKing) <= 3))] + pos->psqtScores[indexColorSide(BLACK,(fileOf(blackKing) <= 3))];
 
     // Weak pieces
     const BitBoard weakPieces[2] = {
