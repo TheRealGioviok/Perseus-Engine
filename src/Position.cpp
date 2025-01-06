@@ -170,7 +170,7 @@ void Position::wipe(){
     whitePawnsHashKey = 0;
     nonPawnKeys[0] = nonPawnKeys[1] = 0;
     minorKey = 0;
-    psqtScore = SCORE_ZERO;
+    memset(psqtScores,0,sizeof(psqtScores));
 }
 
 /**
@@ -191,9 +191,9 @@ static inline void removePiece(Position& pos, const Piece piece, const Square sq
     pos.whitePawnsHashKey ^= pawnKeysTable[piece][square] * (piece <= K);
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
     pos.minorKey ^= minorKeysTable[piece][square];
-    //std::cout << "Removing key from side " << int(piece >= p) << "for piece " << getPieceChar(piece) << " and square " << coords[square] << std::endl;
     // Update the psqt score
-    pos.psqtScore -= PSQTs[piece][square];
+    pos.psqtScores[indexColorSide(piece >= p, 0)] -= PSQTs[0][piece][square];
+    pos.psqtScores[indexColorSide(piece >= p, 1)] -= PSQTs[1][piece][square];
 }
 
 /**l
@@ -214,11 +214,9 @@ static inline void addPiece(Position& pos, const Piece piece, const Square squar
     pos.whitePawnsHashKey ^= pawnKeysTable[piece][square] * (piece <= K);
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
     pos.minorKey ^= minorKeysTable[piece][square];
-    //std::cout << "Adding key from side " << int(piece >= p) << "for piece " << getPieceChar(piece) << " and square " << coords[square] << std::endl;
-    assert(pos.psqtScore.mg() + PSQTs[piece][square].mg() < 0xFFFF);
-    // std::cout << "Previous psqt score was " << psqt << " and we are adding " << PSQTs[piece][square] << "\n";
     // Update the psqt score
-    pos.psqtScore += PSQTs[piece][square];
+    pos.psqtScores[indexColorSide(piece >= p, 0)] += PSQTs[0][piece][square];
+    pos.psqtScores[indexColorSide(piece >= p, 1)] += PSQTs[1][piece][square];
 }
 
 bool Position::parseFEN(char *fen) {
@@ -262,7 +260,6 @@ bool Position::parseFEN(char *fen) {
                 return false;
             }
             addPiece(*this, piece, square);
-            // std::cout << "After addition of piece " << getPieceChar(piece) << " on square " << coords[square] << " the psqt score is now: " << psqtScore.mg() << "\t" << psqtScore.eg() << std::endl;
             fen++;
             square++;
             pieceCount++;
@@ -791,7 +788,8 @@ bool Position::SEE(const Move move, const Score threshold) {
 
 void Position::reflect() {
     // reflect psqt
-    psqtScore = -psqtScore;
+    std::swap(psqtScores[indexColorSide(WHITE,0)], psqtScores[indexColorSide(BLACK,0)]);
+    std::swap(psqtScores[indexColorSide(WHITE,1)], psqtScores[indexColorSide(BLACK,1)]);
     // First, swap white with black
     for (int i = P; i <= K; i++) {
 
@@ -1687,8 +1685,8 @@ UndoInfo::UndoInfo(Position& position){
     totalPly = position.totalPly;
     plyFromNull = position.plyFromNull;
     side = position.side;
-    psqtScore = position.psqtScore;
     checkers = position.checkers;
+    memcpy(psqtScores, position.psqtScores, sizeof(PScore) * 4);
     memcpy(bitboards, position.bitboards, sizeof(BitBoard) * 12);
     memcpy(occupancies, position.occupancies, sizeof(BitBoard) * 3);
 }
@@ -1705,7 +1703,6 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.fiftyMove = fiftyMove;
     position.totalPly = totalPly;
     position.plyFromNull = plyFromNull;
-    position.psqtScore = psqtScore;
     position.side = side;
     
     Piece piece = movePiece(move);
@@ -1721,7 +1718,7 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.bitboards[captured] = bitboards[captured];
     position.bitboards[aux] = bitboards[aux];
     position.checkers = checkers;
-
+    memcpy(position.psqtScores, psqtScores, sizeof(PScore) * 4);
     memcpy(position.occupancies, occupancies, sizeof(BitBoard) * 3);
 }
 
@@ -1737,7 +1734,6 @@ void UndoInfo::undoNullMove(Position& position){
     position.fiftyMove = fiftyMove;
     position.totalPly = totalPly;
     position.plyFromNull = plyFromNull;
-    position.psqtScore = psqtScore;
     position.side = side;
     position.checkers = checkers;
 }

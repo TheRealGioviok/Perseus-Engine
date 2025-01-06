@@ -44,6 +44,8 @@ static inline constexpr BitBoard sw(BitBoard bb) 		{ return (bb & notFile(0)) <<
 static inline constexpr BitBoard east(BitBoard bb) 		{ return (bb & notFile(7)) >> 1; }
 static inline constexpr BitBoard west(BitBoard bb) 		{ return (bb & notFile(0)) << 1; }
 
+static inline constexpr S32 indexColorSide(U8 color, U8 side) {return (color << 1) + side; }
+
 #define bitScanForward _BitScanForward64 //ls1b
 #define bitScanReverse _BitScanReverse64 //ms1b
 #define makeSquareColor(color,square) (((color) * 64) + (square))

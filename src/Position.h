@@ -43,7 +43,7 @@ struct Position{
     HashKey whitePawnsHashKey; // No need to store the black one, we can infer it by XORing
     HashKey nonPawnKeys[2];
     HashKey minorKey;
-    PScore psqtScore; // PSQT score, incrementally updated
+    PScore psqtScores[4]; // PSQT score, incrementally updated. White / Black - file <= 3 / >= 4
 
     // The default constructor instantiates the position with the standard chess starting position.
     Position();
@@ -250,7 +250,7 @@ struct UndoInfo {
     U8 fiftyMove;
     Ply totalPly;
     Ply plyFromNull;
-    PScore psqtScore;
+    PScore psqtScores[4];
     U8 side;
     // Reversible information
     BitBoard bitboards[12];
