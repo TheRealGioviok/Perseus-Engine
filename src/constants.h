@@ -169,6 +169,7 @@ TUNE_PARAM(lmpC1, 2858, 500, 5000, 225, 0.002);
 // RFP values
 TUNE_PARAM(futilityMarginDelta, 91, 55, 155, 5, 0.002);
 TUNE_PARAM(RFPDepth, 8, 5, 10, .5, 0.002);
+TUNE_PARAM(rfpHistoryDivisor, 400, 128, 1024, 45, 0.002);
 
 // NMP values
 TUNE_PARAM(nmpDepthDivisor, 4, 2, 6, .5, 0.002);

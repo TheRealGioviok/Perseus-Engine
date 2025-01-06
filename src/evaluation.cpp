@@ -11,36 +11,38 @@
 #include <algorithm>
 #include <cmath>
 
-PScore PSQTs[12][64];
+PScore PSQTs[2][12][64];
 
 PawnEvalHashEntry pawnEvalHash[PAWNHASHSIZE];
-
-const PScore* pestoTables[6] = {
-    pawnTable,
-    knightTable,
-    bishopTable,
-    rookTable,
-    queenTable,
-    kingTable 
-};
 
 
 void initTables() {
     for(Square square = a8; square < noSquare; square++) {
         // White
-        PSQTs[P][square] = pawnTable[square] + materialValues[P];
-        PSQTs[N][square] = knightTable[square] + materialValues[N];
-        PSQTs[B][square] = bishopTable[square] + materialValues[B];
-        PSQTs[R][square] = rookTable[square] + materialValues[R];
-        PSQTs[Q][square] = queenTable[square] + materialValues[Q];
-        PSQTs[K][square] = kingTable[square];
+        PSQTs[0][P][square] = pawnTable[0][square] + materialValues[P];
+        PSQTs[1][P][square] = pawnTable[1][square] + materialValues[P];
+        PSQTs[0][N][square] = knightTable[0][square] + materialValues[N];
+        PSQTs[1][N][square] = knightTable[1][square] + materialValues[N];
+        PSQTs[0][B][square] = bishopTable[0][square] + materialValues[B];
+        PSQTs[1][B][square] = bishopTable[1][square] + materialValues[B];
+        PSQTs[0][R][square] = rookTable[0][square] + materialValues[R];
+        PSQTs[1][R][square] = rookTable[1][square] + materialValues[R];
+        PSQTs[0][Q][square] = queenTable[0][square] + materialValues[Q];
+        PSQTs[1][Q][square] = queenTable[1][square] + materialValues[Q];
+        PSQTs[0][K][square] = PSQTs[1][K][square] = kingTable[square];
         // Black
-        PSQTs[p][flipSquare(square)] = -PSQTs[P][square];
-        PSQTs[n][flipSquare(square)] = -PSQTs[N][square];
-        PSQTs[b][flipSquare(square)] = -PSQTs[B][square];
-        PSQTs[r][flipSquare(square)] = -PSQTs[R][square];
-        PSQTs[q][flipSquare(square)] = -PSQTs[Q][square];
-        PSQTs[k][flipSquare(square)] = -PSQTs[K][square];
+        PSQTs[0][p][flipSquare(square)] = -PSQTs[0][P][square];
+        PSQTs[1][p][flipSquare(square)] = -PSQTs[1][P][square];
+        PSQTs[0][n][flipSquare(square)] = -PSQTs[0][N][square];
+        PSQTs[1][n][flipSquare(square)] = -PSQTs[1][N][square];
+        PSQTs[0][b][flipSquare(square)] = -PSQTs[0][B][square];
+        PSQTs[1][b][flipSquare(square)] = -PSQTs[1][B][square];
+        PSQTs[0][r][flipSquare(square)] = -PSQTs[0][R][square];
+        PSQTs[1][r][flipSquare(square)] = -PSQTs[1][R][square];
+        PSQTs[0][q][flipSquare(square)] = -PSQTs[0][Q][square];
+        PSQTs[1][q][flipSquare(square)] = -PSQTs[1][Q][square];
+        PSQTs[0][k][flipSquare(square)] = -PSQTs[0][K][square];
+        PSQTs[1][k][flipSquare(square)] = -PSQTs[1][K][square];
     }
 }
 
@@ -423,6 +425,8 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
 Score pestoEval(Position *pos){
     auto const& bb = pos->bitboards;
     auto const& occ = pos->occupancies;
+    HashKey pawnHashKey = pos->pawnHashKey ^ enPassantKeysTable[pos->enPassant];
+    prefetch(&pawnEvalHash[pawnHashKey & 0x3FFFF]);
     // Setup the game phase
     S32 gamePhase = gamephaseInc[P] * popcount(bb[P] | bb[p]) +
                     gamephaseInc[N] * popcount(bb[N] | bb[n]) +
@@ -573,7 +577,7 @@ Score pestoEval(Position *pos){
     PScore innerAttacks[2] = {PScore(0,0), PScore(0,0)};
     PScore outerAttacks[2] = {PScore(0,0), PScore(0,0)};
 
-    PScore score = -pos->psqtScore;
+    PScore score = PScore(0,0);
 
     // std::cout << "PSQT scores are :\t"<<-score.mg()<<"\t"<<-score.eg()<<std::endl;
     
@@ -593,6 +597,7 @@ Score pestoEval(Position *pos){
     mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
     
     // std::cout << "PSQT scores are :\t"<<score.mg()<<"\t"<<score.eg()<<std::endl;
+    score += pos->psqtScores[indexColorSide(WHITE,(fileOf(whiteKing) >= 3))] + pos->psqtScores[indexColorSide(BLACK,(fileOf(blackKing) >= 3))];
 
     // Weak pieces
     const BitBoard weakPieces[2] = {
@@ -628,7 +633,7 @@ Score pestoEval(Position *pos){
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
 
-    score += pawnEval(pos->pawnHashKey ^ enPassantKeysTable[pos->enPassant], bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, passedCount);
+    score += pawnEval(pawnHashKey, bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, passedCount);
     
     // Calculate king safety
     // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
@@ -870,12 +875,7 @@ std::vector<Score> getCurrentEvalWeights(){
     for (Piece piece = P; piece <= Q; piece++){
         weights.push_back(materialValues[piece].mg());
     }
-    // Add the psqt weights
-    for (Piece piece = P; piece <= K; piece++){
-        for (Square square = a8; square < noSquare; square++){
-            weights.push_back(pestoTables[piece][square].mg());
-        }
-    }
+    // PSQT weights handled later bc of king bucket
     // Add the mobility weights
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
         weights.push_back(knightMob[mobcount].mg());
@@ -946,12 +946,7 @@ std::vector<Score> getCurrentEvalWeights(){
     for (Piece piece = P; piece <= Q; piece++){
         weights.push_back(materialValues[piece].eg());
     }
-    // Add the psqt weights
-    for (Piece piece = P; piece <= K; piece++){
-        for (Square square = a8; square < noSquare; square++){
-            weights.push_back(pestoTables[piece][square].eg());
-        }
-    }
+    // Same thing abt PSQTs
     // Add the mobility weights
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
         weights.push_back(knightMob[mobcount].eg());
@@ -1029,6 +1024,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     auto us = pos->side;
     Square whiteKing = lsb(bb[K]);
     Square blackKing = lsb(bb[k]);
+    bool wkhside = fileOf(whiteKing) <= 3;
+    bool bkhside = fileOf(blackKing) <= 3;
+    
 
     // Calculate the game phase
     S32 gamePhase = gamephaseInc[P] * popcount(bb[P] | bb[p]) +
@@ -1049,12 +1047,13 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     }
     tensor += 5;
 
-    // Add the psqt weights
+    // Add the psqt weights. Only add them once, no need to bloat the data.
     for (Square square = a8; square < noSquare; square++){
         Piece piece = pos->pieceOn(square);
         if (piece == NOPIECE) continue;
         Square sq = piece < p ? square : flipSquare(square);
-        tensor[64 * (piece % 6) + sq] += piece < p ? 1 : -1;
+        bool pieceColor = piece >= p;
+        tensor[64 * (piece % 6) + sq] += (pieceColor ? 0b0100 : 0b0001) << (pieceColor ? bkhside : wkhside);
     }
     tensor += 64 * 6;
     
@@ -1609,12 +1608,18 @@ void convertToFeatures(std::string filename, std::string output) {
     // Get the count of weights by getting the current eval weights
     auto weights = getCurrentEvalWeights();
     U32 weightCount = weights.size();
-    std::cout << "Allocating for " << weightCount << " weights: " << 1 + weightCount / 2 + 1 << " bytes per entry" << std::endl;
-    U32 entrySize = 1 + weightCount / 2 + 1; // The entry size is the 1 (gamephase) + number of weights divided by 2 + 1, since we add the result at the end, but we don't need to write the features twice for each side
+    U32 PSQTweights = 6 * 64; // PSQTS + 2 king buckets
+    U32 entrySize = 1 + PSQTweights + weightCount / 2 + 1; // The entry size is the 1 (gamephase) + number of weights divided by 2 + 1, since we add the result at the end, but we don't need to write the features twice for each side
     entrySize += KINGSAFETYCOLOREDPARAMS;
     entrySize += COMPLEXITYFEATURES;
-    std::cout << "Additional colored params: " << KINGSAFETYCOLOREDPARAMS / 2 << " x 2 = " << KINGSAFETYCOLOREDPARAMS << std::endl;
-    std::cout << "Additional complexity features: " << COMPLEXITYFEATURES << std::endl;
+    std::cout << "Allocating for:\n";
+    std::cout << "\t1\tGame result\n";
+    std::cout << "\t1\tGame phase\n";
+    std::cout << "\t" << PSQTweights << "\tPsqt entries\n";
+    std::cout << "\t" << weightCount / 2 << "\tLinear evaluation terms\n";
+    std::cout << "\t" << KINGSAFETYCOLOREDPARAMS / 2 << "x2=" << KINGSAFETYCOLOREDPARAMS << "\tAdditional color-dependant king safety formula features\n";
+    std::cout << "\t" << COMPLEXITYFEATURES << "\tAdditional complexity features\n";
+    std::cout << "For a total of " << entrySize << " bytes per entry" << std::endl;
     // Create buffer to store the features
     S8* features = new S8[entrySize];
     // For each line in the file
