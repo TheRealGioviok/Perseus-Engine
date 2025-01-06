@@ -19,17 +19,18 @@ PawnEvalHashEntry pawnEvalHash[PAWNHASHSIZE];
 void initTables() {
     for(Square square = a8; square < noSquare; square++) {
         // White
-        PSQTs[0][P][square] = pawnTable[0][square] + materialValues[P];
-        PSQTs[1][P][square] = pawnTable[1][square] + materialValues[P];
-        PSQTs[0][N][square] = knightTable[0][square] + materialValues[N];
-        PSQTs[1][N][square] = knightTable[1][square] + materialValues[N];
-        PSQTs[0][B][square] = bishopTable[0][square] + materialValues[B];
-        PSQTs[1][B][square] = bishopTable[1][square] + materialValues[B];
-        PSQTs[0][R][square] = rookTable[0][square] + materialValues[R];
-        PSQTs[1][R][square] = rookTable[1][square] + materialValues[R];
-        PSQTs[0][Q][square] = queenTable[0][square] + materialValues[Q];
-        PSQTs[1][Q][square] = queenTable[1][square] + materialValues[Q];
-        PSQTs[0][K][square] = PSQTs[1][K][square] = kingTable[square];
+        PSQTs[0][P][square] = pawnTable[0][square] ; // + materialValues[P];
+        PSQTs[1][P][square] = pawnTable[1][square] ; // + materialValues[P];
+        PSQTs[0][N][square] = knightTable[0][square] ; // + materialValues[N];
+        PSQTs[1][N][square] = knightTable[1][square] ; // + materialValues[N];
+        PSQTs[0][B][square] = bishopTable[0][square] ; // + materialValues[B];
+        PSQTs[1][B][square] = bishopTable[1][square] ; // + materialValues[B];
+        PSQTs[0][R][square] = rookTable[0][square] ; // + materialValues[R];
+        PSQTs[1][R][square] = rookTable[1][square] ; // + materialValues[R];
+        PSQTs[0][Q][square] = queenTable[0][square] ; // + materialValues[Q];
+        PSQTs[1][Q][square] = queenTable[1][square] ; // + materialValues[Q];
+        PSQTs[0][K][square] = kingTable[0][square];
+        PSQTs[1][K][square] = kingTable[1][square];
         // Black
         PSQTs[0][p][flipSquare(square)] = -PSQTs[0][P][square];
         PSQTs[1][p][flipSquare(square)] = -PSQTs[1][P][square];
@@ -46,77 +47,67 @@ void initTables() {
     }
 }
 
-const PScore passedRankBonus[7] = {
-    S(0,0), S(-7,-103), S(-28,-72), S(-22,-15), S(15,37), S(35,141), S(126,220)
-};
-
-const PScore SAFECHECK[4] = {
-    S(178,-34), S(39,0), S(107,24), S(109,11)
-};
-
-const PScore ALLCHECKS[4] = {
-    S(45,8), S(19,30), S(43,1), S(9,20)
-};
-
-constexpr PScore DOUBLEISOLATEDPEN = S(10, 63);
-constexpr PScore ISOLATEDPEN = S(17, 23);
-constexpr PScore BACKWARDPEN = S(4, 19);
+constexpr PScore DOUBLEISOLATEDPEN = S(10, 64);
+constexpr PScore ISOLATEDPEN = S(18, 23);
+constexpr PScore BACKWARDPEN = S(3, 17);
 constexpr PScore DOUBLEDPEN = S(15, 22);
-constexpr PScore SUPPORTEDPHALANX = S(0, 4);
-constexpr PScore ADVANCABLEPHALANX = S(7, 27);
+constexpr PScore SUPPORTEDPHALANX = S(-1, 5);
+constexpr PScore ADVANCABLEPHALANX = S(9, 27);
 constexpr PScore R_SUPPORTEDPHALANX = S(2, 12);
-constexpr PScore R_ADVANCABLEPHALANX = S(1, 19);
+constexpr PScore R_ADVANCABLEPHALANX = S(1, 20);
+constexpr PScore passedRankBonus[7] = {S(0, 0), S(-3, -104), S(-25, -74), S(-18, -15), S(18, 37), S(40, 140), S(138, 237), };
 constexpr PScore PASSEDPATHBONUS = S(-1, 18);
 constexpr PScore SUPPORTEDPASSER = S(29, 1);
-constexpr PScore INNERSHELTER = S(10, -36);
-constexpr PScore OUTERSHELTER = S(12, -20);
-constexpr PScore BISHOPPAIR = S(19, 127);
-constexpr PScore ROOKONOPENFILE = S(24, 0);
-constexpr PScore ROOKONSEMIOPENFILE = S(16, 21);
-constexpr PScore KNIGHTONEXTOUTPOST = S(26, 34);
-constexpr PScore BISHOPONEXTOUTPOST = S(27, -2);
-constexpr PScore KNIGHTONINTOUTPOST = S(24, 38);
+constexpr PScore INNERSHELTER = S(-1, -32);
+constexpr PScore OUTERSHELTER = S(7, -20);
+constexpr PScore BISHOPPAIR = S(19, 128);
+constexpr PScore ROOKONOPENFILE = S(25, 0);
+constexpr PScore ROOKONSEMIOPENFILE = S(17, 21);
+constexpr PScore KNIGHTONEXTOUTPOST = S(26, 33);
+constexpr PScore BISHOPONEXTOUTPOST = S(30, -3);
+constexpr PScore KNIGHTONINTOUTPOST = S(24, 39);
 constexpr PScore BISHOPONINTOUTPOST = S(35, -9);
-constexpr PScore KNIGHTPROTECTOR = S(-6, -3);
-constexpr PScore BISHOPPROTECTOR = S(-4, -2);
+constexpr PScore KNIGHTPROTECTOR = S(-7, 0);
+constexpr PScore BISHOPPROTECTOR = S(-4, 0);
 constexpr PScore BISHOPPAWNS = S(1, -4);
-constexpr PScore THREATSAFEPAWN = S(50, 59);
-constexpr PScore THREATPAWNPUSH = S(20, 33);
+constexpr PScore THREATSAFEPAWN = S(49, 60);
+constexpr PScore THREATPAWNPUSH = S(21, 34);
 constexpr PScore PAWNHANGING = S(-5, -59);
-constexpr PScore NONPAWNHANGING = S(-23, -33);
-constexpr PScore KINGTHREAT = S(-3, 2);
-constexpr PScore QUEENINFILTRATION = S(0, -14);
-constexpr PScore RESTRICTEDSQUARES = S(5, 3);
-constexpr PScore TEMPO = S(21, 29);
+constexpr PScore NONPAWNHANGING = S(-25, -33);
+constexpr PScore KINGTHREAT = S(-2, 3);
+constexpr PScore QUEENINFILTRATION = S(1, -8);
+constexpr PScore RESTRICTEDSQUARES = S(4, 3);
+constexpr PScore TEMPO = S(21, 28);
 
-constexpr PScore PAWNATTACKINNERRING = S(13, -44);
-constexpr PScore KNIGHTATTACKINNERRING = S(55, -8);
-constexpr PScore BISHOPATTACKINNERRING = S(52, 4);
-constexpr PScore ROOKATTACKINNERRING = S(51, 13);
-constexpr PScore QUEENATTACKINNERRING = S(37, -31);
-constexpr PScore PAWNATTACKOUTERRING = S(38, -14);
-constexpr PScore KNIGHTATTACKOUTERRING = S(47, 6);
-constexpr PScore BISHOPATTACKOUTERRING = S(56, 3);
-constexpr PScore ROOKATTACKOUTERRING = S(30, -4);
-constexpr PScore QUEENATTACKOUTERRING = S(48, 20);
-constexpr PScore NOQUEENDANGER = S(-421, -1061);
-constexpr PScore PINNEDSHELTERDANGER = S(64, -1);
-constexpr PScore SAFETYINNERSHELTER = S(-33, -74);
-constexpr PScore SAFETYOUTERSHELTER = S(-28, -77);
-constexpr PScore INNERWEAKNESS = S(56, -18);
-constexpr PScore OUTERWEAKNESS = S(8, 5);
+constexpr PScore PAWNATTACKINNERRING = S(22, -44);
+constexpr PScore KNIGHTATTACKINNERRING = S(55, -7);
+constexpr PScore BISHOPATTACKINNERRING = S(54, 5);
+constexpr PScore ROOKATTACKINNERRING = S(54, 12);
+constexpr PScore QUEENATTACKINNERRING = S(41, -32);
+constexpr PScore PAWNATTACKOUTERRING = S(42, -15);
+constexpr PScore KNIGHTATTACKOUTERRING = S(49, 4);
+constexpr PScore BISHOPATTACKOUTERRING = S(53, 3);
+constexpr PScore ROOKATTACKOUTERRING = S(28, -3);
+constexpr PScore QUEENATTACKOUTERRING = S(48, 19);
+constexpr PScore NOQUEENDANGER = S(-461, -1021);
+constexpr PScore PINNEDSHELTERDANGER = S(66, -3);
+constexpr PScore SAFECHECK[4] = {S(188, -24), S(44, 3), S(120, 20), S(118, 12), };
+constexpr PScore ALLCHECKS[4] = {S(45, 7), S(16, 26), S(42, 0), S(9, 14), };
+constexpr PScore SAFETYINNERSHELTER = S(-37, -70);
+constexpr PScore SAFETYOUTERSHELTER = S(-26, -72);
+constexpr PScore INNERWEAKNESS = S(63, -20);
+constexpr PScore OUTERWEAKNESS = S(7, 4);
 
-constexpr Score COMPLEXITYPASSERS = 233;
-constexpr Score COMPLEXITYPAWNS = 884;
-constexpr Score COMPLEXITYBLOCKEDPAIRS = -351;
-constexpr Score COMPLEXITYPAWNTENSION = -881;
-constexpr Score COMPLEXITYOUTFLANKING = -36;
-constexpr Score COMPLEXITYINFILTRATION = -723;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9580;
-constexpr Score COMPLEXITYPAWNENDING = 12842;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3884;
-constexpr Score COMPLEXITYBIAS = -18393;
-
+constexpr Score COMPLEXITYPASSERS = 275;
+constexpr Score COMPLEXITYPAWNS = 903;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -340;
+constexpr Score COMPLEXITYPAWNTENSION = -927;
+constexpr Score COMPLEXITYOUTFLANKING = -31;
+constexpr Score COMPLEXITYINFILTRATION = -683;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9800;
+constexpr Score COMPLEXITYPAWNENDING = 13000;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3656;
+constexpr Score COMPLEXITYBIAS = -18780;
 
 // Function to access the table values
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
@@ -1041,12 +1032,6 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[0] = gamePhase;
     ++tensor;
 
-    // Add the material weights
-    for (Piece piece = P; piece <= Q; piece++){
-        tensor[piece] = popcount(pos->bitboards[piece]) - popcount(pos->bitboards[piece + 6]);
-    }
-    tensor += 5;
-
     // Add the psqt weights. Only add them once, no need to bloat the data.
     for (Square square = a8; square < noSquare; square++){
         Piece piece = pos->pieceOn(square);
@@ -1056,7 +1041,13 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         tensor[64 * (piece % 6) + sq] += (pieceColor ? 0b0100 : 0b0001) << (pieceColor ? bkhside : wkhside);
     }
     tensor += 64 * 6;
-    
+
+    // Add the material weights
+    for (Piece piece = P; piece <= Q; piece++){
+        tensor[piece] = popcount(pos->bitboards[piece]) - popcount(pos->bitboards[piece + 6]);
+    }
+    tensor += 5;
+
     // Pin, mobility and threat calculations
     BitBoard attackedBy[2] = {
         kingAttacks[whiteKing],
