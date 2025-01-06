@@ -553,7 +553,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     }
 
     if (bestScore >= beta)
-        return beta;
+        return bestScore;
     alpha = std::max(alpha, bestScore);
 
     // Generate moves
