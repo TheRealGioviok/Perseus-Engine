@@ -42,7 +42,7 @@
 #define isCapture(move)		((((move) & 0xf0000) >> 16) != NOPIECE)
 #define isPromotion(move)	((((move) & 0xf00000) >> 20) != NOPIECE)
 #define okToReduce(move)	(! (isCapture(move) || isPromotion(move)))
-#define onlyMove(move)		((move) & 0x2fffffff)
+#define onlyMove(move)		((move) & 0x7ffffff)
 #define getScore(move)		((move) >> 32)
 
 #define NULLMOVE encodeMove(a8,a8,NOPIECE,NOPIECE,NOPIECE,false,false,false,false)
