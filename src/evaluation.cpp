@@ -862,10 +862,7 @@ Score pestoEval(Position *pos){
 
 std::vector<Score> getCurrentEvalWeights(){
     std::vector<Score> weights;
-    // Add the material weights
-    for (Piece piece = P; piece <= Q; piece++){
-        weights.push_back(materialValues[piece].mg());
-    }
+    // Material is only for phase
     // PSQT weights handled later bc of king bucket
     // Add the mobility weights
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
@@ -933,10 +930,7 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(TEMPO.mg());
 
     // Now, EG
-    // Add the material weights
-    for (Piece piece = P; piece <= Q; piece++){
-        weights.push_back(materialValues[piece].eg());
-    }
+    // Same thing abt material
     // Same thing abt PSQTs
     // Add the mobility weights
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
@@ -1017,20 +1011,12 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     Square blackKing = lsb(bb[k]);
     bool wkhside = fileOf(whiteKing) <= 3;
     bool bkhside = fileOf(blackKing) <= 3;
-    
 
-    // Calculate the game phase
-    S32 gamePhase = gamephaseInc[P] * popcount(bb[P] | bb[p]) +
-                    gamephaseInc[N] * popcount(bb[N] | bb[n]) +
-                    gamephaseInc[B] * popcount(bb[B] | bb[b]) +
-                    gamephaseInc[R] * popcount(bb[R] | bb[r]) +
-                    gamephaseInc[Q] * popcount(bb[Q] | bb[q]) +
-                    gamephaseInc[K] * popcount(bb[K] | bb[k]);
-    
-    gamePhase = std::min(gamePhase, (S32)24); // If we have a lot of pieces, we don't want to go over 24
-    // Add the game phase
-    tensor[0] = gamePhase;
-    ++tensor;
+    // Add the material count for training phase
+    for (Piece piece = P; piece <= Q; piece++){
+        tensor[piece] = popcount(pos->bitboards[piece] | pos->bitboards[piece + 6]);
+    }
+    tensor += 5;
 
     // Add the psqt weights. Only add them once, no need to bloat the data.
     for (Square square = a8; square < noSquare; square++){
@@ -1041,12 +1027,6 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         tensor[64 * (piece % 6) + sq] += (pieceColor ? 0b0100 : 0b0001) << (pieceColor ? bkhside : wkhside);
     }
     tensor += 64 * 6;
-
-    // Add the material weights
-    for (Piece piece = P; piece <= Q; piece++){
-        tensor[piece] = popcount(pos->bitboards[piece]) - popcount(pos->bitboards[piece + 6]);
-    }
-    tensor += 5;
 
     // Pin, mobility and threat calculations
     BitBoard attackedBy[2] = {
@@ -1600,16 +1580,14 @@ void convertToFeatures(std::string filename, std::string output) {
     auto weights = getCurrentEvalWeights();
     U32 weightCount = weights.size();
     U32 PSQTweights = 6 * 64; // PSQTS + 2 king buckets
-    U32 entrySize = 1 + PSQTweights + weightCount / 2 + 1; // The entry size is the 1 (gamephase) + number of weights divided by 2 + 1, since we add the result at the end, but we don't need to write the features twice for each side
-    entrySize += KINGSAFETYCOLOREDPARAMS;
-    entrySize += COMPLEXITYFEATURES;
+    U32 entrySize = 5 + PSQTweights + weightCount / 2 + KINGSAFETYCOLOREDPARAMS + COMPLEXITYFEATURES + 1; // The entry size is the 1 (gamephase) + number of weights divided by 2 + 1, since we add the result at the end, but we don't need to write the features twice for each side
     std::cout << "Allocating for:\n";
-    std::cout << "\t1\tGame result\n";
-    std::cout << "\t1\tGame phase\n";
+    std::cout << "\t5\tMaterial count (phase)\n";
     std::cout << "\t" << PSQTweights << "\tPsqt entries\n";
     std::cout << "\t" << weightCount / 2 << "\tLinear evaluation terms\n";
     std::cout << "\t" << KINGSAFETYCOLOREDPARAMS / 2 << "x2=" << KINGSAFETYCOLOREDPARAMS << "\tAdditional color-dependant king safety formula features\n";
     std::cout << "\t" << COMPLEXITYFEATURES << "\tAdditional complexity features\n";
+    std::cout << "\t1\tGame result\n";
     std::cout << "For a total of " << entrySize << " bytes per entry" << std::endl;
     // Create buffer to store the features
     S8* features = new S8[entrySize];
