@@ -172,6 +172,8 @@ TUNE_PARAM(RFPDepth, 8, 5, 10, .5, 0.002);
 TUNE_PARAM(rfpHistoryDivisor, 400, 128, 1024, 45, 0.002);
 
 // NMP values
+TUNE_PARAM(nmpThreshA, 175, 50, 300, 13, 0.002);
+TUNE_PARAM(nmpThreshB, 23, 10, 50, 2, 0.002);
 TUNE_PARAM(nmpDepthDivisor, 4, 2, 6, .5, 0.002);
 TUNE_PARAM(nmpScoreDivisor, 213, 100, 300, 10, 0.002);
 TUNE_PARAM(nmpQ1, 3, 1, 5, .5, 0.002);
