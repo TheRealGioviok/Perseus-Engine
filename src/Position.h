@@ -43,6 +43,7 @@ struct Position{
     HashKey whitePawnsHashKey; // No need to store the black one, we can infer it by XORing
     HashKey nonPawnKeys[2];
     HashKey minorKey;
+    HashKey majorKey;
     PScore psqtScores[4]; // PSQT score, incrementally updated. White / Black - file <= 3 / >= 4
 
     // The default constructor instantiates the position with the standard chess starting position.
@@ -64,12 +65,6 @@ struct Position{
      */
     HashKey generatePawnHashKey();
 
-    /**
-     * @brief The Position::generateWhitePawnHashKey function generates the hash key of the white pawn structure from scratch.
-     * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
-     */
-    HashKey generateWhitePawnHashKey();
-
     /** 
      * @brief The Position::generateNonPawnHashKey function generates the hash key of the non pawn structure from scratch, for a given side.
      * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
@@ -77,10 +72,16 @@ struct Position{
     HashKey generateNonPawnHashKey(const bool side);
 
     /**
-     * @brief The Position::generateMinorHashKey function generates the hash key of the minor pieces from scratch.
+     * @brief The Position::generateMinorHashKey function generates the hash key of the minors + kings from scratch.
      * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
      */
     HashKey generateMinorHashKey();
+
+    /**
+     * @brief The Position::generateMajorHashKey function generates the hash key of the majors + kings from scratch.
+     * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
+     */
+    HashKey generateMajorHashKey();
 
     /**
      * @brief The Position::print function prints the position to stdout.
@@ -242,9 +243,9 @@ struct UndoInfo {
     // Irreversible information
     HashKey hashKey;
     HashKey pawnsHashKey;
-    HashKey whitePawnsHashKey;
     HashKey nonPawnsHashKey[2];
     HashKey minorHashKey;
+    HashKey majorHashKey;
     Square enPassant;
     U8 castle;
     U8 fiftyMove;

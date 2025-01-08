@@ -3,9 +3,6 @@
 
 // random piece keys
 HashKey pieceKeysTable[12][64];
-HashKey pawnKeysTable[12][64];
-HashKey nonPawnKeysTable[12][64];
-HashKey minorKeysTable[12][64];
 // random enPassant keys
 HashKey enPassantKeysTable[65];
 // random castling keys
@@ -20,21 +17,6 @@ void initHashKeys(){
     for(int i = 0; i < 12; i++){
         for(int j = 0; j < 64; j++){
             pieceKeysTable[i][j] = getRandom64();
-            if (i % 6 == 0) {
-                pawnKeysTable[i][j] = pieceKeysTable[i][j];
-                minorKeysTable[i][j] = 0;
-                nonPawnKeysTable[i][j] = 0;
-            }
-            else if ((i%6) == 1 || (i%6) == 2 || (i%6) == 5){
-                pawnKeysTable[i][j] = 0;
-                minorKeysTable[i][j] = pieceKeysTable[i][j];
-                nonPawnKeysTable[i][j] = pieceKeysTable[i][j];
-            }
-            else {
-                pawnKeysTable[i][j] = 0;
-                minorKeysTable[i][j] = 0;
-                nonPawnKeysTable[i][j] = pieceKeysTable[i][j];
-            }
         }
     }
     for(int i = 0; i < 64; i++){
