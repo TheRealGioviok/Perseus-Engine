@@ -93,7 +93,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
 
     assert(pos.hashKey == pos.generateHashKey());
     assert(pos.pawnHashKey == pos.generatePawnHashKey());
-    assert(pos.whitePawnsHashKey == pos.generateWhitePawnHashKey());
     assert(pos.nonPawnKeys[WHITE] == pos.generateNonPawnHashKey(WHITE));
     assert(pos.nonPawnKeys[BLACK] == pos.generateNonPawnHashKey(BLACK));
     assert(pos.minorKey == pos.generateMinorHashKey());
@@ -301,37 +300,29 @@ skipPruning:
     {
         S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
         Move currMove = onlyMove(moveList.moves[i]);
-        if (sameMovePos(currMove, excludedMove)) continue;
+        if (!currMove || sameMovePos(currMove, excludedMove)) continue;
         const bool isQuiet = okToReduce(currMove);
         if (!skipQuiets) { 
-            if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
-            if (!PVNode
-                && depth <= 8
-                && !inCheck
-                && bestScore > -KNOWNWIN
-                && std::abs(alpha) < KNOWNWIN
-                && isQuiet
-                && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
-            {
-                skipQuiets = true;
-                continue;
-            }
-            if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
-                skipQuiets = true;
-                continue;
+            if (!inCheck){
+                if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
+                if (!PVNode
+                    && depth <= 8
+                    && bestScore > -KNOWNWIN
+                    && std::abs(alpha) < KNOWNWIN
+                    && isQuiet
+                    && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha) skipQuiets = true;
+                if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()) skipQuiets = true;
             }
         }
-        else if (currMoveScore < COUNTERSCORE) continue;
-        // assert (
-        //     i != 0 || !excludedMove ||
-        //     (excludedMove == currMove)
-        // );
-        if (!currMove) continue; // || currMove == excludedMove
 
         // const bool givesCheck = isCheck(currMove) || pos.inCheck();
         
         if (makeMove(currMove))
         {
+            if (skipQuiets && !pos.checkers && currMoveScore < COUNTERSCORE) {
+                undo(undoer, currMove);
+                continue;
+            }
             // Prefetch tt
             prefetch(&tt[hashEntryFor(pos.hashKey)]);
             U64 nodesBefore = nodes;

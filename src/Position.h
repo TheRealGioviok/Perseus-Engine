@@ -64,12 +64,6 @@ struct Position{
      */
     HashKey generatePawnHashKey();
 
-    /**
-     * @brief The Position::generateWhitePawnHashKey function generates the hash key of the white pawn structure from scratch.
-     * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
-     */
-    HashKey generateWhitePawnHashKey();
-
     /** 
      * @brief The Position::generateNonPawnHashKey function generates the hash key of the non pawn structure from scratch, for a given side.
      * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
@@ -77,7 +71,7 @@ struct Position{
     HashKey generateNonPawnHashKey(const bool side);
 
     /**
-     * @brief The Position::generateMinorHashKey function generates the hash key of the minor pieces from scratch.
+     * @brief The Position::generateMinorHashKey function generates the hash key of the minors + kings from scratch.
      * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
      */
     HashKey generateMinorHashKey();
@@ -242,7 +236,6 @@ struct UndoInfo {
     // Irreversible information
     HashKey hashKey;
     HashKey pawnsHashKey;
-    HashKey whitePawnsHashKey;
     HashKey nonPawnsHashKey[2];
     HashKey minorHashKey;
     Square enPassant;
