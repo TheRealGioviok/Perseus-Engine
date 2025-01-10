@@ -5,46 +5,46 @@
 #include "Game.h"
 #include <algorithm>
 // history table
-S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
+S16 historyTable[2][NUM_SQUARES * NUM_SQUARES];
 
 // capture history table
-S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][6];
+S16 captureHistoryTable[NUM_PIECES * NUM_SQUARES][6];
 
 // counter move table
 Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
 
 // Continuation History table
-S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
+S16 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
 
 // Correction History
-S32 pawnsCorrHist[2][CORRHISTSIZE]; // stm - hash
-S32 nonPawnsCorrHist[2][2][CORRHISTSIZE]; // stm - side - hash
-S32 minorCorrHist[2][CORRHISTSIZE]; // stm - hash
+S16 pawnsCorrHist[2][CORRHISTSIZE]; // stm - hash
+S16 nonPawnsCorrHist[2][2][CORRHISTSIZE]; // stm - side - hash
+S16 minorCorrHist[2][CORRHISTSIZE]; // stm - hash
 
 
-void updateHistoryMove(bool side, Move move, S32 delta) {
-    S32 *current = &historyTable[side][indexFromTo(moveSource(move),moveTarget(move))];
+void updateHistoryMove(bool side, Move move, S16 delta) {
+    S16 *current = &historyTable[side][indexFromTo(moveSource(move),moveTarget(move))];
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
-void updateCaptureHistory(Move move, S32 delta) {
+void updateCaptureHistory(Move move, S16 delta) {
     Piece captured = moveCapture(move);
-    S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6]; // account for promotion
+    S16 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6]; // account for promotion
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
-void updateContHistOffset(SStack* ss, const Move move, const S32 delta, const S32 offset){
-    S32 *current = &(ss - offset)->contHistEntry[indexPieceTo(movePiece(move), moveTarget(move))];
+void updateContHistOffset(SStack* ss, const Move move, const S16 delta, const S32 offset){
+    S16 *current = &(ss - offset)->contHistEntry[indexPieceTo(movePiece(move), moveTarget(move))];
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
-void updateContHist(SStack* ss, const Move move, const S32 delta){
+void updateContHist(SStack* ss, const Move move, const S16 delta){
     updateContHistOffset(ss, move, delta, 1);
     updateContHistOffset(ss, move, delta, 2);
 }
 
 void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount) {
-    const S32 delta = stat_bonus(depth);
+    const S16 delta = stat_bonus(depth);
     if (okToReduce(bestMove)) {
         // If bestMove is not noisy, we reduce the bonus of all other moves and increase the bonus of the bestMove
         updateHistoryMove(side, bestMove, delta);
@@ -84,9 +84,9 @@ Score correctStaticEval(Position& pos, const Score eval) {
     return static_cast<Score>(std::clamp(corrected, -mateValue, +mateValue));
 }
 
-void updateSingleCorrHist(S32& entry, const S32 bonus, const S32 weight){
-    entry = (entry * (256 - weight) + bonus * weight) / 256;
-    entry = static_cast<Score>(std::clamp(entry, -MAXCORRHIST, MAXCORRHIST));
+void updateSingleCorrHist(S16& entry, const S32 bonus, const S32 weight){
+    S32 newValue = (entry * (256 - weight) + bonus * weight) / 256; 
+    entry = static_cast<Score>(std::clamp(newValue, -MAXCORRHIST, MAXCORRHIST));
 }
 
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
