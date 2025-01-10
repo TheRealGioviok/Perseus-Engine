@@ -408,10 +408,10 @@ skipPruning:
                 }
                 else {
                     if (currMoveScore < QUIETSCORE) { 
-                        if (cutNode) granularR += lmrBadNoisyCutNode();
+                    if (cutNode) granularR += lmrBadNoisyCutNode();
                         granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
-                                        }
-granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
+                    }
+                    granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
                 }
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
@@ -422,8 +422,12 @@ granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUT
                 // Search at reduced depth
                 score = -search(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
                 // If failed high on reduced search, research at full depth
-                if (score > alpha && R)
+                if (score > alpha && R){
+                    bool deeper = score > bestScore + 35 + 2 * newDepth;
+                    bool shallower = score < bestScore + 8;
+                    newDepth += deeper - shallower; 
                     score = -search(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
+                }
             }
             else 
                 if (!PVNode || moveSearched)
