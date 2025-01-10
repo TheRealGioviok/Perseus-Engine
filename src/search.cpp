@@ -395,29 +395,28 @@ skipPruning:
             if (isQuiet) quiets[quietsCount++] = currMove;
             else noisy[noisyCount++] = currMove;
             // if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
-
-            if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
-            {
-                S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
-                if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
-                if (isQuiet){
-                    // R -= givesCheck;
-                    granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
-                    if (cutNode) granularR += lmrQuietCutNode();
-                    if (ttPv) granularR -= cutNode * lmrQuietTTPV();
+            // Reduction calculation
+            S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
+            if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
+            if (isQuiet){
+                // R -= givesCheck;
+                granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
+                if (cutNode) granularR += lmrQuietCutNode();
+                if (ttPv) granularR -= cutNode * lmrQuietTTPV();
+            }
+            else {
+                if (currMoveScore < QUIETSCORE) { 
+                    if (cutNode) granularR += lmrBadNoisyCutNode();
+                    granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
                 }
-                else {
-                    if (currMoveScore < QUIETSCORE) { 
-                        if (cutNode) granularR += lmrBadNoisyCutNode();
-                        granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
-                                        }
-granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
-                }
-                // The function looked cool on desmos
-                granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
-                Depth R = granularR / RESOLUTION;
-                R = std::max(Depth(0), R);
-                R = std::min(Depth(newDepth - Depth(1)), R);
+                granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
+            }
+            // The function looked cool on desmos
+            granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
+            Depth R = granularR / RESOLUTION;
+            R = std::max(Depth(0), R);
+            R = std::min(Depth(newDepth - Depth(1)), R);
+            if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv)) {
                 Depth reducedDepth = newDepth - R;
                 // Search at reduced depth
                 score = -search(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
@@ -427,7 +426,7 @@ granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUT
             }
             else 
                 if (!PVNode || moveSearched)
-                    score = -search(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
+                    score = -search(-alpha - 1, -alpha, newDepth - (R > 3), !cutNode, ss + 1);
 
             // Pvsearch
             if (PVNode && (!moveSearched || score > alpha))
