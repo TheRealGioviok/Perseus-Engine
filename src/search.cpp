@@ -486,7 +486,7 @@ skipPruning:
             && (!bestMove || okToReduce(bestMove))
             && !(ttBound == hashLOWER && bestScore <= ss->staticEval)
             && !(ttBound == hashUPPER && bestScore >= ss->staticEval)){
-                updateCorrHist(pos, bestScore - ss->staticEval, depth);
+                updateCorrHist(pos, bestScore - (rawEval + ss->staticEval) / 2, depth);
         }
         U8 ttStoreFlag = bestScore >= beta ? hashLOWER : alpha != origAlpha ? hashEXACT : hashUPPER;
         writeTT(pos.hashKey, bestScore, rawEval, depth, ttStoreFlag, bestMove, ply, PVNode, ttPv);
