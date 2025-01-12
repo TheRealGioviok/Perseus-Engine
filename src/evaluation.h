@@ -142,8 +142,8 @@ constexpr PScore bishopMob[14] = {S(-42, -182), S(-14, -105), S(2, -51), S(10, -
 constexpr PScore rookMob[15] = {S(-17, -145), S(-24, -93), S(-17, -58), S(-15, -41), S(-15, -24), S(-17, -6), S(-14, 4), S(-9, 5), S(-6, 9), S(3, 12), S(2, 18), S(8, 21), S(11, 22), S(29, 4), S(96, -21), };
 constexpr PScore queenMob[28] = {S(-117, -457), S(-74, -485), S(-37, -389), S(-22, -294), S(-20, -202), S(-17, -143), S(-15, -107), S(-13, -88), S(-11, -68), S(-6, -55), S(-3, -49), S(1, -45), S(6, -41), S(9, -39), S(12, -38), S(13, -39), S(12, -40), S(6, -38), S(9, -43), S(11, -51), S(27, -73), S(33, -87), S(33, -100), S(47, -119), S(25, -126), S(34, -144), S(-1, -114), S(-9, -89), };
 
-constexpr S32 gamePhaseInc[12] = { -145, -453, -518, -1048, -2203, 0, -145, -453, -518, -1048, -2203, 0 };
-constexpr S32 gamePhaseBias = 1336;
+constexpr S32 gamePhaseInc[12] = { 145, 453, 518, 1048, 2203, 0, 145, 453, 518, 1048, 2203, 0 };
+constexpr S32 gamePhaseBias = -1336;
 constexpr S32 gamePhaseOnes = gamePhaseInc[0] + gamePhaseInc[1] + gamePhaseInc[2] + gamePhaseInc[3] + gamePhaseInc[4] + gamePhaseInc[5] + gamePhaseBias;
 
 //constexpr Score KSAMG = -2;
