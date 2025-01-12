@@ -7,7 +7,7 @@ void printBitBoard(BitBoard bitboard) {
 		std::cout << 8 - rank << "  ";
 		for (int file = 0; file < 8; file++) {
 			Square square = rank * 8 + file;
-			std::cout << testBit(bitboard, square) << " ";
+			std::cout << (int)testBit(bitboard, square) << " ";
 		}
 		std::cout << "\n";
 	}
