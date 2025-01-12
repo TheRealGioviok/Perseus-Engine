@@ -866,6 +866,10 @@ Score pestoEval(Position *pos){
 
 std::vector<Score> getCurrentEvalWeights(){
     std::vector<Score> weights;
+    // Add the material weights
+    for (Piece piece = P; piece <= Q; piece++){
+        weights.push_back(materialValues[piece].mg());
+    }
     // PSQT weights handled later bc of king bucket
     // Add the mobility weights
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
@@ -933,6 +937,10 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(TEMPO.mg());
 
     // Now, EG
+    // Add the material weights
+    for (Piece piece = P; piece <= Q; piece++){
+        weights.push_back(materialValues[piece].eg());
+    }
     // Same thing abt PSQTs
     // Add the mobility weights
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
@@ -1030,7 +1038,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     }
     tensor += 64 * 6;
 
-    
+    // Add the material weights
+    for (Piece piece = P; piece <= Q; piece++){
+        tensor[piece] = popcount(pos->bitboards[piece]) - popcount(pos->bitboards[piece + 6]);
+    }
+    tensor += 5;
 
     // Pin, mobility and threat calculations
     BitBoard attackedBy[2] = {
@@ -1587,7 +1599,7 @@ void convertToFeatures(std::string filename, std::string output) {
     U32 PSQTweights = 6 * 64; // PSQTS + 2 king buckets
     U32 entrySize = 5 + PSQTweights + weightCount / 2 + KINGSAFETYCOLOREDPARAMS + COMPLEXITYFEATURES + 1; // The entry size is the 1 (gamephase) + number of weights divided by 2 + 1, since we add the result at the end, but we don't need to write the features twice for each side
     std::cout << "Allocating for:\n";
-    std::cout << "\t5\tMaterial\n";
+    std::cout << "\t5\tPhase Material\n";
     std::cout << "\t" << PSQTweights << "\tPsqt entries\n";
     std::cout << "\t" << weightCount / 2 << "\tLinear evaluation terms\n";
     std::cout << "\t" << KINGSAFETYCOLOREDPARAMS / 2 << "x2=" << KINGSAFETYCOLOREDPARAMS << "\tAdditional color-dependant king safety formula features\n";
