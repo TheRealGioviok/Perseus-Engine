@@ -74,7 +74,7 @@ static inline void clearExcludedMove(SStack *ss)
     ss->excludedMove = noMove;
 }
 
-Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SStack *ss)
+Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *ss)
 {
     // Comms
     if (stopped)
@@ -93,7 +93,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, const bool cutNode, SSt
 
     assert(pos.hashKey == pos.generateHashKey());
     assert(pos.pawnHashKey == pos.generatePawnHashKey());
-    assert(pos.whitePawnsHashKey == pos.generateWhitePawnHashKey());
     assert(pos.nonPawnKeys[WHITE] == pos.generateNonPawnHashKey(WHITE));
     assert(pos.nonPawnKeys[BLACK] == pos.generateNonPawnHashKey(BLACK));
     assert(pos.minorKey == pos.generateMinorHashKey());
@@ -383,6 +382,7 @@ skipPruning:
                 else if (inCheck)
                     extension = 1;
             }
+            cutNode |= extension < 0;
 
             Depth newDepth = std::max(0,depth - 1 + extension);
 
