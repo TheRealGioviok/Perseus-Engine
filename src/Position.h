@@ -40,7 +40,6 @@ struct Position{
     U8 castle;
     HashKey hashKey;
     HashKey pawnHashKey;
-    HashKey whitePawnsHashKey; // No need to store the black one, we can infer it by XORing
     HashKey nonPawnKeys[2];
     HashKey minorKey;
     PScore psqtScores[4]; // PSQT score, incrementally updated. White / Black - file <= 3 / >= 4
@@ -63,12 +62,6 @@ struct Position{
      * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
      */
     HashKey generatePawnHashKey();
-
-    /**
-     * @brief The Position::generateWhitePawnHashKey function generates the hash key of the white pawn structure from scratch.
-     * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
-     */
-    HashKey generateWhitePawnHashKey();
 
     /** 
      * @brief The Position::generateNonPawnHashKey function generates the hash key of the non pawn structure from scratch, for a given side.
@@ -242,7 +235,6 @@ struct UndoInfo {
     // Irreversible information
     HashKey hashKey;
     HashKey pawnsHashKey;
-    HashKey whitePawnsHashKey;
     HashKey nonPawnsHashKey[2];
     HashKey minorHashKey;
     Square enPassant;
