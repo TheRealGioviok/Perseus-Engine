@@ -400,6 +400,7 @@ skipPruning:
             {
                 S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
                 if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
+                if(abs(rawEval - ss->staticEval) >= lmrComplexityThreshold()) granularR -= lmrComplexityValue();
                 if (isQuiet){
                     // R -= givesCheck;
                     granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
