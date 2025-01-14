@@ -370,7 +370,7 @@ skipPruning:
                         return singularBeta;
                     }
                     else if (ttScore >= beta || cutNode){
-                        extension = -1;
+                        extension = -2 + PVNode;
                     }
                     
                     // else{
