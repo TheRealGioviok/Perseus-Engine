@@ -416,8 +416,7 @@ skipPruning:
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
                 Depth R = granularR / RESOLUTION;
-                R = std::max(Depth(0), R);
-                R = std::min(Depth(newDepth - Depth(1)), R);
+                R = std::clamp((S32)R, -(!PVNode && !cutNode), newDepth - 1);
                 Depth reducedDepth = newDepth - R;
                 // Search at reduced depth
                 score = -search(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
