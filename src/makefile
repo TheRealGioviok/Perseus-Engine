@@ -1,6 +1,7 @@
-.PHONY: all debug release
+.PHONY: all pgo-instrument pgo-run pgo-build clean release debug dirs link
 
-all: release
+all: 
+	@$(MAKE) -sf build.mk 
 
 release:
 	@$(MAKE) -sf build.mk TARGET=Release

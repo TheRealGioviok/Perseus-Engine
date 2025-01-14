@@ -9,7 +9,9 @@ else
 endif
 
 # Default target (release build)
-all: release
+all: 
+	$(MAKE) -C src EXE=$(EXE)
+	$(MOVE_CMD) src/$(EXE) .
 
 # Release target
 release:
