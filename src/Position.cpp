@@ -56,21 +56,6 @@ HashKey Position::generatePawnHashKey() {
 }
 
 /** 
- * @brief The Position::generateWhitePawnHashKey function generates the hash key of the white pawn structure from scratch.
- * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
- */
-HashKey Position::generateWhitePawnHashKey() {
-    HashKey h = 0ULL;
-    BitBoard pieceBB = bitboards[P];
-    while (pieceBB) {
-        Square square = popLsb(pieceBB);
-        h ^= pawnKeysTable[P][square];
-    }
-    // No enpass
-    return h;
-}
-
-/** 
  * @brief The Position::generateNonPawnHashKey function generates the hash key of the non pawn structure from scratch, for a given side.
  * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
  */
@@ -167,7 +152,6 @@ void Position::wipe(){
     castle = 0;
     hashKey = 0;
     pawnHashKey = 0;
-    whitePawnsHashKey = 0;
     nonPawnKeys[0] = nonPawnKeys[1] = 0;
     minorKey = 0;
     memset(psqtScores,0,sizeof(psqtScores));
@@ -175,20 +159,29 @@ void Position::wipe(){
 
 /**
  * @brief The addPiece function removes a piece from the board. It also incrementally updates psqt and various hash keys
+ * @tparam unsafe Set it to true if we are removing a piece that we are sure is there
  * @param pos the Position object to update
  * @param square The square where the piece is.
  * @param piece The piece to remove.
  */
+template<bool unsafe = true>
 static inline void removePiece(Position& pos, const Piece piece, const Square square){
-    // Remove the piece from the bitboard
-    clearBit(pos.bitboards[piece], square);
-    // Add it also to the side and both bitboard
-    clearBit(pos.occupancies[piece >= p], square);
-    clearBit(pos.occupancies[BOTH], square);
+    if constexpr (!unsafe){
+        // Remove the piece from the bitboard
+        clearBit(pos.bitboards[piece], square);
+        // Add it also to the side and both bitboard
+        clearBit(pos.occupancies[piece >= p], square);
+        clearBit(pos.occupancies[BOTH], square);
+    }
+    else {
+        const BitBoard sqb = squareBB(square);
+        pos.bitboards[piece] ^= sqb;
+        pos.occupancies[piece >= p] ^= sqb;
+        pos.occupancies[BOTH] ^= sqb;
+    }
     // Update the hash key
     pos.hashKey ^= pieceKeysTable[piece][square];
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
-    pos.whitePawnsHashKey ^= pawnKeysTable[piece][square] * (piece <= K);
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
     pos.minorKey ^= minorKeysTable[piece][square];
     // Update the psqt score
@@ -198,20 +191,29 @@ static inline void removePiece(Position& pos, const Piece piece, const Square sq
 
 /**l
  * @brief The addPiece function adds a piece to the board. It also incrementally updates psqt and various hash keys
+ * @tparam unsafe Set it to true if we are removing a piece that we are sure is not already there
  * @param pos the Position object to update
  * @param square The square to add the piece to.
  * @param piece The piece to add.
  */
+template<bool unsafe = true>
 static inline void addPiece(Position& pos, const Piece piece, const Square square){
-    // Add the piece to the bitboard
-    setBit(pos.bitboards[piece], square);
-    // Add it also to the side and both bitboard
-    setBit(pos.occupancies[piece >= p], square);
-    setBit(pos.occupancies[BOTH], square);
+    if constexpr (!unsafe){
+        // Remove the piece from the bitboard
+        setBit(pos.bitboards[piece], square);
+        // Add it also to the side and both bitboard
+        setBit(pos.occupancies[piece >= p], square);
+        setBit(pos.occupancies[BOTH], square);
+    }
+    else {
+        const BitBoard sqb = squareBB(square);
+        pos.bitboards[piece] ^= sqb;
+        pos.occupancies[piece >= p] ^= sqb;
+        pos.occupancies[BOTH] ^= sqb;
+    }
     // Update the hash key
     pos.hashKey ^= pieceKeysTable[piece][square];
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
-    pos.whitePawnsHashKey ^= pawnKeysTable[piece][square] * (piece <= K);
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
     pos.minorKey ^= minorKeysTable[piece][square];
     // Update the psqt score
@@ -358,7 +360,6 @@ FENkeyEval:
     // If everything is alright, generate the hash key for the current position
     hashKey = generateHashKey();
     pawnHashKey = generatePawnHashKey();
-    whitePawnsHashKey = generateWhitePawnHashKey();
     nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
     minorKey = generateMinorHashKey();
@@ -819,7 +820,6 @@ void Position::reflect() {
 	// Recalculate hash
     hashKey = generateHashKey();
     pawnHashKey = generatePawnHashKey();
-    whitePawnsHashKey = generateWhitePawnHashKey();
     nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
     minorKey = generateMinorHashKey();
@@ -1675,7 +1675,6 @@ void Position::makeNullMove(){
 UndoInfo::UndoInfo(Position& position){
     hashKey = position.hashKey;
     pawnsHashKey = position.pawnHashKey;
-    whitePawnsHashKey = position.whitePawnsHashKey;
     nonPawnsHashKey[WHITE] = position.nonPawnKeys[WHITE];
     nonPawnsHashKey[BLACK] = position.nonPawnKeys[BLACK];
     minorHashKey = position.minorKey;
@@ -1694,7 +1693,6 @@ UndoInfo::UndoInfo(Position& position){
 void UndoInfo::undoMove(Position& position, Move move){
     position.hashKey = hashKey;
     position.pawnHashKey = pawnsHashKey;
-    position.whitePawnsHashKey = whitePawnsHashKey;
     position.nonPawnKeys[WHITE] = nonPawnsHashKey[WHITE];
     position.nonPawnKeys[BLACK] = nonPawnsHashKey[BLACK];
     position.minorKey = minorHashKey;
@@ -1725,7 +1723,6 @@ void UndoInfo::undoMove(Position& position, Move move){
 void UndoInfo::undoNullMove(Position& position){
     position.hashKey = hashKey;
     position.pawnHashKey = pawnsHashKey;
-    position.whitePawnsHashKey = whitePawnsHashKey;
     position.nonPawnKeys[WHITE] = nonPawnsHashKey[WHITE];
     position.nonPawnKeys[BLACK] = nonPawnsHashKey[BLACK];
     position.minorKey = minorHashKey;
