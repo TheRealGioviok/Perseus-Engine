@@ -246,7 +246,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
             ss->move = noMove;
             ss->contHistEntry = continuationHistoryTable[0];
 
-            Depth R = nmpQ1() + (depth / nmpDepthDivisor()) + std::min((eval - beta) / nmpScoreDivisor(), nmpQ2());
+            Depth R = improving + nmpQ1() + (depth / nmpDepthDivisor()) + std::min((eval - beta) / nmpScoreDivisor(), nmpQ2());
             Score nullScore = -search(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
 
             undoNullMove(undoer);
