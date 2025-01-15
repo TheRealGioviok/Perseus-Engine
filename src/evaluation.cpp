@@ -155,7 +155,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
         if constexpr (pt == N || pt == n) {
             if (sqb & pinned) {
                 moves = 0ULL; // Knight has no moves when pinned!
-                features[0]++;
+                features[0] += us == WHITE ? 1 : -1;
             }
             else {
                 moves = knightAttacks[sq];
@@ -170,7 +170,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
             if (sqb & pinned) {
                 const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
                 moves &= squaresBetween[ownKing][pinner];
-                features[0]++;
+                features[0] += us == WHITE ? 1 : -1;
             }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
@@ -182,7 +182,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
             if (sqb & pinned) {
                 const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
                 moves &= squaresBetween[ownKing][pinner];
-                features[0]++;
+                features[0] += us == WHITE ? 1 : -1;
             }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
@@ -193,7 +193,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
             if (sqb & pinned) {
                 const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
                 moves &= squaresBetween[ownKing][pinner];
-                features[0]++;
+                features[0] += us == WHITE ? 1 : -1;
             }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
@@ -465,7 +465,8 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
     
 }
 
-Score pestoEval(Position *pos){
+
+Score pestoEval(Position *pos, EvalState& evalState){
     auto const& bb = pos->bitboards;
     auto const& occ = pos->occupancies;
     HashKey pawnHashKey = pos->pawnHashKey ^ enPassantKeysTable[pos->enPassant];
@@ -485,10 +486,10 @@ Score pestoEval(Position *pos){
     // Mobility calculations
 
     // Pin, mobility and threat calculations
-    BitBoard attackedBy[2] = {
-        kingAttacks[whiteKing],
-        kingAttacks[blackKing]
-    };
+    BitBoard (&attackedBy)[2] = evalState.attackedBy;
+    
+    attackedBy[WHITE] = kingAttacks[whiteKing];
+    attackedBy[BLACK] = kingAttacks[blackKing];
 
     BitBoard pawnAttackedSquares[2] = {
         0,
