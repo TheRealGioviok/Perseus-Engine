@@ -924,15 +924,19 @@ std::vector<Score> getCurrentEvalWeights(){
     }
     // PSQT weights handled later bc of king bucket
     // Add the mobility weights
+    weights.push_back(PINNEDKNIGHT.mg());
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
         weights.push_back(knightMob[mobcount].mg());
     }
+    weights.push_back(PINNEDBISHOP.mg());
     for (U8 mobcount = 0; mobcount < 14; mobcount++){
         weights.push_back(bishopMob[mobcount].mg());
     }
+    weights.push_back(PINNEDROOK.mg());
     for (U8 mobcount = 0; mobcount < 15; mobcount++){
         weights.push_back(rookMob[mobcount].mg());
     }
+    weights.push_back(PINNEDQUEEN.mg());
     for (U8 mobcount = 0; mobcount < 28; mobcount++){
         weights.push_back(queenMob[mobcount].mg());
     }
@@ -995,15 +999,19 @@ std::vector<Score> getCurrentEvalWeights(){
     }
     // Same thing abt PSQTs
     // Add the mobility weights
+    weights.push_back(PINNEDKNIGHT.eg());
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
         weights.push_back(knightMob[mobcount].eg());
     }
+    weights.push_back(PINNEDBISHOP.eg());
     for (U8 mobcount = 0; mobcount < 14; mobcount++){
         weights.push_back(bishopMob[mobcount].eg());
     }
+    weights.push_back(PINNEDROOK.eg());
     for (U8 mobcount = 0; mobcount < 15; mobcount++){
         weights.push_back(rookMob[mobcount].eg());
     }
+    weights.push_back(PINNEDQUEEN.eg());
     for (U8 mobcount = 0; mobcount < 28; mobcount++){
         weights.push_back(queenMob[mobcount].eg());
     }
