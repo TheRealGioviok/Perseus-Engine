@@ -1147,9 +1147,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         bb[b] | bb[q]
     };
     
-    const BitBoard pinned[2] = {
-        getPinnedPieces(whiteKing, pinners[WHITE], occ[WHITE]),
-        getPinnedPieces(blackKing, pinners[BLACK], occ[BLACK])
+    BitBoard pinned[2] = {
+        getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
+        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
     };
 
     BitBoard blockedPawns[2] = {
