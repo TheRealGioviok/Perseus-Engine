@@ -211,11 +211,11 @@ inline BitBoard getPinners(BitBoard occupancy, BitBoard ownPieces, Square pinSqu
  * @param pinners The already calculated pinner pieces.
  * @return The pinned pieces, if any.
  */
-inline BitBoard getPinnedPieces(BitBoard pinners){
+inline BitBoard getPinnedPieces(Square pinSquare, BitBoard pinners, BitBoard ownPieces){
     BitBoard pinned = 0;
-    while (pinner){
-        Square sq = popLsb(pinner);
-        pinned |= squaresBetween[sq][pinSquare]; // We add the squares between the pin square and the pinner to the pinned pieces
+    while (pinners){
+        Square sq = popLsb(pinners);
+        pinned |= squaresBetween[pinSquare][sq]; // We add the squares between the pin square and the pinner to the pinned pieces
     }
     // Only return own pieces
     return pinned & ownPieces;
