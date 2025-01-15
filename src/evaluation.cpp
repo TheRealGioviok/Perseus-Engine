@@ -465,8 +465,7 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
     
 }
 
-
-Score pestoEval(Position *pos, EvalState& evalState){
+Score pestoEval(Position *pos){
     auto const& bb = pos->bitboards;
     auto const& occ = pos->occupancies;
     HashKey pawnHashKey = pos->pawnHashKey ^ enPassantKeysTable[pos->enPassant];
@@ -486,10 +485,10 @@ Score pestoEval(Position *pos, EvalState& evalState){
     // Mobility calculations
 
     // Pin, mobility and threat calculations
-    BitBoard (&attackedBy)[2] = evalState.attackedBy;
-    
-    attackedBy[WHITE] = kingAttacks[whiteKing];
-    attackedBy[BLACK] = kingAttacks[blackKing];
+    BitBoard attackedBy[2] = {    
+        attackedBy[WHITE] = kingAttacks[whiteKing],
+        attackedBy[BLACK] = kingAttacks[blackKing]
+    };
 
     BitBoard pawnAttackedSquares[2] = {
         0,
