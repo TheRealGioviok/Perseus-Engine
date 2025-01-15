@@ -56,6 +56,10 @@ constexpr PScore ADVANCABLEPHALANX = S(8, 26);
 constexpr PScore R_SUPPORTEDPHALANX = S(2, 11);
 constexpr PScore R_ADVANCABLEPHALANX = S(1, 20);
 constexpr PScore passedRankBonus[7] = {S(0, 0), S(10, -81), S(-11, -52), S(-7, 3), S(25, 55), S(47, 151), S(136, 237), };
+constexpr PScore PINNEDKNIGHT = S(-5,-10);
+constexpr PScore PINNEDBISHOP = S(-5,-10);
+constexpr PScore PINNEDROOK = S(-15,-30);
+constexpr PScore PINNEDQUEEN = S(-45,-125);
 constexpr PScore PASSEDPATHBONUS = S(-4, 23);
 constexpr PScore SUPPORTEDPASSER = S(29, 0);
 constexpr PScore INNERSHELTER = S(-1, -29);
@@ -132,7 +136,6 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
     constexpr Side us = pt < p ? WHITE : BLACK;
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard pieces = bb[pt];
-    if constexpr (pt == N) pieces &= ~pinned; // Pinned knight can never move
 
     // Consider diagonal xrays through our queens
     if constexpr (pt == B || pt == Q)                   occCheck ^= bb[Q];
@@ -150,10 +153,16 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
         Square sq = popLsb(pieces);
         BitBoard sqb = squareBB(sq);
         if constexpr (pt == N || pt == n) {
-            moves = knightAttacks[sq];
+            if (sqb & pinned) {
+                moves = 0ULL; // Knight has no moves when pinned!
+                features[0]++;
+            }
+            else {
+                moves = knightAttacks[sq];
+            }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : -1;
+            features[1 + moveCount] += us == WHITE ? 1 : -1;
             kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
         }
         else if constexpr (pt == B || pt == b) { // X-ray through our queens
@@ -161,10 +170,11 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
             if (sqb & pinned) {
                 const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
                 moves &= squaresBetween[ownKing][pinner];
+                features[0]++;
             }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : -1;
+            features[1 + moveCount] += us == WHITE ? 1 : -1;
             kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
         }
         else if constexpr (pt == R || pt == r) { // X-ray through our queens and rooks
@@ -172,20 +182,22 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
             if (sqb & pinned) {
                 const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
                 moves &= squaresBetween[ownKing][pinner];
+                features[0]++;
             }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : -1;
+            features[1 + moveCount] += us == WHITE ? 1 : -1;
         }
         else if constexpr (pt == Q || pt == q) { // X-ray through our queens
             moves = getQueenAttack(sq, occCheck);
             if (sqb & pinned) {
                 const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
                 moves &= squaresBetween[ownKing][pinner];
+                features[0]++;
             }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : -1;
+            features[1 + moveCount] += us == WHITE ? 1 : -1;
         }
         innerAttacks += popcount(mobMoves & kingRing);
         outerAttacks += popcount(mobMoves & kingOuter);
@@ -201,8 +213,6 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard pieces = bb[pt]; // TODO: try to exclude xray through pinned pieces
 
-    if constexpr (pt == N) pieces &= ~pinned; // Pinned knight can never move
-
     // Consider diagonal xrays through our queens
     if constexpr (pt == B || pt == Q)                   occCheck ^= bb[Q];
 
@@ -217,7 +227,13 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
         Square sq = popLsb(pieces);
         BitBoard sqb = squareBB(sq);
         if constexpr (pt == N) {
-            moves = knightAttacks[sq];
+            if (sqb & pinned) {
+                moves = 0ULL; // Knight has no moves when pinned!
+                score += PINNEDKNIGHT;
+            }
+            else {
+                moves = knightAttacks[sq];
+            }
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves);
             // Add the mobility score
@@ -230,6 +246,7 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
             if (sqb & pinned) {
                 const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
                 moves &= squaresBetween[ownKing][pinner];
+                score += PINNEDBISHOP;
             }
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens
@@ -243,6 +260,7 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
             if (sqb & pinned) {
                 const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
                 moves &= squaresBetween[ownKing][pinner];
+                score += PINNEDROOK;
             }
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens and rooks
@@ -256,6 +274,7 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
             if (sqb & pinned) {
                 const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
                 moves &= squaresBetween[ownKing][pinner];
+                score += PINNEDQUEEN;
             }
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens
@@ -520,11 +539,11 @@ Score pestoEval(Position *pos){
     }
 
     // Pinned mask
-    BitBoard RQmask[2] = {
+    const BitBoard RQmask[2] = {
         bb[R] | bb[Q],
         bb[r] | bb[q]
     };
-    BitBoard BQmask[2] = {
+    const BitBoard BQmask[2] = {
         bb[B] | bb[Q],
         bb[b] | bb[q]
     };
