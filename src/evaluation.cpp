@@ -529,13 +529,9 @@ Score pestoEval(Position *pos){
         bb[B] | bb[Q],
         bb[b] | bb[q]
     };
-    BitBoard pinners[2] = {
-        getPinners(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
-        getPinners(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
-    };
-    BitBoard pinned[2] = {
-        getPinnedPieces(whiteKing, pinners[WHITE], occ[WHITE]),
-        getPinnedPieces(blackKing, pinners[BLACK], occ[BLACK])
+    const BitBoard pinned[2] = {
+        getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
+        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
     };
 
     const BitBoard blockedPawns[2] = {
@@ -1150,11 +1146,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         bb[B] | bb[Q],
         bb[b] | bb[q]
     };
-    BitBoard pinners[2] = {
-        getPinners(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
-        getPinners(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
-    };
-    BitBoard pinned[2] = {
+    
+    const BitBoard pinned[2] = {
         getPinnedPieces(whiteKing, pinners[WHITE], occ[WHITE]),
         getPinnedPieces(blackKing, pinners[BLACK], occ[BLACK])
     };
