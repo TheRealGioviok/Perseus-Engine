@@ -56,10 +56,6 @@ constexpr PScore ADVANCABLEPHALANX = S(8, 26);
 constexpr PScore R_SUPPORTEDPHALANX = S(2, 11);
 constexpr PScore R_ADVANCABLEPHALANX = S(1, 20);
 constexpr PScore passedRankBonus[7] = {S(0, 0), S(10, -81), S(-11, -52), S(-7, 3), S(25, 55), S(47, 151), S(136, 237), };
-constexpr PScore PINNEDKNIGHT = S(-5,-10);
-constexpr PScore PINNEDBISHOP = S(-5,-10);
-constexpr PScore PINNEDROOK = S(-15,-30);
-constexpr PScore PINNEDQUEEN = S(-45,-125);
 constexpr PScore PASSEDPATHBONUS = S(-4, 23);
 constexpr PScore SUPPORTEDPASSER = S(29, 0);
 constexpr PScore INNERSHELTER = S(-1, -29);
@@ -155,46 +151,41 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
         if constexpr (pt == N || pt == n) {
             if (sqb & pinned) {
                 moves = 0ULL; // Knight has no moves when pinned!
-                features[0] += us == WHITE ? 1 : -1;
             }
             else {
                 moves = knightAttacks[sq];
             }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[1 + moveCount] += us == WHITE ? 1 : -1;
+            features[moveCount] += us == WHITE ? 1 : -1;
             kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
         }
         else if constexpr (pt == B || pt == b) { // X-ray through our queens
             moves = getBishopAttack(sq, occCheck);
             if (sqb & pinned) {
                 moves &= lineBetween[ownKing][sq];
-                features[0] += us == WHITE ? 1 : -1;
             }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[1 + moveCount] += us == WHITE ? 1 : -1;
+            features[moveCount] += us == WHITE ? 1 : -1;
             kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
         }
         else if constexpr (pt == R || pt == r) { // X-ray through our queens and rooks
             moves = getRookAttack(sq, occCheck);
             if (sqb & pinned) {
                 moves &= lineBetween[ownKing][sq];
-                features[0] += us == WHITE ? 1 : -1;
             }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[1 + moveCount] += us == WHITE ? 1 : -1;
         }
         else if constexpr (pt == Q || pt == q) { // X-ray through our queens
             moves = getQueenAttack(sq, occCheck);
             if (sqb & pinned) {
                 moves &= lineBetween[ownKing][sq];
-                features[0] += us == WHITE ? 1 : -1;
             }
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[1 + moveCount] += us == WHITE ? 1 : -1;
+            features[moveCount] += us == WHITE ? 1 : -1;
         }
         innerAttacks += popcount(mobMoves & kingRing);
         outerAttacks += popcount(mobMoves & kingOuter);
@@ -226,7 +217,6 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
         if constexpr (pt == N) {
             if (sqb & pinned) {
                 moves = 0ULL; // Knight has no moves when pinned!
-                score += PINNEDKNIGHT;
             }
             else {
                 moves = knightAttacks[sq];
@@ -242,7 +232,6 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
             moves = getBishopAttack(sq, occCheck);
             if (sqb & pinned) {
                 moves &= lineBetween[ownKing][sq];
-                score += PINNEDBISHOP;
             }
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens
@@ -255,7 +244,6 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
             moves = getRookAttack(sq, occCheck);
             if (sqb & pinned) {
                 moves &= lineBetween[ownKing][sq];
-                score += PINNEDROOK;
             }
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens and rooks
@@ -268,7 +256,6 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
             moves = getQueenAttack(sq, occCheck);
             if (sqb & pinned) {
                 moves &= lineBetween[ownKing][sq];
-                score += PINNEDQUEEN;
             }
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens
@@ -541,13 +528,9 @@ Score pestoEval(Position *pos){
         bb[B] | bb[Q],
         bb[b] | bb[q]
     };
-    BitBoard pinners[2] = {
-        getPinners(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
-        getPinners(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
-    };
     BitBoard pinned[2] = {
-        getPinnedPieces(whiteKing, pinners[WHITE], occ[WHITE]),
-        getPinnedPieces(blackKing, pinners[BLACK], occ[BLACK])
+        getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
+        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
     };
 
     const BitBoard blockedPawns[2] = {
@@ -918,19 +901,15 @@ std::vector<Score> getCurrentEvalWeights(){
     }
     // PSQT weights handled later bc of king bucket
     // Add the mobility weights
-    weights.push_back(PINNEDKNIGHT.mg());
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
         weights.push_back(knightMob[mobcount].mg());
     }
-    weights.push_back(PINNEDBISHOP.mg());
     for (U8 mobcount = 0; mobcount < 14; mobcount++){
         weights.push_back(bishopMob[mobcount].mg());
     }
-    weights.push_back(PINNEDROOK.mg());
     for (U8 mobcount = 0; mobcount < 15; mobcount++){
         weights.push_back(rookMob[mobcount].mg());
     }
-    weights.push_back(PINNEDQUEEN.mg());
     for (U8 mobcount = 0; mobcount < 28; mobcount++){
         weights.push_back(queenMob[mobcount].mg());
     }
@@ -993,19 +972,15 @@ std::vector<Score> getCurrentEvalWeights(){
     }
     // Same thing abt PSQTs
     // Add the mobility weights
-    weights.push_back(PINNEDKNIGHT.eg());
     for (U8 mobcount = 0; mobcount < 9; mobcount++){
         weights.push_back(knightMob[mobcount].eg());
     }
-    weights.push_back(PINNEDBISHOP.eg());
     for (U8 mobcount = 0; mobcount < 14; mobcount++){
         weights.push_back(bishopMob[mobcount].eg());
     }
-    weights.push_back(PINNEDROOK.eg());
     for (U8 mobcount = 0; mobcount < 15; mobcount++){
         weights.push_back(rookMob[mobcount].eg());
     }
-    weights.push_back(PINNEDQUEEN.eg());
     for (U8 mobcount = 0; mobcount < 28; mobcount++){
         weights.push_back(queenMob[mobcount].eg());
     }
@@ -1170,13 +1145,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         bb[B] | bb[Q],
         bb[b] | bb[q]
     };
-    BitBoard pinners[2] = {
-        getPinners(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
-        getPinners(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
-    };
     BitBoard pinned[2] = {
-        getPinnedPieces(whiteKing, pinners[WHITE], occ[WHITE]),
-        getPinnedPieces(blackKing, pinners[BLACK], occ[BLACK])
+        getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
+        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
     };
 
     BitBoard blockedPawns[2] = {
