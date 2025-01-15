@@ -97,7 +97,7 @@ constexpr PScore SAFETYINNERSHELTER = S(-35, -74);
 constexpr PScore SAFETYOUTERSHELTER = S(-26, -76);
 constexpr PScore INNERWEAKNESS = S(61, -21);
 constexpr PScore OUTERWEAKNESS = S(9, 5);
-conttexpr PScore KSTEMPO = S(15,15);
+constexpr PScore KSTEMPO = S(15,15);
 
 constexpr Score COMPLEXITYPASSERS = 259;
 constexpr Score COMPLEXITYPAWNS = 965;
@@ -813,12 +813,14 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += ALLCHECKS[B-1] * popcount(checks[BLACK][B-1]);
     dangerIndex[BLACK] += ALLCHECKS[R-1] * popcount(checks[BLACK][R-1]);
     dangerIndex[BLACK] += ALLCHECKS[Q-1] * popcount(checks[BLACK][Q-1]);
-    dangerIndex[us == WHITE] += KSTEMPO;
 
     dangerIndex[WHITE] += SAFETYINNERSHELTER * popcount(innerShelters[BLACK]);
     dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
     dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
     dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
+    const S32 sign = 1 - 2 * pos->side;
+    dangerIndex[sign] += KSTEMPO;
+
 
     const S32 mgWhiteDanger = getKingSafetyMg(dangerIndex[WHITE].mg());
     const S32 egWhiteDanger = getKingSafetyEg(dangerIndex[WHITE].eg());
@@ -829,7 +831,6 @@ Score pestoEval(Position *pos){
     score += safety;
 
     // Calculate mg and eg scores
-    const S32 sign = 1 - 2 * pos->side;
     score += TEMPO * sign;
 
     S32 mgScore = score.mg();
