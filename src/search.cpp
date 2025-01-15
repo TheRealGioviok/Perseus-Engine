@@ -289,7 +289,7 @@ skipPruning:
     Move bestMove = noMove;
     U16 moveSearched = 0;
     bool skipQuiets = false;
-
+    bool ttNoisy = false;
     Move quiets[256], noisy[256];
     U16 quietsCount = 0, noisyCount = 0;
 
@@ -335,6 +335,7 @@ skipPruning:
             prefetch(&tt[hashEntryFor(pos.hashKey)]);
             U64 nodesBefore = nodes;
             // // Singular extension
+            if (i == 0) ttNoisy = isCapture(currMove);
             Depth extension = 0;
             if (!excludedMove && ply < currSearch * (1 + PVNode)){
                 
@@ -402,6 +403,7 @@ skipPruning:
                 if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
+                    granularR -= ttNoisy * 1000;
                     granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
                     if (cutNode) granularR += lmrQuietCutNode();
                     if (ttPv) granularR -= cutNode * lmrQuietTTPV();
