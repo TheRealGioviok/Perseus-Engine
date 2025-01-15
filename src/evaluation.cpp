@@ -132,7 +132,7 @@ static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) |
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKing, BitBoard occCheck, const BitBoard pinners, const BitBoard pinned, const BitBoard mob, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, S8 *features, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, S32 &innerAttacks, S32 &outerAttacks, S32 &kingDist) {
+static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKing, BitBoard occCheck, const BitBoard pinned, const BitBoard mob, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, S8 *features, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, S32 &innerAttacks, S32 &outerAttacks, S32 &kingDist) {
     constexpr Side us = pt < p ? WHITE : BLACK;
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard pieces = bb[pt];
@@ -168,8 +168,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
         else if constexpr (pt == B || pt == b) { // X-ray through our queens
             moves = getBishopAttack(sq, occCheck);
             if (sqb & pinned) {
-                const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
-                moves &= squaresBetween[ownKing][pinner];
+                moves &= lineBetween[ownKing][sq];
                 features[0] += us == WHITE ? 1 : -1;
             }
             mobMoves = moves & mob;
@@ -180,8 +179,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
         else if constexpr (pt == R || pt == r) { // X-ray through our queens and rooks
             moves = getRookAttack(sq, occCheck);
             if (sqb & pinned) {
-                const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
-                moves &= squaresBetween[ownKing][pinner];
+                moves &= lineBetween[ownKing][sq];
                 features[0] += us == WHITE ? 1 : -1;
             }
             mobMoves = moves & mob;
@@ -191,8 +189,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
         else if constexpr (pt == Q || pt == q) { // X-ray through our queens
             moves = getQueenAttack(sq, occCheck);
             if (sqb & pinned) {
-                const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
-                moves &= squaresBetween[ownKing][pinner];
+                moves &= lineBetween[ownKing][sq];
                 features[0] += us == WHITE ? 1 : -1;
             }
             mobMoves = moves & mob;
@@ -209,7 +206,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], const Square ownKin
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard occCheck, const BitBoard pinners, const BitBoard pinned, const BitBoard mobilityArea, PScore &score, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, PScore &innerAttacks, PScore &outerAttacks){
+static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard occCheck, const BitBoard pinned, const BitBoard mobilityArea, PScore &score, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, PScore &innerAttacks, PScore &outerAttacks){
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard pieces = bb[pt]; // TODO: try to exclude xray through pinned pieces
 
@@ -244,8 +241,7 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
         else if constexpr (pt == B) {
             moves = getBishopAttack(sq, occCheck);
             if (sqb & pinned) {
-                const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
-                moves &= squaresBetween[ownKing][pinner];
+                moves &= lineBetween[ownKing][sq];
                 score += PINNEDBISHOP;
             }
             mobMoves = moves & mobilityArea;
@@ -258,8 +254,7 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
         else if constexpr (pt == R) {
             moves = getRookAttack(sq, occCheck);
             if (sqb & pinned) {
-                const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
-                moves &= squaresBetween[ownKing][pinner];
+                moves &= lineBetween[ownKing][sq];
                 score += PINNEDROOK;
             }
             mobMoves = moves & mobilityArea;
@@ -272,8 +267,7 @@ static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard o
         else if constexpr (pt == Q) {
             moves = getQueenAttack(sq, occCheck);
             if (sqb & pinned) {
-                const Square pinner = lsb(lineBetween[ownKing][sq] & pinners); // & is never 0!
-                moves &= squaresBetween[ownKing][pinner];
+                moves &= lineBetween[ownKing][sq];
                 score += PINNEDQUEEN;
             }
             mobMoves = moves & mobilityArea;
@@ -485,9 +479,9 @@ Score pestoEval(Position *pos){
     // Mobility calculations
 
     // Pin, mobility and threat calculations
-    BitBoard attackedBy[2] = {    
-        attackedBy[WHITE] = kingAttacks[whiteKing],
-        attackedBy[BLACK] = kingAttacks[blackKing]
+    BitBoard attackedBy[2] = {
+        kingAttacks[whiteKing],
+        kingAttacks[blackKing]
     };
 
     BitBoard pawnAttackedSquares[2] = {
@@ -629,19 +623,19 @@ Score pestoEval(Position *pos){
     // std::cout << "PSQT scores are :\t"<<-score.mg()<<"\t"<<-score.eg()<<std::endl;
     
     // Black mobility
-    mobility<N>(bb+6, blackKing, occ[BOTH], pinners[BLACK], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][N-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<B>(bb+6, blackKing, occ[BOTH], pinners[BLACK], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][B-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<R>(bb+6, blackKing, occ[BOTH], pinners[BLACK], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][R-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<Q>(bb+6, blackKing, occ[BOTH], pinners[BLACK], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<N>(bb+6, blackKing, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][N-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<B>(bb+6, blackKing, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][B-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<R>(bb+6, blackKing, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][R-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<Q>(bb+6, blackKing, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
 
     // Flip
     score = -score;
 
     // White mobility
-    mobility<N>(bb, whiteKing, occ[BOTH], pinners[WHITE], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][N-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<B>(bb, whiteKing, occ[BOTH], pinners[WHITE], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][B-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<R>(bb, whiteKing, occ[BOTH], pinners[WHITE], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][R-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<Q>(bb, whiteKing, occ[BOTH], pinners[WHITE], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<N>(bb, whiteKing, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][N-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<B>(bb, whiteKing, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][B-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<R>(bb, whiteKing, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][R-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<Q>(bb, whiteKing, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
     
     // std::cout << "PSQT scores are :\t"<<score.mg()<<"\t"<<score.eg()<<std::endl;
     score += pos->psqtScores[indexColorSide(WHITE,(fileOf(whiteKing) <= 3))] + pos->psqtScores[indexColorSide(BLACK,(fileOf(blackKing) <= 3))];
@@ -1250,19 +1244,18 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     outerAttacks[BLACK][P] = popcount(pawnAttackedSquares[BLACK] & kingOuter[WHITE]);
 
     // Calculate the mobility scores (index by phase and color)
-    getMobilityFeat<N>(bb, whiteKing, occ[BOTH], pinners[WHITE], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][N-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][N], outerAttacks[WHITE][N], kingDist[0]);
-    getMobilityFeat<n>(bb, blackKing, occ[BOTH], pinners[BLACK], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][N-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][N], outerAttacks[BLACK][N], kingDist[0]);
-    tensor += 1+9;
-    getMobilityFeat<B>(bb, whiteKing, occ[BOTH], pinners[WHITE], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][B-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][B], outerAttacks[WHITE][B], kingDist[1]);
-    getMobilityFeat<b>(bb, blackKing, occ[BOTH], pinners[BLACK], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][B-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][B], outerAttacks[BLACK][B], kingDist[1]);
-    tensor += 1+14;
-    getMobilityFeat<R>(bb, whiteKing, occ[BOTH], pinners[WHITE], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][R-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][R], outerAttacks[WHITE][R], kingDist[0]);
-    getMobilityFeat<r>(bb, blackKing, occ[BOTH], pinners[BLACK], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][R-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][R], outerAttacks[BLACK][R], kingDist[0]);
-    tensor += 1+15;
-    getMobilityFeat<Q>(bb, whiteKing, occ[BOTH], pinners[WHITE], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][Q], outerAttacks[WHITE][Q], kingDist[0]);
-    getMobilityFeat<q>(bb, blackKing, occ[BOTH], pinners[BLACK], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][Q], outerAttacks[BLACK][Q], kingDist[0]);
-    tensor += 1+28;
-
+    getMobilityFeat<N>(bb, whiteKing, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][N-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][N], outerAttacks[WHITE][N], kingDist[0]);
+    getMobilityFeat<n>(bb, blackKing, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][N-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][N], outerAttacks[BLACK][N], kingDist[0]);
+    tensor += 9;
+    getMobilityFeat<B>(bb, whiteKing, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][B-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][B], outerAttacks[WHITE][B], kingDist[1]);
+    getMobilityFeat<b>(bb, blackKing, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][B-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][B], outerAttacks[BLACK][B], kingDist[1]);
+    tensor += 14;
+    getMobilityFeat<R>(bb, whiteKing, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][R-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][R], outerAttacks[WHITE][R], kingDist[0]);
+    getMobilityFeat<r>(bb, blackKing, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][R-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][R], outerAttacks[BLACK][R], kingDist[0]);
+    tensor += 15;
+    getMobilityFeat<Q>(bb, whiteKing, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][Q], outerAttacks[WHITE][Q], kingDist[0]);
+    getMobilityFeat<q>(bb, blackKing, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][Q], outerAttacks[BLACK][Q], kingDist[0]);
+    tensor += 28;
 
     // Weak pieces
     BitBoard weakPieces[2] = {
