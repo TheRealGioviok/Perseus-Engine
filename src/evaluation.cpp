@@ -97,6 +97,7 @@ constexpr PScore SAFETYINNERSHELTER = S(-35, -74);
 constexpr PScore SAFETYOUTERSHELTER = S(-26, -76);
 constexpr PScore INNERWEAKNESS = S(61, -21);
 constexpr PScore OUTERWEAKNESS = S(9, 5);
+conttexpr PScore KSTEMPO = S(15,15);
 
 constexpr Score COMPLEXITYPASSERS = 259;
 constexpr Score COMPLEXITYPAWNS = 965;
@@ -812,6 +813,7 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += ALLCHECKS[B-1] * popcount(checks[BLACK][B-1]);
     dangerIndex[BLACK] += ALLCHECKS[R-1] * popcount(checks[BLACK][R-1]);
     dangerIndex[BLACK] += ALLCHECKS[Q-1] * popcount(checks[BLACK][Q-1]);
+    dangerIndex[us == WHITE] += KSTEMPO;
 
     dangerIndex[WHITE] += SAFETYINNERSHELTER * popcount(innerShelters[BLACK]);
     dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
@@ -1515,7 +1517,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor += 9;
 
 
-#define KINGSAFETYCOLOREDPARAMS 48
+#define KINGSAFETYCOLOREDPARAMS 50
     tensor[P] = innerAttacks[WHITE][P];
     tensor[N] = innerAttacks[WHITE][N];
     tensor[B] = innerAttacks[WHITE][B];
@@ -1548,6 +1550,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[0] += popcount(kingRing[BLACK] & weakSquares[BLACK]);
     tensor[1] += popcount(outerRing[BLACK] & weakSquares[BLACK]);
     tensor += 2;
+    tensor[0] += us == WHITE ? 1 : -1;
+    tensor++;
 
     tensor[P] = innerAttacks[BLACK][P];
     tensor[N] = innerAttacks[BLACK][N];
@@ -1581,6 +1585,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[0] += popcount(kingRing[WHITE] & weakSquares[WHITE]);
     tensor[1] += popcount(outerRing[WHITE] & weakSquares[WHITE]);
     tensor += 2;
+    tensor[0] += us == BLACK ? 1 : -1;
+    tensor++;
 
     // Also assert the last element we wrote is the penultimate element
     // assert(tensorStart + tensorSize - 2 == tensor);
