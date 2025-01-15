@@ -418,14 +418,16 @@ void execCommand(Game* game, char* command){
                 BitBoard blackRQ = game->pos.bitboards[9] | game->pos.bitboards[10];
                 BitBoard ourKing = game->pos.bitboards[5];
                 Square ourKingSquare = popLsb(ourKing);
-                toPrint = getPinnedPieces(pieces, whitePieces, ourKingSquare, blackRQ, blackBQ);
+                BitBoard pinners = getPinners(pieces, whitePieces, ourKingSquare, blackRQ, blackBQ)
+                toPrint = getPinnedPieces(pinners);
             }
             else{
                 BitBoard whiteBQ = game->pos.bitboards[2] | game->pos.bitboards[4];
                 BitBoard whiteRQ = game->pos.bitboards[3] | game->pos.bitboards[4];
                 BitBoard ourKing = game->pos.bitboards[11];
                 Square ourKingSquare = popLsb(ourKing);
-                toPrint = getPinnedPieces(pieces, blackPieces, ourKingSquare, whiteRQ, whiteBQ);
+                itBoard pinners = getPinners(pieces, blackPieces, ourKingSquare, whiteRQ, whiteBQ)
+                toPrint = getPinnedPieces(pinners);
             }
             printBitBoard(toPrint);
         }

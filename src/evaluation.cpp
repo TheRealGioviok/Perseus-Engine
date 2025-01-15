@@ -183,9 +183,11 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoard pinned, const BitBoard mobilityArea, PScore &score, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, PScore &innerAttacks, PScore &outerAttacks){
+static inline void mobility(const BitBoard *bb, const Square ownKing, BitBoard occCheck, const BitBoard pinned, const BitBoard pinners, const BitBoard mobilityArea, PScore &score, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, PScore &innerAttacks, PScore &outerAttacks){
     // constexpr Side them = us ? BLACK : WHITE;
-    BitBoard pieces = bb[pt] & ~pinned; // TODO: try to exclude xray through pinned pieces
+    BitBoard pieces = bb[pt]; // TODO: try to exclude xray through pinned pieces
+
+    if constexpr (pt == N) pieces &= ~pinned; // Pinned knight can never move
 
     // Consider diagonal xrays through our queens
     if constexpr (pt == B || pt == Q)                   occCheck ^= bb[Q];
@@ -199,6 +201,7 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
         BitBoard moves;
         BitBoard mobMoves;
         Square sq = popLsb(pieces);
+        BitBoard sqb = squareBB(sq);
         if constexpr (pt == N) {
             moves = knightAttacks[sq];
             mobMoves = moves & mobilityArea;
@@ -210,6 +213,10 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
         }
         else if constexpr (pt == B) {
             moves = getBishopAttack(sq, occCheck);
+            if (sqb & pinned) {
+                Square pinner = lineBetween[ownKing][sqb] & pinners;
+                moves &= squaresBetween[ownKing][pinner];
+            }
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens
             // Add the mobility score
@@ -219,6 +226,10 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
         }
         else if constexpr (pt == R) {
             moves = getRookAttack(sq, occCheck);
+            if (sqb & pinned) {
+                Square pinner = lineBetween[ownKing][sqb] & pinners;
+                moves &= squaresBetween[ownKing][pinner];
+            }
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens and rooks
             // Add the mobility score
@@ -228,6 +239,10 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
         }
         else if constexpr (pt == Q) {
             moves = getQueenAttack(sq, occCheck);
+            if (sqb & pinned) {
+                Square pinner = lineBetween[ownKing][sqb] & pinners;
+                moves &= squaresBetween[ownKing][pinner];
+            }
             mobMoves = moves & mobilityArea;
             U8 moveCount = popcount(mobMoves); // X-ray through our queens
             // Add the mobility score
@@ -499,9 +514,13 @@ Score pestoEval(Position *pos){
         bb[B] | bb[Q],
         bb[b] | bb[q]
     };
+    BitBoard pinners[2] = {
+        getPinners(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
+        getPinners(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
+    };
     BitBoard pinned[2] = {
-        getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
-        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
+        getPinnedPieces(pinners[WHITE]),
+        getPinnedPieces(pinners[BLACK])
     };
 
     const BitBoard blockedPawns[2] = {

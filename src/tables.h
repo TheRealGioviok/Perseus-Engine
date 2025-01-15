@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "constants.h"
+#include "BBmacros.h"
 #include <array>
 #define RESOLUTION 1000
 
@@ -23,6 +24,7 @@ extern BitBoard kingShelter[2][64];
 extern U8 centerDistance[64];
 // squaresbetween
 extern BitBoard squaresBetween[64][64];
+extern BitBoard lineBetween[64][64];
 // pv table and pv length
 extern Move pvTable[maxPly][maxPly];
 extern Ply pvLen[maxPly];
@@ -72,6 +74,9 @@ constexpr BitBoard boardSide[2] = {
 	1085102592571150095ULL, 
 	17361641481138401520ULL
 };
+
+constexpr BitBoard boardRim = files(0) | files(7) | ranks(0) | ranks(7);
+
 
 constexpr U64 MvvLva[12][12] = {
 	// Aggressor - Victim
@@ -162,6 +167,8 @@ constexpr Score blockBonusEg[] = { 0, -3, 3 };
 extern BitBoard outerRing[64]; // The ring of squares in a centered 5x5 square
 extern BitBoard fiveSquare[64]; // The 5x5 square
 extern BitBoard kingShelter[2][64]; // The king shelter
+
+inline bool aligned(Square sq1, Square sq2, Square sq3) { return lineBetween[sq1][sq2] & squareBB(sq3); }
 
 /**
  * @brief The initEvalTables function initializes the evaluation tables
