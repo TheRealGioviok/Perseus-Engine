@@ -819,7 +819,7 @@ Score pestoEval(Position *pos){
     dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
     dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
     const S32 sign = 1 - 2 * pos->side;
-    dangerIndex[sign] += KSTEMPO;
+    dangerIndex[pos->side] += KSTEMPO;
 
 
     const S32 mgWhiteDanger = getKingSafetyMg(dangerIndex[WHITE].mg());
