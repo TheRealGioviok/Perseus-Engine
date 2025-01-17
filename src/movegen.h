@@ -166,6 +166,12 @@ inline BitBoard getQueenAttack(int square, U64 occupancy) {
     return getBishopAttack(square, occupancy) | getRookAttack(square, occupancy);
 }
 
+template <bool side>
+static inline BitBoard makePawnAttacks(BitBoard pawns){
+    if constexpr (side == WHITE) return ((pawns & notFile(0)) >> 9) | ((pawns & notFile(7)) >> 7);
+    else                         return ((pawns & notFile(0)) << 7) | ((pawns & notFile(7)) << 9);
+}
+
 /**
  * @brief The xrayRookAttacks function determines the xray rook attacks for a given square, blockers and occupancy
  * @param occupancy The occupancy.

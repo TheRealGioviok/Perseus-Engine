@@ -462,7 +462,7 @@ skipPruning:
                             updateKillers(ss, currMove);
                             updateCounters(currMove, (ss - 1)->move);
                         }
-                        updateHH(ss, pos.side, depth, currMove, quiets, quietsCount, noisy, noisyCount);
+                        updateHH(ss, pos.side, pos.threats, depth, currMove, quiets, quietsCount, noisy, noisyCount);
                         break;
                     }
                     alpha = score;

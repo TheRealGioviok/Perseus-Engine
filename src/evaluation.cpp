@@ -265,12 +265,6 @@ static inline BitBoard advancePathMasked(BitBoard bb, BitBoard mask){
 }
 
 template <bool side>
-static inline BitBoard makePawnAttacks(BitBoard pawns){
-    if constexpr (side == WHITE) return ((pawns & notFile(0)) >> 9) | ((pawns & notFile(7)) >> 7);
-    else                         return ((pawns & notFile(0)) << 7) | ((pawns & notFile(7)) << 9);
-}
-
-template <bool side>
 static inline BitBoard pawnSpanPawns(BitBoard movers, BitBoard blockers){
     if constexpr (side == WHITE){
         return makePawnAttacks<WHITE>(advancePathMasked<WHITE>(movers, ~blockers)) & ~blockers;
