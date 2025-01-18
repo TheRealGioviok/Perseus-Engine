@@ -289,6 +289,7 @@ skipPruning:
     Move bestMove = noMove;
     U16 moveSearched = 0;
     bool skipQuiets = false;
+    bool ttNoisy = false;
 
     Move quiets[256], noisy[256];
     U16 quietsCount = 0, noisyCount = 0;
@@ -328,7 +329,6 @@ skipPruning:
         if (!currMove) continue; // || currMove == excludedMove
 
         // const bool givesCheck = isCheck(currMove) || pos.inCheck();
-        
         if (makeMove(currMove))
         {
             // Prefetch tt
@@ -345,6 +345,7 @@ skipPruning:
                     && abs(ttScore) < mateValue 
                     && ttDepth >= depth - 3
                 ){
+                    ttNoisy = !isQuiet;
                     // Increase singular candidates
                     //++seCandidates;
                     const Score singularBeta = ttScore - singularDepthMultiplier() * depth / 10;
@@ -405,6 +406,7 @@ skipPruning:
                     granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
                     if (cutNode) granularR += lmrQuietCutNode();
                     if (ttPv) granularR -= cutNode * lmrQuietTTPV();
+                    if (currMoveScore < COUNTERSCORE && ttNoisy) granularR -= lmrQuietWhenTTNoisy();
                 }
                 else {
                     if (currMoveScore < QUIETSCORE) { 
