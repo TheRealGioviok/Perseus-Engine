@@ -149,10 +149,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
             else if ((ttBound == hashUPPER))
                 beta = std::min(beta, ttScore);
             if (alpha >= beta) {
-                // Update best move history
-                // Square from = moveSource(ttMove);
-                // Square to = moveTarget(ttMove);
-                // updateHistoryBonus(&historyTable[pos.side][indexFromTo(from, to)], depth, true);
                 return ttScore;
             }
         }
@@ -530,10 +526,6 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
             else if ((ttBound == hashUPPER))
                 beta = std::min(beta, ttScore);
             if (alpha >= beta) {
-                // Update best move history
-                // Square from = moveSource(ttMove);
-                // Square to = moveTarget(ttMove);
-                // updateHistoryBonus(&historyTable[pos.side][indexFromTo(from, to)], depth, true);
                 return ttScore;
             }
         }
