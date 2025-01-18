@@ -8,7 +8,7 @@
 struct Position;
 
 // history table
-extern S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
+extern S32 historyTable[2][4][NUM_SQUARES * NUM_SQUARES];
 
 // capture history table
 extern S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES / 2]; // The color of the captured piece is always the opposite of the color of the moving piece
@@ -62,6 +62,12 @@ inline S32 indexPieceTo(Piece piece, Square to) {
 	return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
 }
 
+static inline S32 getThreatsIndexing(const BitBoard threats, const Move move){
+    const BitBoard source = squareBB(moveSource(move));
+    const BitBoard target = squareBB(moveTarget(move));
+    return ((source & threats)>0) + 2*((target & threats)>0);
+}
+
 static inline S32 stat_bonus(int depth) {
 #if ENABLEBETTERHISTORYFORMULA
 	// Approximately verbatim stat bonus formula from Stockfish // Formula from Ethereal, who took it from stockfish. I love chess programming.
@@ -72,7 +78,7 @@ static inline S32 stat_bonus(int depth) {
 }
 
 #define MAXHISTORYABS 16384LL
-void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);
+void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);
 
 Score correctStaticEval(Position& pos, const Score eval);
 

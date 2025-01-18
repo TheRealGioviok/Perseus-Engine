@@ -5,7 +5,7 @@
 #include "Game.h"
 #include <algorithm>
 // history table
-S32 historyTable[2][NUM_SQUARES * NUM_SQUARES];
+S32 historyTable[2][4][NUM_SQUARES * NUM_SQUARES];
 
 // capture history table
 S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][6];
@@ -21,37 +21,36 @@ S32 pawnsCorrHist[2][CORRHISTSIZE]; // stm - hash
 S32 nonPawnsCorrHist[2][2][CORRHISTSIZE]; // stm - side - hash
 S32 minorCorrHist[2][CORRHISTSIZE]; // stm - hash
 
-
-void updateHistoryMove(bool side, Move move, S32 delta) {
-    S32 *current = &historyTable[side][indexFromTo(moveSource(move),moveTarget(move))];
+static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
+    S32 *current = &historyTable[side][getThreatsIndexing(threats, move)][indexFromTo(moveSource(move),moveTarget(move))];
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
-void updateCaptureHistory(Move move, S32 delta) {
+static inline void updateCaptureHistory(Move move, S32 delta) {
     Piece captured = moveCapture(move);
     S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6]; // account for promotion
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
-void updateContHistOffset(SStack* ss, const Move move, const S32 delta, const S32 offset){
+static inline void updateContHistOffset(SStack* ss, const Move move, const S32 delta, const S32 offset){
     S32 *current = &(ss - offset)->contHistEntry[indexPieceTo(movePiece(move), moveTarget(move))];
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
-void updateContHist(SStack* ss, const Move move, const S32 delta){
+static inline void updateContHist(SStack* ss, const Move move, const S32 delta){
     updateContHistOffset(ss, move, delta, 1);
     updateContHistOffset(ss, move, delta, 2);
 }
 
-void updateHH(SStack* ss, bool side, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount) {
+void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount) {
     const S32 delta = stat_bonus(depth);
     if (okToReduce(bestMove)) {
         // If bestMove is not noisy, we reduce the bonus of all other moves and increase the bonus of the bestMove
-        updateHistoryMove(side, bestMove, delta);
+        updateHistoryMove(side, threats, bestMove, delta);
         updateContHist(ss, bestMove, delta);
         for (int i = 0; i < quietsCount; i++) {
             if (quietMoves[i] == bestMove) continue;
-            updateHistoryMove(side, quietMoves[i], -delta);
+            updateHistoryMove(side, threats, quietMoves[i], -delta);
             updateContHist(ss, quietMoves[i], -delta);
         }
     }
@@ -84,7 +83,7 @@ Score correctStaticEval(Position& pos, const Score eval) {
     return static_cast<Score>(std::clamp(corrected, -mateValue, +mateValue));
 }
 
-void updateSingleCorrHist(S32& entry, const S32 bonus, const S32 weight){
+static inline void updateSingleCorrHist(S32& entry, const S32 bonus, const S32 weight){
     entry = (entry * (256 - weight) + bonus * weight) / 256;
     entry = static_cast<Score>(std::clamp(entry, -MAXCORRHIST, MAXCORRHIST));
 }

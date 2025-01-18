@@ -38,6 +38,7 @@ struct Position{
     Ply totalPly; // Total number of plies since the start of the game
     Ply plyFromNull; // Ply from the last null move (see Null Move Pruning for more information)
     U8 castle;
+    BitBoard threats;
     HashKey hashKey;
     HashKey pawnHashKey;
     HashKey nonPawnKeys[2];
@@ -85,6 +86,7 @@ struct Position{
      */
     void wipe();
 
+    void generateThreats();
     /**
      * @brief The hasNonPawns function checks if the current side to move has non-pawn material.
      * @return true if the position has non-pawn material, false otherwise.
@@ -244,6 +246,7 @@ struct UndoInfo {
     Ply plyFromNull;
     PScore psqtScores[4];
     U8 side;
+    BitBoard threats;
     // Reversible information
     BitBoard bitboards[12];
     BitBoard occupancies[3];

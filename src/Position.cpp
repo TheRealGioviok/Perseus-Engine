@@ -364,7 +364,48 @@ FENkeyEval:
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
     minorKey = generateMinorHashKey();
     checkers = calculateCheckers();
+    generateThreats();
     return true;
+}
+
+void Position::generateThreats()
+{
+    threats = 0ULL;
+    const BitBoard occ = occupancies[BOTH];
+
+    const BitBoard queens  = bitboards[q - 6*side];
+    BitBoard rooks   = bitboards[r - 6*side];
+    BitBoard bishops = bitboards[b - 6*side];
+    BitBoard knights = bitboards[n - 6*side];
+    BitBoard pawns   = bitboards[p - 6*side];
+
+    rooks |= queens;
+    while (rooks)
+    {
+        Square rook = popLsb(rooks);
+        threats |= getRookAttack(rook, occ);
+    }
+
+    bishops |= queens;
+    while (bishops)
+    {
+        Square bishop = popLsb(bishops);
+        threats |= getBishopAttack(bishop, occ);
+    }
+
+    while (knights)
+    {
+        Square knight = popLsb(knights);
+        threats |= knightAttacks[knight];
+    }
+
+    if (side == WHITE)
+        threats |= makePawnAttacks<WHITE>(pawns);
+    else
+        threats |= makePawnAttacks<BLACK>(pawns);
+
+    threats |= kingAttacks[lsb(bitboards[k - 6*side])];
+
 }
 
 /**
@@ -584,6 +625,7 @@ bool Position::makeMove(Move move)
     else
         fiftyMove++;
     checkers = calculateCheckers();
+    generateThreats();
     return true;
 }
 
@@ -682,7 +724,7 @@ inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Squ
         return;
     }
     ml->moves[ml->count++] = ((
-        (S64)(historyTable[side][indexFromTo(source, target)]) 
+        (S64)(historyTable[side][getThreatsIndexing(threats,move)][indexFromTo(source, target)]) 
         + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
         + QUIETSCORE
@@ -823,6 +865,7 @@ void Position::reflect() {
     nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
     minorKey = generateMinorHashKey();
+    generateThreats();
 }
 
 std::string Position::getFEN() {
@@ -1670,6 +1713,7 @@ void Position::makeNullMove(){
     totalPly++;
     plyFromNull = 0;
     checkers = 0ULL; // null moves will never be done while in check.
+    generateThreats();
 }
 
 UndoInfo::UndoInfo(Position& position){
@@ -1685,6 +1729,7 @@ UndoInfo::UndoInfo(Position& position){
     plyFromNull = position.plyFromNull;
     side = position.side;
     checkers = position.checkers;
+    threats = position.threats;
     memcpy(psqtScores, position.psqtScores, sizeof(PScore) * 4);
     memcpy(bitboards, position.bitboards, sizeof(BitBoard) * 12);
     memcpy(occupancies, position.occupancies, sizeof(BitBoard) * 3);
@@ -1702,6 +1747,7 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.totalPly = totalPly;
     position.plyFromNull = plyFromNull;
     position.side = side;
+    position.threats = threats;
     
     Piece piece = movePiece(move);
     Piece captured = moveCapture(move);
@@ -1733,4 +1779,5 @@ void UndoInfo::undoNullMove(Position& position){
     position.plyFromNull = plyFromNull;
     position.side = side;
     position.checkers = checkers;
+    position.threats = threats;
 }
