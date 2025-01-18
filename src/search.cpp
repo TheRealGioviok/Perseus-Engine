@@ -337,50 +337,50 @@ skipPruning:
             // // Singular extension
             Depth extension = 0;
             if (!excludedMove && ply < currSearch * (1 + PVNode)){
-                
-                if (i == 0 // Can only happen on ttMove
-                    && !RootNode 
-                    && depth >= singularSearchDepth()
-                    && (ttBound & hashLOWER) 
-                    && abs(ttScore) < mateValue 
-                    && ttDepth >= depth - 3
-                ){
-                    // Increase singular candidates
-                    //++seCandidates;
-                    const Score singularBeta = ttScore - singularDepthMultiplier() * depth / 10;
-                    const Depth singularDepth = (depth - 1) / 2;
-                    ss->excludedMove = currMove;
-                    undo(undoer, currMove);
-                    const Score singularScore = search(singularBeta - 1, singularBeta, singularDepth, cutNode, ss);
-                    makeMove(currMove);
-                    ss->excludedMove = noMove;
-
-                    if (singularScore < singularBeta) {
-                        extension = 1;
-                        if (!PVNode && ss->doubleExtensions < maximumDoubleExtensions() && singularScore + doubleExtensionMargin() < singularBeta) {
-                            ++ss->doubleExtensions;
-                            //std::cout << "Double extension counter "<<ss->doubleExtensions<<std::endl;
-                            extension = 2;
-                        }
-                        // Increase singular activations
-                        // ++seActivations;
-                    }
-                    else if (singularBeta >= beta){ // Multicut
+                if (!RootNode) { // Extensions only happen on non root 
+                    if (i == 0 // Can only happen on ttMove
+                        && depth >= singularSearchDepth()
+                        && (ttBound & hashLOWER) 
+                        && abs(ttScore) < mateValue 
+                        && ttDepth >= depth - 3
+                    ){
+                        // Increase singular candidates
+                        //++seCandidates;
+                        const Score singularBeta = ttScore - singularDepthMultiplier() * depth / 10;
+                        const Depth singularDepth = (depth - 1) / 2;
+                        ss->excludedMove = currMove;
                         undo(undoer, currMove);
-                        return singularBeta;
+                        const Score singularScore = search(singularBeta - 1, singularBeta, singularDepth, cutNode, ss);
+                        makeMove(currMove);
+                        ss->excludedMove = noMove;
+
+                        if (singularScore < singularBeta) {
+                            extension = 1;
+                            if (!PVNode && ss->doubleExtensions < maximumDoubleExtensions() && singularScore + doubleExtensionMargin() < singularBeta) {
+                                ++ss->doubleExtensions;
+                                //std::cout << "Double extension counter "<<ss->doubleExtensions<<std::endl;
+                                extension = 2;
+                            }
+                            // Increase singular activations
+                            // ++seActivations;
+                        }
+                        else if (singularBeta >= beta){ // Multicut
+                            undo(undoer, currMove);
+                            return singularBeta;
+                        }
+                        else if (ttScore >= beta || cutNode){
+                            extension = -1;
+                        }
+                        
+                        // else{
+                        //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
+                        // }
+                        // Update avg dist
+                        //avgDist += singularScore - singularBeta;
                     }
-                    else if (ttScore >= beta || cutNode){
-                        extension = -1;
-                    }
-                    
-                    // else{
-                    //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
-                    // }
-                    // Update avg dist
-                    //avgDist += singularScore - singularBeta;
+                    else if (pos.checkers)
+                        extension = 1;
                 }
-                else if (inCheck)
-                    extension = 1;
             }
             cutNode |= extension < 0;
 
