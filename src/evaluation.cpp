@@ -314,7 +314,7 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
             const BitBoard sqb = squareBB(sq);
             const U8 rank = 7 - rankOf(sq);
             bool doubled = doubledPawns[WHITE] & sqb;
-            bool isolated = !(isolatedPawnMask[sq] & bb[P]);
+            bool isolated = !(isolatedPawnMask[sq] & bb[P]) && !(defendedByPawn[BLACK] & sqb);
             bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
             bool supported = protectedPawns[WHITE] & sqb;
             bool advancable = !(pawnBlockage[WHITE] & north(sqb));
@@ -363,7 +363,7 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
             const BitBoard sqb = squareBB(sq);
             const U8 rank = rankOf(sq);
             bool doubled = doubledPawns[BLACK] & sqb;
-            bool isolated = !(isolatedPawnMask[sq] & bb[p]);
+            bool isolated = !(isolatedPawnMask[sq] & bb[p]) && !(defendedByPawn[WHITE] & sqb);
             bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
             bool supported = protectedPawns[BLACK] & sqb;
             bool advancable = !(pawnBlockage[BLACK] & south(sqb));
@@ -1239,7 +1239,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         BitBoard sqb = squareBB(sq);
         U8 rank = 7 - rankOf(sq);
         bool doubled = doubledPawns[WHITE] & squareBB(sq);
-        bool isolated = !(isolatedPawnMask[sq] & bb[P]);
+        bool isolated = !(isolatedPawnMask[sq] & bb[P]) && !(pawnAttackedSquares[BLACK] & sqb);
         bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
         bool supported = protectedPawns[WHITE] & sqb;
         bool advancable = !(pawnBlockage[WHITE] & north(sqb));
@@ -1284,7 +1284,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         BitBoard sqb = squareBB(sq);
         U8 rank = rankOf(sq);
         bool doubled = doubledPawns[BLACK] & squareBB(sq);
-        bool isolated = !(isolatedPawnMask[sq] & bb[p]);
+        bool isolated = !(isolatedPawnMask[sq] & bb[p]) && !(pawnAttackedSquares[WHITE] & sqb);
         bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
         bool supported = protectedPawns[BLACK] & sqb;
         bool advancable = !(pawnBlockage[BLACK] & south(sqb));
