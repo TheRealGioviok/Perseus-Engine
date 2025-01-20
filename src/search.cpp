@@ -303,21 +303,23 @@ skipPruning:
         if (sameMovePos(currMove, excludedMove)) continue;
         const bool isQuiet = okToReduce(currMove);
         if (!skipQuiets) { 
-            if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
-            if (!PVNode
-                && depth <= 8
-                && !inCheck
-                && bestScore > -KNOWNWIN
-                && std::abs(alpha) < KNOWNWIN
-                && isQuiet
-                && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
-            {
-                skipQuiets = true;
-                continue;
-            }
-            if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
-                skipQuiets = true;
-                continue;
+            if (!PVNode){
+                if (moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
+                if (depth <= 8
+                    && !inCheck
+                    && bestScore > -KNOWNWIN
+                    && std::abs(alpha) < KNOWNWIN
+                    && isQuiet
+                    && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
+                {
+                    skipQuiets = true;
+                    continue;
+                }
+                if (isQuiet && depth <= quietHistoryPruningDepth() && ((currMoveScore - QUIETSCORE) < quietHistoryPruningMultiplier() * depth + quietHistoryPruningBias())) {
+                    skipQuiets = true;
+                    continue;
+                }
+                else if (!isQuiet && depth <= captHistoryPruningDepth() && ((currMoveScore - BADNOISYMOVE) < captHistoryPruningMultiplier() * depth + captHistoryPruningBias())) continue;
             }
         }
         else if (currMoveScore < COUNTERSCORE) continue;
