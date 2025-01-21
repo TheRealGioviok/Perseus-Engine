@@ -319,7 +319,10 @@ skipPruning:
                     skipQuiets = true;
                     continue;
                 }
-                else if (!isQuiet && depth <= captHistoryPruningDepth() && ((currMoveScore - BADNOISYMOVE) < captHistoryPruningMultiplier() * depth + captHistoryPruningBias())) continue;
+                else if (!isQuiet && depth <= captHistoryPruningDepth() && ((currMoveScore - BADNOISYMOVE) < captHistoryPruningMultiplier() * depth + captHistoryPruningBias())) {
+                    skipQuiets = true;
+                    continue;
+                }
             }
         }
         else if (currMoveScore < COUNTERSCORE) continue;
