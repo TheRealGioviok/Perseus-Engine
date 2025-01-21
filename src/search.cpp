@@ -319,7 +319,7 @@ skipPruning:
                     skipQuiets = true;
                     continue;
                 }
-                else if (!isQuiet && depth <= captHistoryPruningDepth() && ((currMoveScore - BADNOISYMOVE) < captHistoryPruningMultiplier() * depth + captHistoryPruningBias())) {
+                else if (!isQuiet && depth <= captHistoryPruningDepth() && ((currMoveScore - BADNOISYMOVE) < captHistoryPruningMultiplier() * depth * depth + captHistoryPruningBias())) {
                     skipQuiets = true;
                     continue;
                 }
