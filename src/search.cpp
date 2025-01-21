@@ -320,7 +320,6 @@ skipPruning:
                     continue;
                 }
                 else if (!isQuiet && depth <= captHistoryPruningDepth() && ((currMoveScore - BADNOISYMOVE) < captHistoryPruningMultiplier() * depth * depth + captHistoryPruningBias())) {
-                    skipQuiets = true;
                     continue;
                 }
             }
