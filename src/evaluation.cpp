@@ -89,6 +89,8 @@ constexpr PScore KNIGHTATTACKOUTERRING = S(47, 6);
 constexpr PScore BISHOPATTACKOUTERRING = S(55, 1);
 constexpr PScore ROOKATTACKOUTERRING = S(31, -5);
 constexpr PScore QUEENATTACKOUTERRING = S(48, 21);
+constexpr PScore INNERDOUBLEATTACKS = S(15,5);
+constexpr PScore OUTERDOUBLEATTACKS = S(3,2);
 constexpr PScore NOQUEENDANGER = S(-452, -1127);
 constexpr PScore PINNEDSHELTERDANGER = S(68, -7);
 constexpr PScore SAFECHECK[4] = {S(188, -29), S(43, 0), S(118, 34), S(117, 14), };
@@ -776,6 +778,12 @@ Score pestoEval(Position *pos){
         innerAttacks[BLACK] + outerAttacks[BLACK]
     };
 
+    // Strong double attacks and double defends
+    dangerIndex[WHITE] += INNERDOUBLEATTACKS * popcount(multiAttacks[WHITE] & weakSquares[BLACK] & kingRing[BLACK]);
+    dangerIndex[BLACK] += INNERDOUBLEATTACKS * popcount(multiAttacks[BLACK] & weakSquares[WHITE] & kingRing[WHITE]);
+    dangerIndex[WHITE] += OUTERDOUBLEATTACKS * popcount(multiAttacks[WHITE] & weakSquares[BLACK] & kingOuter[BLACK]);
+    dangerIndex[BLACK] += OUTERDOUBLEATTACKS * popcount(multiAttacks[BLACK] & weakSquares[WHITE] & kingOuter[WHITE]);
+
     dangerIndex[WHITE] += NOQUEENDANGER * (!bb[Q]);
     dangerIndex[BLACK] += NOQUEENDANGER * (!bb[q]);
 
@@ -1450,7 +1458,17 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         attackedBy[BLACK] & (~attackedBy[WHITE] | ((kingAttacks[whiteKing] | ptAttacks[WHITE][Q-1]) & ~multiAttacks[WHITE])),
         attackedBy[WHITE] & (~attackedBy[BLACK] | ((kingAttacks[blackKing] | ptAttacks[BLACK][Q-1]) & ~multiAttacks[BLACK])),
     };
-    
+
+    const S32 innerStrongDoubleAttacks[2] = {
+        popcount(multiAttacks[WHITE] & weakSquares[BLACK] & kingRing[BLACK]),
+        popcount(multiAttacks[BLACK] & weakSquares[WHITE] & kingRing[WHITE])
+    };
+
+    const S32 outerStrongDoubleAttacks[2] = {
+        popcount(multiAttacks[WHITE] & weakSquares[BLACK] & kingOuter[BLACK]),
+        popcount(multiAttacks[BLACK] & weakSquares[WHITE] & kingOuter[WHITE])
+    };
+
     const BitBoard checks[2][4] = {
         {
             ptAttacks[WHITE][N-1] & kingCheckers[BLACK][N-1],
@@ -1512,7 +1530,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor += 9;
 
 
-#define KINGSAFETYCOLOREDPARAMS 50
+#define KINGSAFETYCOLOREDPARAMS 54
     tensor[P] = innerAttacks[WHITE][P];
     tensor[N] = innerAttacks[WHITE][N];
     tensor[B] = innerAttacks[WHITE][B];
@@ -1525,6 +1543,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[R] = outerAttacks[WHITE][R];
     tensor[Q] = outerAttacks[WHITE][Q];
     tensor += 5;
+    tensor[0] = innerStrongDoubleAttacks[WHITE];
+    tensor[1] = outerStrongDoubleAttacks[WHITE];
+    tensor += 2;
     tensor[0] = noQueenDanger[WHITE];
     tensor[1] = pinnedShelter[WHITE];
     tensor += 2;
@@ -1560,6 +1581,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     tensor[R] = outerAttacks[BLACK][R];
     tensor[Q] = outerAttacks[BLACK][Q];
     tensor += 5;
+    tensor[0] = innerStrongDoubleAttacks[BLACK];
+    tensor[1] = outerStrongDoubleAttacks[BLACK];
+    tensor += 2;
     tensor[0] = noQueenDanger[BLACK];
     tensor[1] = pinnedShelter[BLACK];
     tensor += 2;
