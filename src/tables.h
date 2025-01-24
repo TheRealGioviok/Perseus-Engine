@@ -34,8 +34,8 @@ extern S32 lmpMargin[128][2];
 
 
 constexpr S32 KSTABLESIZE = 256;
-constexpr S32 MIN_X = -32768;
-constexpr S32 MAX_X = 32768;
+constexpr S32 MIN_X = -4096;
+constexpr S32 MAX_X = 4096;
 extern std::array<S32, KSTABLESIZE> kingSafetyMgTable;
 extern std::array<S32, KSTABLESIZE> kingSafetyEgTable;
 
