@@ -1350,8 +1350,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
             // Bonus for connected or supported passed pawns
             if (supported) tensor[8 + 7 + 1]--;
             // Give bonus for proximity of own / opponent king
-            tensor[8 + 7 + 2 + chebyshevDistance[blackKing][sq]] += 1;
-            tensor[8 + 7 + 2 + 8 + chebyshevDistance[whiteKing][sq]] += 1;
+            tensor[8 + 7 + 2 + chebyshevDistance[blackKing][sq]] -= 1;
+            tensor[8 + 7 + 2 + 8 + chebyshevDistance[whiteKing][sq]] -= 1;
         }
     }
     tensor += 8 + 7 + 2 + 8 + 8;
