@@ -58,6 +58,8 @@ constexpr PScore R_ADVANCABLEPHALANX = S(1, 20);
 constexpr PScore passedRankBonus[7] = {S(0, 0), S(10, -82), S(-11, -51), S(-7, 3), S(24, 55), S(47, 150), S(138, 242), };
 constexpr PScore PASSEDPATHBONUS = S(-4, 23);
 constexpr PScore SUPPORTEDPASSER = S(28, 0);
+constexpr PScore OWNKINGPASSERPROXIMITY[8] = {S( 0, 0), S( 7, 49), S( -4, 36), S( -5, 20), S( -2, 10), S( 2, 8), S( 17, 6), S( 7, 4)};
+constexpr PScore THEIRKINGPASSERPROXIMITY[8] = {S( 0, 0), S( -69, -4), S( 6, -1), S( -0, 23), S( 4, 33), S( 5, 41), S( 6, 45), S( -12, 46)};
 constexpr PScore INNERSHELTER = S(-1, -29);
 constexpr PScore OUTERSHELTER = S(7, -17);
 constexpr PScore BISHOPPAIR = S(20, 126);
@@ -279,6 +281,9 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
     PawnEvalHashEntry& entry = pawnEvalHash[hashKey & 0x3FFFF];
     // Init the score
     PScore score = PScore(0,0);
+    // Get kings
+    const Square whiteKing = lsb(bb[K]);
+    const Square blackKing = lsb(bb[k]);
     // Check
     if (entry.hash == hashKey){
         BitBoard whitePassers = entry.passers & bb[P];
@@ -292,6 +297,9 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
             // Give bonus for how many squares the pawn can advance
             BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~block);
             score += PASSEDPATHBONUS * popcount(passedPath);
+            // Give bonus for proximity of own / opponent king
+            score += OWNKINGPASSERPROXIMITY[chebyshevDistance[whiteKing][sq]];
+            score += THEIRKINGPASSERPROXIMITY[chebyshevDistance[blackKing][sq]];
         }
         block = occ[BOTH] | (~defendedByPawn[BLACK] & ((~attackedBy[BLACK] & attackedBy[WHITE]) | (multiAttacks[WHITE]))); 
         while (blackPassers){
@@ -300,6 +308,9 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
             // Give bonus for how many squares the pawn can advance
             BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~block);
             score -= PASSEDPATHBONUS * popcount(passedPath);
+            // Give bonus for proximity of own / opponent king
+            score += OWNKINGPASSERPROXIMITY[chebyshevDistance[blackKing][sq]];
+            score += THEIRKINGPASSERPROXIMITY[chebyshevDistance[whiteKing][sq]];
         }
         return score;
     }
@@ -351,6 +362,9 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
                 // Give bonus for how many squares the pawn can advance. This can't be stored into the entry, since it depends on the rest of the position.
                 BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~block);
                 extraScore += PASSEDPATHBONUS * popcount(passedPath);
+                // Give bonus for proximity of own / opponent king
+                score += OWNKINGPASSERPROXIMITY[chebyshevDistance[whiteKing][sq]];
+                score += THEIRKINGPASSERPROXIMITY[chebyshevDistance[blackKing][sq]];
             }
         }
 
@@ -400,6 +414,9 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
                 // Give bonus for how many squares the pawn can advance. This can't be stored into the entry, since it depends on the rest of the position.
                 BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~block);
                 extraScore -= PASSEDPATHBONUS * popcount(passedPath);
+                // Give bonus for proximity of own / opponent king
+                score += OWNKINGPASSERPROXIMITY[chebyshevDistance[blackKing][sq]];
+                score += THEIRKINGPASSERPROXIMITY[chebyshevDistance[whiteKing][sq]];
             }
         }
 
@@ -896,6 +913,12 @@ std::vector<Score> getCurrentEvalWeights(){
     }
     weights.push_back(PASSEDPATHBONUS.mg());
     weights.push_back(SUPPORTEDPASSER.mg());
+    for (U8 dist = 0; dist < 8; dist++){
+        weights.push_back(OWNKINGPASSERPROXIMITY[dist].mg());
+    }
+    for (U8 dist = 0; dist < 8; dist++){
+        weights.push_back(THEIRKINGPASSERPROXIMITY[dist].mg());
+    }
 
     // Add the shelter weights
     weights.push_back(INNERSHELTER.mg());
@@ -967,6 +990,13 @@ std::vector<Score> getCurrentEvalWeights(){
     }
     weights.push_back(PASSEDPATHBONUS.eg());
     weights.push_back(SUPPORTEDPASSER.eg());
+
+    for (U8 dist = 0; dist < 8; dist++){
+        weights.push_back(OWNKINGPASSERPROXIMITY[dist].eg());
+    }
+    for (U8 dist = 0; dist < 8; dist++){
+        weights.push_back(THEIRKINGPASSERPROXIMITY[dist].eg());
+    }
 
     // Add the shelter weights
     weights.push_back(INNERSHELTER.eg());
