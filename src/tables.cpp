@@ -73,9 +73,15 @@ static inline int computeKingSafetyEg(double x) {
 // Function to initialize the precomputed tables
 void initializeKingSafetyTables() {
     for (int i = 0; i < KSTABLESIZE; ++i) {
-        double x = MIN_X + i * (MAX_X - MIN_X) / (KSTABLESIZE - 1);
+        double x = MIN_MGX + i * (MAX_MGX - MIN_MGX) / (KSTABLESIZE - 1);
         kingSafetyMgTable[i] = computeKingSafetyMg(x);
+        //std::cout << "Input = " << x << "\tMg = " << kingSafetyMgTable[i] << "\n";
+    }
+
+    for (int i = 0; i < KSTABLESIZE; ++i) {
+        double x = MIN_EGX + i * (MAX_EGX - MIN_EGX) / (KSTABLESIZE - 1);
         kingSafetyEgTable[i] = computeKingSafetyEg(x);
+        //std::cout << "Input = " << x << "\tEg = " << kingSafetyEgTable[i] << "\n";
     }
 }
 

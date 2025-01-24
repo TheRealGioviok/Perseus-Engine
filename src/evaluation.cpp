@@ -111,6 +111,7 @@ constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3448;
 constexpr Score COMPLEXITYBIAS = -19546;
 
 // Function to access the table values
+template <int MIN_X, int MAX_X>
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
     // Map x to the table index range
     S32 index = ((x - MIN_X) * (KSTABLESIZE - 1) + (MAX_X - MIN_X)/2) / (MAX_X - MIN_X);
@@ -118,11 +119,11 @@ static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& tab
 }
 
 int getKingSafetyMg(int x) {
-    return getKingSafetyFromTable(kingSafetyMgTable, x);
+    return getKingSafetyFromTable<MIN_MGX, MAX_MGX>(kingSafetyMgTable, x);
 }
 
 int getKingSafetyEg(int x) {
-    return getKingSafetyFromTable(kingSafetyEgTable, x);
+    return getKingSafetyFromTable<MIN_EGX, MAX_EGX>(kingSafetyEgTable, x);
 }
 
 static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) | files(5);
