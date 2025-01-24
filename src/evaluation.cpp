@@ -415,8 +415,8 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
                 BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~block);
                 extraScore -= PASSEDPATHBONUS * popcount(passedPath);
                 // Give bonus for proximity of own / opponent king
-                score += OWNKINGPASSERPROXIMITY[chebyshevDistance[blackKing][sq]];
-                score += THEIRKINGPASSERPROXIMITY[chebyshevDistance[whiteKing][sq]];
+                score -= OWNKINGPASSERPROXIMITY[chebyshevDistance[blackKing][sq]];
+                score -= THEIRKINGPASSERPROXIMITY[chebyshevDistance[whiteKing][sq]];
             }
         }
 
