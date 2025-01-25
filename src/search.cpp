@@ -96,6 +96,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     assert(pos.nonPawnKeys[WHITE] == pos.generateNonPawnHashKey(WHITE));
     assert(pos.nonPawnKeys[BLACK] == pos.generateNonPawnHashKey(BLACK));
     assert(pos.minorKey == pos.generateMinorHashKey());
+    assert(pos.rookPawnKey == pos.generateRookPawnHashKey());
     // Ply overflow
     if (ply >= maxPly)
         return evaluate();

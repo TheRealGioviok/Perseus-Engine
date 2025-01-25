@@ -20,6 +20,7 @@ S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES]
 S32 pawnsCorrHist[2][CORRHISTSIZE]; // stm - hash
 S32 nonPawnsCorrHist[2][2][CORRHISTSIZE]; // stm - side - hash
 S32 minorCorrHist[2][CORRHISTSIZE]; // stm - hash
+S32 rookPawnCorrHist[2][CORRHISTSIZE]; // stm - hash
 
 static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
     S32 *current = &historyTable[side][getThreatsIndexing(threats, move)][indexFromTo(moveSource(move),moveTarget(move))];
@@ -76,8 +77,9 @@ Score correctStaticEval(Position& pos, const Score eval) {
     ;
 
     const S32 minorBonus = minorCorrHist[side][pos.minorKey % CORRHISTSIZE];
+    const S32 rookPawnBonus = rookPawnCorrHist[side][pos.rookPawnKey % CORRHISTSIZE];
 
-    const S32 bonus = pawnBonus + nonPawnBonus + minorBonus;
+    const S32 bonus = pawnBonus + nonPawnBonus + minorBonus + rookPawnBonus;
     const S32 corrected = eval + bonus / CORRHISTSCALE;
 
     return static_cast<Score>(std::clamp(corrected, -mateValue, +mateValue));
@@ -97,9 +99,11 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
     auto& wNonPawnEntry = nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE];
     auto& bNonPawnEntry = nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE];
     auto& minorEntry = minorCorrHist[side][pos.minorKey % CORRHISTSIZE];
+    auto& rookPawnEntry = rookPawnCorrHist[side][pos.rookPawnKey % CORRHISTSIZE];
 
     updateSingleCorrHist(pawnEntry, scaledBonus, weight);
     updateSingleCorrHist(wNonPawnEntry, scaledBonus, weight);
     updateSingleCorrHist(bNonPawnEntry, scaledBonus, weight);
     updateSingleCorrHist(minorEntry, scaledBonus, weight);
+    updateSingleCorrHist(rookPawnEntry, scaledBonus, weight);
 }
