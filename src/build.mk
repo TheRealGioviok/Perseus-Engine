@@ -60,7 +60,7 @@ clean:
 	@echo "Cleaning"
 ifeq ($(OS),Windows_NT)
 	@if exist $(subst /,\,$(OBJ_DIR)) rmdir /s /q $(subst /,\,$(OBJ_DIR))
-	@if exist $(EXE).exe del $(EXE).exe
+	@if exist $(EXE) del $(EXE)
 else
 	@rm -rf $(OBJ_DIR)
 	@rm -f $(EXE)
