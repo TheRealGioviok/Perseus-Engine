@@ -6,16 +6,34 @@ OBJ_FILES = $(addprefix $(OBJ_DIR)/, $(CPP_FILES:.cpp=.o))
 
 CXX ?= clang++
 CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough
-NATIVE := -march=native -mpopcnt
 EXE ?= Perseus
+CPU ?= default
 
 ifeq ($(TARGET), Release)
-	CXXFLAGS += -funroll-loops -O3 -flto -fno-exceptions -DNDEBUG -lm
+#	-lm in g++ means to link the math library; in clang++ it means to link the library named 'm.lib' (which doesn't exist).
+#	since the math library *should* be linked by default it's being removed from the flags. in case of errors, add an if that adds it in case of g++.
+	CXXFLAGS += -mpopcnt -funroll-loops -O3 -flto -fno-exceptions -DNDEBUG
 else ifeq ($(TARGET), Debug)
-	CXXFLAGS += -g -O0 -fsanitize=address -fno-omit-frame-pointer -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC
+	CXXFLAGS += -mpopcnt -g -O0 -fsanitize=address -fno-omit-frame-pointer -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC
 else
 	$(error "Unknown target: $(TARGET)")
 endif
+
+ifeq ($(CPU), default)
+    CPU_FLAGS :=
+else ifeq ($(CPU), M64)
+    CPU_FLAGS := -m64 -mpopcnt
+else ifeq ($(CPU), haswell)
+    CPU_FLAGS := -march=haswell -m64 -mpopcnt
+else ifeq ($(CPU), znver2)
+    CPU_FLAGS := -march=znver2
+else ifeq ($(CPU), native)
+    CPU_FLAGS := -march=native
+else
+    $(error "Unknown CPU architecture: $(CPU)")
+endif
+
+CXXFLAGS += $(CPU_FLAGS)
 
 .PHONY: all build dirs link clean
 
