@@ -5,16 +5,16 @@ CPP_FILES := $(wildcard *.cpp)
 OBJ_FILES = $(addprefix $(OBJ_DIR)/, $(CPP_FILES:.cpp=.o))
 
 CXX ?= clang++
-CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough
+CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough -fuse-ld=lld-link -mpopcnt
 EXE ?= Perseus
 CPU ?= default
 
 ifeq ($(TARGET), Release)
 #	-lm in g++ means to link the math library; in clang++ it means to link the library named 'm.lib' (which doesn't exist).
 #	since the math library *should* be linked by default it's being removed from the flags. in case of errors, add an if that adds it in case of g++.
-	CXXFLAGS += -mpopcnt -funroll-loops -O3 -flto -fno-exceptions -DNDEBUG
+	CXXFLAGS += -funroll-loops -O3 -flto -fno-exceptions -DNDEBUG
 else ifeq ($(TARGET), Debug)
-	CXXFLAGS += -mpopcnt -g -O0 -fsanitize=address -fno-omit-frame-pointer -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC
+	CXXFLAGS += -g -O0 -fsanitize=address -fno-omit-frame-pointer -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC
 else
 	$(error "Unknown target: $(TARGET)")
 endif
