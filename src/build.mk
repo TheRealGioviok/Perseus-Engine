@@ -4,8 +4,15 @@ OBJ_DIR = obj/$(TARGET)
 CPP_FILES := $(wildcard *.cpp)
 OBJ_FILES = $(addprefix $(OBJ_DIR)/, $(CPP_FILES:.cpp=.o))
 
+ifeq ($(OS),Windows_NT)
+# disable msvc linker (beacuse bad)
+	LINKER := -fuse-ld=lld-link
+else
+	LINKER :=
+endif
+
 CXX ?= clang++
-CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough -fuse-ld=lld-link -mpopcnt
+CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough -mpopcnt
 EXE ?= Perseus
 CPU ?= default
 
@@ -50,11 +57,11 @@ endif
 
 $(OBJ_DIR)/%.o: %.cpp
 	@echo "Compiling $<"
-	@$(CXX) $(CXXFLAGS) $(NATIVE) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 link: $(OBJ_FILES)
 	@echo "Linking"
-	@$(CXX) $(CXXFLAGS) $(NATIVE) $(OBJ_FILES) -o $(EXE)
+	@$(CXX) $(CXXFLAGS) $(LINKER) $(OBJ_FILES) -o $(EXE)
 
 clean:
 	@echo "Cleaning"
