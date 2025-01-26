@@ -7,6 +7,8 @@
 #include <sys/select.h> // Solves IO problems for some very barebone linux distros
 #else
 #include <Windows.h>
+#undef min
+#undef max
 #include <io.h>
 #endif
 #include <cstring>
