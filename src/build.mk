@@ -5,10 +5,10 @@ CPP_FILES := $(wildcard *.cpp)
 OBJ_FILES = $(addprefix $(OBJ_DIR)/, $(CPP_FILES:.cpp=.o))
 
 ifeq ($(OS),Windows_NT)
+ifeq ($(CXX),clang++)
 # disable msvc linker (beacuse bad)
 	LINKER := -fuse-ld=lld-link
-else
-	LINKER :=
+endif
 endif
 
 CXX ?= clang++
