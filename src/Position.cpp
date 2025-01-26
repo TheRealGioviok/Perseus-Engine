@@ -102,6 +102,36 @@ HashKey Position::generateMinorHashKey() {
     return h;
 }
 
+/** 
+ * @brief The Position::generateRookPawnHashKey function generates the hash key of the rook-pawn-king structure.
+ * @note This function is called by the constructors. Otherwise the hash gets incrementally updated.
+ */
+HashKey Position::generateRookPawnHashKey() {
+    HashKey h = 0ULL;
+    for (int i = Pieces::K ; i <= Pieces::k; i+=6) {
+        BitBoard pieceBB = bitboards[i];
+        while (pieceBB) {
+            Square square = popLsb(pieceBB);
+            h ^= rookPawnKeysTable[i][square];
+        }
+    }
+    for (int i = Pieces::R ; i <= Pieces::r; i+=6) {
+        BitBoard pieceBB = bitboards[i];
+        while (pieceBB) {
+            Square square = popLsb(pieceBB);
+            h ^= rookPawnKeysTable[i][square];
+        }
+    }
+    for (int i = Pieces::P ; i <= Pieces::p; i+=6) {
+        BitBoard pieceBB = bitboards[i];
+        while (pieceBB) {
+            Square square = popLsb(pieceBB);
+            h ^= rookPawnKeysTable[i][square];
+        }
+    }
+    return h;
+}
+
 /**
  * @brief The Position::print function prints the position to stdout.
  */
@@ -154,6 +184,7 @@ void Position::wipe(){
     pawnHashKey = 0;
     nonPawnKeys[0] = nonPawnKeys[1] = 0;
     minorKey = 0;
+    rookPawnKey = 0;
     memset(psqtScores,0,sizeof(psqtScores));
 }
 
@@ -184,6 +215,7 @@ static inline void removePiece(Position& pos, const Piece piece, const Square sq
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
     pos.minorKey ^= minorKeysTable[piece][square];
+    pos.rookPawnKey ^= rookPawnKeysTable[piece][square];
     // Update the psqt score
     pos.psqtScores[indexColorSide(piece >= p, 0)] -= PSQTs[0][piece][square];
     pos.psqtScores[indexColorSide(piece >= p, 1)] -= PSQTs[1][piece][square];
@@ -216,6 +248,7 @@ static inline void addPiece(Position& pos, const Piece piece, const Square squar
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
     pos.minorKey ^= minorKeysTable[piece][square];
+    pos.rookPawnKey ^= rookPawnKeysTable[piece][square];
     // Update the psqt score
     pos.psqtScores[indexColorSide(piece >= p, 0)] += PSQTs[0][piece][square];
     pos.psqtScores[indexColorSide(piece >= p, 1)] += PSQTs[1][piece][square];
@@ -363,6 +396,7 @@ FENkeyEval:
     nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
     minorKey = generateMinorHashKey();
+    rookPawnKey = generateRookPawnHashKey();
     checkers = calculateCheckers();
     generateThreats();
     return true;
@@ -865,6 +899,7 @@ void Position::reflect() {
     nonPawnKeys[WHITE] = generateNonPawnHashKey(WHITE);
     nonPawnKeys[BLACK] = generateNonPawnHashKey(BLACK);
     minorKey = generateMinorHashKey();
+    rookPawnKey = generateRookPawnHashKey();
     generateThreats();
 }
 
@@ -1722,6 +1757,7 @@ UndoInfo::UndoInfo(Position& position){
     nonPawnsHashKey[WHITE] = position.nonPawnKeys[WHITE];
     nonPawnsHashKey[BLACK] = position.nonPawnKeys[BLACK];
     minorHashKey = position.minorKey;
+    rookPawnHashKey = position.rookPawnKey;
     enPassant = position.enPassant;
     castle = position.castle;
     fiftyMove = position.fiftyMove;
@@ -1741,6 +1777,7 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.nonPawnKeys[WHITE] = nonPawnsHashKey[WHITE];
     position.nonPawnKeys[BLACK] = nonPawnsHashKey[BLACK];
     position.minorKey = minorHashKey;
+    position.rookPawnKey = rookPawnHashKey;
     position.enPassant = enPassant;
     position.castle = castle;
     position.fiftyMove = fiftyMove;
@@ -1772,6 +1809,7 @@ void UndoInfo::undoNullMove(Position& position){
     position.nonPawnKeys[WHITE] = nonPawnsHashKey[WHITE];
     position.nonPawnKeys[BLACK] = nonPawnsHashKey[BLACK];
     position.minorKey = minorHashKey;
+    position.rookPawnKey = rookPawnHashKey;
     position.enPassant = enPassant;
     position.castle = castle;
     position.fiftyMove = fiftyMove;

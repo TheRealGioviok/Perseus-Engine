@@ -26,6 +26,7 @@ extern S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_S
 extern S32 pawnsCorrHist[2][CORRHISTSIZE];
 extern S32 nonPawnsCorrHist[2][2][CORRHISTSIZE];
 extern S32 minorCorrHist[2][CORRHISTSIZE]; // stm - hash
+extern S32 rookPawnCorrHist[2][CORRHISTSIZE]; // stm - hash
 
 struct SStack {
     Move excludedMove = 0;
