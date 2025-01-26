@@ -32,15 +32,6 @@ __declspec(align(16)) struct ttEntry {
     U8 flags = hashINVALID;  // 1
     Score score = noScore; // 2
     Score eval = noScore;  // 2
-
-    ttEntry () {
-        hashKey = 0;
-        bestMove = 0;
-        depth = 0;
-        flags = hashINVALID;
-        score = noScore;
-        eval = noScore;
-    }
 };
 
 __declspec(align(64))struct ttBucket {
