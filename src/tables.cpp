@@ -80,8 +80,8 @@ void initializeKingSafetyTables() {
 }
 
 // The LMR reduction table
-S32 reductionTable[2][64][64] = {{0}};
-S32 lmpMargin[128][2] = {{0}};
+S32 reductionTable[2][64][64] = { { {0} } };
+S32 lmpMargin[128][2] = { {0} };
 /**
  * @brief The initLMRTable function initializes the LMR reduction table
  */
