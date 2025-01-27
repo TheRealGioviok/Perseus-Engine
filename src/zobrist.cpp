@@ -5,8 +5,6 @@
 HashKey pieceKeysTable[12][64];
 HashKey pawnKeysTable[12][64];
 HashKey nonPawnKeysTable[12][64];
-HashKey minorKeysTable[12][64];
-HashKey rookPawnKeysTable[12][64];
 // random enPassant keys
 HashKey enPassantKeysTable[65];
 // random castling keys
@@ -24,33 +22,23 @@ void initHashKeys(){
             switch (i % 6){
                 case 0:
                     pawnKeysTable[i][j] = pieceKeysTable[i][j];
-                    minorKeysTable[i][j] = 0;
                     nonPawnKeysTable[i][j] = 0;
-                    rookPawnKeysTable[i][j] = pieceKeysTable[i][j];
                     break;
                 case 1: case 2:
                     pawnKeysTable[i][j] = 0;
-                    minorKeysTable[i][j] = pieceKeysTable[i][j];
                     nonPawnKeysTable[i][j] = pieceKeysTable[i][j];
-                    rookPawnKeysTable[i][j] = 0;
                     break;
                 case 3:
                     pawnKeysTable[i][j] = 0;
-                    minorKeysTable[i][j] = 0;
                     nonPawnKeysTable[i][j] = pieceKeysTable[i][j];
-                    rookPawnKeysTable[i][j] = pieceKeysTable[i][j];
                     break;
                 case 4:
                     pawnKeysTable[i][j] = 0;
-                    minorKeysTable[i][j] = 0;
                     nonPawnKeysTable[i][j] = pieceKeysTable[i][j];
-                    rookPawnKeysTable[i][j] = 0;
                     break;
                 case 5:
                     pawnKeysTable[i][j] = 0;
-                    minorKeysTable[i][j] = pieceKeysTable[i][j];
                     nonPawnKeysTable[i][j] = pieceKeysTable[i][j];
-                    rookPawnKeysTable[i][j] = pieceKeysTable[i][j];
                     break;
             }
         }
