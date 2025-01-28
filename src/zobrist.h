@@ -5,8 +5,6 @@
 extern HashKey pieceKeysTable[12][64];
 extern HashKey pawnKeysTable[12][64];
 extern HashKey nonPawnKeysTable[12][64];
-extern HashKey minorKeysTable[12][64];
-extern HashKey rookPawnKeysTable[12][64];
 // random enPassant keys
 extern HashKey enPassantKeysTable[65];
 // random castling keys

@@ -95,8 +95,13 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     assert(pos.pawnHashKey == pos.generatePawnHashKey());
     assert(pos.nonPawnKeys[WHITE] == pos.generateNonPawnHashKey(WHITE));
     assert(pos.nonPawnKeys[BLACK] == pos.generateNonPawnHashKey(BLACK));
-    assert(pos.minorKey == pos.generateMinorHashKey());
-    assert(pos.rookPawnKey == pos.generateRookPawnHashKey());
+    assert(pos.ptKeys[P] == pos.generatePtHashKey<P>());
+    assert(pos.ptKeys[N] == pos.generatePtHashKey<N>());
+    assert(pos.ptKeys[B] == pos.generatePtHashKey<B>());
+    assert(pos.ptKeys[R] == pos.generatePtHashKey<R>());
+    assert(pos.ptKeys[Q] == pos.generatePtHashKey<Q>());
+    assert(pos.ptKeys[K] == pos.generatePtHashKey<K>());
+
     // Ply overflow
     if (ply >= maxPly)
         return evaluate();

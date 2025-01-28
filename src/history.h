@@ -25,8 +25,8 @@ extern S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_S
 // Correction History
 extern S32 pawnsCorrHist[2][CORRHISTSIZE];
 extern S32 nonPawnsCorrHist[2][2][CORRHISTSIZE];
-extern S32 minorCorrHist[2][CORRHISTSIZE]; // stm - hash
-extern S32 rookPawnCorrHist[2][CORRHISTSIZE]; // stm - hash
+
+extern S32 tripletCorrHist[10][2][CORRHISTSIZE]; // 10 is the number of triplet indexing of type KXY, with X and Y satisfying X != K, Y != K, X != Y
 
 struct SStack {
     Move excludedMove = 0;

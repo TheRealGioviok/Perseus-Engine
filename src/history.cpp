@@ -19,8 +19,7 @@ S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES]
 // Correction History
 S32 pawnsCorrHist[2][CORRHISTSIZE]; // stm - hash
 S32 nonPawnsCorrHist[2][2][CORRHISTSIZE]; // stm - side - hash
-S32 minorCorrHist[2][CORRHISTSIZE]; // stm - hash
-S32 rookPawnCorrHist[2][CORRHISTSIZE]; // stm - hash
+S32 tripletCorrHist[10][2][CORRHISTSIZE]; // stm - hash
 
 static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
     S32 *current = &historyTable[side][getThreatsIndexing(threats, move)][indexFromTo(moveSource(move),moveTarget(move))];
@@ -76,10 +75,22 @@ Score correctStaticEval(Position& pos, const Score eval) {
         + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
     ;
 
-    const S32 minorBonus = minorCorrHist[side][pos.minorKey % CORRHISTSIZE];
-    const S32 rookPawnBonus = rookPawnCorrHist[side][pos.rookPawnKey % CORRHISTSIZE];
+    auto const& k = pos.ptKeys;
 
-    const S32 bonus = pawnBonus + nonPawnBonus + minorBonus + rookPawnBonus;
+    const S32 tripletBonus = 
+        + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE]
+        + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE]
+        + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE]
+        + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE]
+        + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE]
+        + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE]
+        + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE]
+        + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE]
+        + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE]
+        + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE]
+    ;
+
+    const S32 bonus = pawnBonus + nonPawnBonus + tripletBonus;
     const S32 corrected = eval + bonus / CORRHISTSCALE;
 
     return static_cast<Score>(std::clamp(corrected, -mateValue, +mateValue));
@@ -95,15 +106,24 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
     const S32 scaledBonus = bonus * CORRHISTSCALE; 
     const S32 weight = std::min(1 + depth, 16);
 
+    auto const& k = pos.ptKeys;
+
     auto& pawnEntry = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE];
     auto& wNonPawnEntry = nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE];
     auto& bNonPawnEntry = nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE];
-    auto& minorEntry = minorCorrHist[side][pos.minorKey % CORRHISTSIZE];
-    auto& rookPawnEntry = rookPawnCorrHist[side][pos.rookPawnKey % CORRHISTSIZE];
 
     updateSingleCorrHist(pawnEntry, scaledBonus, weight);
     updateSingleCorrHist(wNonPawnEntry, scaledBonus, weight);
     updateSingleCorrHist(bNonPawnEntry, scaledBonus, weight);
-    updateSingleCorrHist(minorEntry, scaledBonus, weight);
-    updateSingleCorrHist(rookPawnEntry, scaledBonus, weight);
+
+    updateSingleCorrHist(tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
 }
