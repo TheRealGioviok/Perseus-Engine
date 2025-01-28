@@ -67,37 +67,27 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
 
 Score correctStaticEval(Position& pos, const Score eval) {
     const bool side = pos.side;
-    auto& bb = pos.bitboards;
-    auto& occ = pos.occupancies;
 
-    const S32 ptCounts[5] = {
-        popcount(bb[P] ^ bb[p]),
-        popcount(bb[N] ^ bb[n]),
-        popcount(bb[B] ^ bb[b]),
-        popcount(bb[R] ^ bb[r]),
-        popcount(bb[Q] ^ bb[q]),
-    };
-
-    const S32 pawnBonus = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE] * (ptCounts[P]) / 16;
+    const S32 pawnBonus = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE] ;
 
     const S32 nonPawnBonus = 
-        + nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE] * (popcount(occ[WHITE] ^ bb[P]) - 1) / 7
-        + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE] * (popcount(occ[BLACK] ^ bb[p]) - 1) / 7
+        + nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE] 
+        + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
     ;
 
     auto const& k = pos.ptKeys;
 
     const S32 tripletBonus = 
-        + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE] * (ptCounts[P] + ptCounts[N]) / 20
-        + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE] * (ptCounts[P] + ptCounts[B]) / 20
-        + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE] * (ptCounts[P] + ptCounts[R]) / 20
-        + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE] * (ptCounts[P] + ptCounts[Q]) / 18
-        + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE] * (ptCounts[N] + ptCounts[B]) / 8
-        + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE] * (ptCounts[N] + ptCounts[R]) / 8
-        + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE] * (ptCounts[N] + ptCounts[Q]) / 6
-        + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE] * (ptCounts[B] + ptCounts[R]) / 8
-        + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE] * (ptCounts[B] + ptCounts[Q]) / 6
-        + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE] * (ptCounts[R] + ptCounts[Q]) / 6
+        + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE]
+        + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE]
+        + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE]
+        + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE]
+        + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE]
+        + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE]
+        + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE]
+        + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE]
+        + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE]
+        + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE]
     ;
 
     const S32 bonus = pawnBonus + nonPawnBonus + tripletBonus;
@@ -116,24 +106,35 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
     const S32 scaledBonus = bonus * CORRHISTSCALE; 
     const S32 weight = std::min(1 + depth, 16);
 
+    auto& bb = pos.bitboards;
+    auto& occ = pos.occupancies;
+
+    const S32 ptCounts[5] = {
+        popcount(bb[P] ^ bb[p]),
+        popcount(bb[N] ^ bb[n]),
+        popcount(bb[B] ^ bb[b]),
+        popcount(bb[R] ^ bb[r]),
+        popcount(bb[Q] ^ bb[q]),
+    };
+
     auto const& k = pos.ptKeys;
 
     auto& pawnEntry = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE];
     auto& wNonPawnEntry = nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE];
     auto& bNonPawnEntry = nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE];
 
-    updateSingleCorrHist(pawnEntry, scaledBonus, weight);
-    updateSingleCorrHist(wNonPawnEntry, scaledBonus, weight);
-    updateSingleCorrHist(bNonPawnEntry, scaledBonus, weight);
+    updateSingleCorrHist(pawnEntry, scaledBonus * (ptCounts[P]) / 16, weight);
+    updateSingleCorrHist(wNonPawnEntry, scaledBonus * (popcount(occ[WHITE] ^ bb[P]) - 1) / 7, weight);
+    updateSingleCorrHist(bNonPawnEntry, scaledBonus * (popcount(occ[BLACK] ^ bb[p]) - 1) / 7, weight);
 
-    updateSingleCorrHist(tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE], scaledBonus * (ptCounts[P] + ptCounts[N]) / 20, weight);
+    updateSingleCorrHist(tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE], scaledBonus * (ptCounts[P] + ptCounts[B]) / 20, weight);
+    updateSingleCorrHist(tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE], scaledBonus * (ptCounts[P] + ptCounts[R]) / 20, weight);
+    updateSingleCorrHist(tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE], scaledBonus * (ptCounts[P] + ptCounts[Q]) / 18, weight);
+    updateSingleCorrHist(tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE], scaledBonus * (ptCounts[N] + ptCounts[B]) / 8, weight);
+    updateSingleCorrHist(tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE], scaledBonus * (ptCounts[N] + ptCounts[R]) / 8, weight);
+    updateSingleCorrHist(tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE], scaledBonus * (ptCounts[N] + ptCounts[Q]) / 6, weight);
+    updateSingleCorrHist(tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE], scaledBonus * (ptCounts[B] + ptCounts[R]) / 8, weight);
+    updateSingleCorrHist(tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE], scaledBonus * (ptCounts[B] + ptCounts[Q]) / 6, weight);
+    updateSingleCorrHist(tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE], scaledBonus * (ptCounts[R] + ptCounts[Q]) / 6, weight);
 }
