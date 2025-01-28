@@ -70,26 +70,34 @@ Score correctStaticEval(Position& pos, const Score eval) {
     auto& bb = pos.bitboards;
     auto& occ = pos.occupancies;
 
-    const S32 pawnBonus = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE] * (popcount(bb[P] ^ bb[p])) / 16;
+    const S32 ptCounts[5] = {
+        popcount(bb[P] ^ bb[p]),
+        popcount(bb[N] ^ bb[n]),
+        popcount(bb[B] ^ bb[b]),
+        popcount(bb[R] ^ bb[r]),
+        popcount(bb[Q] ^ bb[q]),
+    };
+
+    const S32 pawnBonus = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE] * (ptCounts[P]) / 16;
 
     const S32 nonPawnBonus = 
-        + nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE] * (popcount(occ[WHITE]^bb[P]) - 1) / 7
-        + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE] * (popcount(occ[BLACK]^bb[p]) - 1) / 7
+        + nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE] * (popcount(occ[WHITE] ^ bb[P]) - 1) / 7
+        + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE] * (popcount(occ[BLACK] ^ bb[p]) - 1) / 7
     ;
 
     auto const& k = pos.ptKeys;
 
     const S32 tripletBonus = 
-        + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE] * (popcount(bb[P] ^ bb[p] ^ bb[N] ^ bb[n])) / 20
-        + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE] * (popcount(bb[P] ^ bb[p] ^ bb[B] ^ bb[b])) / 20
-        + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE] * (popcount(bb[P] ^ bb[p] ^ bb[R] ^ bb[r])) / 20
-        + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE] * (popcount(bb[P] ^ bb[p] ^ bb[Q] ^ bb[q])) / 20
-        + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE] * (popcount(bb[N] ^ bb[n] ^ bb[B] ^ bb[b])) / 8
-        + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE] * (popcount(bb[N] ^ bb[n] ^ bb[R] ^ bb[r])) / 8
-        + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE] * (popcount(bb[N] ^ bb[n] ^ bb[Q] ^ bb[q])) / 6
-        + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE] * (popcount(bb[B] ^ bb[b] ^ bb[R] ^ bb[r])) / 8
-        + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE] * (popcount(bb[B] ^ bb[B] ^ bb[Q] ^ bb[q])) / 6
-        + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE] * (popcount(bb[R] ^ bb[r] ^ bb[Q] ^ bb[q])) / 6
+        + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE] * (ptCounts[P] + ptCounts[N]) / 20
+        + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE] * (ptCounts[P] + ptCounts[B]) / 20
+        + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE] * (ptCounts[P] + ptCounts[R]) / 20
+        + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE] * (ptCounts[P] + ptCounts[Q]) / 18
+        + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE] * (ptCounts[N] + ptCounts[B]) / 8
+        + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE] * (ptCounts[N] + ptCounts[R]) / 8
+        + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE] * (ptCounts[N] + ptCounts[Q]) / 6
+        + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE] * (ptCounts[B] + ptCounts[R]) / 8
+        + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE] * (ptCounts[B] + ptCounts[Q]) / 6
+        + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE] * (ptCounts[R] + ptCounts[Q]) / 6
     ;
 
     const S32 bonus = pawnBonus + nonPawnBonus + tripletBonus;
