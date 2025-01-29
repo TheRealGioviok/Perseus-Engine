@@ -189,8 +189,10 @@ TUNE_PARAM(doubleExtensionMargin, 23, 1, 50, 2.5, 0.002);
 TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
 
 // History Pruning values
-TUNE_PARAM(historyPruningMultiplier, -1422, -5120, -1024, 205, 0.002);
-TUNE_PARAM(historyPruningBias, 0, -6, 2048, 205, 0.002);
+TUNE_PARAM(quietHistoryPruningMultiplier, -2314, -5120, -1024, 205, 0.002);
+TUNE_PARAM(quietHistoryPruningBias, -1157, -2048, 2048, 205, 0.002);
+TUNE_PARAM(noisyHistoryPruningMultiplier, -1000, -5120, -1024, 205, 0.002);
+TUNE_PARAM(noisyHistoryPruningBias, -1000, -2048, 2048, 205, 0.002);
 
 // IIR values
 TUNE_PARAM(IIRDepth, 5, 3, 8, .5, 0.002);

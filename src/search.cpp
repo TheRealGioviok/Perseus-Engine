@@ -299,12 +299,23 @@ skipPruning:
     // Iterate through moves
     for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
     {
-        S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
         Move currMove = onlyMove(moveList.moves[i]);
-        if (sameMovePos(currMove, excludedMove)) continue;
         const bool isQuiet = okToReduce(currMove);
-        if (!skipQuiets) { 
-            if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
+        if (sameMovePos(currMove, excludedMove)) continue;
+        if (skipQuiets && isQuiet && moveSearched) continue;
+
+        S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
+
+        // Quiets only moveloop pruning
+        if (isQuiet) { 
+            if (!PVNode && moveSearched >= lmpMargin[depth][improving]) {
+                skipQuiets = true;
+                continue;
+            }
+            if (!PVNode && depth <= 5 && (currMoveScore - QUIETSCORE) < quietHistoryPruningMultiplier() * depth + quietHistoryPruningBias()){
+                skipQuiets = true;
+                continue;
+            }
             if (!PVNode
                 && depth <= 8
                 && !inCheck
@@ -316,12 +327,13 @@ skipPruning:
                 skipQuiets = true;
                 continue;
             }
-            if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
-                skipQuiets = true;
+        }
+        // Noisy only moveloop pruning
+        else {
+            if (!PVNode && depth <= 4 && (currMoveScore > QUIETSCORE ? (currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) : (currMoveScore - BADNOISYMOVE)) < noisyHistoryPruningMultiplier() * depth * depth + noisyHistoryPruningBias()){
                 continue;
             }
         }
-        else if (currMoveScore < COUNTERSCORE) continue;
         // assert (
         //     i != 0 || !excludedMove ||
         //     (excludedMove == currMove)
