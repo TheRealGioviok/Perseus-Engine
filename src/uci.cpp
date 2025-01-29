@@ -136,8 +136,7 @@ int executeCommand(Game* game, char* command) {
 	
 
     if (setOption){
-        // TODO: implement setoption
-        setOptionCommand(game, command);
+        setOptionCommand(command);
         return 0;
     }
 
@@ -230,7 +229,7 @@ int executeCommand(Game* game, char* command) {
     return 0;
 }
 
-int setOptionCommand(Game* game, char* command) {
+int setOptionCommand(char* command) {
     // For now, we only have the stposHashDump command
     // Get option name
     char* optionNamec = command + 15;

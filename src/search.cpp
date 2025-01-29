@@ -69,11 +69,6 @@ static inline void clearKillers(SStack *ss)
     ss->killers[1] = noMove;
 }
 
-static inline void clearExcludedMove(SStack *ss)
-{
-    ss->excludedMove = noMove;
-}
-
 Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *ss)
 {
     // Comms

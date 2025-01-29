@@ -7,6 +7,8 @@
 #include <sys/select.h> // Solves IO problems for some very barebone linux distros
 #else
 #include <Windows.h>
+#undef min
+#undef max
 #include <io.h>
 #endif
 #include <cstring>
@@ -65,11 +67,10 @@ int goCommand(Game *game, char *command);
 
 /**
  * @brief The setOptionCommand function handles the setOption command
- * @param game The game object.
  * @param command The command string.
  * @return The return value is the return value of the command.
  */
-int setOptionCommand(Game* game, char* command);
+int setOptionCommand(char* command);
 
 /**
  * @brief The inputWaiting function waits for input from the GUI. The code is based on the code from Code Monkey King's BBC chess engine which is based on the code from VICE by BlueFeverSoftware.

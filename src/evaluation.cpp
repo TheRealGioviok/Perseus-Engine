@@ -562,7 +562,7 @@ Score pestoEval(Position *pos){
     kingCheckers[WHITE][Q-1] = kingCheckers[WHITE][B-1] | kingCheckers[WHITE][R-1];
     kingCheckers[BLACK][Q-1] = kingCheckers[BLACK][B-1] | kingCheckers[BLACK][R-1];
 
-    BitBoard ptAttacks[2][4] = {0};
+    BitBoard ptAttacks[2][4] = { {0} };
 
     PScore innerAttacks[2] = {PScore(0,0), PScore(0,0)};
     PScore outerAttacks[2] = {PScore(0,0), PScore(0,0)};
@@ -1009,7 +1009,7 @@ std::vector<Score> getCurrentEvalWeights(){
     
 // Returns the evaluation features tensor
 // This will be used to tune the evaluation function
-void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
+void getEvalFeaturesTensor(Position *pos, S8* tensor){
 
     auto const& bb = pos->bitboards;
     auto const& occ = pos->occupancies;
@@ -1154,8 +1154,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
         fiveSquare[blackKing] & ~doublePawnAttackedSquares[BLACK]
     };
 
-    S32 innerAttacks[2][5] = {{0}}; 
-    S32 outerAttacks[2][5] = {{0}};
+    S32 innerAttacks[2][5] = { {0} }; 
+    S32 outerAttacks[2][5] = { {0} };
     S32 kingDist[2] = {0};
 
     BitBoard kingCheckers[2][4] = {
@@ -1175,7 +1175,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor, S32 tensorSize){
     kingCheckers[WHITE][Q-1] = kingCheckers[WHITE][B-1] | kingCheckers[WHITE][R-1];
     kingCheckers[BLACK][Q-1] = kingCheckers[BLACK][B-1] | kingCheckers[BLACK][R-1];
 
-    BitBoard ptAttacks[2][4] = {0};
+    BitBoard ptAttacks[2][4] = { {0} };
 
     innerAttacks[WHITE][P] = popcount(pawnAttackedSquares[WHITE] & kingRing[BLACK]);
     innerAttacks[BLACK][P] = popcount(pawnAttackedSquares[BLACK] & kingRing[WHITE]);
@@ -1637,7 +1637,7 @@ void convertToFeatures(std::string filename, std::string output) {
         // Parse the position
         if (pos.parseFEN((char*)tokens[0].c_str())){
             // Get the features
-            getEvalFeaturesTensor(&pos, features, entrySize);
+            getEvalFeaturesTensor(&pos, features);
 
             // Assert we filled the features correctly. This is checked by checking the penultimate element of the features and checking if it is 1 or -1
             assert(features[entrySize - 2] == 1 || features[entrySize - 2] == -1);
