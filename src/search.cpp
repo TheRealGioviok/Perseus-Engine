@@ -488,11 +488,12 @@ skipPruning:
         // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
     if (!stopped && !excludedMove){
+        const Score avgEval = (rawEval + ss->staticEval) / 2;
         if (!inCheck
             && (!bestMove || okToReduce(bestMove))
-            && !(ttBound == hashLOWER && bestScore <= ss->staticEval)
-            && !(ttBound == hashUPPER && bestScore >= ss->staticEval)){
-                updateCorrHist(pos, bestScore - (rawEval + ss->staticEval) / 2, depth);;
+            && !(ttBound == hashLOWER && bestScore <= avgEval)
+            && !(ttBound == hashUPPER && bestScore >= avgEval)){
+                updateCorrHist(pos, bestScore - avgEval, depth);
         }
         U8 ttStoreFlag = bestScore >= beta ? hashLOWER : alpha != origAlpha ? hashEXACT : hashUPPER;
         writeTT(pos.hashKey, bestScore, rawEval, depth, ttStoreFlag, bestMove, ply, PVNode, ttPv);
