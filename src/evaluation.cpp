@@ -47,70 +47,72 @@ void initTables() {
     }
 }
 
-constexpr PScore DOUBLEISOLATEDPEN = S(14, 49);
-constexpr PScore ISOLATEDPEN = S(17, 22);
-constexpr PScore BACKWARDPEN = S(3, 16);
-constexpr PScore DOUBLEDPEN = S(16, 22);
-constexpr PScore SUPPORTEDPHALANX = S(-1, 4);
-constexpr PScore ADVANCABLEPHALANX = S(8, 26);
+constexpr PScore DOUBLEISOLATEDPEN = S(13, 49);
+constexpr PScore ISOLATEDPEN = S(18, 23);
+constexpr PScore BACKWARDPEN = S(3, 17);
+constexpr PScore DOUBLEDPEN = S(15, 23);
+constexpr PScore SUPPORTEDPHALANX = S(-2, 4);
+constexpr PScore ADVANCABLEPHALANX = S(9, 27);
 constexpr PScore R_SUPPORTEDPHALANX = S(2, 11);
-constexpr PScore R_ADVANCABLEPHALANX = S(1, 20);
-constexpr PScore passedRankBonus[7] = {S(0, 0), S(10, -82), S(-11, -51), S(-7, 3), S(24, 55), S(47, 150), S(138, 242), };
+constexpr PScore R_ADVANCABLEPHALANX = S(1, 19);
+constexpr PScore passedRankBonus[7] = {S(0, 0), S(10, -81), S(-12, -51), S(-7, 5), S(24, 56), S(47, 154), S(137, 245), };
 constexpr PScore PASSEDPATHBONUS = S(-4, 23);
-constexpr PScore SUPPORTEDPASSER = S(28, 0);
-constexpr PScore INNERSHELTER = S(-1, -29);
-constexpr PScore OUTERSHELTER = S(7, -17);
-constexpr PScore BISHOPPAIR = S(20, 126);
+constexpr PScore SUPPORTEDPASSER = S(29, -1);
+constexpr PScore INNERSHELTER = S(-1, -30);
+constexpr PScore OUTERSHELTER = S(6, -18);
+constexpr PScore BISHOPPAIR = S(19, 127);
 constexpr PScore ROOKONOPENFILE = S(22, 10);
-constexpr PScore ROOKONSEMIOPENFILE = S(19, 13);
-constexpr PScore KNIGHTONEXTOUTPOST = S(26, 36);
-constexpr PScore BISHOPONEXTOUTPOST = S(30, -1);
-constexpr PScore KNIGHTONINTOUTPOST = S(24, 39);
-constexpr PScore BISHOPONINTOUTPOST = S(35, -8);
-constexpr PScore KNIGHTPROTECTOR = S(-7, -1);
+constexpr PScore ROOKONSEMIOPENFILE = S(18, 13);
+constexpr PScore KNIGHTONEXTOUTPOST = S(25, 35);
+constexpr PScore BISHOPONEXTOUTPOST = S(29, 0);
+constexpr PScore KNIGHTONINTOUTPOST = S(25, 40);
+constexpr PScore BISHOPONINTOUTPOST = S(35, -5);
+constexpr PScore KNIGHTPROTECTOR = S(-6, 0);
 constexpr PScore BISHOPPROTECTOR = S(-4, -1);
 constexpr PScore BISHOPPAWNS = S(1, -4);
 constexpr PScore THREATSAFEPAWN = S(49, 61);
-constexpr PScore THREATPAWNPUSH = S(20, 33);
-constexpr PScore PAWNHANGING = S(-4, -60);
+constexpr PScore THREATPAWNPUSH = S(20, 34);
+constexpr PScore PAWNHANGING = S(-4, -61);
 constexpr PScore NONPAWNHANGING = S(-25, -35);
-constexpr PScore KINGTHREAT = S(-3, 2);
-constexpr PScore QUEENINFILTRATION = S(-1, -1);
+constexpr PScore KINGTHREAT = S(-2, 2);
+constexpr PScore QUEENINFILTRATION = S(-1, 0);
 constexpr PScore RESTRICTEDSQUARES = S(5, 4);
 constexpr PScore TEMPO = S(14, 24);
 
-constexpr PScore PAWNATTACKINNERRING = S(18, -45);
-constexpr PScore KNIGHTATTACKINNERRING = S(53, -4);
-constexpr PScore BISHOPATTACKINNERRING = S(55, 8);
-constexpr PScore ROOKATTACKINNERRING = S(56, 18);
-constexpr PScore QUEENATTACKINNERRING = S(40, -34);
-constexpr PScore PAWNATTACKOUTERRING = S(39, -11);
-constexpr PScore KNIGHTATTACKOUTERRING = S(47, 6);
-constexpr PScore BISHOPATTACKOUTERRING = S(55, 1);
-constexpr PScore ROOKATTACKOUTERRING = S(31, -5);
-constexpr PScore QUEENATTACKOUTERRING = S(48, 21);
-constexpr PScore NOQUEENDANGER = S(-452, -1127);
-constexpr PScore PINNEDSHELTERDANGER = S(68, -7);
-constexpr PScore SAFECHECK[4] = {S(188, -29), S(43, 0), S(118, 34), S(117, 14), };
-constexpr PScore ALLCHECKS[4] = {S(45, 6), S(18, 31), S(43, 3), S(8, 16), };
-constexpr PScore SAFETYINNERSHELTER = S(-36, -74);
-constexpr PScore SAFETYOUTERSHELTER = S(-36, -80);
-constexpr PScore INNERWEAKNESS = S(63, -21);
-constexpr PScore OUTERWEAKNESS = S(9, 6);
-constexpr PScore KSTEMPO = S(17, 4);
+constexpr PScore PAWNATTACKINNERRING = S(26, -89);
+constexpr PScore KNIGHTATTACKINNERRING = S(86, -5);
+constexpr PScore BISHOPATTACKINNERRING = S(89, 9);
+constexpr PScore ROOKATTACKINNERRING = S(86, 31);
+constexpr PScore QUEENATTACKINNERRING = S(65, -66);
+constexpr PScore PAWNATTACKOUTERRING = S(63, -26);
+constexpr PScore KNIGHTATTACKOUTERRING = S(80, 15);
+constexpr PScore BISHOPATTACKOUTERRING = S(90, 2);
+constexpr PScore ROOKATTACKOUTERRING = S(47, -11);
+constexpr PScore QUEENATTACKOUTERRING = S(78, 51);
+constexpr PScore NOQUEENDANGER = S(-750, -2281);
+constexpr PScore PINNEDSHELTERDANGER = S(112, -26);
+constexpr PScore SAFECHECK[4] = {S(314, -51), S(65, 13), S(198, 60), S(191, 20), };
+constexpr PScore ALLCHECKS[4] = {S(75, 13), S(22, 66), S(68, 4), S(11, 30), };
+constexpr PScore SAFETYINNERSHELTER = S(-58, -161);
+constexpr PScore SAFETYOUTERSHELTER = S(-49, -165);
+constexpr PScore INNERWEAKNESS = S(103, -44);
+constexpr PScore OUTERWEAKNESS = S(18, 6);
+constexpr PScore KSTEMPO = S(28, 14);
 
-constexpr Score COMPLEXITYPASSERS = 198;
-constexpr Score COMPLEXITYPAWNS = 951;
-constexpr Score COMPLEXITYBLOCKEDPAIRS = -338;
-constexpr Score COMPLEXITYPAWNTENSION = -846;
-constexpr Score COMPLEXITYOUTFLANKING = -52;
-constexpr Score COMPLEXITYINFILTRATION = -893;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS = 10075;
-constexpr Score COMPLEXITYPAWNENDING = 13099;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3448;
-constexpr Score COMPLEXITYBIAS = -19546;
+constexpr Score COMPLEXITYPASSERS = 199;
+constexpr Score COMPLEXITYPAWNS = 955;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -324;
+constexpr Score COMPLEXITYPAWNTENSION = -1068;
+constexpr Score COMPLEXITYOUTFLANKING = -31;
+constexpr Score COMPLEXITYINFILTRATION = -679;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS = 10498;
+constexpr Score COMPLEXITYPAWNENDING = 12355;
+constexpr Score COMPLEXITYOPPOSITEBISHOPENDING = -8388;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3423;
+constexpr Score COMPLEXITYBIAS = -19416;
 
 // Function to access the table values
+template <int MIN_X, int MAX_X>
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
     // Map x to the table index range
     S32 index = ((x - MIN_X) * (KSTABLESIZE - 1) + (MAX_X - MIN_X)/2) / (MAX_X - MIN_X);
@@ -118,11 +120,11 @@ static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& tab
 }
 
 int getKingSafetyMg(int x) {
-    return getKingSafetyFromTable(kingSafetyMgTable, x);
+    return getKingSafetyFromTable<MIN_MGX, MAX_MGX>(kingSafetyMgTable, x);
 }
 
 int getKingSafetyEg(int x) {
-    return getKingSafetyFromTable(kingSafetyEgTable, x);
+    return getKingSafetyFromTable<MIN_EGX, MAX_EGX>(kingSafetyEgTable, x);
 }
 
 static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) | files(5);
@@ -838,6 +840,20 @@ Score pestoEval(Position *pos){
     const bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
     const bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
     const bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
+    const bool pawnEnding = !(nonPawns[WHITE] | nonPawns[BLACK]);
+    bool oppBishopEg = false;
+
+    // Check if both sides only have bishops left
+    if (!pawnEnding){
+        // Confirm that each side has exactly one bishop
+        if (popcount(bb[B]) == 1 && popcount(bb[b]) == 1) {
+            // Since there are two bishops, if only one bishop (not 0, not 2) is on white, then its an opposite bishops ending
+            if (popcount((bb[B] | bb[b]) & squaresOfColor[WHITE]) == 1) { 
+                oppBishopEg = true;
+            }
+        }
+    }
+
     const Score complexity = (COMPLEXITYPASSERS * passedCount
                         +  COMPLEXITYPAWNS * popcount(pawns)
                         +  COMPLEXITYBLOCKEDPAIRS * blockedPairs
@@ -845,8 +861,9 @@ Score pestoEval(Position *pos){
                         +  COMPLEXITYOUTFLANKING * outflanking
                         +  COMPLEXITYINFILTRATION * infiltration
                         +  COMPLEXITYPAWNBOTHFLANKS * pawnsOnBothFlanks
-                        +  COMPLEXITYPAWNENDING * !(nonPawns[WHITE] | nonPawns[BLACK])
+                        +  COMPLEXITYPAWNENDING * pawnEnding
                         +  COMPLEXITYALMOSTUNWINNABLE * almostUnwinnable
+                        +  COMPLEXITYOPPOSITEBISHOPENDING * oppBishopEg
                         +  COMPLEXITYBIAS) / 100;
     
     const Score v = ((egScore > 0) - (egScore < 0)) * std::max(complexity, Score(-std::abs(egScore)));
@@ -1488,7 +1505,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     safeChecks[WHITE][Q-1] &= ~safeChecks[WHITE][R-1];
     safeChecks[BLACK][Q-1] &= ~safeChecks[BLACK][R-1];
 
-#define COMPLEXITYFEATURES 9
+#define COMPLEXITYFEATURES 10
 
     // Complexity adjustment, so we avoid going into drawish barely better endgames
     Score outflanking = std::abs(fileOf(whiteKing)- fileOf(blackKing)) - std::abs(rankOf(whiteKing)- rankOf(blackKing));
@@ -1498,6 +1515,19 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
     bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
     bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
+    const bool pawnEnding = !(nonPawns[WHITE] | nonPawns[BLACK]);
+    bool oppBishopEg = false;
+
+    // Check if both sides only have bishops left
+    if (!pawnEnding){
+        // Confirm that each side has exactly one bishop
+        if (popcount(bb[B]) == 1 && popcount(bb[b]) == 1) {
+            // Since there are two bishops, if only one bishop (not 0, not 2) is on white, then its an opposite bishops ending
+            if (popcount((bb[B] | bb[b]) & squaresOfColor[WHITE]) == 1) { 
+                oppBishopEg = true;
+            }
+        }
+    }
     
     tensor[0] = passedCount;
     tensor[1] = popcount(pawns);
@@ -1506,10 +1536,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[4] = outflanking;
     tensor[5] = infiltration;
     tensor[6] = pawnsOnBothFlanks;
-    tensor[7] = !(nonPawns[WHITE] | nonPawns[BLACK]);
-    tensor[8] = almostUnwinnable;
+    tensor[7] = pawnEnding;
+    tensor[8] = oppBishopEg;
+    tensor[9] = almostUnwinnable;
 
-    tensor += 9;
+    tensor += 10;
 
 
 #define KINGSAFETYCOLOREDPARAMS 50
