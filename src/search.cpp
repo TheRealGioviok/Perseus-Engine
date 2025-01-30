@@ -302,36 +302,37 @@ skipPruning:
         Move currMove = onlyMove(moveList.moves[i]);
         const bool isQuiet = okToReduce(currMove);
         if (sameMovePos(currMove, excludedMove)) continue;
-        if (skipQuiets && isQuiet && moveSearched) continue;
+        if (skipQuiets && isQuiet && bestScore > -mateValue) continue;
 
         S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
 
         // Quiets only moveloop pruning
-        if (isQuiet) { 
-            if (!PVNode && moveSearched >= lmpMargin[depth][improving]) {
-                skipQuiets = true;
-                continue;
+        if (!PVNode && bestScore > -mateValue){
+            if (isQuiet) { 
+                if (moveSearched >= lmpMargin[depth][improving]) {
+                    skipQuiets = true;
+                    continue;
+                }
+                if (depth <= 4 && (currMoveScore - QUIETSCORE) < quietHistoryPruningMultiplier() * depth + quietHistoryPruningBias()){
+                    skipQuiets = true;
+                    continue;
+                }
+                if (depth <= 8
+                    && !inCheck
+                    && bestScore > -KNOWNWIN
+                    && std::abs(alpha) < KNOWNWIN
+                    && isQuiet
+                    && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
+                {
+                    skipQuiets = true;
+                    continue;
+                }
             }
-            if (!PVNode && depth <= 4 && (currMoveScore - QUIETSCORE) < quietHistoryPruningMultiplier() * depth + quietHistoryPruningBias()){
-                skipQuiets = true;
-                continue;
-            }
-            if (!PVNode
-                && depth <= 8
-                && !inCheck
-                && bestScore > -KNOWNWIN
-                && std::abs(alpha) < KNOWNWIN
-                && isQuiet
-                && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
-            {
-                skipQuiets = true;
-                continue;
-            }
-        }
-        // Noisy only moveloop pruning
-        else {
-            if (!PVNode && depth <= 4 && (currMoveScore - BADNOISYMOVE) < noisyHistoryPruningMultiplier() * depth + noisyHistoryPruningBias()){
-                continue;
+            // Noisy only moveloop pruning
+            else {
+                if (!PVNode && depth <= 4 && (currMoveScore > QUIETSCORE ? (currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) : (currMoveScore - BADNOISYMOVE)) < noisyHistoryPruningMultiplier() * depth * depth + noisyHistoryPruningBias()){
+                    continue;
+                }
             }
         }
         // assert (
