@@ -312,7 +312,7 @@ skipPruning:
                 skipQuiets = true;
                 continue;
             }
-            if (!PVNode && depth <= 5 && (currMoveScore - QUIETSCORE) < quietHistoryPruningMultiplier() * depth + quietHistoryPruningBias()){
+            if (!PVNode && depth <= 4 && (currMoveScore - QUIETSCORE) < quietHistoryPruningMultiplier() * depth + quietHistoryPruningBias()){
                 skipQuiets = true;
                 continue;
             }
@@ -330,7 +330,7 @@ skipPruning:
         }
         // Noisy only moveloop pruning
         else {
-            if (!PVNode && depth <= 4 && (currMoveScore > QUIETSCORE ? (currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) : (currMoveScore - BADNOISYMOVE)) < noisyHistoryPruningMultiplier() * depth * depth + noisyHistoryPruningBias()){
+            if (!PVNode && depth <= 4 && (currMoveScore - BADNOISYMOVE) < noisyHistoryPruningMultiplier() * depth + noisyHistoryPruningBias()){
                 continue;
             }
         }
