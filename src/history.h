@@ -19,9 +19,11 @@ extern Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
 // Continuation History table
 extern S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
 
-#define CORRHISTSIZE 16384
-#define CORRHISTSCALE 256
-#define MAXCORRHIST (CORRHISTSCALE * 32)
+constexpr S32 CORRHISTSIZE = 16384;
+constexpr S32 CORRHISTSCALE = 256;
+constexpr S32 MAXCORRHIST = CORRHISTSCALE * 32;
+constexpr S32 MAXCORRHISTUPDATE = MAXCORRHIST / 4;
+
 // Correction History
 extern S32 pawnsCorrHist[2][CORRHISTSIZE];
 extern S32 nonPawnsCorrHist[2][2][CORRHISTSIZE];

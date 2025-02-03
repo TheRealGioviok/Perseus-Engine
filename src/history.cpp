@@ -97,8 +97,9 @@ Score correctStaticEval(Position& pos, const Score eval) {
 }
 
 static inline void updateSingleCorrHist(S32& entry, const S32 bonus, const S32 weight){
-    entry = (entry * (256 - weight) + bonus * weight) / 256;
-    entry = static_cast<Score>(std::clamp(entry, -MAXCORRHIST, MAXCORRHIST));
+    S32 newValue = (entry * (256 - weight) + bonus * weight) / 256;
+    newValue = std::clamp(newValue, entry - MAXCORRHISTUPDATE, entry + MAXCORRHISTUPDATE);
+    entry = std::clamp(newValue, -MAXCORRHIST, MAXCORRHIST);
 }
 
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
