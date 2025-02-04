@@ -402,6 +402,7 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
+                if(abs(rawEval - ss->staticEval) >= lmrComplexityThreshold()) granularR -= lmrComplexityValue();
                 if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
