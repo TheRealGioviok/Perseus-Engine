@@ -385,6 +385,7 @@ skipPruning:
                 else if (inCheck)
                     extension = 1;
             }
+            
             cutNode |= extension < 0;
 
             Depth newDepth = std::max(0,depth - 1 + extension);

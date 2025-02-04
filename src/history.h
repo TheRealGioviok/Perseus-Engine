@@ -25,10 +25,12 @@ constexpr S32 MAXCORRHIST = CORRHISTSCALE * 32;
 constexpr S32 MAXCORRHISTUPDATE = MAXCORRHIST / 4;
 
 // Correction History
-extern S32 pawnsCorrHist[2][CORRHISTSIZE];
-extern S32 nonPawnsCorrHist[2][2][CORRHISTSIZE];
-
-extern S32 tripletCorrHist[10][2][CORRHISTSIZE]; // 10 is the number of triplet indexing of type KXY, with X and Y satisfying X != K, Y != K, X != Y
+extern S32 pawnsCorrHist[2][CORRHISTSIZE]; // stm - hash
+extern S32 pawnsCorrHistSums[2]; // stm
+extern S32 nonPawnsCorrHist[2][2][CORRHISTSIZE]; // stm - side - hash
+extern S32 nonPawnsCorrHistSums[2][2]; // stm
+extern S32 tripletCorrHist[10][2][CORRHISTSIZE]; // stm - hash
+extern S32 tripletCorrHistSums[10][2]; // 10 is the number of triplet indexing of type KXY, with X and Y satisfying X != K, Y != K, X != Y
 
 struct SStack {
     Move excludedMove = 0;
@@ -58,11 +60,11 @@ struct SStack {
 };
 
 inline S32 indexFromTo(Square from, Square to) {
-	return from * 64 + to;
+    return from * 64 + to;
 }
 
 inline S32 indexPieceTo(Piece piece, Square to) {
-	return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
+    return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
 }
 
 static inline S32 getThreatsIndexing(const BitBoard threats, const Move move){
@@ -73,10 +75,10 @@ static inline S32 getThreatsIndexing(const BitBoard threats, const Move move){
 
 static inline S32 stat_bonus(int depth) {
 #if ENABLEBETTERHISTORYFORMULA
-	// Approximately verbatim stat bonus formula from Stockfish // Formula from Ethereal, who took it from stockfish. I love chess programming.
+    // Approximately verbatim stat bonus formula from Stockfish // Formula from Ethereal, who took it from stockfish. I love chess programming.
     return depth > 13 ? 32 : 16 * depth * depth + 128 * std::max(depth - 1, 0);
 #else
-	return std::min(16 * depth * depth + 32 * depth + 16, 1200);
+    return std::min(16 * depth * depth + 32 * depth + 16, 1200);
 #endif
 }
 
