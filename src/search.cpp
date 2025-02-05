@@ -72,14 +72,12 @@ static inline void clearKillers(SStack *ss)
 Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *ss)
 {
     // Comms
+    if (nodes >= hardNodesLimit)
+        stopped = true;
+    if ((nodes & comfrequency) == 0)
+        communicate();
     if (stopped)
         return 0;
-
-    if ((nodes & comfrequency) == 0) {
-        communicate();
-        if (stopped)
-            return 0;
-    }
 
     //print();
     //std::cout << "lmove ";
@@ -442,6 +440,10 @@ skipPruning:
             
             undo(undoer, currMove);
 
+
+            if (stopped)
+                return 0;
+
             if (RootNode) nodesPerMoveTable[indexFromTo(moveSource(currMove), moveTarget(currMove))] += nodes - nodesBefore;
 
             ++moveSearched;
@@ -775,8 +777,6 @@ void Game::startSearch(bool halveTT = true)
     }
 
 bmove:
-    // Report SE stats
-    std::cout << "info string SE candidates count: " << seCandidates << " with activations: " << seActivations << "total nodes: " << nodes << std::endl;
     // Report Avg dist over all the SE candidates
     if (seCandidates)
         std::cout << "info string Avg dist: " << avgDist / seCandidates << std::endl;
