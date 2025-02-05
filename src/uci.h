@@ -46,7 +46,7 @@ void uciLoop(Game *game);
  * @param command The command string.
  * @return The return value is the return value of the command.
  */
-int executeCommand(Game *game, char *command);
+int executeCommand(Game *game,const std::string& command);
 
 /**
  * @brief The positionCommand function handles the position command.
@@ -54,7 +54,7 @@ int executeCommand(Game *game, char *command);
  * @param command The command string.
  * @return The return value is the return value of the command.
  */
-int positionCommand(Game *game, char *command);
+int positionCommand(Game *game,const std::string& command);
 
 /**
  * @brief The goCommand function handles the go command.
@@ -63,14 +63,14 @@ int positionCommand(Game *game, char *command);
  * @return The return value is the return value of the command.
  * @note This function is responsible for the main search loop.
  */
-int goCommand(Game *game, char *command);
+int goCommand(Game *game,const std::string& command);
 
 /**
  * @brief The setOptionCommand function handles the setOption command
  * @param command The command string.
  * @return The return value is the return value of the command.
  */
-int setOptionCommand(char* command);
+int setOptionCommand(const std::string& command);
 
 /**
  * @brief The inputWaiting function waits for input from the GUI. The code is based on the code from Code Monkey King's BBC chess engine which is based on the code from VICE by BlueFeverSoftware.
@@ -97,4 +97,4 @@ void UCICommunicate(Game *game);
  * @param game The game object.
  * @param command The command string.
  */
-void execCommand(Game *game, char *command);
+void execCommand(Game *game, const char *command);

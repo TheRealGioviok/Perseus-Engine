@@ -9,6 +9,9 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <unordered_map>
+#include <functional>
+#include <string>
 
 bool quit = false;
 int movesToGo = -1; // UCI parameter for the moves until the next time control.
@@ -35,217 +38,99 @@ void uciStr() {
     std::cout << "uciok" << std::endl;
 }
 
-int executeCommand(Game* game, char* command) {
-    // Technically speaking, each possible command is present only once in the command, so we can look for the first character
-    // Command supported:
-    // - tt : Reads and reports the transposition table (if any) from the current position
-    // - isready : returns "readyok" if the engine is ready to accept commands
-    // - uci : returns engine info, followed by "uciok"
-    // - setoption name <option_name> value <option_value> (To implement)
-    // - ucinewgame : resets the engine to its initial state
-    // - position fen <fen_string> : sets the position to the given fen string
-    // - position startpos moves <move_list> : sets the position to the given move list
-    // - go [depth / movetime / infinite] <num>: starts the engine to search for the best move using the parameters specified in the command
-    // - stop : stops the engine from searching
-    // - fen : print the currently loaded fen
-    // - quit : exits the engine
-    // - print : prints the current position
-    // - eval : prints the static evaluation of the current position
-    // - divide : prints the perft results for the current position, divided for each move
-    // - movelist : wrapper for "divide 1"
-    // - exec <command> : executes the given command ( no context is assumed, unless specified (this = game))
-    // we will search for the first occurrence of a command
-    char* tuneStr = strstr((char*)command, "tunestr");
-    char* ttt = strstr((char*)command, "tt");
-    char* sanity = strstr((char*)command, "sanity");
-    char* isReady = strstr((char*)command, "isready");
-    char* uci = strstr((char*)command, "uci");
-    char* setOption = strstr((char*)command, "setoption name");
-    char* uciNewGame = strstr((char*)command, "ucinewgame");
-    char* position = strstr((char*)command, "position");
-    char* fen = strstr((char*)command, "fen");
-    char* go = strstr((char*)command, "go");
-    char* stop = strstr((char*)command, "stop");
-    char* quit = strstr((char*)command, "quit");
-    char* print = strstr((char*)command, "print");
-    char* eval = strstr((char*)command, "eval");
-    char* divide = strstr((char*)command, "divide");
-    char* moveList = strstr((char*)command, "movelist");
-    char* exec = strstr((char*)command, "exec");
-    char* flip = strstr((char*)command, "flip");
-    char* bench = strstr((char*)command, "bench");
-    char* extract = strstr((char*)command, "extract");
-    if (tuneStr){
-        for(const TunableParam& param : tunableParams())
-            std::cout  << param.name << ", int, " << param.defaultValue << ", " << param.minValue << ", " << param.maxValue << ", " << param.cEnd << ", " << param.rEnd << std::endl;
-        return 0;
-    }
-    if (uciNewGame){
-        initTT();
-        game->reset();
-    }
-    else if (uci) {
-        uciStr();
-        return 0;
-    }
-
-    if (isReady)
-        std::cout << "readyok" << std::endl;
-
-    if (flip) {
-        game->pos.reflect();
-        return 0;
-    }
-	
-    if (sanity) {
-        int cnt = 0;
-        for (U64 i = 0; i < ttEntryCount; i++) {
-            ttEntry entry = tt[i];
-            if ((entry.eval != noScore) && (entry.eval != entry.score)) {
-                Depth depth;
-                Score score, eval;
-                HashKey hash;
-                PackedMove bestMove;
-                U8 flags;
-
-                depth = entry.depth;
-                score = entry.score;
-                eval = entry.eval;
-                hash = entry.hashKey;
-                bestMove = entry.bestMove;
-                flags = entry.flags;
-
-                std::cout << "TT for hashKey " << std::hex << hash << std::dec << ":\n";
-                std::cout << "Score: " << score << "\t\tStatic eval: " << eval << "\n";
-                std::cout << "Depth: " << (int)depth << "\n";
-                std::cout << "BestMove: " << getMoveString(bestMove) << "\n";
-                std::cout << "Flags:\n" <<
-                    (flags & hashUPPER ? "\thashUPPER\n" : "") <<
-                    (flags & hashLOWER ? "\thashLOWER\n" : "") <<
-                    (flags & hashEXACT ? "\thashEXACT\n" : "") <<
-                    (flags & hashSINGULAR ? "\thashALPHA\n" : "") <<
-                    (flags & hashINVALID ? "\thashALPHA\n" : "") << "\n\n";
-                if (cnt++ >= 100) goto megabreak;
+int executeCommand(Game* game, const std::string& command) {
+    static const std::unordered_map<std::string, std::function<void()>> commandMap = {
+        {"tunestr", [&]() {
+            for (const TunableParam& param : tunableParams()) {
+                std::cout << param.name << ", int, " << param.defaultValue << ", "
+                          << param.minValue << ", " << param.maxValue << ", "
+                          << param.cEnd << ", " << param.rEnd << std::endl;
             }
-        }
-    megabreak:
-        exit(-1);
-    }
-
+        }},
+        {"ucinewgame", [&]() { initTT(); game->reset(); }},
+        {"uci", [&]() { uciStr(); }},
+        {"isready", [&]() { std::cout << "readyok" << std::endl; }},
+        {"flip", [&]() { game->pos.reflect(); }},
+        {"setoption name", [&]() { setOptionCommand(command); }},
+        {"tt", [&]() {
+            Position& pos = game->pos;
+            if (auto* entry = probeTT(pos.hashKey)) {
+                std::cout << "TT for hashKey " << std::hex << pos.hashKey << " (" << entry->hashKey << std::dec << ") :\n"
+                          << "Score: " << entry->score << "\t\tStatic eval: " << entry->eval << "\n"
+                          << "Depth: " << static_cast<int>(entry->depth) << "\n"
+                          << "BestMove: " << getMoveString(entry->bestMove) << "\n";
+            } else {
+                std::cout << "No entry!\n";
+            }
+        }},
+        {"position", [&]() { positionCommand(game, command); }},
+        {"fen", [&]() { std::cout << game->pos.getFEN() << std::endl; }},
+        {"go", [&]() { goCommand(game, command); }},
+        {"stop", [&]() { game->stopped = true; }},
+        {"quit", [&]() { exit(1); }},
+        {"print", [&]() { game->print(); }},
+        {"eval", [&]() { std::cout << "Static evaluation: " << pestoEval(&(game->pos)) << std::endl; }},
+        {"divide", [&]() { game->divide(std::stoi(command.substr(7))); }},
+        {"movelist", [&]() { game->divide(1); }},
+        {"exec", [&]() { execCommand(game, command.c_str()); }},
+        {"bench", [&]() {
+            std::string arg = command.substr(5);
+            int depth = (arg.empty()) ? 12 : std::stoi(arg);
+            benchmark(depth);
+        }},
+        {"extract", [&]() {
+            std::string inputFilename = command.substr(8);
+            std::string outputFilename = inputFilename.substr(0, inputFilename.find_last_of('.')) + ".feat";
+            convertToFeatures(inputFilename.c_str(), outputFilename.c_str());
+        }}
+    };
     
-	
-
-    if (setOption){
-        setOptionCommand(command);
-        return 0;
-    }
-
-    if (ttt) {
-        Position& pos = game->pos;
-        ttEntry* entry = probeTT(pos.hashKey);
-        if (!entry) {
-            std::cout << "No entry!\n";
+    for (const auto& [key, func] : commandMap) {
+        if (command.find(key) != std::string::npos) {
+            func();
             return 0;
         }
-        Depth depth;
-        Score score, eval;
-        HashKey hash;
-        Move bestMove;
-        U8 flags;
-
-        depth = entry->depth;
-        score = entry->score;
-        eval = entry->eval;
-        hash = entry->hashKey;
-        bestMove = entry->bestMove;
-        flags = entry->flags;
-
-        std::cout << "TT for hashKey " << std::hex << pos.hashKey << " (" << hash << std::dec << ") :\n";
-        std::cout << "Score: " << score << "\t\tStatic eval: " << eval << "\n";
-        std::cout << "Depth: " << (int)depth << "\n";
-        std::cout << "BestMove: " << getMoveString(bestMove) << "\n";
-        std::cout << "Flags:\n" <<
-            (flags & hashUPPER ? "\thashUPPER\n" : "") <<
-            (flags & hashLOWER ? "\thashLOWER\n" : "") <<
-            (flags & hashEXACT ? "\thashEXACT\n" : "") <<
-            (flags & hashSINGULAR ? "\thashSingular\n" : "") <<
-            (flags & hashINVALID ? "\thashInvalid\n" : "") << "\n";
     }
-
-    if (position) positionCommand(game, command);
-    
-    if (fen) std::cout << game->pos.getFEN() << std::endl;
-
-    if (go) goCommand(game, command);
-
-    if (stop) game->stopped = true;
-
-    if (quit) return 1;
-
-    if (print) game->print();
-
-    if (eval) std::cout << "Static evaluation for current position (from side to move perspective): " << pestoEval(&(game->pos)) << std::endl;
-
-    if (divide) {
-        std::cout << "Perft results for current position:" << std::endl;
-        game->divide(atoi(divide + 7));
-    }
-
-    if (moveList) game->divide(1);
-
-    if (exec) execCommand(game, command);
-
-    if (bench){
-        char* args = bench + 5;
-        Depth depth;
-        depth = atoi(args);
-        if (depth == 0) depth = 12;
-        benchmark(depth);
-    }
-
-    if (extract) {
-    // Get the filename
-    char* filename = extract + 8;
-
-    // Convert the C-style string to a C++ std::string for easier manipulation
-    std::string inputFilename(filename);
-    std::string outputFilename;
-
-    // Find the last '.' in the filename
-    size_t dotPos = inputFilename.find_last_of('.');
-
-    if (dotPos != std::string::npos) {
-        // If there's an extension, replace it with ".feat"
-        outputFilename = inputFilename.substr(0, dotPos) + ".feat";
-    } else {
-        // If no extension, just add ".feat"
-        outputFilename = inputFilename + ".feat";
-    }
-
-    // Convert back to C-style string if needed for the function call
-    convertToFeatures(inputFilename.c_str(), outputFilename.c_str());
-}
-
     return 0;
 }
 
-int setOptionCommand(char* command) {
-    // For now, we only have the stposHashDump command
-    // Get option name
-    char* optionNamec = command + 15;
-    // get string after 
-    std::string optionName(optionNamec);
-    // find first space name
+int setOptionCommand(const std::string& command) {
+    std::string optionName = command.substr(15);
     size_t space = optionName.find(" value ");
-    // split the arg
-    std::string arg = optionName.substr(space + 1 + 5 + 1);
-    // remove last characters from optionName
+    if (space == std::string::npos) {
+        std::cout << "Invalid command format!\n";
+        return 0;
+    }
+    
+    std::string arg = optionName.substr(space + 7);
     optionName.erase(space);
-	// Depending on optionName
+    
+    static std::unordered_map<std::string, std::function<void(const std::string&)>> optionHandlers = {
+        {"stposHashDump", [](const std::string& arg) { hashDumpFile = arg; }},
+        {"Hash", [](const std::string& arg) {
+            int size = std::stoi(arg);
+            if (size < 1) {
+                std::cout << "Invalid hash size!\n";
+                return;
+            }
+            resizeTT(size);
+        }},
+        {"Threads", [](const std::string&) { /* Placeholder for future multithreading */ }},
+        {"lmrDepthValue", [](const std::string&) { initLMRTable(); }},
+        {"lmrMoveValue", [](const std::string&) { initLMRTable(); }},
+        {"lmrA0", [](const std::string&) { initLMRTable(); }},
+        {"lmrC0", [](const std::string&) { initLMRTable(); }},
+        {"lmrA1", [](const std::string&) { initLMRTable(); }},
+        {"lmrC1", [](const std::string&) { initLMRTable(); }},
+        {"lmpA0", [](const std::string&) { initLMRTable(); }},
+        {"lmpC0", [](const std::string&) { initLMRTable(); }},
+        {"lmpA1", [](const std::string&) { initLMRTable(); }},
+        {"lmpC1", [](const std::string&) { initLMRTable(); }}
+    };
 
     for (TunableParam& param : tunableParams()) {
         if (param.name == optionName) {
-            int value = atoi(arg.c_str());
+            int value = std::stoi(arg);
             if (value < param.minValue || value > param.maxValue) {
                 std::cout << "Invalid value for option " << optionName << "!\n";
                 return 0;
@@ -254,153 +139,73 @@ int setOptionCommand(char* command) {
             return 0;
         }
     }
-
-    if (optionName == "stposHashDump") {
-        // Set hashDumpFile to arg
-        hashDumpFile = arg;
-    }
-    else if (optionName == "Threads"){
-        // Nothing for now. TODO: update this when we add multithreading
-    }
-    else if (optionName == "Hash"){
-        hashSize = atoi(arg.c_str());
-        if (hashSize < 1) {
-            std::cout << "Invalid hash size!\n";
-            return 0;
-        }
-        resizeTT(hashSize);
-    }
-    else if (optionName == "lmrDepthValue" 
-            || optionName == "lmrMoveValue" 
-            || optionName == "lmrA0" 
-            || optionName == "lmrC0" 
-            || optionName == "lmrA1" 
-            || optionName == "lmrC1" 
-            || optionName == "lmpA0" 
-            || optionName == "lmpC0" 
-            || optionName == "lmpA1" 
-            || optionName == "lmpC1"
-        ) initLMRTable();
-    else {
+    
+    auto it = optionHandlers.find(optionName);
+    if (it != optionHandlers.end()) {
+        it->second(arg);
+    } else {
         std::cout << "Option " << optionName << " not recognized!\n";
     }
+    
     return 0;
 }
 
-int positionCommand(Game *game, char* command){
-    // the position command is composed by the following subcommands:
-    // - fen <fen_string> : sets the position to the specified fen string
-    // - startpos : sets the position to the starting position
-    // - trickypos : sets the position to the tricky position (debugging purposes)
-    // - moves <move_list> : sets the position to the specified move list
 
-    // we will search for the first occurrence of a command
-
+int positionCommand(Game* game, const std::string& command) {
     game->pos.wipe();
-
-    char* fen = strstr((char *)command, "fen");
-    char* startposCMD = strstr((char *)command, "startpos");
-    char* trickyposCMD = strstr((char *)command, "trickypos");
-    char* moves = strstr((char *)command, "moves");
-
-    if(startposCMD){
-        game->parseFEN((char*)std::string(startPosition).c_str());
+    
+    static std::unordered_map<std::string, std::function<void(Game*)>> positionHandlers = {
+        {"startpos", [](Game* game) { game->parseFEN((char *)startPosition.c_str()); }},
+        {"perseuspos", [](Game* game) { game->parseFEN((char *)perseusPosition.c_str()); }},
+        {"trickypos", [](Game* game) { game->parseFEN((char *)trickyPosition.c_str()); }}
+    };
+    
+    for (const auto& [key, handler] : positionHandlers) {
+        if (command.find(key) != std::string::npos) {
+            handler(game);
+            return 0;
+        }
     }
-
-    if(trickyposCMD){
-        game->parseFEN((char*)std::string(trickyPosition).c_str());
+    
+    size_t fenPos = command.find("fen ");
+    if (fenPos != std::string::npos) {
+        game->parseFEN((char *)command.substr(fenPos + 4).c_str());
     }
-
-    if(fen){
-        game->parseFEN(fen + 4);
+    
+    size_t movesPos = command.find("moves ");
+    if (movesPos != std::string::npos) {
+        game->executeMoveList((char *)command.substr(movesPos + 6).c_str());
     }
-
-    if(moves){
-        game->executeMoveList(moves + 6);
-    }
-
+    
     return 0;
 }
 
-int goCommand(Game* game, char* command){
-    // the go command is composed by the following subcommands:
-    // - depth <num> : sets the depth to the specified value
-    // - movetime <num> : sets the movetime to the specified value
-    // - infinite : sets the movetime to infinite
-    // - wtime <num> : sets the white time to the specified value
-    // - btime <num> : sets the black time to the specified value
-    // - winc <num> : sets the white increment to the specified value
-    // - binc <num> : sets the black increment to the specified value
-    // - movetime <num> : sets the movetime to the specified value
+int goCommand(Game* game, const std::string& command) {
+    static std::unordered_map<std::string, std::function<void(Game*, const std::string&)>> goHandlers = {
+        {"depth", [](Game* game, const std::string& arg) { game->depth = std::stoi(arg); game->searchMode = 1; }},
+        {"movetime", [](Game* game, const std::string& arg) { game->moveTime = getTime64() + std::stoll(arg); game->searchMode = 3; game->depth = 127; }},
+        {"infinite", [](Game* game, const std::string&) { game->moveTime = 0xFFFFFFFFFFFFFFFF; game->searchMode = 0; game->depth = 127; }},
+        {"wtime", [](Game* game, const std::string& arg) { game->wtime = std::stoi(arg); game->searchMode = 2; }},
+        {"btime", [](Game* game, const std::string& arg) { game->btime = std::stoi(arg); game->searchMode = 2; }},
+        {"winc", [](Game* game, const std::string& arg) { game->winc = std::stoi(arg); game->searchMode = 2; }},
+        {"binc", [](Game* game, const std::string& arg) { game->binc = std::stoi(arg); game->searchMode = 2; }},
+        {"nodes", [](Game* game, const std::string& arg) { game->hardNodesLimit = std::stoll(arg); }}
+    };
 
-    // we will search for the first occurrence of a command
-    char* depth = strstr((char *)command, "depth");
-    char* movetime = strstr((char *)command, "movetime");
-    char* infinite = strstr((char *)command, "infinite");
-    char* wtime = strstr((char *)command, "wtime");
-    char* btime = strstr((char *)command, "btime");
-    char* winc = strstr((char *)command, "winc");
-    char* binc = strstr((char *)command, "binc");
-    char* nodes = strstr((char *)command, "nodes");
+    game->hardNodesLimit = 0xFFFFFFFFFFFFFFFF;
 
-    if(depth){
-        game->depth = atoi(depth + 6);
-        game->searchMode = 1;
-    }
-    else {
-        if(movetime){
-            game->moveTime = getTime64();
-            game->moveTime += atoi(movetime + 9);
-            game->searchMode = 3;
-            game->depth = 127;
-        }
-        else {
-            // if no movetime is specified, we set the movetime to infinite
-            game->moveTime = 0xFFFFFFFFFFFFFFFF;
-            game->searchMode = 0;
-            game->depth = 127;
-        }
-
-        if(infinite){
-            game->moveTime = 0xFFFFFFFFFFFFFFFF;
-            game->searchMode = 0;
-            game->depth = 127;
-        }
-
-        if(wtime){
-            game->wtime = atoi(wtime + 6);
-            game->searchMode = 2; // To mark that we are not in infinite mode
-        }
-
-        if(btime){
-            game->btime = atoi(btime + 6);
-            game->searchMode = 2; // To mark that we are not in infinite mode
-        }
-
-        if(winc){
-            game->winc = atoi(winc + 5);
-            game->searchMode = 2; // To mark that we are not in infinite mode
-        }
-
-        if(binc){
-            game->binc = atoi(binc + 5);
-            game->searchMode = 2; // To mark that we are not in infinite mode
+    for (const auto& [key, handler] : goHandlers) {
+        size_t pos = command.find(key + " ");
+        if (pos != std::string::npos) {
+            handler(game, command.substr(pos + key.length() + 1));
         }
     }
-
-    if(nodes){
-        game->hardNodesLimit = atoll(nodes + 6);
-    }
-    else {
-        game->hardNodesLimit = 0xFFFFFFFFFFFFFFFF;
-    }
-
+    
     game->startSearch(true);
-
     return 0;
 }
 
-void execCommand(Game* game, char* command){
+void execCommand(Game* game, const char* command){
     // the exec command is composed by the following subcommands:
     // - exec <command> : executes the specified command
 
@@ -438,9 +243,9 @@ void execCommand(Game* game, char* command){
         }
         else if (strstr((char* )command, "btwn")){
             // read the next two squares. Each square is two characters long, so we need to read two characters for each square
-            char* square1 = command + 10;
+            const char* square1 = command + 10;
             std::cout << square1 << "\n";
-            char* square2 = square1 + 3;
+            const char* square2 = square1 + 3;
             Square sq1 = squareFromName(square1);
             Square sq2 = squareFromName(square2);
             BitBoard btwn = squaresBetween[sq1][sq2];
@@ -492,7 +297,7 @@ void uciLoop(Game* game){
         }
 
         // execute the command
-        if(executeCommand(game, userInput) == 1 || strcmp(userInput, "quit") == 0){
+        if(executeCommand(game, std::string(userInput)) == 1 || strcmp(userInput, "quit") == 0){
             break;
         }
 
