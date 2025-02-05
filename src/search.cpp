@@ -777,9 +777,8 @@ void Game::startSearch(bool halveTT = true)
     }
 
 bmove:
-    // Report Avg dist over all the SE candidates
-    if (seCandidates)
-        std::cout << "info string Avg dist: " << avgDist / seCandidates << std::endl;
+    // Report final search info
+    std::cout << "info nodes " << nodes << std::endl;
     std::cout << "bestmove ";
     printMove(bestMove);
     std::cout << std::endl;
