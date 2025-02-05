@@ -173,13 +173,12 @@ TUNE_PARAM(lmpC1, 2858, 500, 5000, 225, 0.002);
 // RFP values
 TUNE_PARAM(futilityMarginDelta, 91, 55, 155, 5, 0.002);
 NO_TUNE_PARAM(RFPDepth, 8, 5, 10, .5, 0.002);
-TUNE_PARAM(rfpHistoryDivisor, 400, 128, 1024, 45, 0.002);
 
 // NMP values
-TUNE_PARAM(nmpDepthDivisor, 4, 2, 6, .5, 0.002);
+NO_TUNE_PARAM(nmpDepthDivisor, 4, 2, 6, .5, 0.002);
 TUNE_PARAM(nmpScoreDivisor, 213, 100, 300, 10, 0.002);
-TUNE_PARAM(nmpQ1, 3, 1, 5, .5, 0.002);
-TUNE_PARAM(nmpQ2, 3, 0, 5, .5, 0.002);
+NO_TUNE_PARAM(nmpQ1, 3, 1, 5, .5, 0.002);
+NO_TUNE_PARAM(nmpQ2, 3, 0, 5, .5, 0.002);
 
 // Razoring value
 TUNE_PARAM(razorQ1, 127, -200, 200, 20, 0.002);
@@ -194,7 +193,7 @@ NO_TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
 
 // History Pruning values
 TUNE_PARAM(historyPruningMultiplier, -1422, -5120, -1024, 205, 0.002);
-TUNE_PARAM(historyPruningBias, 0, -6, 2048, 205, 0.002);
+TUNE_PARAM(historyPruningBias, 0, -2048, 2048, 205, 0.002);
 
 // IIR values
 NO_TUNE_PARAM(IIRDepth, 5, 3, 8, .5, 0.002);
