@@ -9,6 +9,7 @@ extern S64 avgDist;
 class Game {
 public:
     U64 nodes = 0;
+    U64 hardNodesLimit = 0;
     Ply ply;
     Position pos;
     Depth depth;

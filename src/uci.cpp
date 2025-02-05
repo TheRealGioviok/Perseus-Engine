@@ -341,6 +341,7 @@ int goCommand(Game* game, char* command){
     char* btime = strstr((char *)command, "btime");
     char* winc = strstr((char *)command, "winc");
     char* binc = strstr((char *)command, "binc");
+    char* nodes = strstr((char *)command, "nodes");
 
     if(depth){
         game->depth = atoi(depth + 6);
@@ -385,6 +386,13 @@ int goCommand(Game* game, char* command){
             game->binc = atoi(binc + 5);
             game->searchMode = 2; // To mark that we are not in infinite mode
         }
+    }
+
+    if(nodes){
+        game->hardNodesLimit = atoll(nodes + 6);
+    }
+    else {
+        game->hardNodesLimit = 0xFFFFFFFFFFFFFFFF;
     }
 
     game->startSearch(true);
