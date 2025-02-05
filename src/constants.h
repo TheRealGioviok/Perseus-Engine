@@ -145,74 +145,74 @@ TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxV
 		constexpr S32 name() { return defaultValue; }
 
 // LMR table values
-NO_TUNE_PARAM(lmrDepthValue, 922, 500, 1500, 50, 0.002);
-NO_TUNE_PARAM(lmrMoveValue, 1080, 500, 1500, 50, 0.002);
-NO_TUNE_PARAM(lmrA0, 791, 500, 1500, 50, 0.002);
-NO_TUNE_PARAM(lmrC0, -267, -1000, 1000, 100, 0.002);
-NO_TUNE_PARAM(lmrA1, 750, 500, 1500, 50, 0.002);
-NO_TUNE_PARAM(lmrC1, 619, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrDepthValue, 922, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrMoveValue, 1080, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrA0, 791, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrC0, -267, -1000, 1000, 100, 0.002);
+TUNE_PARAM(lmrA1, 750, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrC1, 619, 500, 1500, 50, 0.002);
 // LMR additionals
-NO_TUNE_PARAM(lmrCieckA, 4258, 2048, 8192, 308, 0.002)
-NO_TUNE_PARAM(lmrCieckB, 1558, 500, 2500, 100, 0.002)
-NO_TUNE_PARAM(lmrCieckC, 652, 128, 1024, 45, 0.002)
-NO_TUNE_PARAM(lmrPV, 1029, 250, 1750, 75, 0.002)
-NO_TUNE_PARAM(lmrExpectedDecent, 755, 250, 2750, 150, 0.002)
-NO_TUNE_PARAM(lmrQuietHistoryDivisor, 7991, 2000, 16000, 700, 0.002)
-NO_TUNE_PARAM(lmrQuietCutNode, 1896, 250, 2750, 150, 0.002);
-NO_TUNE_PARAM(lmrQuietTTPV, 919, 250, 2750, 150, 0.002)
-NO_TUNE_PARAM(lmrBadNoisyCutNode, 766, 250, 2750, 150, 0.002);
-NO_TUNE_PARAM(lmrNoisyHistoryDivisorA, 5338, 2000, 16000, 700, 0.002)
-NO_TUNE_PARAM(lmrNoisyHistoryDivisorB, 6521, 2000, 16000, 700, 0.002)
+TUNE_PARAM(lmrCieckA, 4258, 2048, 8192, 308, 0.002)
+TUNE_PARAM(lmrCieckB, 1558, 500, 2500, 100, 0.002)
+TUNE_PARAM(lmrCieckC, 652, 128, 1024, 45, 0.002)
+TUNE_PARAM(lmrPV, 1029, 250, 1750, 75, 0.002)
+TUNE_PARAM(lmrExpectedDecent, 755, 250, 2750, 150, 0.002)
+TUNE_PARAM(lmrQuietHistoryDivisor, 7991, 2000, 16000, 700, 0.002)
+TUNE_PARAM(lmrQuietCutNode, 1896, 250, 2750, 150, 0.002);
+TUNE_PARAM(lmrQuietTTPV, 919, 250, 2750, 150, 0.002)
+TUNE_PARAM(lmrBadNoisyCutNode, 766, 250, 2750, 150, 0.002);
+TUNE_PARAM(lmrNoisyHistoryDivisorA, 5338, 2000, 16000, 700, 0.002)
+TUNE_PARAM(lmrNoisyHistoryDivisorB, 6521, 2000, 16000, 700, 0.002)
 
 // LMP values
-NO_TUNE_PARAM(lmpA0, 528, 500, 1500, 50, 0.002);
-NO_TUNE_PARAM(lmpC0, 1576, 500, 5000, 225, 0.002);
-NO_TUNE_PARAM(lmpA1, 978, 500, 1500, 50, 0.002);
-NO_TUNE_PARAM(lmpC1, 2858, 500, 5000, 225, 0.002);
+TUNE_PARAM(lmpA0, 528, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmpC0, 1576, 500, 5000, 225, 0.002);
+TUNE_PARAM(lmpA1, 978, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmpC1, 2858, 500, 5000, 225, 0.002);
 
 // RFP values
-NO_TUNE_PARAM(futilityMarginDelta, 91, 55, 155, 5, 0.002);
+TUNE_PARAM(futilityMarginDelta, 91, 55, 155, 5, 0.002);
 NO_TUNE_PARAM(RFPDepth, 8, 5, 10, .5, 0.002);
-NO_TUNE_PARAM(rfpHistoryDivisor, 400, 128, 1024, 45, 0.002);
+TUNE_PARAM(rfpHistoryDivisor, 400, 128, 1024, 45, 0.002);
 
 // NMP values
-NO_TUNE_PARAM(nmpDepthDivisor, 4, 2, 6, .5, 0.002);
-NO_TUNE_PARAM(nmpScoreDivisor, 213, 100, 300, 10, 0.002);
-NO_TUNE_PARAM(nmpQ1, 3, 1, 5, .5, 0.002);
-NO_TUNE_PARAM(nmpQ2, 3, 0, 5, .5, 0.002);
+TUNE_PARAM(nmpDepthDivisor, 4, 2, 6, .5, 0.002);
+TUNE_PARAM(nmpScoreDivisor, 213, 100, 300, 10, 0.002);
+TUNE_PARAM(nmpQ1, 3, 1, 5, .5, 0.002);
+TUNE_PARAM(nmpQ2, 3, 0, 5, .5, 0.002);
 
 // Razoring value
-NO_TUNE_PARAM(razorQ1, 127, -200, 200, 20, 0.002);
-NO_TUNE_PARAM(razorQ2, 232,  100, 500, 20, 0.002);
+TUNE_PARAM(razorQ1, 127, -200, 200, 20, 0.002);
+TUNE_PARAM(razorQ2, 232,  100, 500, 20, 0.002);
 NO_TUNE_PARAM(razorDepth, 3, 2, 5, .5, 0.002);
 
 // Singular Extensions
-NO_TUNE_PARAM(singularDepthMultiplier, 10, 1, 30, 2, 0.002);
-NO_TUNE_PARAM(maximumDoubleExtensions, 6, 1, 9, 1, 0.002);
-NO_TUNE_PARAM(doubleExtensionMargin, 23, 1, 50, 2.5, 0.002);
+TUNE_PARAM(singularDepthMultiplier, 10, 1, 30, 2, 0.002);
+TUNE_PARAM(maximumDoubleExtensions, 6, 1, 9, 1, 0.002);
+TUNE_PARAM(doubleExtensionMargin, 23, 1, 50, 2.5, 0.002);
 NO_TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
 
 // History Pruning values
-NO_TUNE_PARAM(historyPruningMultiplier, -1422, -5120, -1024, 205, 0.002);
-NO_TUNE_PARAM(historyPruningBias, 0, -6, 2048, 205, 0.002);
+TUNE_PARAM(historyPruningMultiplier, -1422, -5120, -1024, 205, 0.002);
+TUNE_PARAM(historyPruningBias, 0, -6, 2048, 205, 0.002);
 
 // IIR values
 NO_TUNE_PARAM(IIRDepth, 5, 3, 8, .5, 0.002);
 
 // FFP values
-NO_TUNE_PARAM(futPruningMultiplier, 56, 30, 130, 5, 0.002);
-NO_TUNE_PARAM(futPruningAdd, 246, 150, 350, 10, 0.002);
+TUNE_PARAM(futPruningMultiplier, 56, 30, 130, 5, 0.002);
+TUNE_PARAM(futPruningAdd, 246, 150, 350, 10, 0.002);
 NO_TUNE_PARAM(futPruningDepth, 9, 6, 10, 0.5, 0.002);
 
 // Move ordering values
-NO_TUNE_PARAM(captScoreMvvMultiplier, 14, 8, 32, 1, 0.002)
+TUNE_PARAM(captScoreMvvMultiplier, 14, 8, 32, 1, 0.002)
 
 // Time management values
-NO_TUNE_PARAM(timeTmA, 135, 10, 200, 9, 0.002)
-NO_TUNE_PARAM(timeTmB, 988, 0, 1000, 50, 0.002)
-NO_TUNE_PARAM(timeTmOptimScale, 340, 100, 1000, 45, 0.002)
-NO_TUNE_PARAM(nodesTmMax, 1895, 1000, 3000, 100, 0.002)
-NO_TUNE_PARAM(nodesTmMul, 1309, 750, 1500, 38, 0.002)
+TUNE_PARAM(timeTmA, 135, 10, 200, 9, 0.002)
+TUNE_PARAM(timeTmB, 988, 0, 1000, 50, 0.002)
+TUNE_PARAM(timeTmOptimScale, 340, 100, 1000, 45, 0.002)
+TUNE_PARAM(nodesTmMax, 1895, 1000, 3000, 100, 0.002)
+TUNE_PARAM(nodesTmMul, 1309, 750, 1500, 38, 0.002)
 
 // CorrHist scale values
 TUNE_PARAM(MAXCORRHISTUNSCALED, 32, 8, 256, 12, 0.002)
