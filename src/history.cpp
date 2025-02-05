@@ -4,6 +4,7 @@
 #include "move.h"
 #include "Game.h"
 #include <algorithm>
+
 // history table
 S32 historyTable[2][4][NUM_SQUARES * NUM_SQUARES];
 
@@ -64,34 +65,37 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
     }
 }
 
+S32 MAXCORRHIST = CORRHISTSCALE * MAXCORRHISTUNSCALED();
+S32 MAXCORRHISTUPDATE = MAXCORRHIST * MAXCORRHISTMILLIUPDATE() / CORRECTIONGRANULARITY;
+
+void updateCorrHistScale(){
+    MAXCORRHIST = CORRHISTSCALE * MAXCORRHISTUNSCALED();
+    MAXCORRHISTUPDATE = MAXCORRHIST * MAXCORRHISTMILLIUPDATE() / CORRECTIONGRANULARITY;
+}
 
 Score correctStaticEval(Position& pos, const Score eval) {
     const bool side = pos.side;
-
-    const S32 pawnBonus = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE];
-
-    const S32 nonPawnBonus = 
-        nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE] 
-        + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
-    ;
-
     auto const& k = pos.ptKeys;
 
-    const S32 tripletBonus = 
-        + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE]
-        + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE]
-        + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE]
-        + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE]
-        + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE]
-        + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE]
-        + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE]
-        + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE]
-        + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE]
-        + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE]
+    const S32 bonus = 
+        + pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE]           * pawnCorrWeight()
+        + (
+            + nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE]
+            + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
+        )                                                               * nonPawnCorrWeight()
+        + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE] * T0CorrWeight()
+        + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE] * T1CorrWeight()
+        + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE] * T2CorrWeight()
+        + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE] * T3CorrWeight()
+        + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE] * T4CorrWeight()
+        + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE] * T5CorrWeight()
+        + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE] * T6CorrWeight()
+        + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE] * T7CorrWeight()
+        + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE] * T8CorrWeight()
+        + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE] * T9CorrWeight()
     ;
 
-    const S32 bonus = pawnBonus + nonPawnBonus + tripletBonus;
-    const S32 corrected = eval + bonus / CORRHISTSCALE;
+    const S32 corrected = eval + bonus / (CORRHISTSCALE * CORRECTIONGRANULARITY);
 
     return static_cast<Score>(std::clamp(corrected, -mateValue, +mateValue));
 }
@@ -104,7 +108,7 @@ static inline void updateSingleCorrHist(S32& entry, const S32 bonus, const S32 w
 
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
     const bool side = pos.side;
-    const S32 scaledBonus = bonus * CORRHISTSCALE; 
+    const S64 scaledBonus = bonus * CORRHISTSCALE; 
     const S32 weight = std::min(1 + depth, 16);
 
     auto const& k = pos.ptKeys;
@@ -113,18 +117,18 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
     auto& wNonPawnEntry = nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE];
     auto& bNonPawnEntry = nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE];
 
-    updateSingleCorrHist(pawnEntry, scaledBonus, weight);
-    updateSingleCorrHist(wNonPawnEntry, scaledBonus, weight);
-    updateSingleCorrHist(bNonPawnEntry, scaledBonus, weight);
+    updateSingleCorrHist(pawnEntry, scaledBonus * pawnCorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(wNonPawnEntry, scaledBonus * nonPawnCorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(bNonPawnEntry, scaledBonus * nonPawnCorrUpdate() / CORRECTIONGRANULARITY, weight);
 
-    updateSingleCorrHist(tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
-    updateSingleCorrHist(tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE], scaledBonus, weight);
+    updateSingleCorrHist(tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE], scaledBonus * T0CorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE], scaledBonus * T1CorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE], scaledBonus * T2CorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE], scaledBonus * T3CorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE], scaledBonus * T4CorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE], scaledBonus * T5CorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE], scaledBonus * T6CorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE], scaledBonus * T7CorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE], scaledBonus * T8CorrUpdate() / CORRECTIONGRANULARITY, weight);
+    updateSingleCorrHist(tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE], scaledBonus * T9CorrUpdate() / CORRECTIONGRANULARITY, weight);
 }

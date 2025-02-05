@@ -6,6 +6,7 @@
 #include "evaluation.h"
 #include "constants.h"
 #include "uci.h"
+#include "history.h"
 #include <fstream>
 #include <vector>
 #include <iostream>
@@ -280,7 +281,9 @@ int setOptionCommand(char* command) {
             || optionName == "lmpC0" 
             || optionName == "lmpA1" 
             || optionName == "lmpC1"
+            
         ) initLMRTable();
+    else if (optionName == "MAXCORRHISTUNSCALED") updateCorrHistScale();
     else {
         std::cout << "Option " << optionName << " not recognized!\n";
     }

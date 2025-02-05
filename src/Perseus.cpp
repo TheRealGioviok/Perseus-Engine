@@ -2,6 +2,7 @@
 #include "tables.h"
 #include "bench.h"
 #include "evaluation.h"
+#include "history.h"
 #include <cstdlib>
 #include <vector>
 #include <string>
@@ -72,6 +73,7 @@ void perftSuite(){
 
 int main(int argc, char* argv[]){
     initAll();
+    updateCorrHistScale();
     // perftSuite();
     Game game;
 
