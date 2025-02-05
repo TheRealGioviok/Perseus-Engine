@@ -73,7 +73,6 @@ void perftSuite(){
 
 int main(int argc, char* argv[]){
     initAll();
-    updateCorrHistScale();
     // perftSuite();
     Game game;
 

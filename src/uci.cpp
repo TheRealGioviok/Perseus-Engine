@@ -283,7 +283,6 @@ int setOptionCommand(char* command) {
             || optionName == "lmpC1"
             
         ) initLMRTable();
-    else if (optionName == "MAXCORRHISTUNSCALED") updateCorrHistScale();
     else {
         std::cout << "Option " << optionName << " not recognized!\n";
     }

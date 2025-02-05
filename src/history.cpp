@@ -65,14 +65,6 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
     }
 }
 
-S32 MAXCORRHIST = CORRHISTSCALE * MAXCORRHISTUNSCALED();
-S32 MAXCORRHISTUPDATE = MAXCORRHIST * MAXCORRHISTMILLIUPDATE() / CORRECTIONGRANULARITY;
-
-void updateCorrHistScale(){
-    MAXCORRHIST = CORRHISTSCALE * MAXCORRHISTUNSCALED();
-    MAXCORRHISTUPDATE = MAXCORRHIST * MAXCORRHISTMILLIUPDATE() / CORRECTIONGRANULARITY;
-}
-
 Score correctStaticEval(Position& pos, const Score eval) {
     const bool side = pos.side;
     auto const& k = pos.ptKeys;
@@ -101,6 +93,9 @@ Score correctStaticEval(Position& pos, const Score eval) {
 }
 
 static inline void updateSingleCorrHist(S32& entry, const S32 bonus, const S32 weight){
+    const S32 MAXCORRHIST = CORRHISTSCALE * MAXCORRHISTUNSCALED();
+    const S32 MAXCORRHISTUPDATE = MAXCORRHIST * MAXCORRHISTMILLIUPDATE() / CORRECTIONGRANULARITY;
+
     S32 newValue = (entry * (256 - weight) + bonus * weight) / 256;
     newValue = std::clamp(newValue, entry - MAXCORRHISTUPDATE, entry + MAXCORRHISTUPDATE);
     entry = std::clamp(newValue, -MAXCORRHIST, MAXCORRHIST);
