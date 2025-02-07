@@ -40,4 +40,5 @@ Also Cie is a strange individual. Just saying. But gives ELO. So we will tolerat
 Viz is an amazing source of ancient HCE druid knowledge, pretty wholesome.  
 Viren does not give ELO. In fact Viren owes us ELO.  
 Ty cj for the lmr granularity idea. Very wholesome.  
+Thanks to shawn for helping with both ideas (rip givesCheck lmp) and cores (that thing is fast af).
 Yes, I capitalize ELO not because it is an acronym, but because it sounds funny.  
