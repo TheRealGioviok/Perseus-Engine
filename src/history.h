@@ -21,8 +21,7 @@ extern S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_S
 
 constexpr S32 CORRHISTSIZE = 16384;
 constexpr S32 CORRHISTSCALE = 256;
-constexpr S32 MAXCORRHIST = CORRHISTSCALE * 32;
-constexpr S32 MAXCORRHISTUPDATE = MAXCORRHIST / 4;
+constexpr S32 CORRECTIONGRANULARITY = 1024;
 
 // Correction History
 extern S32 pawnsCorrHist[2][CORRHISTSIZE];

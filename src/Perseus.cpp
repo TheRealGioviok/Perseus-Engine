@@ -2,6 +2,7 @@
 #include "tables.h"
 #include "bench.h"
 #include "evaluation.h"
+#include "history.h"
 #include <cstdlib>
 #include <vector>
 #include <string>

@@ -4,7 +4,7 @@
 
 std::vector<TunableParam>&  tunableParams() {
     static std::vector<TunableParam> tunableParams{};
-    tunableParams.reserve(64);
+    tunableParams.reserve(128);
     return tunableParams;
 }
 
