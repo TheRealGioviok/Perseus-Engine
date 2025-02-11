@@ -720,7 +720,7 @@ inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Squ
         (S64)(historyTable[side][getThreatsIndexing(threats,move)][indexFromTo(source, target)]) 
         + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
-        + (S64)(ply4contHist ? ply4contHist[indexPieceTo(movePiece(move), target)] : 0)
+        + (S64)(ply4contHist ? ply4contHist[indexPieceTo(movePiece(move), target)] : 0) / 2
         + QUIETSCORE
     ) << 32) | move;
 }
