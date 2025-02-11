@@ -41,6 +41,7 @@ static inline void updateContHistOffset(SStack* ss, const Move move, const S32 d
 static inline void updateContHist(SStack* ss, const Move move, const S32 delta){
     updateContHistOffset(ss, move, delta, 1);
     updateContHistOffset(ss, move, delta, 2);
+    updateContHistOffset(ss, move, delta, 4);
 }
 
 void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount) {
