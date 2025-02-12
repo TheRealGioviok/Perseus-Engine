@@ -145,12 +145,14 @@ TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxV
 		constexpr S32 name() { return defaultValue; }
 
 // History stuff
-TUNE_PARAM(maxHistoryBonus, 416, 1, 4096, 205, 0.002);
-TUNE_PARAM(historyBonusLinDepth, 32, 1, 1536, 77, 0.002);
+TUNE_PARAM(maxHistoryBonus, 512, 1, 4096, 205, 0.002);
+TUNE_PARAM(historyBonusQuadDepth, 4, 1, 1536, 77, 0.002);
+TUNE_PARAM(historyBonusLinDepth, 28, 1, 1536, 77, 0.002);
 TUNE_PARAM(historyBonusOffset, 64, -1024, 1024, 102, 0.002);
 
-TUNE_PARAM(maxHistoryMalus, 416, 1, 4096, 205, 0.002);
-TUNE_PARAM(historyMalusLinDepth, 32, 1, 1536, 77, 0.002);
+TUNE_PARAM(maxHistoryMalus, 512, 1, 4096, 205, 0.002);
+TUNE_PARAM(historyMalusQuadDepth, 4, 1, 1536, 77, 0.002);
+TUNE_PARAM(historyMalusLinDepth, 28, 1, 1536, 77, 0.002);
 TUNE_PARAM(historyMalusOffset, 64, -1024, 1024, 102, 0.002);
 
 // LMR table values
