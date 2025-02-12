@@ -66,6 +66,7 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
     }
 }
 
+
 Score correctStaticEval(Position& pos, const Score eval) {
     const bool side = pos.side;
     auto const& k = pos.ptKeys;
