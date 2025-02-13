@@ -70,13 +70,12 @@ static inline S32 getThreatsIndexing(const BitBoard threats, const Move move){
     return ((source & threats)>0) + 2*((target & threats)>0);
 }
 
-static inline S32 stat_bonus(int depth) {
-#if ENABLEBETTERHISTORYFORMULA
-	// Approximately verbatim stat bonus formula from Stockfish // Formula from Ethereal, who took it from stockfish. I love chess programming.
-    return depth > 13 ? 32 : 16 * depth * depth + 128 * std::max(depth - 1, 0);
-#else
-	return std::min(16 * depth * depth + 32 * depth + 16, 1200);
-#endif
+static inline S32 statBonus(S32 depth){
+    return std::min(maxHistoryBonus(), depth * depth * historyBonusQuadDepth() + depth * historyBonusLinDepth() + historyBonusOffset());
+}
+
+static inline S32 statMalus(S32 depth){
+    return std::min(maxHistoryMalus(), depth * depth * historyMalusQuadDepth() + depth * historyMalusLinDepth() + historyMalusOffset());
 }
 
 #define MAXHISTORYABS 16384LL
