@@ -155,6 +155,8 @@ TUNE_PARAM(historyMalusQuadDepth, 5, 1, 1536, 77, 0.002);
 TUNE_PARAM(historyMalusLinDepth, 243, 1, 1536, 77, 0.002);
 TUNE_PARAM(historyMalusOffset, -66, -1024, 1024, 102, 0.002);
 
+TUNE_PARAM(historyBetaMargin, 50, 20, 120, 5, 0.002);
+
 // LMR table values
 TUNE_PARAM(lmrDepthValue, 965, 500, 1500, 50, 0.002);
 TUNE_PARAM(lmrMoveValue, 1120, 500, 1500, 50, 0.002);
