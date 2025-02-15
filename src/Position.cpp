@@ -172,6 +172,7 @@ static inline void removePiece(Position& pos, const Piece piece, const Square sq
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
     pos.ptKeys[piece - 6 * (piece >= p)] ^= pieceKeysTable[piece][square];
+    pos.ptCounts[piece - 6 * (piece >= p)]--;
     // Update the psqt score
     pos.psqtScores[indexColorSide(piece >= p, 0)] -= PSQTs[0][piece][square];
     pos.psqtScores[indexColorSide(piece >= p, 1)] -= PSQTs[1][piece][square];
@@ -204,6 +205,7 @@ static inline void addPiece(Position& pos, const Piece piece, const Square squar
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
     pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
     pos.ptKeys[piece - 6 * (piece >= p)] ^= pieceKeysTable[piece][square];
+    pos.ptCounts[piece - 6 * (piece >= p)]++;
     // Update the psqt score
     pos.psqtScores[indexColorSide(piece >= p, 0)] += PSQTs[0][piece][square];
     pos.psqtScores[indexColorSide(piece >= p, 1)] += PSQTs[1][piece][square];
@@ -357,6 +359,11 @@ FENkeyEval:
     ptKeys[Q] = generatePtHashKey<Q>();
     ptKeys[K] = generatePtHashKey<K>();
     checkers = calculateCheckers();
+    ptCounts[P] = popcount(bitboards[p] | bitboards[P]);
+    ptCounts[N] = popcount(bitboards[n] | bitboards[N]);
+    ptCounts[B] = popcount(bitboards[b] | bitboards[B]);
+    ptCounts[R] = popcount(bitboards[r] | bitboards[R]);
+    ptCounts[Q] = popcount(bitboards[q] | bitboards[Q]);
     generateThreats();
     return true;
 }
@@ -863,6 +870,11 @@ void Position::reflect() {
     ptKeys[R] = generatePtHashKey<R>();
     ptKeys[Q] = generatePtHashKey<Q>();
     ptKeys[K] = generatePtHashKey<K>();
+    ptCounts[P] = popcount(bitboards[p] | bitboards[P]);
+    ptCounts[N] = popcount(bitboards[n] | bitboards[N]);
+    ptCounts[B] = popcount(bitboards[b] | bitboards[B]);
+    ptCounts[R] = popcount(bitboards[r] | bitboards[R]);
+    ptCounts[Q] = popcount(bitboards[q] | bitboards[Q]);
     generateThreats();
 }
 
@@ -1731,6 +1743,7 @@ UndoInfo::UndoInfo(Position& position){
     memcpy(bitboards, position.bitboards, sizeof(BitBoard) * 12);
     memcpy(occupancies, position.occupancies, sizeof(BitBoard) * 3);
     memcpy(ptHashKey, position.ptKeys, sizeof(HashKey) * 6);
+    memcpy(ptCounts, position.ptCounts, sizeof(U8)*5);
 }
 
 void UndoInfo::undoMove(Position& position, Move move){
@@ -1762,6 +1775,7 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.checkers = checkers;
     memcpy(position.psqtScores, psqtScores, sizeof(PScore) * 4);
     memcpy(position.occupancies, occupancies, sizeof(BitBoard) * 3);
+    memcpy(position.ptCounts, ptCounts, sizeof(U8)*5);
 }
 
 void UndoInfo::undoNullMove(Position& position){

@@ -69,23 +69,24 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
 Score correctStaticEval(Position& pos, const Score eval) {
     const bool side = pos.side;
     auto const& k = pos.ptKeys;
+    auto const& counts = pos.ptCounts;
 
     const S32 bonus = 
-        + pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE]           * pawnCorrWeight()
+        + pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE]           * pawnCorrWeight() * (!!counts[P])
         + (
             + nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE]
             + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
         )                                                               * nonPawnCorrWeight()
-        + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE] * T0CorrWeight()
-        + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE] * T1CorrWeight()
-        + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE] * T2CorrWeight()
-        + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE] * T3CorrWeight()
-        + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE] * T4CorrWeight()
-        + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE] * T5CorrWeight()
-        + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE] * T6CorrWeight()
-        + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE] * T7CorrWeight()
-        + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE] * T8CorrWeight()
-        + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE] * T9CorrWeight()
+        + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE] * T0CorrWeight() * (counts[P] && counts[N])
+        + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE] * T1CorrWeight() * (counts[P] && counts[B])
+        + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE] * T2CorrWeight() * (counts[P] && counts[R])
+        + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE] * T3CorrWeight() * (counts[P] && counts[Q])
+        + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE] * T4CorrWeight() * (counts[N] && counts[B])
+        + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE] * T5CorrWeight() * (counts[N] && counts[R])
+        + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE] * T6CorrWeight() * (counts[N] && counts[Q])
+        + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE] * T7CorrWeight() * (counts[B] && counts[R])
+        + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE] * T8CorrWeight() * (counts[B] && counts[Q])
+        + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE] * T9CorrWeight() * (counts[R] && counts[Q])
     ;
 
     const S32 corrected = eval + bonus / (CORRHISTSCALE * CORRECTIONGRANULARITY);

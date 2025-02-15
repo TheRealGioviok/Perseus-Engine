@@ -94,6 +94,11 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     assert(pos.ptKeys[R] == pos.generatePtHashKey<R>());
     assert(pos.ptKeys[Q] == pos.generatePtHashKey<Q>());
     assert(pos.ptKeys[K] == pos.generatePtHashKey<K>());
+    assert(pos.ptCounts[P] == popcount(pos.bitboards[p] | pos.bitboards[P]));
+    assert(pos.ptCounts[N] == popcount(pos.bitboards[n] | pos.bitboards[N]));
+    assert(pos.ptCounts[B] == popcount(pos.bitboards[b] | pos.bitboards[B]));
+    assert(pos.ptCounts[R] == popcount(pos.bitboards[r] | pos.bitboards[R]));
+    assert(pos.ptCounts[Q] == popcount(pos.bitboards[q] | pos.bitboards[Q]));
 
     // Ply overflow
     if (ply >= maxPly)
