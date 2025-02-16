@@ -82,9 +82,9 @@ inline U64 hashEntryFor(HashKey key) {
     );
 }
 
-static inline void resizeTT(S32 mbSize){
+static inline void resizeTT(U64 mbSize){
     // calculate the number of entries
-    S32 ttEntryCount = 1024 * 1024 * mbSize / sizeof(ttEntry);
+    U64 ttEntryCount = 1024 * 1024 * mbSize / sizeof(ttEntry);
     // allocate the memory on the tt vector
     tt.resize(ttEntryCount);
     // clear the memory

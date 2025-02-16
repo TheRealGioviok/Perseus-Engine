@@ -28,7 +28,7 @@ void uciStr() {
     std::cout << "id name " << "Perseus" << std::endl;
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
-    std::cout << "option name Hash type spin default 64 min 8 max 1024" << std::endl;
+    std::cout << "option name Hash type spin default 64 min 8 max 33554432" << std::endl;
     
     for(const TunableParam& param : tunableParams())
         std::cout << "option name " << param.name << " type spin default " << param.defaultValue << " min " << param.minValue << " max " << param.maxValue << std::endl;
