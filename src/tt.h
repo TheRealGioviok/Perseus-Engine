@@ -11,15 +11,11 @@ constexpr U64 ttBucketCount = ttEntryCount / ttBucketSize; // 2^18
 // The enum of hashFlags
 enum HashFlag
 {
-    hashNONE = 0,
-    hashUPPER = 1,
-    hashLOWER = 2,
-    hashEXACT = 3,
-    hashINVALID = 8,
-    hashOLD = 16,
-    hashSINGULAR = 32,
-    hashEVALONLY = 64,
-    hashPVMove = 128
+    hashNONE   = 0b000,
+    hashUPPER  = 0b001,
+    hashLOWER  = 0b010,
+    hashEXACT  = 0b011,
+    hashPVMove = 0b100
 };
 
 #ifdef _MSC_VER
@@ -29,7 +25,7 @@ __declspec(align(16)) struct ttEntry {
     HashKey hashKey;         // 8
     PackedMove bestMove;     // 2
     Depth depth;             // 1
-    U8 flags = hashINVALID;  // 1
+    U8 flags = hashNONE;  // 1
     Score score = noScore; // 2
     Score eval = noScore;  // 2
 };
@@ -38,7 +34,7 @@ __declspec(align(64))struct ttBucket {
     ttEntry entries[ttBucketSize];
     ttBucket(){
 		for (U64 i = 0; i < ttBucketSize; i++){
-			entries[i] = ttEntry(0, 0, 0, hashINVALID, 0);
+			entries[i] = ttEntry(0, 0, 0, hashNONE, 0);
 			entries[i].eval = noScore;
 		}
 	}
@@ -50,7 +46,7 @@ struct ttEntry {
     HashKey hashKey;         // 8
     PackedMove bestMove;     // 2
     Depth depth;             // 1
-    U8 flags = hashINVALID;  // 1
+    U8 ageFlags = hashNONE;  // 1
     Score score = noScore; // 2
     Score eval = noScore;  // 2
 } __attribute__((aligned(16)));
@@ -59,7 +55,7 @@ struct ttBucket {
     ttEntry entries[ttBucketSize];
     ttBucket(){
         for (U64 i = 0; i < ttBucketSize; i++){
-            entries[i] = ttEntry(0, 0, 0, hashINVALID, 0);
+            entries[i] = ttEntry(0, 0, 0, hashNONE, 0);
             entries[i].eval = noScore;
         }
     }
@@ -110,11 +106,12 @@ ttEntry *probeTT(HashKey key);
  * @param score The score.
  * @param depth The depth.
  * @param flags The flags.
+ * @param age The age.
  * @param move The move.
  * @param ply The ply.
  * @param isPv The isPv flag.
  * @param wasPv The wasPv flag.
  */
-void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv, bool wasPv);
+void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, U8 age, Move move, Ply ply, bool isPv, bool wasPv);
 
-U16 hashfull();
+U16 hashfull(U8 age);

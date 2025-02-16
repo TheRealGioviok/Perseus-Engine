@@ -114,7 +114,7 @@ int executeCommand(Game* game, char* command) {
                 eval = entry.eval;
                 hash = entry.hashKey;
                 bestMove = entry.bestMove;
-                flags = entry.flags;
+                flags = entry.ageFlags;
 
                 std::cout << "TT for hashKey " << std::hex << hash << std::dec << ":\n";
                 std::cout << "Score: " << score << "\t\tStatic eval: " << eval << "\n";
@@ -123,9 +123,7 @@ int executeCommand(Game* game, char* command) {
                 std::cout << "Flags:\n" <<
                     (flags & hashUPPER ? "\thashUPPER\n" : "") <<
                     (flags & hashLOWER ? "\thashLOWER\n" : "") <<
-                    (flags & hashEXACT ? "\thashEXACT\n" : "") <<
-                    (flags & hashSINGULAR ? "\thashALPHA\n" : "") <<
-                    (flags & hashINVALID ? "\thashALPHA\n" : "") << "\n\n";
+                    (flags & hashEXACT ? "\thashEXACT\n" : "") << "\n\n";
                 if (cnt++ >= 100) goto megabreak;
             }
         }
@@ -159,7 +157,7 @@ int executeCommand(Game* game, char* command) {
         eval = entry->eval;
         hash = entry->hashKey;
         bestMove = entry->bestMove;
-        flags = entry->flags;
+        flags = entry->ageFlags;
 
         std::cout << "TT for hashKey " << std::hex << pos.hashKey << " (" << hash << std::dec << ") :\n";
         std::cout << "Score: " << score << "\t\tStatic eval: " << eval << "\n";
@@ -168,9 +166,7 @@ int executeCommand(Game* game, char* command) {
         std::cout << "Flags:\n" <<
             (flags & hashUPPER ? "\thashUPPER\n" : "") <<
             (flags & hashLOWER ? "\thashLOWER\n" : "") <<
-            (flags & hashEXACT ? "\thashEXACT\n" : "") <<
-            (flags & hashSINGULAR ? "\thashSingular\n" : "") <<
-            (flags & hashINVALID ? "\thashInvalid\n" : "") << "\n";
+            (flags & hashEXACT ? "\thashEXACT\n" : "") << "\n";
     }
 
     if (position) positionCommand(game, command);
@@ -397,7 +393,7 @@ int goCommand(Game* game, char* command){
         game->hardNodesLimit = 0xFFFFFFFFFFFFFFFF;
     }
 
-    game->startSearch(true);
+    game->startSearch();
 
     return 0;
 }

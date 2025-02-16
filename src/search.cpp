@@ -133,7 +133,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     const bool ttHit = tte;
     const Score ttScore = ttHit ? adjustMateScore(tte->score, ply) : noScore;
     const PackedMove ttMove = ttHit ? tte->bestMove : 0;
-    const U8 ttFlags = ttHit ? tte->flags : 0;
+    const U8 ttFlags = ttHit ? tte->ageFlags : 0;
     const U8 ttBound = ttFlags & 3;
     const Depth ttDepth = ttHit ? tte->depth : 0;
 
@@ -209,7 +209,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         rawEval = evaluate();
         eval = ss->staticEval = correctStaticEval(pos, rawEval);
         // Store the eval in the TT if not in exclusion mode (in which we might already have the entry)
-        writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, PVNode, ttPv);
+        writeTT(pos.hashKey, noScore, eval, 0, hashNONE, age, 0, ply, PVNode, ttPv);
     }
 
     improvement = [&](){
@@ -395,8 +395,7 @@ skipPruning:
             ++nodes;
             if (isQuiet) quiets[quietsCount++] = currMove;
             else noisy[noisyCount++] = currMove;
-            // if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull() << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
-
+            
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
@@ -494,7 +493,7 @@ skipPruning:
                 updateCorrHist(pos, bestScore - ss->staticEval, depth);
         }
         U8 ttStoreFlag = bestScore >= beta ? hashLOWER : alpha != origAlpha ? hashEXACT : hashUPPER;
-        writeTT(pos.hashKey, bestScore, rawEval, depth, ttStoreFlag, bestMove, ply, PVNode, ttPv);
+        writeTT(pos.hashKey, bestScore, rawEval, depth, ttStoreFlag, age, bestMove, ply, PVNode, ttPv);
         // writeTT(pos.hashKey, bestScore, ss->staticEval, depth, ttStoreFlag, bestMove, ply, false, PVNode);
     }
 
@@ -521,7 +520,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     const bool ttHit = tte;
     const Score ttScore = ttHit ? adjustMateScore(tte->score, ply) : noScore;
     const PackedMove ttMove = ttHit ? tte->bestMove : 0;
-    const U8 ttFlags = ttHit ? tte->flags : 0;
+    const U8 ttFlags = ttHit ? tte->ageFlags : 0;
     const U8 ttBound = ttFlags & 3;
 
     if (ttScore != noScore)
@@ -558,7 +557,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     else {
         rawEval = evaluate();
         ss->staticEval = bestScore = correctStaticEval(pos, rawEval);
-        writeTT(pos.hashKey, noScore, bestScore, 0, hashNONE, 0, ply, PVNode, ttPv);
+        writeTT(pos.hashKey, noScore, bestScore, 0, hashNONE, age, 0, ply, PVNode, ttPv);
     }
 
     if (bestScore >= beta)
@@ -610,14 +609,15 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     
     U8 ttStoreFlag = bestScore >= beta ? hashLOWER : hashUPPER; // No exact bounds in qsearch
     ttStoreFlag |= ttPv ? hashPVMove : 0;
-    writeTT(pos.hashKey, bestScore, rawEval, 0, ttStoreFlag, bestMove, ply, PVNode, ttPv);
+    writeTT(pos.hashKey, bestScore, rawEval, 0, ttStoreFlag, age, bestMove, ply, PVNode, ttPv);
 
     return bestScore;
 }
 
 #define ASPIRATIONWINDOW 25
-void Game::startSearch(bool halveTT = true)
+void Game::startSearch()
 {
+    age = (age + 1) & 0b11111;
     // Set SE counters to 0
     seCandidates = 0;
     seActivations = 0;
@@ -752,12 +752,13 @@ void Game::startSearch(bool halveTT = true)
             }
             else
             {
+                U16 hfull = hashfull(age);
                 if (score < -mateValue && score > -mateScore)
-                    std::cout << std::dec << "info score mate " << -(mateScore + score + 2) / 2 << " depth " << (int)searchDepth << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
+                    std::cout << std::dec << "info score mate " << -(mateScore + score + 2) / 2 << " depth " << (int)searchDepth << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hfull << " pv ";
                 else if (score > mateValue && score < mateScore)
-                    std::cout << std::dec << "info score mate " << (mateScore + 1 - score) / 2 << " depth " << (int)searchDepth << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
+                    std::cout << std::dec << "info score mate " << (mateScore + 1 - score) / 2 << " depth " << (int)searchDepth << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hfull << " pv ";
                 else
-                    std::cout << std::dec << "info score cp " << (score >> 1) << " depth " << (int)searchDepth << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hashfull() << " pv ";
+                    std::cout << std::dec << "info score cp " << (score >> 1) << " depth " << (int)searchDepth << " seldepth " << (int)seldepth << " nodes " << nodes << " hashfull " << hfull << " pv ";
 
                 for (int i = 0; i < pvLen[0]; i++)
                 {
@@ -782,11 +783,4 @@ bmove:
     std::cout << "bestmove ";
     printMove(bestMove);
     std::cout << std::endl;
-    if (halveTT)
-    {
-        // Age pv table
-        for (U64 i = 0; i < ttEntryCount; i++){
-            tt[i].flags |= hashOLD;
-        }
-    }
 }

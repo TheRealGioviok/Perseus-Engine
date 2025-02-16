@@ -25,6 +25,7 @@ public:
     Score lastScore = 0;
     U64 nodesPerMoveTable[64 * 64];
     S16 nmpPlies = 0;
+    U8 age;
     bool stopped = false;
 
     /**
@@ -158,9 +159,8 @@ public:
 
     /**
      * @brief The startSearch function starts the search. It uses the internal parameters set by the GUI.
-     * @param halveTT If true, the transposition table depth will be halved before the search.
      */
-    void startSearch(bool halveTT);
+    void startSearch();
 
     /**
      * @brief The contempt function returns the contempt score. The contempt score is used to assign a non-zero score to draw positions, depending on the optimism of the engine.

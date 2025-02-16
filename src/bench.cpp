@@ -70,7 +70,7 @@ S32 benchmark(Depth depth){
         game.depth = depth;
         game.parseFEN((char*)benchmarkfens[i]);
         game.hardNodesLimit = 0xFFFFFFFFFFFFFFFF;
-        game.startSearch(false);
+        game.startSearch();
         nodes += game.nodes;
         Move bestMove = pvTable[0][0]; // Bench never returns half searches, hence this is always a bestmove
         avgNodeProportion += (double)game.nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)game.nodes;

@@ -133,7 +133,7 @@ void Game::reset(){
         tt[i].depth = 0;
         tt[i].score = noScore;
         tt[i].eval = noScore;
-        tt[i].flags = hashINVALID;
+        tt[i].ageFlags = hashNONE;
     }
 
     // Clear pawn hash table
