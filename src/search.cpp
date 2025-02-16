@@ -100,6 +100,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         return evaluate();
     const bool RootNode = ply == 0;
     const bool PVNode = (beta - alpha) > 1;
+    if (!PVNode) ss->pvDist = (ss-1)->pvDist + 1;
 
     Score eval;
     Score rawEval; // for corrhist
@@ -383,7 +384,7 @@ skipPruning:
                 else if (inCheck)
                     extension = 1;
             }
-            cutNode |= extension < 0;
+            cutNode |= (ss->pvDist & 1) && extension < 0;
 
             Depth newDepth = std::max(0,depth - 1 + extension);
 
