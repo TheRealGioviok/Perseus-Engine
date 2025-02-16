@@ -488,7 +488,7 @@ skipPruning:
 
     if (!stopped && !excludedMove){
         if (!inCheck
-            && !bestMove
+            && (!bestMove || okToReduce(bestMove) || !ttMove)
             && !(ttBound == hashLOWER && bestScore <= ss->staticEval)
             && !(ttBound == hashUPPER && bestScore >= ss->staticEval)){
                 updateCorrHist(pos, bestScore - ss->staticEval, depth);
