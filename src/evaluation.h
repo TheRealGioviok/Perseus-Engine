@@ -188,4 +188,4 @@ void initTropism();
  * @param filename The filename of the epd file
  * @param output The output file to write the features to
  */
-void convertToFeatures(std::string filename, std::string output);
+void convertToFeatures(std::string filename, std::string output, std::string scores);

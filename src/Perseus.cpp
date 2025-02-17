@@ -92,6 +92,7 @@ int main(int argc, char* argv[]){
             }
             std::string inputFilename(argv[2]);
             std::string outputFilename;
+            std::string scores;
 
             // Find the last '.' in the filename
             size_t dotPos = inputFilename.find_last_of('.');
@@ -99,11 +100,13 @@ int main(int argc, char* argv[]){
             if (dotPos != std::string::npos) {
                 // If there's an extension, replace it with ".feat"
                 outputFilename = inputFilename.substr(0, dotPos) + ".feat";
+                scores = inputFilename.substr(0, dotPos) + ".score";
             } else {
                 // If no extension, just add ".feat"
                 outputFilename = inputFilename + ".feat";
+                outputFilename = inputFilename + ".score";
             }
-            convertToFeatures(inputFilename, outputFilename);
+            convertToFeatures(inputFilename, outputFilename, scores);
             return 0;
         }
     }

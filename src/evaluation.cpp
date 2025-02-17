@@ -1593,7 +1593,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
  * @param filename The filename of the epd file
  * @param output The output file to write the features to
  */
-void convertToFeatures(std::string filename, std::string output) {
+void convertToFeatures(std::string filename, std::string output, std::string scores) {
     std::ifstream file(filename);
     // Check if the file is open
     if (!file.is_open()){
@@ -1602,6 +1602,7 @@ void convertToFeatures(std::string filename, std::string output) {
     }
     // Open output in binary mode
     std::ofstream out(output, std::ios::binary);
+    std::ofstream scoreOut(scores, std::ios::binary);
     // Get the count of weights by getting the current eval weights
     auto weights = getCurrentEvalWeights();
     U32 weightCount = weights.size();
@@ -1645,8 +1646,10 @@ void convertToFeatures(std::string filename, std::string output) {
             if (tokens[1] == "w") features[entrySize - 1] = 1;
             else if (tokens[1] == "d") features[entrySize - 1] = 0;
             else features[entrySize - 1] = -1;
+            S16 score = std::clamp(std::stoi(tokens[2]) * (1 - 2 * pos.side), -mateValue, +mateValue);
             // Write the features to the output file
             out.write((char*)features, entrySize);
+            scoreOut.write(reinterpret_cast<const char*>(&score), sizeof(S16));
         }
         // Increment the counter and report progress each 16384 positions
         if (++counter % 16384 == 0){
@@ -1657,6 +1660,7 @@ void convertToFeatures(std::string filename, std::string output) {
     std::cout << "Processed " << counter << " positions." << std::endl;
     // Close the file
     out.close();
+    scoreOut.close();
     // Delete the features
     delete[] features;
 }
