@@ -139,7 +139,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
     if (ttScore != noScore)
     {
-        if (!PVNode && ttDepth >= depth)
+        if (!PVNode && ttDepth >= depth && (ttScore <= alpha || cutNode))
         {
             if (ttBound == hashEXACT)
                 return ttScore;
@@ -154,6 +154,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
                 // updateHistoryBonus(&historyTable[pos.side][indexFromTo(from, to)], depth, true);
                 return ttScore;
             }
+            //else if (depth <= 6)
+			//	++depth;
         }
     }
 
