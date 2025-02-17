@@ -228,7 +228,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     {
         // RFP
         if (depth <= RFPDepth() && abs(eval) < mateValue && eval - futilityMargin(depth, improving) >= beta) // && !excludedMove)
-            return eval;
+            return (eval + beta) / 2;
 
         // Null move pruning
         if (eval >= ss->staticEval &&
