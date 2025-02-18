@@ -47,68 +47,68 @@ void initTables() {
     }
 }
 
-constexpr PScore DOUBLEISOLATEDPEN = S(14, 49);
-constexpr PScore ISOLATEDPEN = S(17, 22);
-constexpr PScore BACKWARDPEN = S(3, 16);
-constexpr PScore DOUBLEDPEN = S(16, 22);
-constexpr PScore SUPPORTEDPHALANX = S(-1, 4);
-constexpr PScore ADVANCABLEPHALANX = S(8, 26);
-constexpr PScore R_SUPPORTEDPHALANX = S(2, 11);
-constexpr PScore R_ADVANCABLEPHALANX = S(1, 20);
-constexpr PScore passedRankBonus[7] = {S(0, 0), S(10, -82), S(-11, -51), S(-7, 3), S(24, 55), S(47, 150), S(138, 242), };
-constexpr PScore PASSEDPATHBONUS = S(-4, 23);
-constexpr PScore SUPPORTEDPASSER = S(28, 0);
-constexpr PScore INNERSHELTER = S(-1, -29);
-constexpr PScore OUTERSHELTER = S(7, -17);
-constexpr PScore BISHOPPAIR = S(20, 126);
-constexpr PScore ROOKONOPENFILE = S(22, 10);
-constexpr PScore ROOKONSEMIOPENFILE = S(19, 13);
-constexpr PScore KNIGHTONEXTOUTPOST = S(26, 36);
-constexpr PScore BISHOPONEXTOUTPOST = S(30, -1);
-constexpr PScore KNIGHTONINTOUTPOST = S(24, 39);
-constexpr PScore BISHOPONINTOUTPOST = S(35, -8);
-constexpr PScore KNIGHTPROTECTOR = S(-7, -1);
-constexpr PScore BISHOPPROTECTOR = S(-4, -1);
-constexpr PScore BISHOPPAWNS = S(1, -4);
-constexpr PScore THREATSAFEPAWN = S(49, 61);
-constexpr PScore THREATPAWNPUSH = S(20, 33);
-constexpr PScore PAWNHANGING = S(-4, -60);
-constexpr PScore NONPAWNHANGING = S(-25, -35);
-constexpr PScore KINGTHREAT = S(-3, 2);
-constexpr PScore QUEENINFILTRATION = S(-1, -1);
-constexpr PScore RESTRICTEDSQUARES = S(5, 4);
-constexpr PScore TEMPO = S(14, 24);
+constexpr PScore DOUBLEISOLATEDPEN = S(10, 32);
+constexpr PScore ISOLATEDPEN = S(22, 12);
+constexpr PScore BACKWARDPEN = S(6, 10);
+constexpr PScore DOUBLEDPEN = S(22, 15);
+constexpr PScore SUPPORTEDPHALANX = S(-2, 3);
+constexpr PScore ADVANCABLEPHALANX = S(14, 16);
+constexpr PScore R_SUPPORTEDPHALANX = S(3, 6);
+constexpr PScore R_ADVANCABLEPHALANX = S(1, 13);
+constexpr PScore passedRankBonus[7] = {S(0, 0), S(6, -58), S(-20, -35), S(-10, 2), S(34, 33), S(69, 86), S(186, 150), };
+constexpr PScore PASSEDPATHBONUS = S(-6, 15);
+constexpr PScore SUPPORTEDPASSER = S(38, -5);
+constexpr PScore INNERSHELTER = S(1, -7);
+constexpr PScore OUTERSHELTER = S(19, 0);
+constexpr PScore BISHOPPAIR = S(31, 75);
+constexpr PScore ROOKONOPENFILE = S(29, 6);
+constexpr PScore ROOKONSEMIOPENFILE = S(28, 4);
+constexpr PScore KNIGHTONEXTOUTPOST = S(37, 22);
+constexpr PScore BISHOPONEXTOUTPOST = S(40, -3);
+constexpr PScore KNIGHTONINTOUTPOST = S(34, 24);
+constexpr PScore BISHOPONINTOUTPOST = S(53, -10);
+constexpr PScore KNIGHTPROTECTOR = S(-7, -2);
+constexpr PScore BISHOPPROTECTOR = S(-4, -2);
+constexpr PScore BISHOPPAWNS = S(1, -3);
+constexpr PScore THREATSAFEPAWN = S(70, 42);
+constexpr PScore THREATPAWNPUSH = S(28, 23);
+constexpr PScore PAWNHANGING = S(-3, -41);
+constexpr PScore NONPAWNHANGING = S(-41, -25);
+constexpr PScore KINGTHREAT = S(1, 3);
+constexpr PScore QUEENINFILTRATION = S(1, -3);
+constexpr PScore RESTRICTEDSQUARES = S(6, 2);
+constexpr PScore TEMPO = S(15, -2);
 
-constexpr PScore PAWNATTACKINNERRING = S(18, -45);
-constexpr PScore KNIGHTATTACKINNERRING = S(53, -4);
-constexpr PScore BISHOPATTACKINNERRING = S(55, 8);
-constexpr PScore ROOKATTACKINNERRING = S(56, 18);
-constexpr PScore QUEENATTACKINNERRING = S(40, -34);
-constexpr PScore PAWNATTACKOUTERRING = S(39, -11);
-constexpr PScore KNIGHTATTACKOUTERRING = S(47, 6);
-constexpr PScore BISHOPATTACKOUTERRING = S(55, 1);
-constexpr PScore ROOKATTACKOUTERRING = S(31, -5);
-constexpr PScore QUEENATTACKOUTERRING = S(48, 21);
-constexpr PScore NOQUEENDANGER = S(-452, -1127);
-constexpr PScore PINNEDSHELTERDANGER = S(68, -7);
-constexpr PScore SAFECHECK[4] = {S(188, -29), S(43, 0), S(118, 34), S(117, 14), };
-constexpr PScore ALLCHECKS[4] = {S(45, 6), S(18, 31), S(43, 3), S(8, 16), };
-constexpr PScore SAFETYINNERSHELTER = S(-36, -74);
-constexpr PScore SAFETYOUTERSHELTER = S(-36, -80);
-constexpr PScore INNERWEAKNESS = S(63, -21);
-constexpr PScore OUTERWEAKNESS = S(9, 6);
-constexpr PScore KSTEMPO = S(17, 4);
+constexpr PScore PAWNATTACKINNERRING = S(33, -97);
+constexpr PScore KNIGHTATTACKINNERRING = S(83, 1);
+constexpr PScore BISHOPATTACKINNERRING = S(86, 23);
+constexpr PScore ROOKATTACKINNERRING = S(84, 34);
+constexpr PScore QUEENATTACKINNERRING = S(78, -47);
+constexpr PScore PAWNATTACKOUTERRING = S(71, -36);
+constexpr PScore KNIGHTATTACKOUTERRING = S(77, 12);
+constexpr PScore BISHOPATTACKOUTERRING = S(83, 12);
+constexpr PScore ROOKATTACKOUTERRING = S(50, -18);
+constexpr PScore QUEENATTACKOUTERRING = S(69, 3);
+constexpr PScore NOQUEENDANGER = S(-718, -2312);
+constexpr PScore PINNEDSHELTERDANGER = S(128, -29);
+constexpr PScore SAFECHECK[4] = {S(267, -28), S(38, 29), S(163, 80), S(266, -225), };
+constexpr PScore ALLCHECKS[4] = {S(78, 3), S(32, 62), S(83, -5), S(0, 97), };
+constexpr PScore SAFETYINNERSHELTER = S(-51, -27);
+constexpr PScore SAFETYOUTERSHELTER = S(-11, -16);
+constexpr PScore INNERWEAKNESS = S(99, -58);
+constexpr PScore OUTERWEAKNESS = S(-6, -8);
+constexpr PScore KSTEMPO = S(53, 107);
 
-constexpr Score COMPLEXITYPASSERS = 198;
-constexpr Score COMPLEXITYPAWNS = 951;
-constexpr Score COMPLEXITYBLOCKEDPAIRS = -338;
-constexpr Score COMPLEXITYPAWNTENSION = -846;
-constexpr Score COMPLEXITYOUTFLANKING = -52;
-constexpr Score COMPLEXITYINFILTRATION = -893;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS = 10075;
-constexpr Score COMPLEXITYPAWNENDING = 13099;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3448;
-constexpr Score COMPLEXITYBIAS = -19546;
+constexpr Score COMPLEXITYPASSERS = 960;
+constexpr Score COMPLEXITYPAWNS = 652;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -297;
+constexpr Score COMPLEXITYPAWNTENSION = -611;
+constexpr Score COMPLEXITYOUTFLANKING = -64;
+constexpr Score COMPLEXITYINFILTRATION = -555;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS = 7883;
+constexpr Score COMPLEXITYPAWNENDING = 11452;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -2298;
+constexpr Score COMPLEXITYBIAS = 1258;
 
 // Function to access the table values
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
@@ -1646,10 +1646,10 @@ void convertToFeatures(std::string filename, std::string output, std::string sco
             if (tokens[1] == "w") features[entrySize - 1] = 1;
             else if (tokens[1] == "d") features[entrySize - 1] = 0;
             else features[entrySize - 1] = -1;
-            S16 score = std::clamp(std::stoi(tokens[2]) * (1 - 2 * pos.side), -mateValue, +mateValue);
+            float score = std::clamp(std::stoi(tokens[2]) * (1 - 2 * pos.side), -mateValue, +mateValue);
             // Write the features to the output file
             out.write((char*)features, entrySize);
-            scoreOut.write(reinterpret_cast<const char*>(&score), sizeof(S16));
+            scoreOut.write(reinterpret_cast<const char*>(&score), sizeof(float));
         }
         // Increment the counter and report progress each 16384 positions
         if (++counter % 16384 == 0){
