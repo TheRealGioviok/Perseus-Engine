@@ -6,10 +6,10 @@
 #include <algorithm>
 
 // history table
-S32 historyTable[2][4][NUM_SQUARES * NUM_SQUARES];
+S32 historyTable[2][NUM_SQUARES * NUM_SQUARES][4];
 
 // capture history table
-S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][6];
+S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][6][4];
 
 // counter move table
 Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
@@ -23,13 +23,13 @@ S32 nonPawnsCorrHist[2][2][CORRHISTSIZE]; // stm - side - hash
 S32 tripletCorrHist[10][2][CORRHISTSIZE]; // stm - hash
 
 static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
-    S32 *current = &historyTable[side][getThreatsIndexing(threats, move)][indexFromTo(moveSource(move),moveTarget(move))];
+    S32 *current = &historyTable[side][indexFromTo(moveSource(move), moveTarget(move))][getThreatsIndexing(threats, move)];
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
-static inline void updateCaptureHistory(Move move, S32 delta) {
+static inline void updateCaptureHistory(Move move, const BitBoard threats, S32 delta) {
     Piece captured = moveCapture(move);
-    S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6]; // account for promotion
+    S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6][getThreatsIndexing(threats, move)]; // account for promotion
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
@@ -58,11 +58,11 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
     }
     else {
         // If bestMove is noisy, we only reduce the bonus of all other noisy moves
-        updateCaptureHistory(bestMove, bonus);
+        updateCaptureHistory(bestMove, threats, bonus);
     }
     for (int i = 0; i < noisyCount; i++) {
         if (noisyMoves[i] == bestMove) continue;
-        updateCaptureHistory(noisyMoves[i], -malus);
+        updateCaptureHistory(noisyMoves[i], threats, -malus);
     }
 }
 
