@@ -70,9 +70,9 @@ static inline S32 getThreatsIndexing(const BitBoard threats, const Move move){
     return ((source & threats)>0) + 2*((target & threats)>0);
 }
 
-static inline S32 fromThreat(const BitBoard threats, const Move move){
-    const BitBoard source = squareBB(moveSource(move));
-    return ((source & threats)>0);
+static inline S32 toThreat(const BitBoard threats, const Move move){
+    const BitBoard target = squareBB(moveTarget(move));
+    return ((target & threats)>0);
 }
 
 static inline S32 statBonus(S32 depth){

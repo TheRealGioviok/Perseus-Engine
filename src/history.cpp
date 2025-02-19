@@ -29,7 +29,7 @@ static inline void updateHistoryMove(const bool side, const BitBoard threats, co
 
 static inline void updateCaptureHistory(Move move, const BitBoard threats, S32 delta) {
     Piece captured = moveCapture(move);
-    S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6][fromThreat(threats, move)]; // account for promotion
+    S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6][toThreat(threats, move)]; // account for promotion
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
