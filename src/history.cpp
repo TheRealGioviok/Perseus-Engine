@@ -9,7 +9,7 @@
 S32 historyTable[2][NUM_SQUARES * NUM_SQUARES][4];
 
 // capture history table
-S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][6][4];
+S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][6][2];
 
 // counter move table
 Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
@@ -29,7 +29,7 @@ static inline void updateHistoryMove(const bool side, const BitBoard threats, co
 
 static inline void updateCaptureHistory(Move move, const BitBoard threats, S32 delta) {
     Piece captured = moveCapture(move);
-    S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6][getThreatsIndexing(threats, move)]; // account for promotion
+    S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6][fromThreat(threats, move)]; // account for promotion
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
