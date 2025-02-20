@@ -12,7 +12,7 @@ endif
 endif
 
 CXX ?= clang++
-CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough -mpopcnt
+CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough
 EXE ?= Perseus
 CPU ?= default
 
