@@ -625,7 +625,7 @@ bool Position::makeMove(Move move)
 inline void Position::addEp(MoveList* ml, ScoredMove move){
 
     const S32 score = pieceValues[P] * captScoreMvvMultiplier()
-                    + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P];
+                    + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P][getThreatsIndexing(threats, move)];
 
     ml->moves[ml->count++] = ((
         score
@@ -641,7 +641,7 @@ inline void Position::addPromoCapture(MoveList* ml, ScoredMove move, Piece moved
             + pieceValues[promotion]
             + pieceValues[capturedPiece]
             - pieceValues[P]
-            + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)]; // Piece captured can't be NOPIECE (12), so this works
+            + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)][getThreatsIndexing(threats, move)]; // Piece captured can't be NOPIECE (12), so this works
         
         ml->moves[ml->count++] = ((
             score
@@ -653,7 +653,7 @@ inline void Position::addPromoCapture(MoveList* ml, ScoredMove move, Piece moved
             + pieceValues[promotion]
             + pieceValues[capturedPiece]
             - pieceValues[P]
-            + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)]; // Piece captured can't be NOPIECE (12), so this works
+            + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)][getThreatsIndexing(threats, move)]; // Piece captured can't be NOPIECE (12), so this works
         
         ml->moves[ml->count++] = ((
             score
@@ -666,7 +666,7 @@ inline void Position::addPromoCapture(MoveList* ml, ScoredMove move, Piece moved
 inline void Position::addCapture(MoveList* ml, ScoredMove move, Piece movedPiece, Piece capturedPiece){
 
     const S32 score = pieceValues[capturedPiece] * captScoreMvvMultiplier()
-        + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)]; // Piece captured can't be NOPIECE (12), so this works
+    + captureHistoryTable[indexPieceTo(movedPiece, moveTarget(move))][capturedPiece - 6 * (capturedPiece >= 6)][getThreatsIndexing(threats, move)]; // Piece captured can't be NOPIECE (12), so this works
 
     ml->moves[ml->count++] = ((
         score 
@@ -682,7 +682,7 @@ inline void Position::addPromotion(MoveList* ml, ScoredMove move){
         const S32 score = 
             + pieceValues[promotion]
             - pieceValues[P]
-            + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P];
+            + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P][getThreatsIndexing(threats, move)];
         ml->moves[ml->count++] = ((
             score 
             + BADNOISYMOVE
@@ -692,7 +692,7 @@ inline void Position::addPromotion(MoveList* ml, ScoredMove move){
         const S32 score = 
             + pieceValues[promotion]
             - pieceValues[P]
-            + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P];
+            + captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][P][getThreatsIndexing(threats, move)];
 
         ml->moves[ml->count++] = ((
             score 
@@ -717,7 +717,7 @@ inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Squ
         return;
     }
     ml->moves[ml->count++] = ((
-        (S64)(historyTable[side][getThreatsIndexing(threats,move)][indexFromTo(source, target)]) 
+        (S64)(historyTable[side][indexFromTo(source, target)][getThreatsIndexing(threats,move)])
         + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
         + QUIETSCORE

@@ -8,10 +8,10 @@
 struct Position;
 
 // history table
-extern S32 historyTable[2][4][NUM_SQUARES * NUM_SQUARES];
+extern S32 historyTable[2][NUM_SQUARES * NUM_SQUARES][4];
 
 // capture history table
-extern S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES / 2]; // The color of the captured piece is always the opposite of the color of the moving piece
+extern S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES / 2][4]; // The color of the captured piece is always the opposite of the color of the moving piece
 
 // counter move table
 extern Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
