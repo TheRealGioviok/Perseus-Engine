@@ -425,7 +425,7 @@ skipPruning:
                 // If failed high on reduced search, research at full depth
                 if (score > alpha && R){
                     bool deeper = score > bestScore + 35 + 2 * newDepth;
-                    bool shallower = score < bestScore + 8;
+                    bool shallower = !RootNode && score < bestScore + 8;
                     newDepth += deeper - shallower; 
                     score = -search(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
                 }
