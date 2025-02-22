@@ -301,11 +301,13 @@ skipPruning:
         Move currMove = onlyMove(moveList.moves[i]);
         if (sameMovePos(currMove, excludedMove)) continue;
         const bool isQuiet = okToReduce(currMove);
-        if (moveSearched){
+        const bool quietLosing = currMoveScore < COUNTERSCORE;
+        if (moveSearched && !PVNode && quietLosing){
             if (!skipQuiets) { 
-                if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
-                if (!PVNode
-                    && depth <= 8
+                // Late move pruning
+                if (moveSearched >= lmpMargin[depth][improving]) break;
+                // Futility pruning
+                if (depth <= 8
                     && !inCheck
                     && bestScore > -KNOWNWIN
                     && std::abs(alpha) < KNOWNWIN
@@ -315,12 +317,23 @@ skipPruning:
                     skipQuiets = true;
                     continue;
                 }
-                if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
-                    skipQuiets = true;
-                    continue;
+                // PVS SEE will go here.
+                // ...
+                // History Pruning (TODO: separate values for quiet and noisy for the next tune)
+                if (isQuiet){
+                    if (depth <= 4 && (currMoveScore - QUIETSCORE) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
+                        skipQuiets = true;
+                        continue;
+                    }
                 }
+                else {
+                    if (depth <= 4 && (currMoveScore - BADNOISYMOVE) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
+                        break; // No other stages after the losing noisy
+                    }
+                }
+
             }
-            else if (currMoveScore < COUNTERSCORE) continue;
+            else if (isQuiet) continue;
         }
         // assert (
         //     i != 0 || !excludedMove ||
