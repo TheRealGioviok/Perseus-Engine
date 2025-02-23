@@ -176,6 +176,11 @@ TUNE_PARAM(lmrBadNoisyCutNode, 677, 250, 2750, 150, 0.002);
 TUNE_PARAM(lmrNoisyHistoryDivisorA, 5326, 2000, 16000, 700, 0.002)
 TUNE_PARAM(lmrNoisyHistoryDivisorB, 6861, 2000, 16000, 700, 0.002)
 
+// PVS SEE
+TUNE_PARAM(pvsSeeThresholdNoisy, -32, -160, -10, 8, 0.002)
+TUNE_PARAM(pvsSeeThresholdQuiet, -112, -160, -10, 8, 0.002)
+TUNE_PARAM(pvsSeeMaxDepth, 7, 5, 10, 0.5, 0.002)
+
 // LMP values
 TUNE_PARAM(lmpA0, 523, 500, 1500, 50, 0.002);
 TUNE_PARAM(lmpC0, 1620, 500, 5000, 225, 0.002);

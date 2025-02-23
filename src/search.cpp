@@ -300,6 +300,7 @@ skipPruning:
         Move currMove = onlyMove(moveList.moves[i]);
         if (sameMovePos(currMove, excludedMove)) continue;
         const bool isQuiet = okToReduce(currMove);
+        const bool quietOrLosing = currMoveScore < COUNTERSCORE;
         if (moveSearched){
             if (!skipQuiets) { 
                 if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
@@ -319,7 +320,12 @@ skipPruning:
                     continue;
                 }
             }
-            else if (currMoveScore < COUNTERSCORE) continue;
+            else if (quietOrLosing) continue;
+            const auto seeThresh = isQuiet
+                ? pvsSeeThresholdNoisy() * depth 
+                : pvsSeeThresholdQuiet() * depth * depth
+            ;
+            if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
         }
         // assert (
         //     i != 0 || !excludedMove ||
