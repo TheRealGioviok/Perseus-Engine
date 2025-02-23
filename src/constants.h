@@ -177,7 +177,7 @@ TUNE_PARAM(lmrNoisyHistoryDivisorA, 5326, 2000, 16000, 700, 0.002)
 TUNE_PARAM(lmrNoisyHistoryDivisorB, 6861, 2000, 16000, 700, 0.002)
 
 // PVS SEE
-TUNE_PARAM(pvsSeeThresholdNoisy, -64, -160, -10, 8, 0.002)
+TUNE_PARAM(pvsSeeThresholdNoisy, -48, -160, -10, 8, 0.002)
 TUNE_PARAM(pvsSeeThresholdQuiet, -128, -160, -10, 8, 0.002)
 TUNE_PARAM(pvsSeeMaxDepth, 7, 5, 10, 0.5, 0.002)
 
