@@ -433,6 +433,10 @@ skipPruning:
                     bool shallower = score < bestScore + 8;
                     newDepth += deeper - shallower; 
                     score = -search(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
+                    if (isQuiet && (score <= alpha || score >= beta)){
+                        const auto bonus = score <= alpha ? -statMalus(newDepth) : statBonus(newDepth);
+                        updateContHist(ss, currMove, bonus);
+                    }
                 }
             }
             else 
