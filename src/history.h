@@ -99,6 +99,10 @@ static inline void updateHistoryMove(const bool side, const BitBoard threats, co
         case NOTHREATS:
             current = &historyTable[side][fromToIndex][NOTHREATS];
             *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            // If a bad move lands on a square with no threats, then it is probably also a bad move if the threats are added
+            if (delta > 0) return;
+            current = &historyTable[side][fromToIndex][TOTHREAT];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
             return;
 
         case FROMTHREAT:
@@ -109,6 +113,8 @@ static inline void updateHistoryMove(const bool side, const BitBoard threats, co
         case TOTHREAT:
             current = &historyTable[side][fromToIndex][TOTHREAT];
             *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            // If a good move lands on a threatened square, then it is probably also a good move if the threat is removed
+            if (delta < 0) return;
             current = &historyTable[side][fromToIndex][NOTHREATS];
             *current += delta - *current * abs(delta) / MAXHISTORYABS;
             return;
@@ -129,6 +135,10 @@ static inline void updateCaptureHistory(Move move, const BitBoard threats, S32 d
         case NOTHREATS:
             current = &captureHistoryTable[pieceToIndex][capturedPt][NOTHREATS];
             *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            // If a bad move lands on a square with no threats, then it is probably also a bad move if the threats are added
+            if (delta > 0) return;
+            current = &captureHistoryTable[pieceToIndex][capturedPt][TOTHREAT];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
             return;
 
         case FROMTHREAT:
@@ -139,6 +149,8 @@ static inline void updateCaptureHistory(Move move, const BitBoard threats, S32 d
         case TOTHREAT:
             current = &captureHistoryTable[pieceToIndex][capturedPt][TOTHREAT];
             *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            // If a good move lands on a threatened square, then it is probably also a good move if the threat is removed
+            if (delta < 0) return;
             current = &captureHistoryTable[pieceToIndex][capturedPt][NOTHREATS];
             *current += delta - *current * abs(delta) / MAXHISTORYABS;
             return;
