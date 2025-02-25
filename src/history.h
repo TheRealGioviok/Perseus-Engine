@@ -29,6 +29,13 @@ extern S32 nonPawnsCorrHist[2][2][CORRHISTSIZE];
 
 extern S32 tripletCorrHist[10][2][CORRHISTSIZE]; // 10 is the number of triplet indexing of type KXY, with X and Y satisfying X != K, Y != K, X != Y
 
+enum MoveThreatIndex : U8 {
+    NOTHREATS = 0,
+    FROMTHREAT = 1,
+    TOTHREAT = 2,
+    FROMTOTHREAT = 3
+};
+
 struct SStack {
     Move excludedMove = 0;
     Score staticEval = 0;
@@ -57,11 +64,11 @@ struct SStack {
 };
 
 inline S32 indexFromTo(Square from, Square to) {
-	return from * 64 + to;
+    return from * 64 + to;
 }
 
 inline S32 indexPieceTo(Piece piece, Square to) {
-	return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
+    return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
 }
 
 static inline S32 getThreatsIndexing(const BitBoard threats, const Move move){
@@ -86,14 +93,62 @@ Score correctStaticEval(Position& pos, const Score eval);
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth);
 
 static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
-    S32 *current = &historyTable[side][indexFromTo(moveSource(move), moveTarget(move))][getThreatsIndexing(threats, move)];
-    *current += delta - *current * abs(delta) / MAXHISTORYABS;
+    S32 *current;
+    const S32 fromToIndex = indexFromTo(moveSource(move), moveTarget(move));
+    switch (getThreatsIndexing(threats, move)){
+        case NOTHREATS:
+            current = &historyTable[side][fromToIndex][NOTHREATS];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            return;
+
+        case FROMTHREAT:
+            current = &historyTable[side][fromToIndex][FROMTHREAT];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            return;
+
+        case TOTHREAT:
+            current = &historyTable[side][fromToIndex][TOTHREAT];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            current = &historyTable[side][fromToIndex][NOTHREATS];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            return;
+
+        case FROMTOTHREAT:
+            current = &historyTable[side][fromToIndex][FROMTOTHREAT];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            return;
+    }
 }
 
 static inline void updateCaptureHistory(Move move, const BitBoard threats, S32 delta) {
-    Piece captured = moveCapture(move);
-    S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6][getThreatsIndexing(threats, move)]; // account for promotion
-    *current += delta - *current * abs(delta) / MAXHISTORYABS;
+    S32 *current;
+    const Piece captured = moveCapture(move);
+    const S32 pieceToIndex = indexPieceTo(movePiece(move), moveTarget(move));
+    const U8 capturedPt = captured == NOPIECE ? P : captured % 6; // account for promotion
+    switch (getThreatsIndexing(threats, move)){
+        case NOTHREATS:
+            current = &captureHistoryTable[pieceToIndex][capturedPt][NOTHREATS];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            return;
+
+        case FROMTHREAT:
+            current = &captureHistoryTable[pieceToIndex][capturedPt][FROMTHREAT];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            return;
+
+        case TOTHREAT:
+            current = &captureHistoryTable[pieceToIndex][capturedPt][TOTHREAT];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            current = &captureHistoryTable[pieceToIndex][capturedPt][NOTHREATS];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            return;
+
+        case FROMTOTHREAT:
+            current = &captureHistoryTable[pieceToIndex][capturedPt][FROMTOTHREAT];
+            *current += delta - *current * abs(delta) / MAXHISTORYABS;
+            return;
+    }
+    
 }
 
 static inline void updateContHistOffset(SStack* ss, const Move move, const S32 delta, const S32 offset){
