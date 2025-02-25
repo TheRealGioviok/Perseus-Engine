@@ -84,3 +84,24 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
 Score correctStaticEval(Position& pos, const Score eval);
 
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth);
+
+static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
+    S32 *current = &historyTable[side][indexFromTo(moveSource(move), moveTarget(move))][getThreatsIndexing(threats, move)];
+    *current += delta - *current * abs(delta) / MAXHISTORYABS;
+}
+
+static inline void updateCaptureHistory(Move move, const BitBoard threats, S32 delta) {
+    Piece captured = moveCapture(move);
+    S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6][getThreatsIndexing(threats, move)]; // account for promotion
+    *current += delta - *current * abs(delta) / MAXHISTORYABS;
+}
+
+static inline void updateContHistOffset(SStack* ss, const Move move, const S32 delta, const S32 offset){
+    S32 *current = &(ss - offset)->contHistEntry[indexPieceTo(movePiece(move), moveTarget(move))];
+    *current += delta - *current * abs(delta) / MAXHISTORYABS;
+}
+
+static inline void updateContHist(SStack* ss, const Move move, const S32 delta){
+    updateContHistOffset(ss, move, delta, 1);
+    updateContHistOffset(ss, move, delta, 2);
+}
