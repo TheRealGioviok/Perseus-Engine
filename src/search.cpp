@@ -303,45 +303,43 @@ skipPruning:
         const bool isQuiet = okToReduce(currMove);
         const bool quietOrLosing = currMoveScore < COUNTERSCORE;
         if (moveSearched){
-            if (!skipQuiets) { 
-                if (skipBad && quietOrLosing) continue;
-                if (skipQuiets && isQuiet) continue;
-                
-                if (!PVNode && moveSearched >= lmpMargin[depth][improving])
-                    skipBad = true;
-                
-                if (isQuiet){
+            if (skipBad && quietOrLosing) continue;
+            if (skipQuiets && isQuiet) continue;
 
-                    if (!PVNode && depth <= 4 && currMoveScore - QUIETSCORE < historyPruningMultiplier() * depth + historyPruningBias())
-                    {
-                        skipQuiets = true;
-                        continue;
-                    }
+            if (!PVNode && moveSearched >= lmpMargin[depth][improving])
+                skipBad = true;
+            
+            if (isQuiet){
 
-                    if (!PVNode
-                        && depth <= 8
-                        && !inCheck
-                        && bestScore > -KNOWNWIN
-                        && std::abs(alpha) < KNOWNWIN
-                        && isQuiet
-                        && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
-                    {
-                        skipQuiets = true;
-                        continue;
-                    }
-                }
-                else if (!PVNode && depth <= 4 && currMoveScore - BADNOISYMOVE < historyPruningMultiplier() * depth + historyPruningBias())
+                if (!PVNode && depth <= 4 && currMoveScore - QUIETSCORE < historyPruningMultiplier() * depth + historyPruningBias())
                 {
                     skipQuiets = true;
                     continue;
                 }
 
-                const auto seeThresh = isQuiet
-                                           ? pvsSeeThresholdNoisy() * depth
-                                           : pvsSeeThresholdQuiet() * depth * depth;
-                if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh))
+                if (!PVNode
+                    && depth <= 8
+                    && !inCheck
+                    && bestScore > -KNOWNWIN
+                    && std::abs(alpha) < KNOWNWIN
+                    && isQuiet
+                    && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
+                {
+                    skipQuiets = true;
                     continue;
+                }
             }
+            else if (!PVNode && depth <= 4 && currMoveScore - BADNOISYMOVE < historyPruningMultiplier() * depth + historyPruningBias())
+            {
+                skipBad = true;
+                continue;
+            }
+
+            const auto seeThresh = isQuiet
+                                        ? pvsSeeThresholdNoisy() * depth
+                                        : pvsSeeThresholdQuiet() * depth * depth;
+            if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh))
+                continue;
         }
         // assert (
         //     i != 0 || !excludedMove ||
