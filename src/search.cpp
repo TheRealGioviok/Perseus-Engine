@@ -228,6 +228,13 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         // RFP
         if (depth <= RFPDepth() && abs(eval) < mateValue && eval - futilityMargin(depth, improving) >= beta) // && !excludedMove)
             return eval;
+        
+        // Razoring
+        if (depth <= razorDepth() && abs(eval) < mateValue && eval + razorQ1() + depth * razorQ2() < alpha)
+        {
+            const Score razorScore = quiescence(alpha, beta, ss);
+            if (razorScore <= alpha) return razorScore;
+        }
 
         // Null move pruning
         if (eval >= ss->staticEval &&
@@ -269,12 +276,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
             }
         }
     
-        // Razoring
-        if (depth <= razorDepth() && abs(eval) < mateValue && eval + razorQ1() + depth * razorQ2() < alpha)
-        {
-            const Score razorScore = quiescence(alpha, beta, ss);
-            if (razorScore <= alpha) return razorScore;
-        }
+        
     
     }
 
@@ -286,6 +288,7 @@ skipPruning:
     Score bestScore = noScore;
     Move bestMove = noMove;
     U16 moveSearched = 0;
+    bool skipBad = false;
     bool skipQuiets = false;
 
     Move quiets[256], noisy[256];
@@ -303,29 +306,43 @@ skipPruning:
         const bool quietOrLosing = currMoveScore < COUNTERSCORE;
         if (moveSearched){
             if (!skipQuiets) { 
-                if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
-                if (!PVNode
-                    && depth <= 8
-                    && !inCheck
-                    && bestScore > -KNOWNWIN
-                    && std::abs(alpha) < KNOWNWIN
-                    && isQuiet
-                    && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
+                if (skipBad && quietOrLosing) continue;
+                if (skipQuiets && isQuiet) continue;
+                
+                if (isQuiet){
+                    if (!PVNode && moveSearched >= lmpMargin[depth][improving])
+                        skipBad = true;
+
+                    if (!PVNode && depth <= 4 && currMoveScore - QUIETSCORE < historyPruningMultiplier() * depth + historyPruningBias())
+                    {
+                        skipQuiets = true;
+                        continue;
+                    }
+
+                    if (!PVNode
+                        && depth <= 8
+                        && !inCheck
+                        && bestScore > -KNOWNWIN
+                        && std::abs(alpha) < KNOWNWIN
+                        && isQuiet
+                        && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
+                    {
+                        skipQuiets = true;
+                        continue;
+                    }
+                }
+                else if (!PVNode && depth <= 4 && currMoveScore - BADNOISYMOVE < historyPruningMultiplier() * depth + historyPruningBias())
                 {
-                    skipQuiets = true;
+                    skipBad = true;
                     continue;
                 }
-                if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
-                    skipQuiets = true;
+
+                const auto seeThresh = isQuiet
+                                           ? pvsSeeThresholdNoisy() * depth
+                                           : pvsSeeThresholdQuiet() * depth * depth;
+                if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh))
                     continue;
-                }
             }
-            else if (quietOrLosing) continue;
-            const auto seeThresh = isQuiet
-                ? pvsSeeThresholdNoisy() * depth 
-                : pvsSeeThresholdQuiet() * depth * depth
-            ;
-            if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
         }
         // assert (
         //     i != 0 || !excludedMove ||
