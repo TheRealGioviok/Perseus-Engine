@@ -262,7 +262,12 @@ bool Game::isRepetition() {
  * @return The static evaluation of the current position.
  */
 Score Game::evaluate(){
-    return pestoEval(&pos);
+    const auto matScaleValues = 
+        popcount(pos.bitboards[N] | pos.bitboards[B] | pos.bitboards[n] | pos.bitboards[b]) * pieceValues[N]
+        + popcount(pos.bitboards[R] | pos.bitboards[r]) * pieceValues[R]
+        + popcount(pos.bitboards[Q] | pos.bitboards[q]) * pieceValues[Q];
+
+    return pestoEval(&pos) * (27075 + matScaleValues) / 32768;
 }
 
 void Game::makeNullMove() {
