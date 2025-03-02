@@ -229,12 +229,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         if (depth <= RFPDepth() && abs(eval) < mateValue && eval - futilityMargin(depth, improving) >= beta) // && !excludedMove)
             return eval;
         
-        // Razoring
-        if (depth <= razorDepth() && abs(eval) < mateValue && eval + razorQ1() + depth * razorQ2() < alpha)
-        {
-            const Score razorScore = quiescence(alpha, beta, ss);
-            if (razorScore <= alpha) return razorScore;
-        }
 
         // Null move pruning
         if (eval >= ss->staticEval &&
@@ -275,9 +269,13 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
                     return nullScore;
             }
         }
-    
-        
-    
+
+        // Razoring
+        if (depth <= razorDepth() && abs(eval) < mateValue && eval + razorQ1() + depth * razorQ2() < alpha)
+        {
+            const Score razorScore = quiescence(alpha, beta, ss);
+            if (razorScore <= alpha) return razorScore;
+        }
     }
 
 skipPruning:
@@ -309,9 +307,10 @@ skipPruning:
                 if (skipBad && quietOrLosing) continue;
                 if (skipQuiets && isQuiet) continue;
                 
+                if (!PVNode && moveSearched >= lmpMargin[depth][improving])
+                    skipBad = true;
+                
                 if (isQuiet){
-                    if (!PVNode && moveSearched >= lmpMargin[depth][improving])
-                        skipBad = true;
 
                     if (!PVNode && depth <= 4 && currMoveScore - QUIETSCORE < historyPruningMultiplier() * depth + historyPruningBias())
                     {
@@ -333,7 +332,7 @@ skipPruning:
                 }
                 else if (!PVNode && depth <= 4 && currMoveScore - BADNOISYMOVE < historyPruningMultiplier() * depth + historyPruningBias())
                 {
-                    skipBad = true;
+                    skipQuiets = true;
                     continue;
                 }
 
