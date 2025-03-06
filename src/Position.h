@@ -2,7 +2,6 @@
 #include "move.h"
 #include <algorithm>
 #include "BBmacros.h"
-#include "history.h"
 #include "movegen.h"
 
 // We love forward decl
@@ -211,10 +210,10 @@ struct Position{
     inline void addUnsorted(MoveList *ml, ScoredMove move);
 
     /**
-	* @brief The getFEN function returns the FEN string of the current position
-	* @return The FEN string of the current position
+    * @brief The getFEN function returns the FEN string of the current position
+    * @return The FEN string of the current position
     */
-	std::string getFEN();
+    std::string getFEN();
     
     /**
      * @brief The SEE function evaluates a move using the Static Exchange Evaluation algorithm.
@@ -226,7 +225,7 @@ struct Position{
 
     bool inCheck();
 
-	bool insufficientMaterial();
+    bool insufficientMaterial();
 
     void reflect();
 };

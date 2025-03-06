@@ -4,9 +4,6 @@
 #include "constants.h"
 #include "Position.h"
 
-// Forward declaration time
-struct Position;
-
 // history table
 extern S32 historyTable[2][NUM_SQUARES * NUM_SQUARES][4];
 
@@ -57,11 +54,11 @@ struct SStack {
 };
 
 inline S32 indexFromTo(Square from, Square to) {
-	return from * 64 + to;
+    return from * 64 + to;
 }
 
 inline S32 indexPieceTo(Piece piece, Square to) {
-	return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
+    return piece * 64 + (to^56); // So that P to a8 (0 if we don't ^56) is not the same as indexPieceTo(nullMove), which is instead the same as p to a8, which is impossible.
 }
 
 static inline S32 getThreatsIndexing(const BitBoard threats, const Move move){
@@ -81,7 +78,43 @@ static inline S32 statMalus(S32 depth){
 #define MAXHISTORYABS 16384LL
 void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);
 
-Score correctStaticEval(Position& pos, const Score eval);
+template <bool doCorrHist>
+Score correctStaticEval(Position& pos, const Score eval) {
+
+    S32 corrected;
+
+    if constexpr (doCorrHist){
+
+        const bool side = pos.side;
+        auto const& k = pos.ptKeys;
+
+        const S32 bonus = 
+            + pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE]           * pawnCorrWeight()
+            + (
+                + nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE]
+                + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
+            )                                                               * nonPawnCorrWeight()
+            + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE] * T0CorrWeight()
+            + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE] * T1CorrWeight()
+            + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE] * T2CorrWeight()
+            + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE] * T3CorrWeight()
+            + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE] * T4CorrWeight()
+            + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE] * T5CorrWeight()
+            + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE] * T6CorrWeight()
+            + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE] * T7CorrWeight()
+            + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE] * T8CorrWeight()
+            + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE] * T9CorrWeight()
+        ;
+
+        corrected = eval + bonus / (CORRHISTSCALE * CORRECTIONGRANULARITY);
+    }
+    else corrected = eval;
+
+    // Integral's fifty move scaling. I had previously tried sp's (200) but didn't get a passer
+    return static_cast<Score>(std::clamp(
+        (corrected * (220 - pos.fiftyMove) / 220)
+    , -mateValue, +mateValue));
+}
 
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth);
 

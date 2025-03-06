@@ -193,7 +193,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     {
         // Check if the eval is stored in the TT
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
-        eval = ss->staticEval = ttMove ? rawEval : correctStaticEval(pos, rawEval);
+        eval = ss->staticEval = ttMove ? correctStaticEval<false>(pos, rawEval) : correctStaticEval<true>(pos, rawEval);
         // Also, we might be able to use the score as a better eval
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
             eval = ttScore;
@@ -206,7 +206,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     }
     else {
         rawEval = evaluate();
-        eval = ss->staticEval = correctStaticEval(pos, rawEval);
+        eval = ss->staticEval = correctStaticEval<true>(pos, rawEval);
         // Store the eval in the TT if not in exclusion mode (in which we might already have the entry)
         writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
@@ -560,13 +560,13 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     }
     else if (ttHit){
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
-        ss->staticEval = bestScore = ttMove ? rawEval : correctStaticEval(pos, rawEval);
+        ss->staticEval = bestScore = ttMove ? correctStaticEval<false>(pos, rawEval) : correctStaticEval<true>(pos, rawEval);
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < bestScore) || (ttBound == hashLOWER && ttScore > bestScore)))
             bestScore = ttScore;
     }
     else {
         rawEval = evaluate();
-        ss->staticEval = bestScore = correctStaticEval(pos, rawEval);
+        ss->staticEval = bestScore = correctStaticEval<true>(pos, rawEval);
         writeTT(pos.hashKey, noScore, bestScore, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
 
