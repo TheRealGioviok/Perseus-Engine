@@ -587,8 +587,10 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
         Move move = onlyMove(moveList.moves[i]);
         
         // SEE pruning : skip all moves that have see < -100 (We may want to do this with a threshold of 0, but we would introduce another see call. TODO: lazily evaluate the see so that we can skip moves with see < 0)
-        if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
-            break;
+        if (moveCount){
+            if (!inCheck && !pos.SEE(move, 0))
+                continue;
+        }
         if (makeMove(move))
         {
             // Prefetch tt
