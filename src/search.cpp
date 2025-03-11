@@ -375,9 +375,10 @@ skipPruning:
                         undo(undoer, currMove);
                         return singularBeta;
                     }
-                    else if (ttScore >= beta || cutNode){
+                    else if (ttScore >= beta)
+                        extension = -2 + PVNode;
+                    else if (cutNode)
                         extension = -1;
-                    }
                     
                     // else{
                     //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
@@ -421,6 +422,8 @@ skipPruning:
                 }
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
+                granularR -= (ss-1)->lmr / 5;
+                ss->lmr = granularR;
                 Depth R = granularR / RESOLUTION;
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
