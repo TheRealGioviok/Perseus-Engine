@@ -208,7 +208,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         rawEval = evaluate();
         eval = ss->staticEval = correctStaticEval<true>(pos, rawEval);
         // Store the eval in the TT if not in exclusion mode (in which we might already have the entry)
-        writeTT(pos.hashKey, noScore, eval, 0, hashNONE, 0, ply, PVNode, ttPv);
+        writeTT(pos.hashKey, noScore, rawEval, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
 
     improvement = [&](){
@@ -567,7 +567,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     else {
         rawEval = evaluate();
         ss->staticEval = bestScore = correctStaticEval<true>(pos, rawEval);
-        writeTT(pos.hashKey, noScore, bestScore, 0, hashNONE, 0, ply, PVNode, ttPv);
+        writeTT(pos.hashKey, noScore, rawEval, 0, hashNONE, 0, ply, PVNode, ttPv);
     }
 
     if (bestScore >= beta)
