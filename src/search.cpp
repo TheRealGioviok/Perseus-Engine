@@ -287,6 +287,7 @@ skipPruning:
     Move bestMove = noMove;
     U16 moveSearched = 0;
     bool skipQuiets = false;
+    bool singularSuccess = false;
 
     Move quiets[256], noisy[256];
     U16 quietsCount = 0, noisyCount = 0;
@@ -362,6 +363,7 @@ skipPruning:
                     ss->excludedMove = noMove;
 
                     if (singularScore < singularBeta) {
+                        singularSuccess = true;
                         extension = 1;
                         if (!PVNode && ss->doubleExtensions < maximumDoubleExtensions() && singularScore + doubleExtensionMargin() < singularBeta) {
                             ++ss->doubleExtensions;
@@ -476,7 +478,7 @@ skipPruning:
                             updateKillers(ss, currMove);
                             updateCounters(currMove, (ss - 1)->move);
                         }
-                        updateHH(ss, pos.side, pos.threats, depth, currMove, quiets, quietsCount, noisy, noisyCount);
+                        updateHH(ss, pos.side, pos.threats, depth + (singularSuccess || PVNode), currMove, quiets, quietsCount, noisy, noisyCount);
                         break;
                     }
                     alpha = score;
