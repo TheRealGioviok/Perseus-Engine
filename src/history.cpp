@@ -57,7 +57,7 @@ static inline void updateSingleCorrHist(S32& entry, const S32 bonus, const S32 w
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
     const bool side = pos.side;
     const S64 scaledBonus = bonus * CORRHISTSCALE; 
-    const S32 weight = std::min(1 + depth, 16);
+    const S32 weight = 2 * std::min(1 + depth, 16);
 
     auto const& k = pos.ptKeys;
 
