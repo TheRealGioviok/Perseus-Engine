@@ -1,53 +1,44 @@
-// The BBmacros.h and BBmacros.cpp files contain utility definitions to write some more readable code
 #pragma once
 #include <algorithm>
 #include <iostream>
-
-
 #include <cassert>
-
-#ifdef _MSC_VER
-#include <intrin.h>
-#else
-#include <x86intrin.h>
-#endif
 
 #include "types.h"
 #include "constants.h"
 
-inline constexpr BitBoard 	squareBB(Square square) 					{ return (1ULL << square); } 
-inline U64 		getBit(BitBoard bitboard, Square square) 	{ return (bitboard & squareBB(square)); }
-inline U8 		testBit(BitBoard bitboard, Square square) 	{ return (getBit(bitboard, square) > 0); }
-inline void 		setBit(BitBoard& bitboard, Square square) 	{ bitboard |= squareBB(square); }
-inline void 		clearBit(BitBoard& bitboard, Square square) { bitboard &= (~squareBB(square)); }
-inline void 		clearBit(U8 &u8, U8 pos) { u8 &= ~(1 << pos); }
+inline constexpr BitBoard squareBB(Square square) { return (1ULL << square); }
+inline U64 getBit(BitBoard bitboard, Square square) { return (bitboard & squareBB(square)); }
+inline U8 testBit(BitBoard bitboard, Square square) { return (getBit(bitboard, square) > 0); }
+inline void setBit(BitBoard& bitboard, Square square) { bitboard |= squareBB(square); }
+inline void clearBit(BitBoard& bitboard, Square square) { bitboard &= (~squareBB(square)); }
+inline void clearBit(U8 &u8, U8 pos) { u8 &= ~(1 << pos); }
 
-inline U8 rankOf(Square square) 				{ return (square >> 3); }
-inline U8 fileOf(Square square) 				{ return (square & 7); }
-inline Square flipSquare(Square square) 		{ return (square ^ 56); }
-inline Square makeSquare(U8 rank, U8 file) 	{ return (rank * 8 + file); }
+inline U8 rankOf(Square square) { return (square >> 3); }
+inline U8 fileOf(Square square) { return (square & 7); }
+inline Square flipSquare(Square square) { return (square ^ 56); }
+inline Square makeSquare(U8 rank, U8 file) { return (rank * 8 + file); }
 
-inline constexpr BitBoard files(U8 fileNo) 				{ return (0x0101010101010101ULL << fileNo); }
-inline constexpr BitBoard ranks(U8 rankNo) 				{ return  (0xFFULL << (rankNo<<3)); }
-inline constexpr BitBoard notFile(U8 fileNo) 			{ return ~files(fileNo); }
-inline constexpr BitBoard notRank(U8 rankNo) 			{ return ~ranks(rankNo); }
-inline constexpr BitBoard squaresAhead(Square square) 	{ return (files(7) ^ 0x8000000000000000) >> (63 - square); }
-inline constexpr BitBoard squaresBehind(Square square) 	{ return (files(0) ^ 0x1ULL) << square; }
-constexpr BitBoard squaresOfColor[2] = 					{ 0xAA55AA55AA55AA55ULL,	0x55AA55AA55AA55AAULL };
+inline constexpr BitBoard files(U8 fileNo) { return (0x0101010101010101ULL << fileNo); }
+inline constexpr BitBoard ranks(U8 rankNo) { return (0xFFULL << (rankNo<<3)); }
+inline constexpr BitBoard notFile(U8 fileNo) { return ~files(fileNo); }
+inline constexpr BitBoard notRank(U8 rankNo) { return ~ranks(rankNo); }
+inline constexpr BitBoard squaresAhead(Square square) { return (files(7) ^ 0x8000000000000000) >> (63 - square); }
+inline constexpr BitBoard squaresBehind(Square square) { return (files(0) ^ 0x1ULL) << square; }
+constexpr BitBoard squaresOfColor[2] = { 0xAA55AA55AA55AA55ULL, 0x55AA55AA55AA55AAULL };
 
-static inline constexpr BitBoard ne(BitBoard bb) 		{ return (bb & notFile(7)) >> 7; }
-static inline constexpr BitBoard north(BitBoard bb) 	{ return bb >> 8; }
-static inline constexpr BitBoard nw(BitBoard bb) 		{ return (bb & notFile(0)) >> 9; }
-static inline constexpr BitBoard se(BitBoard bb) 		{ return (bb & notFile(7)) << 9; }
-static inline constexpr BitBoard south(BitBoard bb) 	{ return bb << 8; }
-static inline constexpr BitBoard sw(BitBoard bb) 		{ return (bb & notFile(0)) << 7; }
-static inline constexpr BitBoard east(BitBoard bb) 		{ return (bb & notFile(7)) >> 1; }
-static inline constexpr BitBoard west(BitBoard bb) 		{ return (bb & notFile(0)) << 1; }
+static inline constexpr BitBoard ne(BitBoard bb) { return (bb & notFile(7)) >> 7; }
+static inline constexpr BitBoard north(BitBoard bb) { return bb >> 8; }
+static inline constexpr BitBoard nw(BitBoard bb) { return (bb & notFile(0)) >> 9; }
+static inline constexpr BitBoard se(BitBoard bb) { return (bb & notFile(7)) << 9; }
+static inline constexpr BitBoard south(BitBoard bb) { return bb << 8; }
+static inline constexpr BitBoard sw(BitBoard bb) { return (bb & notFile(0)) << 7; }
+static inline constexpr BitBoard east(BitBoard bb) { return (bb & notFile(7)) >> 1; }
+static inline constexpr BitBoard west(BitBoard bb) { return (bb & notFile(0)) << 1; }
 
-static inline constexpr S32 indexColorSide(U8 color, U8 side) {return (color << 1) + side; }
+static inline constexpr S32 indexColorSide(U8 color, U8 side) { return (color << 1) + side; }
 
-#define bitScanForward _BitScanForward64 //ls1b
-#define bitScanReverse _BitScanReverse64 //ms1b
+#define bitScanForward __builtin_ctzll  // ARM: trailing zero count
+#define bitScanReverse __builtin_clzll  // ARM: leading zero count
 #define makeSquareColor(color,square) (((color) * 64) + (square))
 
 #define emptyBoard "8/8/8/8/8/8/8/8 w - - "
@@ -55,7 +46,6 @@ static inline constexpr S32 indexColorSide(U8 color, U8 side) {return (color << 
 #define trickyPosition "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq e8 0 1 "
 #define killerPosition "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
 #define cmkPosition "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 "
-
 
 // The squares name
 const std::string coords[65] = {
@@ -79,19 +69,19 @@ void printBitBoard(BitBoard bitboard);
 
 inline Square lsb(BitBoard b) {
 	assert(b);
-	return Square(__builtin_ctzll(b));
+	return Square(__builtin_ctzll(b));  // ARM: counts trailing zeros
 }
 
 inline Square msb(BitBoard b) {
 	assert(b);
-	return Square(63 ^ __builtin_clzll(b));
+	return Square(63 ^ __builtin_clzll(b));  // ARM: counts leading zeros
 }
 
 inline int popcount(BitBoard b) {
-	return __builtin_popcountll(b);
+	return __builtin_popcountll(b);  // ARM: population count
 }
 
-inline BitBoard reflectBitBoard(BitBoard bb) { return __builtin_bswap64(bb); }
+inline BitBoard reflectBitBoard(BitBoard bb) { return __builtin_bswap64(bb); }  // ARM: byte swap
 
 #elif defined(_MSC_VER)  // MSVC
 
@@ -133,8 +123,7 @@ inline Square lsb(BitBoard b) {
 	}
 }
 
-inline Square msb(BitBoard b)
-{
+inline Square msb(BitBoard b) {
 	assert(b);
 	unsigned long idx;
 
@@ -149,7 +138,6 @@ inline Square msb(BitBoard b)
 }
 
 #endif
-
 
 #else  // Compiler is neither GCC nor MSVC compatible
 
