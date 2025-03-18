@@ -284,7 +284,7 @@ void initEvalTables() {
       
         // King shelter
         {
-            BitBoard sq = squareBB(sq1);
+            BitBoard sq = squareBB(fileOf(sq1) == 0 ? sq1 + 1 : fileOf(sq1) == 7 ? sq1 - 1 : sq1);
             kingShelter[WHITE][sq1] = north(sq) | ne(sq) | nw(sq);
             kingShelter[BLACK][sq1] = south(sq) | se(sq) | sw(sq);
         }
