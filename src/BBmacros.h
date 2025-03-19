@@ -41,8 +41,8 @@ static inline constexpr BitBoard nw(BitBoard bb) 		{ return (bb & notFile(0)) >>
 static inline constexpr BitBoard se(BitBoard bb) 		{ return (bb & notFile(7)) << 9; }
 static inline constexpr BitBoard south(BitBoard bb) 	{ return bb << 8; }
 static inline constexpr BitBoard sw(BitBoard bb) 		{ return (bb & notFile(0)) << 7; }
-static inline constexpr BitBoard east(BitBoard bb) 		{ return (bb & notFile(7)) >> 1; }
-static inline constexpr BitBoard west(BitBoard bb) 		{ return (bb & notFile(0)) << 1; }
+static inline constexpr BitBoard east(BitBoard bb) 		{ return (bb & notFile(7)) << 1; }
+static inline constexpr BitBoard west(BitBoard bb) 		{ return (bb & notFile(0)) >> 1; }
 
 static inline constexpr S32 indexColorSide(U8 color, U8 side) {return (color << 1) + side; }
 

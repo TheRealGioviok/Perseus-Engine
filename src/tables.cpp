@@ -48,6 +48,7 @@ BitBoard phalanx[64];
 BitBoard outerRing[64];
 BitBoard fiveSquare[64]; // The 5x5 square
 BitBoard kingShelter[2][64]; // The king shelter
+BitBoard kingFlank[2][8];
 
 // Precomputed king safety tables
 
@@ -288,6 +289,30 @@ void initEvalTables() {
             kingShelter[WHITE][sq1] = north(sq) | ne(sq) | nw(sq);
             kingShelter[BLACK][sq1] = south(sq) | se(sq) | sw(sq);
         }
+    }
+    // King flank
+    {
+        BitBoard flank = squareBB(a8) | squareBB(b8) | squareBB(c8) | squareBB(d8);
+        flank |= south(flank);
+        flank |= south(south(flank));
+        flank |= south(flank);
+        kingFlank[BLACK][0] = kingFlank[BLACK][1] = kingFlank[BLACK][2] = flank;
+        flank = east(east(flank));
+        kingFlank[BLACK][3] = kingFlank[BLACK][4] = flank;
+        flank = east(east(flank));
+        kingFlank[BLACK][5] = kingFlank[BLACK][6] = flank;
+    }
+    // King flank
+    {
+        BitBoard flank = squareBB(a1) | squareBB(b1) | squareBB(c1) | squareBB(d1);
+        flank |= north(flank);
+        flank |= north(north(flank));
+        flank |= north(flank);
+        kingFlank[WHITE][0] = kingFlank[WHITE][1] = kingFlank[WHITE][2] = flank;
+        flank = east(east(flank));
+        kingFlank[WHITE][3] = kingFlank[WHITE][4] = flank;
+        flank = east(east(flank));
+        kingFlank[WHITE][5] = kingFlank[WHITE][6] = flank;
     }
 }
 
