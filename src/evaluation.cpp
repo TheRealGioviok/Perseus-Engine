@@ -257,13 +257,17 @@ template <bool side>
 static inline BitBoard advancePathMasked(BitBoard bb, BitBoard mask){
     if constexpr (side == WHITE){
         bb |= (bb >> 8) & mask;
-        bb |= (bb >> 16) & mask;
-        bb |= (bb >> 32) & mask;
+        bb |= (bb >> 8) & mask;
+        bb |= (bb >> 8) & mask;
+        bb |= (bb >> 8) & mask;
+        bb |= (bb >> 8) & mask;
     }
     else {
         bb |= (bb << 8) & mask;
-        bb |= (bb << 16) & mask;
-        bb |= (bb << 32) & mask;
+        bb |= (bb << 8) & mask;
+        bb |= (bb << 8) & mask;
+        bb |= (bb << 8) & mask;
+        bb |= (bb << 8) & mask;
     }
     return bb;
 }
