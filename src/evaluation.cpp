@@ -1528,7 +1528,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor += 9;
 
 
-#define KINGSAFETYCOLOREDPARAMS 50
+#define KINGSAFETYCOLOREDPARAMS 58
     tensor[P] = innerAttacks[WHITE][P];
     tensor[N] = innerAttacks[WHITE][N];
     tensor[B] = innerAttacks[WHITE][B];
