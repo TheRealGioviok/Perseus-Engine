@@ -18,6 +18,8 @@ extern U8 manhattanDistance[64][64];
 extern U8 chebyshevDistance[64][64];
 // kingshelter
 extern BitBoard kingShelter[2][64];
+// flank
+extern BitBoard kingFlank[2][8];
 
 // centerDistance
 extern U8 centerDistance[64];

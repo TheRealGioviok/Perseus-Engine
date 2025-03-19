@@ -91,6 +91,10 @@ constexpr PScore ROOKATTACKOUTERRING = S(48, -8);
 constexpr PScore QUEENATTACKOUTERRING = S(79, 47);
 constexpr PScore NOQUEENDANGER = S(-761, -2282);
 constexpr PScore PINNEDSHELTERDANGER = S(107, -27);
+
+constexpr PScore FLANKATTACKS[2] = {S(0,0), S(0,0)};
+constexpr PScore FLANKDEFENSES[2] = {S(0,0), S(0,0)};
+
 constexpr PScore SAFECHECK[4] = {S(317, -52), S(79, 3), S(193, 66), S(192, 33), };
 constexpr PScore ALLCHECKS[4] = {S(78, 12), S(31, 68), S(71, 5), S(13, 34), };
 constexpr PScore SAFETYINNERSHELTER = S(-55, -156);
@@ -781,6 +785,18 @@ Score pestoEval(Position *pos){
 
     dangerIndex[WHITE] += PINNEDSHELTERDANGER * popcount(pinned[BLACK] & innerShelters[BLACK]);
     dangerIndex[BLACK] += PINNEDSHELTERDANGER * popcount(pinned[WHITE] & innerShelters[WHITE]);
+
+    // Flank attacks
+    dangerIndex[WHITE] += FLANKATTACKS[0]  * popcount(attackedBy[WHITE] & kingFlank[BLACK][fileOf(blackKing)]) 
+                        + FLANKATTACKS[1]  * popcount(multiAttacks[WHITE] & kingFlank[BLACK][fileOf(blackKing)])
+                        + FLANKDEFENSES[0] * popcount(attackedBy[BLACK] & kingFlank[BLACK][fileOf(blackKing)])
+                        + FLANKDEFENSES[1] * popcount(multiAttacks[BLACK] & kingFlank[BLACK][fileOf(blackKing)]);
+
+    // Flank attacks
+    dangerIndex[BLACK] += FLANKATTACKS[0]  * popcount(attackedBy[BLACK] & kingFlank[WHITE][fileOf(whiteKing)]) 
+                        + FLANKATTACKS[1]  * popcount(multiAttacks[BLACK] & kingFlank[WHITE][fileOf(whiteKing)])
+                        + FLANKDEFENSES[0] * popcount(attackedBy[WHITE] & kingFlank[WHITE][fileOf(whiteKing)])
+                        + FLANKDEFENSES[1] * popcount(multiAttacks[WHITE] & kingFlank[WHITE][fileOf(whiteKing)]);
 
     // Safe checks
     dangerIndex[WHITE] += SAFECHECK[N-1] * popcount(safeChecks[WHITE][N-1]);
@@ -1528,6 +1544,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[0] = noQueenDanger[WHITE];
     tensor[1] = pinnedShelter[WHITE];
     tensor += 2;
+    tensor[0] = popcount(attackedBy[WHITE] & kingFlank[BLACK][fileOf(blackKing)]);
+    tensor[1] = popcount(multiAttacks[WHITE] & kingFlank[BLACK][fileOf(blackKing)]);
+    tensor[2] = popcount(attackedBy[BLACK] & kingFlank[BLACK][fileOf(blackKing)]);
+    tensor[3] = popcount(multiAttacks[BLACK] & kingFlank[BLACK][fileOf(blackKing)]);
+    tensor += 4;
     tensor[0] = popcount(safeChecks[WHITE][N-1]);
     tensor[1] = popcount(safeChecks[WHITE][B-1]);
     tensor[2] = popcount(safeChecks[WHITE][R-1]);
@@ -1563,6 +1584,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[0] = noQueenDanger[BLACK];
     tensor[1] = pinnedShelter[BLACK];
     tensor += 2;
+    tensor[0] = popcount(attackedBy[BLACK] & kingFlank[WHITE][fileOf(whiteKing)]);
+    tensor[1] = popcount(multiAttacks[BLACK] & kingFlank[WHITE][fileOf(whiteKing)]);
+    tensor[2] = popcount(attackedBy[WHITE] & kingFlank[WHITE][fileOf(whiteKing)]);
+    tensor[3] = popcount(multiAttacks[WHITE] & kingFlank[WHITE][fileOf(whiteKing)]);
+    tensor += 4;
     tensor[0] += popcount(safeChecks[BLACK][N-1]);
     tensor[1] += popcount(safeChecks[BLACK][B-1]);
     tensor[2] += popcount(safeChecks[BLACK][R-1]);
