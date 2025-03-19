@@ -703,7 +703,7 @@ inline void Position::addPromotion(MoveList* ml, ScoredMove move){
     return;
 }
 
-inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S32 *ply1contHist, const S32 *ply2contHist, const S32 *ply4contHist) {
+inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S16 *ply1contHist, const S16 *ply2contHist, const S16 *ply4contHist) {
     if (sameMovePos(move, killer1)){
         ml->moves[ml->count++] = (KILLER1SCORE << 32) | move;
         return;
@@ -918,9 +918,9 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
     const Move killer2 = ss->killers[1];
     const Move lastMove = (ss-1)->move;
     const Move counterMove = lastMove ? counterMoveTable[indexFromTo(moveSource(lastMove), moveTarget(lastMove))] : noMove;
-    const S32 *ply1contHist = lastMove ? (ss - 1)->contHistEntry : nullptr;
-    const S32 *ply2contHist = (ss - 2)->move ? (ss - 2)->contHistEntry : nullptr;
-    const S32 *ply4contHist = (ss - 4)->move ? (ss - 4)->contHistEntry : nullptr;
+    const S16 *ply1contHist = lastMove ? (ss - 1)->contHistEntry : nullptr;
+    const S16 *ply2contHist = (ss - 2)->move ? (ss - 2)->contHistEntry : nullptr;
+    const S16 *ply4contHist = (ss - 4)->move ? (ss - 4)->contHistEntry : nullptr;
 
     BitBoard ourPawns   = bitboards[P + 6 * side];
     BitBoard ourKnights = bitboards[N + 6 * side];
