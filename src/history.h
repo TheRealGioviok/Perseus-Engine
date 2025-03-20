@@ -5,16 +5,16 @@
 #include "Position.h"
 
 // history table
-extern S32 historyTable[2][NUM_SQUARES * NUM_SQUARES][4];
+extern S16 historyTable[2][NUM_SQUARES * NUM_SQUARES][4];
 
 // capture history table
-extern S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES / 2][4]; // The color of the captured piece is always the opposite of the color of the moving piece
+extern S16 captureHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES / 2][4]; // The color of the captured piece is always the opposite of the color of the moving piece
 
 // counter move table
 extern Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
 
 // Continuation History table
-extern S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
+extern S16 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
 
 constexpr S32 CORRHISTSIZE = 16384;
 constexpr S32 CORRHISTSCALE = 256;
@@ -32,7 +32,7 @@ struct SStack {
     Move move = 0;
     S16 doubleExtensions = 0;
     Move killers[2] = {0, 0};
-    S32* contHistEntry = continuationHistoryTable[0];
+    S16* contHistEntry = continuationHistoryTable[0];
 
     SStack() {
         excludedMove = noMove;
@@ -119,18 +119,18 @@ Score correctStaticEval(Position& pos, const Score eval) {
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth);
 
 static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
-    S32 *current = &historyTable[side][indexFromTo(moveSource(move), moveTarget(move))][getThreatsIndexing(threats, move)];
+    S16 *current = &historyTable[side][indexFromTo(moveSource(move), moveTarget(move))][getThreatsIndexing(threats, move)];
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
 static inline void updateCaptureHistory(Move move, const BitBoard threats, S32 delta) {
     Piece captured = moveCapture(move);
-    S32 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6][getThreatsIndexing(threats, move)]; // account for promotion
+    S16 *current = &captureHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))][captured == NOPIECE ? P : captured % 6][getThreatsIndexing(threats, move)]; // account for promotion
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
 static inline void updateContHistOffset(SStack* ss, const Move move, const S32 delta, const S32 offset){
-    S32 *current = &(ss - offset)->contHistEntry[indexPieceTo(movePiece(move), moveTarget(move))];
+    S16 *current = &(ss - offset)->contHistEntry[indexPieceTo(movePiece(move), moveTarget(move))];
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 

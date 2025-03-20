@@ -6,16 +6,16 @@
 #include <algorithm>
 
 // history table
-S32 historyTable[2][NUM_SQUARES * NUM_SQUARES][4];
+S16 historyTable[2][NUM_SQUARES * NUM_SQUARES][4];
 
 // capture history table
-S32 captureHistoryTable[NUM_PIECES * NUM_SQUARES][6][4];
+S16 captureHistoryTable[NUM_PIECES * NUM_SQUARES][6][4];
 
 // counter move table
 Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
 
 // Continuation History table
-S32 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
+S16 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
 
 // Correction History
 S32 pawnsCorrHist[2][CORRHISTSIZE]; // stm - hash
