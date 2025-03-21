@@ -1472,17 +1472,18 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     BitBoard threats[2] = {pawnAttackedSquares[WHITE], pawnAttackedSquares[BLACK]};
     const Score threatenedKnightsDiff = popcount(bb[N] & threats[BLACK]) - popcount(bb[n] & threats[WHITE]);
     const Score threatenedBishopsDiff = popcount(bb[B] & threats[BLACK]) - popcount(bb[b] & threats[WHITE]);
-    threats[WHITE] |= ptAttacks[WHITE][N] | ptAttacks[WHITE][B];
-    threats[BLACK] |= ptAttacks[BLACK][N] | ptAttacks[BLACK][B];
+    threats[WHITE] |= ptAttacks[WHITE][N-1] | ptAttacks[WHITE][B-1];
+    threats[BLACK] |= ptAttacks[BLACK][N-1] | ptAttacks[BLACK][B-1];
     const Score threatenedRooksDiff = popcount(bb[R] & threats[BLACK]) - popcount(bb[r] & threats[WHITE]);
-    threats[WHITE] |= ptAttacks[WHITE][R];
-    threats[BLACK] |= ptAttacks[BLACK][R];
+    threats[WHITE] |= ptAttacks[WHITE][R-1];
+    threats[BLACK] |= ptAttacks[BLACK][R-1];
     const Score threatenedQueensDiff = popcount(bb[Q] & threats[BLACK]) - popcount(bb[q] & threats[WHITE]);
 
     tensor[0] = threatenedKnightsDiff;
     tensor[1] = threatenedBishopsDiff;
     tensor[2] = threatenedRooksDiff;
     tensor[3] = threatenedQueensDiff;
+    tensor +=4;
 
     const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
     tensor[0] = kingThreatsDiff;
