@@ -280,7 +280,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
 skipPruning:
     
-
     // Search
     const Score origAlpha = alpha;
     Score bestScore = noScore;
