@@ -77,6 +77,12 @@ constexpr PScore NONPAWNHANGING = S(-24, -34);
 constexpr PScore KINGTHREAT = S(-2, 3);
 constexpr PScore QUEENINFILTRATION = S(1, -1);
 constexpr PScore RESTRICTEDSQUARES = S(4, 3);
+
+constexpr PScore THREATONKNIGHT = S(0,0);
+constexpr PScore THREATONBISHOP = S(0,0);
+constexpr PScore THREATONROOK = S(0,0);
+constexpr PScore THREATONQUEEN = S(0,0);
+
 constexpr PScore TEMPO = S(16, 23);
 
 constexpr PScore PAWNATTACKINNERRING = S(20, -69);
@@ -715,6 +721,21 @@ Score pestoEval(Position *pos){
     score += PAWNHANGING * pawnHangingDiff;
     score += NONPAWNHANGING * nonPawnHangingDiff;
 
+    BitBoard threats[2] = {pawnAttackedSquares[WHITE], pawnAttackedSquares[BLACK]};
+    const Score threatenedKnightsDiff = popcount(bb[N] & threats[BLACK]) - popcount(bb[n] & threats[WHITE]);
+    const Score threatenedBishopsDiff = popcount(bb[B] & threats[BLACK]) - popcount(bb[b] & threats[WHITE]);
+    threats[WHITE] |= ptAttacks[WHITE][N] | ptAttacks[WHITE][B];
+    threats[BLACK] |= ptAttacks[BLACK][N] | ptAttacks[BLACK][B];
+    const Score threatenedRooksDiff = popcount(bb[R] & threats[BLACK]) - popcount(bb[r] & threats[WHITE]);
+    threats[WHITE] |= ptAttacks[WHITE][R];
+    threats[BLACK] |= ptAttacks[BLACK][R];
+    const Score threatenedQueensDiff = popcount(bb[Q] & threats[BLACK]) - popcount(bb[q] & threats[WHITE]);
+
+    score += THREATONKNIGHT * threatenedKnightsDiff
+           + THREATONBISHOP * threatenedBishopsDiff
+           + THREATONROOK * threatenedRooksDiff
+           + THREATONQUEEN * threatenedQueensDiff;
+
     const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
     score += KINGTHREAT * kingThreatsDiff;
 
@@ -942,6 +963,10 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(THREATPAWNPUSH.mg());
     weights.push_back(PAWNHANGING.mg());
     weights.push_back(NONPAWNHANGING.mg());
+    weights.push_back(THREATONKNIGHT.mg());
+    weights.push_back(THREATONBISHOP.mg());
+    weights.push_back(THREATONROOK.mg());
+    weights.push_back(THREATONQUEEN.mg());
     weights.push_back(KINGTHREAT.mg());
     weights.push_back(QUEENINFILTRATION.mg());
     weights.push_back(RESTRICTEDSQUARES.mg());
@@ -1013,6 +1038,10 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(THREATPAWNPUSH.eg());
     weights.push_back(PAWNHANGING.eg());
     weights.push_back(NONPAWNHANGING.eg());
+    weights.push_back(THREATONKNIGHT.eg());
+    weights.push_back(THREATONBISHOP.eg());
+    weights.push_back(THREATONROOK.eg());
+    weights.push_back(THREATONQUEEN.eg());
     weights.push_back(KINGTHREAT.eg());
     weights.push_back(QUEENINFILTRATION.eg());
     weights.push_back(RESTRICTEDSQUARES.eg());
@@ -1439,6 +1468,21 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[0] = pawnHangingDiff;
     tensor[1] = nonPawnHangingDiff;
     tensor += 2;
+
+    BitBoard threats[2] = {pawnAttackedSquares[WHITE], pawnAttackedSquares[BLACK]};
+    const Score threatenedKnightsDiff = popcount(bb[N] & threats[BLACK]) - popcount(bb[n] & threats[WHITE]);
+    const Score threatenedBishopsDiff = popcount(bb[B] & threats[BLACK]) - popcount(bb[b] & threats[WHITE]);
+    threats[WHITE] |= ptAttacks[WHITE][N] | ptAttacks[WHITE][B];
+    threats[BLACK] |= ptAttacks[BLACK][N] | ptAttacks[BLACK][B];
+    const Score threatenedRooksDiff = popcount(bb[R] & threats[BLACK]) - popcount(bb[r] & threats[WHITE]);
+    threats[WHITE] |= ptAttacks[WHITE][R];
+    threats[BLACK] |= ptAttacks[BLACK][R];
+    const Score threatenedQueensDiff = popcount(bb[Q] & threats[BLACK]) - popcount(bb[q] & threats[WHITE]);
+
+    tensor[0] = threatenedKnightsDiff;
+    tensor[1] = threatenedBishopsDiff;
+    tensor[2] = threatenedRooksDiff;
+    tensor[3] = threatenedQueensDiff;
 
     const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
     tensor[0] = kingThreatsDiff;
