@@ -75,10 +75,11 @@ constexpr PScore THREATPAWNPUSH = S(21, 36);
 constexpr PScore PAWNHANGING = S(-4, -61);
 constexpr PScore NONPAWNHANGING = S(-16, -33);
 constexpr PScore KINGTHREAT = S(-32, -73);
-constexpr PScore THREATONKNIGHT = S(-38, -104);
-constexpr PScore THREATONBISHOP = S(-52, -19);
-constexpr PScore THREATONROOK = S(-38, -18);
-constexpr PScore THREATONQUEEN = S(-3, 0);
+constexpr PScore PAWNTHREAT[2][5] = {{S(0,0),S(0,0),S(0,0),S(0,0),S(0,0)},{S(0,0),S(0,0),S(0,0),S(0,0),S(0,0)}};
+constexpr PScore KNIGHTTHREAT[2][5] = {{S(0,0),S(0,0),S(0,0),S(0,0),S(0,0)},{S(0,0),S(0,0),S(0,0),S(0,0),S(0,0)}};
+constexpr PScore BISHOPTHREAT[2][5] = {{S(0,0),S(0,0),S(0,0),S(0,0),S(0,0)},{S(0,0),S(0,0),S(0,0),S(0,0),S(0,0)}};
+constexpr PScore ROOKTHREAT[2][5] = {{S(0,0),S(0,0),S(0,0),S(0,0),S(0,0)},{S(0,0),S(0,0),S(0,0),S(0,0),S(0,0)}};
+constexpr PScore QUEENTHREAT[2][5] = {{S(0,0),S(0,0),S(0,0),S(0,0),S(0,0)},{S(0,0),S(0,0),S(0,0),S(0,0),S(0,0)}};
 constexpr PScore QUEENINFILTRATION = S(1, 1);
 constexpr PScore RESTRICTEDSQUARES = S(4, 3);
 constexpr PScore TEMPO = S(17, 31);
@@ -247,6 +248,96 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
         ptAttacks |= moves;
     }
 } 
+
+template <bool us>
+static inline PScore getPtPtThreatsFeat(Position& pos, const BitBoard (&weakPieces)[2], BitBoard (&pawnAttacks)[2], BitBoard (&ptAttacks)[2][4], S8* features){
+    auto &occ = pos.occupancies;
+    constexpr bool them = !us;
+    PScore score = S(0,0);
+    BitBoard pawnThreats = pawnAttacks[us] & occ[them];
+    while (pawnThreats){
+        const Square sq = popLsb(pawnThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        const bool weakTarget = weakPieces[them] & squareBB(sq);
+        features[5 * (!weakTarget) + piece] += us ? 1 : -1;
+    }
+    BitBoard knightThreats = ptAttacks[us][N-1] & occ[them];
+    while (knightThreats){
+        const Square sq = popLsb(knightThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        const bool weakTarget = weakPieces[them] & squareBB(sq);
+        features[10 + 5 * (!weakTarget) + piece] += us ? 1 : -1;
+    }
+    BitBoard bishopThreats = ptAttacks[us][B-1] & occ[them];
+    while (bishopThreats){
+        const Square sq = popLsb(bishopThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        const bool weakTarget = weakPieces[them] & squareBB(sq);
+        features[20 + 5 * (!weakTarget) + piece] += us ? 1 : -1;
+    }
+    BitBoard rookThreats = ptAttacks[us][R-1] & occ[them];
+    while (rookThreats){
+        const Square sq = popLsb(rookThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        const bool weakTarget = weakPieces[them] & squareBB(sq);
+        features[30 + 5 * (!weakTarget) + piece] += us ? 1 : -1;
+    }
+    BitBoard queenThreats = ptAttacks[us][Q-1] & occ[them];
+    while (queenThreats){
+        const Square sq = popLsb(queenThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        const bool weakTarget = weakPieces[them] & squareBB(sq);
+        features[40 + 5 * (!weakTarget) + piece] += us ? 1 : -1;
+    }
+    return score;
+}
+
+template <bool us>
+static inline PScore evalPtPtThreats(Position& pos, const BitBoard (&weakPieces)[2], BitBoard (&pawnAttacks)[2], BitBoard (&ptAttacks)[2][4]){
+    auto &occ = pos.occupancies;
+    constexpr bool them = !us;
+    PScore score = S(0,0);
+    BitBoard pawnThreats = pawnAttacks[us] & occ[them];
+    while (pawnThreats){
+        const Square sq = popLsb(pawnThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        score += PAWNTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
+    }
+    BitBoard knightThreats = ptAttacks[us][N-1] & occ[them];
+    while (knightThreats){
+        const Square sq = popLsb(knightThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        score += KNIGHTTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
+    }
+    BitBoard bishopThreats = ptAttacks[us][B-1] & occ[them];
+    while (bishopThreats){
+        const Square sq = popLsb(bishopThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        score += BISHOPTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
+    }
+    BitBoard rookThreats = ptAttacks[us][R-1] & occ[them];
+    while (rookThreats){
+        const Square sq = popLsb(rookThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        score += ROOKTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
+    }
+    BitBoard queenThreats = ptAttacks[us][Q-1] & occ[them];
+    while (queenThreats){
+        const Square sq = popLsb(queenThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        score += QUEENTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
+    }
+    return score;
+}
 
 static inline BitBoard filesFromBB(BitBoard bb){
     bb |= bb >> 8 | bb << 8;
@@ -717,20 +808,7 @@ Score pestoEval(Position *pos){
     score += PAWNHANGING * pawnHangingDiff;
     score += NONPAWNHANGING * nonPawnHangingDiff;
 
-    BitBoard threats[2] = {pawnAttackedSquares[WHITE], pawnAttackedSquares[BLACK]};
-    const Score threatenedKnightsDiff = popcount(bb[N] & threats[BLACK]) - popcount(bb[n] & threats[WHITE]);
-    const Score threatenedBishopsDiff = popcount(bb[B] & threats[BLACK]) - popcount(bb[b] & threats[WHITE]);
-    threats[WHITE] |= ptAttacks[WHITE][N-1] | ptAttacks[WHITE][B-1];
-    threats[BLACK] |= ptAttacks[BLACK][N-1] | ptAttacks[BLACK][B-1];
-    const Score threatenedRooksDiff = popcount(bb[R] & threats[BLACK]) - popcount(bb[r] & threats[WHITE]);
-    threats[WHITE] |= ptAttacks[WHITE][R-1];
-    threats[BLACK] |= ptAttacks[BLACK][R-1];
-    const Score threatenedQueensDiff = popcount(bb[Q] & threats[BLACK]) - popcount(bb[q] & threats[WHITE]);
-
-    score += THREATONKNIGHT * threatenedKnightsDiff
-           + THREATONBISHOP * threatenedBishopsDiff
-           + THREATONROOK * threatenedRooksDiff
-           + THREATONQUEEN * threatenedQueensDiff;
+    score += evalPtPtThreats<WHITE>(*pos, weakPieces, pawnAttackedSquares, ptAttacks) - evalPtPtThreats<BLACK>(*pos, weakPieces, pawnAttackedSquares, ptAttacks);
 
     const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
     score += KINGTHREAT * kingThreatsDiff;
@@ -964,10 +1042,15 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(THREATPAWNPUSH.mg());
     weights.push_back(PAWNHANGING.mg());
     weights.push_back(NONPAWNHANGING.mg());
-    weights.push_back(THREATONKNIGHT.mg());
-    weights.push_back(THREATONBISHOP.mg());
-    weights.push_back(THREATONROOK.mg());
-    weights.push_back(THREATONQUEEN.mg());
+    
+    for (auto t : {PAWNTHREAT, KNIGHTTHREAT, BISHOPTHREAT, ROOKTHREAT, QUEENTHREAT}){
+        for (int def : {0, 1}){
+            for (Piece target : {P, N, B, R, Q}){
+                weights.push_back(t[def][target].mg());
+            }
+        }
+    }
+
     weights.push_back(KINGTHREAT.mg());
     weights.push_back(QUEENINFILTRATION.mg());
     weights.push_back(RESTRICTEDSQUARES.mg());
@@ -1039,10 +1122,15 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(THREATPAWNPUSH.eg());
     weights.push_back(PAWNHANGING.eg());
     weights.push_back(NONPAWNHANGING.eg());
-    weights.push_back(THREATONKNIGHT.eg());
-    weights.push_back(THREATONBISHOP.eg());
-    weights.push_back(THREATONROOK.eg());
-    weights.push_back(THREATONQUEEN.eg());
+    
+    for (auto t : {PAWNTHREAT, KNIGHTTHREAT, BISHOPTHREAT, ROOKTHREAT, QUEENTHREAT}){
+        for (int def : {0, 1}){
+            for (Piece target : {P, N, B, R, Q}){
+                weights.push_back(t[def][target].eg());
+            }
+        }
+    }
+
     weights.push_back(KINGTHREAT.eg());
     weights.push_back(QUEENINFILTRATION.eg());
     weights.push_back(RESTRICTEDSQUARES.eg());
@@ -1470,21 +1558,10 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[1] = nonPawnHangingDiff;
     tensor += 2;
 
-    BitBoard threats[2] = {pawnAttackedSquares[WHITE], pawnAttackedSquares[BLACK]};
-    const Score threatenedKnightsDiff = popcount(bb[N] & threats[BLACK]) - popcount(bb[n] & threats[WHITE]);
-    const Score threatenedBishopsDiff = popcount(bb[B] & threats[BLACK]) - popcount(bb[b] & threats[WHITE]);
-    threats[WHITE] |= ptAttacks[WHITE][N-1] | ptAttacks[WHITE][B-1];
-    threats[BLACK] |= ptAttacks[BLACK][N-1] | ptAttacks[BLACK][B-1];
-    const Score threatenedRooksDiff = popcount(bb[R] & threats[BLACK]) - popcount(bb[r] & threats[WHITE]);
-    threats[WHITE] |= ptAttacks[WHITE][R-1];
-    threats[BLACK] |= ptAttacks[BLACK][R-1];
-    const Score threatenedQueensDiff = popcount(bb[Q] & threats[BLACK]) - popcount(bb[q] & threats[WHITE]);
+    getPtPtThreatsFeat<WHITE>(*pos, weakPieces, pawnAttackedSquares, ptAttacks, tensor);
+    getPtPtThreatsFeat<BLACK>(*pos, weakPieces, pawnAttackedSquares, ptAttacks, tensor);
 
-    tensor[0] = threatenedKnightsDiff;
-    tensor[1] = threatenedBishopsDiff;
-    tensor[2] = threatenedRooksDiff;
-    tensor[3] = threatenedQueensDiff;
-    tensor +=4;
+    tensor += 50;
 
     const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
     tensor[0] = kingThreatsDiff;
