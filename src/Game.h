@@ -26,6 +26,7 @@ public:
     U64 nodesPerMoveTable[64 * 64];
     S16 nmpPlies = 0;
     bool stopped = false;
+    U8 age = 0;
 
     /**
      * @brief The print function prints the position to stdout.
@@ -158,9 +159,9 @@ public:
 
     /**
      * @brief The startSearch function starts the search. It uses the internal parameters set by the GUI.
-     * @param halveTT If true, the transposition table depth will be halved before the search.
+     * @param ageTT If true, the game age will be increased by one at the start of the search, making previous entries old.
      */
-    void startSearch(bool halveTT);
+    void startSearch(bool ageTT);
 
     /**
      * @brief The contempt function returns the contempt score. The contempt score is used to assign a non-zero score to draw positions, depending on the optimism of the engine.
