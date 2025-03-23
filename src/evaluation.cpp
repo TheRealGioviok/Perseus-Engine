@@ -47,72 +47,90 @@ void initTables() {
     }
 }
 
-constexpr PScore DOUBLEISOLATEDPEN = S(14, 49);
+constexpr PScore DOUBLEISOLATEDPEN = S(13, 48);
 constexpr PScore ISOLATEDPEN = S(17, 22);
-constexpr PScore BACKWARDPEN = S(3, 17);
+constexpr PScore BACKWARDPEN = S(4, 16);
 constexpr PScore DOUBLEDPEN = S(16, 22);
-constexpr PScore SUPPORTEDPHALANX = S(-1, 4);
+constexpr PScore SUPPORTEDPHALANX = S(0, 3);
 constexpr PScore ADVANCABLEPHALANX = S(8, 26);
-constexpr PScore R_SUPPORTEDPHALANX = S(2, 11);
+constexpr PScore R_SUPPORTEDPHALANX = S(3, 10);
 constexpr PScore R_ADVANCABLEPHALANX = S(1, 19);
-constexpr PScore passedRankBonus[7] = {S(0, 0), S(10, -81), S(-13, -52), S(-7, 4), S(25, 55), S(49, 150), S(142, 246), };
-constexpr PScore PASSEDPATHBONUS = S(-4, 22);
-constexpr PScore SUPPORTEDPASSER = S(28, 0);
-constexpr PScore INNERSHELTER = S(2, -25);
-constexpr PScore OUTERSHELTER = S(11, -16);
-constexpr PScore BISHOPPAIR = S(19, 127);
-constexpr PScore ROOKONOPENFILE = S(23, 9);
-constexpr PScore ROOKONSEMIOPENFILE = S(18, 13);
-constexpr PScore KNIGHTONEXTOUTPOST = S(24, 34);
-constexpr PScore BISHOPONEXTOUTPOST = S(28, -2);
-constexpr PScore KNIGHTONINTOUTPOST = S(20, 38);
-constexpr PScore BISHOPONINTOUTPOST = S(32, -9);
-constexpr PScore KNIGHTPROTECTOR = S(-7, -1);
-constexpr PScore BISHOPPROTECTOR = S(-4, -1);
+constexpr PScore passedRankBonus[7] = {S(0, 0), S(9, -80), S(-13, -51), S(-7, 3), S(29, 54), S(53, 150), S(146, 247), };
+constexpr PScore PASSEDPATHBONUS = S(-4, 23);
+constexpr PScore SUPPORTEDPASSER = S(27, -1);
+constexpr PScore INNERSHELTER = S(4, -4);
+constexpr PScore OUTERSHELTER = S(13, 6);
+constexpr PScore BISHOPPAIR = S(17, 114);
+constexpr PScore ROOKONOPENFILE = S(17, 9);
+constexpr PScore ROOKONSEMIOPENFILE = S(25, 9);
+constexpr PScore KNIGHTONEXTOUTPOST = S(29, 36);
+constexpr PScore BISHOPONEXTOUTPOST = S(38, 2);
+constexpr PScore KNIGHTONINTOUTPOST = S(23, 40);
+constexpr PScore BISHOPONINTOUTPOST = S(36, -1);
+constexpr PScore KNIGHTPROTECTOR = S(-7, 0);
+constexpr PScore BISHOPPROTECTOR = S(-5, -1);
 constexpr PScore BISHOPPAWNS = S(1, -4);
-constexpr PScore THREATSAFEPAWN = S(50, 63);
-constexpr PScore THREATPAWNPUSH = S(21, 36);
-constexpr PScore PAWNHANGING = S(-4, -59);
-constexpr PScore NONPAWNHANGING = S(-24, -34);
-constexpr PScore KINGTHREAT = S(-2, 3);
-constexpr PScore QUEENINFILTRATION = S(1, -1);
+constexpr PScore THREATSAFEPAWN = S(46, -44);
+constexpr PScore THREATPAWNPUSH = S(20, 38);
+constexpr PScore PAWNHANGING = S(1, -51);
+constexpr PScore NONPAWNHANGING = S(-5, -42);
+constexpr PScore PAWNTHREAT[2][5] = {
+    {S(9, -67), S(31, 70), S(27, 118), S(30, 43), S(5, 33)}, 
+    {S(9, -51), S(10, 123), S(10, 165), S(21, 92), S(12, 92)}
+};
+constexpr PScore KNIGHTTHREAT[2][5] = {
+    {S(7, 18), S(1, -31), S(28, 15), S(60, -17), S(41, 10)}, 
+    {S(-7, 10), S(1, 19), S(27, 72), S(52, 56), S(42, 42)}
+};
+constexpr PScore BISHOPTHREAT[2][5] = {
+    {S(14, 23), S(35, 22), S(-8, -40), S(61, -11), S(56, 21)}, 
+    {S(2, 17), S(34, 73), S(-7, 14), S(51, 65), S(49, 72)}
+};
+constexpr PScore ROOKTHREAT[2][5] = {
+    {S(0, 19), S(15, 43), S(24, 30), S(-3, -63), S(60, -18)}, 
+    {S(-12, 4), S(4, 23), S(7, 19), S(1, -7), S(43, 36)}
+};
+constexpr PScore QUEENTHREAT[2][5] = {
+    {S(11, -5), S(30, -7), S(28, 17), S(2, -26), S(6, -141)}, 
+    {S(-1, 8), S(8, -1), S(4, 14), S(0, 4), S(9, -118)}
+};
+constexpr PScore KINGTHREAT = S(-5, 1);
+constexpr PScore QUEENINFILTRATION = S(2, 2);
 constexpr PScore RESTRICTEDSQUARES = S(4, 3);
-constexpr PScore TEMPO = S(16, 23);
+constexpr PScore TEMPO = S(20, 24);
 
-constexpr PScore PAWNATTACKINNERRING = S(20, -69);
-constexpr PScore KNIGHTATTACKINNERRING = S(71, 0);
-constexpr PScore BISHOPATTACKINNERRING = S(95, 13);
-constexpr PScore ROOKATTACKINNERRING = S(95, 28);
-constexpr PScore QUEENATTACKINNERRING = S(53, -20);
-constexpr PScore PAWNATTACKOUTERRING = S(69, -21);
-constexpr PScore KNIGHTATTACKOUTERRING = S(84, 17);
-constexpr PScore BISHOPATTACKOUTERRING = S(79, 14);
-constexpr PScore ROOKATTACKOUTERRING = S(36, 0);
-constexpr PScore QUEENATTACKOUTERRING = S(67, 41);
-constexpr PScore NOQUEENDANGER = S(-772, -2018);
-constexpr PScore PINNEDSHELTERDANGER = S(98, 1);
-
-constexpr PScore FLANKATTACKS[2] = {S(31, -22), S(39, -16), };
-constexpr PScore FLANKDEFENSES[2] = {S(-40, 5), S(-8, 0), };
-
-constexpr PScore SAFECHECK[4] = {S(299, -48), S(82, -5), S(195, 52), S(203, 12), };
-constexpr PScore ALLCHECKS[4] = {S(77, 16), S(29, 56), S(72, 3), S(14, 23), };
-constexpr PScore SAFETYINNERSHELTER = S(-44, -102);
-constexpr PScore SAFETYOUTERSHELTER = S(-1, -124);
-constexpr PScore INNERWEAKNESS = S(100, -35);
-constexpr PScore OUTERWEAKNESS = S(13, 8);
-constexpr PScore KSTEMPO = S(28, 13);
+constexpr PScore PAWNATTACKINNERRING = S(14, -253);
+constexpr PScore KNIGHTATTACKINNERRING = S(81, -50);
+constexpr PScore BISHOPATTACKINNERRING = S(101, 11);
+constexpr PScore ROOKATTACKINNERRING = S(108, 14);
+constexpr PScore QUEENATTACKINNERRING = S(77, -135);
+constexpr PScore PAWNATTACKOUTERRING = S(73, -82);
+constexpr PScore KNIGHTATTACKOUTERRING = S(78, 36);
+constexpr PScore BISHOPATTACKOUTERRING = S(77, 80);
+constexpr PScore ROOKATTACKOUTERRING = S(31, 6);
+constexpr PScore QUEENATTACKOUTERRING = S(59, 110);
+constexpr PScore NOQUEENDANGER = S(-826, -152);
+constexpr PScore PINNEDSHELTERDANGER = S(99, -46);
+constexpr PScore FLANKATTACKS[2] = {S(29, -56), S(38, -57), };
+constexpr PScore FLANKDEFENSES[2] = {S(-34, -2), S(-8, -4), };
+constexpr PScore SAFECHECK[4] = {S(271, -32), S(78, 55), S(213, 91), S(199, -3), };
+constexpr PScore ALLCHECKS[4] = {S(75, 6), S(30, 76), S(66, 12), S(10, 51), };
+constexpr PScore SAFETYINNERSHELTER = S(-42, 46);
+constexpr PScore SAFETYOUTERSHELTER = S(-7, -8);
+constexpr PScore INNERWEAKNESS = S(83, -16);
+constexpr PScore OUTERWEAKNESS = S(16, 14);
+constexpr PScore KSTEMPO = S(25, 33);
 
 constexpr Score COMPLEXITYPASSERS = 258;
-constexpr Score COMPLEXITYPAWNS = 981;
-constexpr Score COMPLEXITYBLOCKEDPAIRS = -389;
-constexpr Score COMPLEXITYPAWNTENSION = -904;
-constexpr Score COMPLEXITYOUTFLANKING = -41;
-constexpr Score COMPLEXITYINFILTRATION = -762;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS = 10156;
-constexpr Score COMPLEXITYPAWNENDING = 13141;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3247;
-constexpr Score COMPLEXITYBIAS = -19724;
+constexpr Score COMPLEXITYPAWNS = 1021;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -376;
+constexpr Score COMPLEXITYPAWNTENSION = -813;
+constexpr Score COMPLEXITYOUTFLANKING = -77;
+constexpr Score COMPLEXITYINFILTRATION = -688;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS = 9988;
+constexpr Score COMPLEXITYPAWNENDING = 13039;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3389;
+constexpr Score COMPLEXITYBIAS = -19771;
 
 // Function to access the table values
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
@@ -245,6 +263,96 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
         ptAttacks |= moves;
     }
 } 
+
+template <bool us>
+static inline PScore getPtPtThreatsFeat(Position& pos, const BitBoard (&weakPieces)[2], BitBoard (&pawnAttacks)[2], BitBoard (&ptAttacks)[2][4], S8* features){
+    auto &occ = pos.occupancies;
+    constexpr bool them = !us;
+    PScore score = S(0,0);
+    BitBoard pawnThreats = pawnAttacks[us] & occ[them];
+    while (pawnThreats){
+        const Square sq = popLsb(pawnThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        const bool weakTarget = weakPieces[them] & squareBB(sq);
+        features[5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
+    }
+    BitBoard knightThreats = ptAttacks[us][N-1] & occ[them];
+    while (knightThreats){
+        const Square sq = popLsb(knightThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        const bool weakTarget = weakPieces[them] & squareBB(sq);
+        features[10 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
+    }
+    BitBoard bishopThreats = ptAttacks[us][B-1] & occ[them];
+    while (bishopThreats){
+        const Square sq = popLsb(bishopThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        const bool weakTarget = weakPieces[them] & squareBB(sq);
+        features[20 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
+    }
+    BitBoard rookThreats = ptAttacks[us][R-1] & occ[them];
+    while (rookThreats){
+        const Square sq = popLsb(rookThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        const bool weakTarget = weakPieces[them] & squareBB(sq);
+        features[30 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
+    }
+    BitBoard queenThreats = ptAttacks[us][Q-1] & occ[them];
+    while (queenThreats){
+        const Square sq = popLsb(queenThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        const bool weakTarget = weakPieces[them] & squareBB(sq);
+        features[40 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
+    }
+    return score;
+}
+
+template <bool us>
+static inline PScore evalPtPtThreats(Position& pos, const BitBoard (&weakPieces)[2], BitBoard (&pawnAttacks)[2], BitBoard (&ptAttacks)[2][4]){
+    auto &occ = pos.occupancies;
+    constexpr bool them = !us;
+    PScore score = S(0,0);
+    BitBoard pawnThreats = pawnAttacks[us] & occ[them];
+    while (pawnThreats){
+        const Square sq = popLsb(pawnThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        score += PAWNTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
+    }
+    BitBoard knightThreats = ptAttacks[us][N-1] & occ[them];
+    while (knightThreats){
+        const Square sq = popLsb(knightThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        score += KNIGHTTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
+    }
+    BitBoard bishopThreats = ptAttacks[us][B-1] & occ[them];
+    while (bishopThreats){
+        const Square sq = popLsb(bishopThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        score += BISHOPTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
+    }
+    BitBoard rookThreats = ptAttacks[us][R-1] & occ[them];
+    while (rookThreats){
+        const Square sq = popLsb(rookThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        score += ROOKTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
+    }
+    BitBoard queenThreats = ptAttacks[us][Q-1] & occ[them];
+    while (queenThreats){
+        const Square sq = popLsb(queenThreats);
+        Piece piece = pos.pieceOn(sq) - 6*them;
+        if (piece == K) continue;
+        score += QUEENTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
+    }
+    return score;
+}
 
 static inline BitBoard filesFromBB(BitBoard bb){
     bb |= bb >> 8 | bb << 8;
@@ -715,6 +823,8 @@ Score pestoEval(Position *pos){
     score += PAWNHANGING * pawnHangingDiff;
     score += NONPAWNHANGING * nonPawnHangingDiff;
 
+    score += evalPtPtThreats<WHITE>(*pos, weakPieces, pawnAttackedSquares, ptAttacks) - evalPtPtThreats<BLACK>(*pos, weakPieces, pawnAttackedSquares, ptAttacks);
+
     const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
     score += KINGTHREAT * kingThreatsDiff;
 
@@ -831,6 +941,11 @@ Score pestoEval(Position *pos){
     const S32 sign = 1 - 2 * pos->side;
     dangerIndex[pos->side] += KSTEMPO;
 
+    //const PScore dampenWhite = PScore(dangerIndex[WHITE].mg() * DAMPEN.mg() / RESOLUTION, dangerIndex[WHITE].eg() * DAMPEN.eg() / RESOLUTION);
+    //const PScore dampenBlack = PScore(dangerIndex[BLACK].mg() * DAMPEN.mg() / RESOLUTION, dangerIndex[BLACK].eg() * DAMPEN.eg() / RESOLUTION);
+    
+    //dangerIndex[WHITE] = dangerIndex[WHITE] - dampenBlack;
+    //dangerIndex[BLACK] = dangerIndex[BLACK] - dampenWhite;
 
     const S32 mgWhiteDanger = getKingSafetyMg(dangerIndex[WHITE].mg());
     const S32 egWhiteDanger = getKingSafetyEg(dangerIndex[WHITE].eg());
@@ -942,6 +1057,15 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(THREATPAWNPUSH.mg());
     weights.push_back(PAWNHANGING.mg());
     weights.push_back(NONPAWNHANGING.mg());
+    
+    for (auto t : {PAWNTHREAT, KNIGHTTHREAT, BISHOPTHREAT, ROOKTHREAT, QUEENTHREAT}){
+        for (int def : {0, 1}){
+            for (Piece target : {P, N, B, R, Q}){
+                weights.push_back(t[def][target].mg());
+            }
+        }
+    }
+
     weights.push_back(KINGTHREAT.mg());
     weights.push_back(QUEENINFILTRATION.mg());
     weights.push_back(RESTRICTEDSQUARES.mg());
@@ -1013,6 +1137,15 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(THREATPAWNPUSH.eg());
     weights.push_back(PAWNHANGING.eg());
     weights.push_back(NONPAWNHANGING.eg());
+    
+    for (auto t : {PAWNTHREAT, KNIGHTTHREAT, BISHOPTHREAT, ROOKTHREAT, QUEENTHREAT}){
+        for (int def : {0, 1}){
+            for (Piece target : {P, N, B, R, Q}){
+                weights.push_back(t[def][target].eg());
+            }
+        }
+    }
+
     weights.push_back(KINGTHREAT.eg());
     weights.push_back(QUEENINFILTRATION.eg());
     weights.push_back(RESTRICTEDSQUARES.eg());
@@ -1439,6 +1572,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[0] = pawnHangingDiff;
     tensor[1] = nonPawnHangingDiff;
     tensor += 2;
+
+    getPtPtThreatsFeat<WHITE>(*pos, weakPieces, pawnAttackedSquares, ptAttacks, tensor);
+    getPtPtThreatsFeat<BLACK>(*pos, weakPieces, pawnAttackedSquares, ptAttacks, tensor);
+
+    tensor += 50;
 
     const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
     tensor[0] = kingThreatsDiff;
