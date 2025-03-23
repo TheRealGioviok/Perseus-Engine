@@ -12,7 +12,7 @@ endif
 endif
 
 CXX ?= clang++
-CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough -mpopcnt
+CXXFLAGS := -Wall -Wextra -Wpedantic -std=c++20 -Wno-implicit-fallthrough
 EXE ?= Perseus
 CPU ?= default
 
@@ -27,11 +27,11 @@ else
 endif
 
 ifeq ($(CPU), default)
-    CPU_FLAGS :=
+    CPU_FLAGS := -march=native
 else ifeq ($(CPU), M64)
     CPU_FLAGS := -m64 -mpopcnt
 else ifeq ($(CPU), haswell)
-    CPU_FLAGS := -march=haswell -m64 -mpopcnt
+    CPU_FLAGS := -march=haswell -m64
 else ifeq ($(CPU), znver2)
     CPU_FLAGS := -march=znver2
 else ifeq ($(CPU), native)
