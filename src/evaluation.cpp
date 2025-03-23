@@ -274,7 +274,7 @@ static inline PScore getPtPtThreatsFeat(Position& pos, const BitBoard (&weakPiec
         const Square sq = popLsb(pawnThreats);
         Piece piece = pos.pieceOn(sq) - 6*them;
         const bool weakTarget = weakPieces[them] & squareBB(sq);
-        features[5 * (!weakTarget) + piece] += us ? 1 : -1;
+        features[5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
     }
     BitBoard knightThreats = ptAttacks[us][N-1] & occ[them];
     while (knightThreats){
@@ -282,7 +282,7 @@ static inline PScore getPtPtThreatsFeat(Position& pos, const BitBoard (&weakPiec
         Piece piece = pos.pieceOn(sq) - 6*them;
         if (piece == K) continue;
         const bool weakTarget = weakPieces[them] & squareBB(sq);
-        features[10 + 5 * (!weakTarget) + piece] += us ? 1 : -1;
+        features[10 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
     }
     BitBoard bishopThreats = ptAttacks[us][B-1] & occ[them];
     while (bishopThreats){
@@ -290,7 +290,7 @@ static inline PScore getPtPtThreatsFeat(Position& pos, const BitBoard (&weakPiec
         Piece piece = pos.pieceOn(sq) - 6*them;
         if (piece == K) continue;
         const bool weakTarget = weakPieces[them] & squareBB(sq);
-        features[20 + 5 * (!weakTarget) + piece] += us ? 1 : -1;
+        features[20 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
     }
     BitBoard rookThreats = ptAttacks[us][R-1] & occ[them];
     while (rookThreats){
@@ -298,7 +298,7 @@ static inline PScore getPtPtThreatsFeat(Position& pos, const BitBoard (&weakPiec
         Piece piece = pos.pieceOn(sq) - 6*them;
         if (piece == K) continue;
         const bool weakTarget = weakPieces[them] & squareBB(sq);
-        features[30 + 5 * (!weakTarget) + piece] += us ? 1 : -1;
+        features[30 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
     }
     BitBoard queenThreats = ptAttacks[us][Q-1] & occ[them];
     while (queenThreats){
@@ -306,7 +306,7 @@ static inline PScore getPtPtThreatsFeat(Position& pos, const BitBoard (&weakPiec
         Piece piece = pos.pieceOn(sq) - 6*them;
         if (piece == K) continue;
         const bool weakTarget = weakPieces[them] & squareBB(sq);
-        features[40 + 5 * (!weakTarget) + piece] += us ? 1 : -1;
+        features[40 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
     }
     return score;
 }
