@@ -109,6 +109,7 @@ void Game::reset(){
     seldepth = 0;
     rootDelta = infinity;
     nmpPlies = 0;
+    age = 0;
 
     // Clear history, killer and counter move tables
     memset(historyTable, 0, sizeof(historyTable));
@@ -133,7 +134,7 @@ void Game::reset(){
         tt[i].depth = 0;
         tt[i].score = noScore;
         tt[i].eval = noScore;
-        tt[i].flags = hashINVALID;
+        tt[i].agePvFlag = hashNONE;
     }
 
     // Clear pawn hash table

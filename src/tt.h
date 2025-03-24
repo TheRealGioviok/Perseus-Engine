@@ -12,14 +12,10 @@ constexpr U64 ttBucketCount = ttEntryCount / ttBucketSize; // 2^18
 enum HashFlag
 {
     hashNONE = 0,
-    hashUPPER = 1,
-    hashLOWER = 2,
-    hashEXACT = 3,
-    hashINVALID = 8,
-    hashOLD = 16,
-    hashSINGULAR = 32,
-    hashEVALONLY = 64,
-    hashPVMove = 128
+    hashUPPER = 0b01000000,
+    hashLOWER = 0b10000000,
+    hashEXACT = 0b11000000,
+    hashPVMove = 0b00100000
 };
 
 #ifdef _MSC_VER
@@ -50,7 +46,7 @@ struct ttEntry {
     HashKey hashKey;         // 8
     PackedMove bestMove;     // 2
     Depth depth;             // 1
-    U8 flags = hashINVALID;  // 1
+    U8 agePvFlag = hashNONE;  // 1
     Score score = noScore; // 2
     Score eval = noScore;  // 2
 } __attribute__((aligned(16)));
@@ -59,7 +55,7 @@ struct ttBucket {
     ttEntry entries[ttBucketSize];
     ttBucket(){
         for (U64 i = 0; i < ttBucketSize; i++){
-            entries[i] = ttEntry(0, 0, 0, hashINVALID, 0);
+            entries[i] = ttEntry(0, 0, 0, hashNONE, 0);
             entries[i].eval = noScore;
         }
     }
@@ -109,12 +105,13 @@ ttEntry *probeTT(HashKey key);
  * @param key The key.
  * @param score The score.
  * @param depth The depth.
- * @param flags The flags.
+ * @param bound The flags.
  * @param move The move.
  * @param ply The ply.
  * @param isPv The isPv flag.
  * @param wasPv The wasPv flag.
+ * @param age The age gen
  */
-void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 flags, Move move, Ply ply, bool isPv, bool wasPv);
+void writeTT(HashKey key, Score score, Score staticEval, Depth depth, U8 bound, Move move, Ply ply, bool isPv, bool wasPv, U8 age);
 
-U16 hashfull();
+U16 hashfull(U8 age);
