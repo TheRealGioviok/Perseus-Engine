@@ -611,6 +611,10 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
                         break;
                     alpha = score;
                 }
+                // Obsidian ml pruning idea
+                if (bestScore >= -KNOWNWIN) {
+                    if (pos.checkers && okToReduce(move)) break;
+                }
             }
         }
         else
