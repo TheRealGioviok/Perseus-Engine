@@ -586,12 +586,14 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     {
         Move move = onlyMove(moveList.moves[i]);
 
-        // Move count pruning
-        if (!inCheck && moveCount >= 2) break;
+        if (isOk((ss-1)->move) && moveTarget(move) != moveTarget((ss-1)->move)){
+            // Move count pruning
+            if (!inCheck && moveCount >= 2) break;
+            // SEE pruning : skip all moves that have see < of the adaptive capthist based threshold
+            if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
+                break;
+        }
         
-        // SEE pruning : skip all moves that have see < of the adaptive capthist based threshold
-        if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
-            break;
         if (makeMove(move))
         {
             // Prefetch tt
