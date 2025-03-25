@@ -96,6 +96,7 @@ constexpr PScore QUEENTHREAT[2][5] = {
 };
 constexpr PScore KINGTHREAT = S(-5, 1);
 constexpr PScore QUEENINFILTRATION = S(2, 2);
+constexpr PScore QUEENOVERLOAD = S(2, 2);
 constexpr PScore RESTRICTEDSQUARES = S(4, 3);
 constexpr PScore TEMPO = S(20, 24);
 
@@ -832,6 +833,12 @@ Score pestoEval(Position *pos){
     const Score queenInfiltrationDiff = popcount(~pawnSpan[BLACK] & (ranks(0) | ranks(1) | ranks(2) | ranks(3)) & bb[Q]) - popcount(~pawnSpan[WHITE] & (ranks(7) | ranks(6) | ranks(5) | ranks(4)) & bb[q]);
     score += QUEENINFILTRATION * queenInfiltrationDiff;
 
+    // Queen Overload
+    const Score queenOverloadDiff = 
+        (popcount(occ[WHITE] & ptAttacks[WHITE][Q-1] & ~multiAttacks[WHITE] & attackedBy[BLACK]) >= 2) -
+        (popcount(occ[WHITE] & ptAttacks[WHITE][Q-1] & ~multiAttacks[WHITE] & attackedBy[BLACK]) >= 2) ;
+    score += QUEENOVERLOAD * queenOverloadDiff;
+
     // Square restriction
     const Score restrictedSquaresDiff = popcount(multiAttacks[WHITE] & attackedBy[BLACK] & ~multiAttacks[BLACK]) - popcount(multiAttacks[BLACK] & attackedBy[WHITE] & ~multiAttacks[WHITE]);
     score += RESTRICTEDSQUARES * restrictedSquaresDiff;
@@ -1068,6 +1075,7 @@ std::vector<Score> getCurrentEvalWeights(){
 
     weights.push_back(KINGTHREAT.mg());
     weights.push_back(QUEENINFILTRATION.mg());
+    weights.push_back(QUEENOVERLOAD.mg());
     weights.push_back(RESTRICTEDSQUARES.mg());
 
     // Add the tempo bonus
@@ -1148,6 +1156,7 @@ std::vector<Score> getCurrentEvalWeights(){
 
     weights.push_back(KINGTHREAT.eg());
     weights.push_back(QUEENINFILTRATION.eg());
+    weights.push_back(QUEENOVERLOAD.eg());
     weights.push_back(RESTRICTEDSQUARES.eg());
 
     // Add the tempo bonus
@@ -1586,6 +1595,12 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     const Score queenInfiltrationDiff = popcount(~pawnSpan[BLACK] & (ranks(0) | ranks(1) | ranks(2) | ranks(3)) & bb[Q]) - popcount(~pawnSpan[WHITE] & (ranks(7) | ranks(6) | ranks(5) | ranks(4)) & bb[q]);
     tensor[0] = queenInfiltrationDiff;
     ++tensor;
+
+    // Queen Overload
+    const Score queenOverloadDiff = 
+        (popcount(occ[WHITE] & ptAttacks[WHITE][Q-1] & ~multiAttacks[WHITE] & attackedBy[BLACK]) >= 2) -
+        (popcount(occ[WHITE] & ptAttacks[WHITE][Q-1] & ~multiAttacks[WHITE] & attackedBy[BLACK]) >= 2) ;
+    ++tensor[0];
 
     // Square restriction
     const Score restrictedSquaresDiff = popcount(multiAttacks[WHITE] & attackedBy[BLACK] & ~multiAttacks[BLACK]) - popcount(multiAttacks[BLACK] & attackedBy[WHITE] & ~multiAttacks[WHITE]);
