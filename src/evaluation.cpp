@@ -1601,7 +1601,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
         (popcount(occ[WHITE] & ptAttacks[WHITE][Q-1] & ~multiAttacks[WHITE] & attackedBy[BLACK]) >= 2) -
         (popcount(occ[BLACK] & ptAttacks[BLACK][Q-1] & ~multiAttacks[BLACK] & attackedBy[WHITE]) >= 2) ;
     tensor[0] = queenOverloadDiff;
-    ++tensor[0];
+    ++tensor;
 
     // Square restriction
     const Score restrictedSquaresDiff = popcount(multiAttacks[WHITE] & attackedBy[BLACK] & ~multiAttacks[BLACK]) - popcount(multiAttacks[BLACK] & attackedBy[WHITE] & ~multiAttacks[WHITE]);
