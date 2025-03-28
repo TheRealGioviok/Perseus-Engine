@@ -938,14 +938,15 @@ Score pestoEval(Position *pos){
     dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
     dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
     dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
-    const S32 sign = 1 - 2 * pos->side;
-    dangerIndex[pos->side] += KSTEMPO;
 
     const PScore dampenWhite = PScore(DAMPENMG * dangerIndex[BLACK].mg() / RESOLUTION, DAMPENEG * dangerIndex[BLACK].eg() / RESOLUTION);
     const PScore dampenBlack = PScore(DAMPENMG * dangerIndex[WHITE].mg() / RESOLUTION, DAMPENEG * dangerIndex[WHITE].eg() / RESOLUTION);
 
     dangerIndex[WHITE] -= dampenWhite;
     dangerIndex[BLACK] -= dampenBlack;
+
+    const S32 sign = 1 - 2 * pos->side;
+    dangerIndex[pos->side] += KSTEMPO;
 
     //const PScore dampenWhite = PScore(dangerIndex[WHITE].mg() * DAMPEN.mg() / RESOLUTION, dangerIndex[WHITE].eg() * DAMPEN.eg() / RESOLUTION);
     //const PScore dampenBlack = PScore(dangerIndex[BLACK].mg() * DAMPEN.mg() / RESOLUTION, dangerIndex[BLACK].eg() * DAMPEN.eg() / RESOLUTION);
