@@ -419,6 +419,7 @@ skipPruning:
                     }
                     granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
                 }
+                if ((rawEval - ss->staticEval) >= lmrComplexityThreshold()) granularR += lmrComplexityValue();
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
                 Depth R = granularR / RESOLUTION;
