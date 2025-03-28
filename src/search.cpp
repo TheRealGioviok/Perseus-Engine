@@ -428,7 +428,7 @@ skipPruning:
                 // Search at reduced depth
                 score = -search(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
                 // If failed high on reduced search, research at full depth
-                if (score > alpha && R){
+                if (score >= alpha && R){
                     bool deeper = score > bestScore + 35 + 2 * newDepth;
                     bool shallower = score < bestScore + 8;
                     newDepth += deeper - shallower; 
@@ -444,7 +444,7 @@ skipPruning:
                     score = -search(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
             // Pvsearch
-            if (PVNode && (!moveSearched || score > alpha))
+            if (PVNode && (!moveSearched || score >= alpha))
                 score = -search(-beta, -alpha, newDepth, false, ss + 1);
             
             undo(undoer, currMove);
@@ -459,7 +459,7 @@ skipPruning:
 
             if (score > bestScore) {
                 bestScore = score;
-                if (score > alpha) {
+                if (score >= alpha) {
                     bestMove = currMove;
                     
                     if (PVNode) {
