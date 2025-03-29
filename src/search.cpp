@@ -139,7 +139,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
     if (ttScore != noScore)
     {
-        if (!PVNode && ttDepth >= depth)
+        if (!PVNode && ttDepth >= depth && (ttScore <= alpha || cutNode))
         {
             if (ttBound == hashEXACT)
                 return ttScore;
