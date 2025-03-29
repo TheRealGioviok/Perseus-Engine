@@ -578,6 +578,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     MoveList moveList;
 
     inCheck ? generateMoves(moveList, ss) : generateCaptures(moveList);
+    Score futility = inCheck ? -infinity : ss->staticEval + qsFutilityMargin();
 
     UndoInfo undoer = UndoInfo(pos);
     U16 moveCount = 0;
@@ -592,6 +593,12 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
         // SEE pruning : skip all moves that have see < of the adaptive capthist based threshold
         if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
             break;
+
+        // Futility pruning
+        if (!inCheck && futility <= alpha && !pos.SEE(move, 1)){
+            bestScore = std::max(bestScore, futility);
+            continue;
+        }
         if (makeMove(move))
         {
             // Prefetch tt

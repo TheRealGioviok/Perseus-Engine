@@ -219,6 +219,7 @@ NO_TUNE_PARAM(IIRDepth, 5, 3, 8, .5, 0.002);
 TUNE_PARAM(futPruningMultiplier, 54, 30, 130, 5, 0.002);
 TUNE_PARAM(futPruningAdd, 241, 150, 350, 10, 0.002);
 NO_TUNE_PARAM(futPruningDepth, 9, 6, 10, 0.5, 0.002);
+TUNE_PARAM(qsFutilityMargin, 68, 0, 250, 13, 0.002)
 
 // Move ordering values
 TUNE_PARAM(captScoreMvvMultiplier, 14, 8, 32, 1, 0.002)
