@@ -79,11 +79,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     if (stopped)
         return 0;
 
-    //print();
-    //std::cout << "lmove ";
-    //printMove((ss-1)->move);
-    //std::cout << " " << std::endl;
-
     assert(pos.hashKey == pos.generateHashKey());
     assert(pos.pawnHashKey == pos.generatePawnHashKey());
     assert(pos.nonPawnKeys[WHITE] == pos.generateNonPawnHashKey(WHITE));
