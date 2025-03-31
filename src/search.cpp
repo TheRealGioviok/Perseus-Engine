@@ -235,7 +235,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         if (ply >= nmpPlies &&
             depth >= 3 &&
             eval >= beta &&
-            ss->staticEval >= beta + nmpMarginBias() + depth * nmpDepthMargin() &&
+            ss->staticEval >= beta + nmpMarginBias() - depth * nmpDepthMargin() &&
             pos.hasNonPawns())
         {
 
@@ -289,11 +289,11 @@ skipPruning:
     // Iterate through moves
     for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
     {
-        S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
+        S32 currMoveScore = getScore(moveList.moves[i]); // - BAD_NOISY_MOVE;
         Move currMove = onlyMove(moveList.moves[i]);
         if (sameMovePos(currMove, excludedMove)) continue;
         const bool isQuiet = okToReduce(currMove);
-        const bool quietOrLosing = currMoveScore < COUNTERSCORE;
+        const bool quietOrLosing = currMoveScore < COUNTER_SCORE;
         if (moveSearched){
             if (!skipQuiets) { 
                 if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
@@ -308,7 +308,7 @@ skipPruning:
                     skipQuiets = true;
                     continue;
                 }
-                if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
+                if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIET_SCORE) : (currMoveScore - BAD_NOISY_MOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
                     skipQuiets = true;
                     continue;
                 }
@@ -399,19 +399,19 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
-                if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
+                if (currMoveScore >= COUNTER_SCORE) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
-                    granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
+                    granularR -= std::clamp((currMoveScore - QUIET_SCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
                     if (cutNode) granularR += lmrQuietCutNode();
                     if (ttPv) granularR -= cutNode * lmrQuietTTPV();
                 }
                 else {
-                    if (currMoveScore < QUIETSCORE) { 
+                    if (currMoveScore < QUIET_SCORE) { 
                     if (cutNode) granularR += lmrBadNoisyCutNode();
-                        granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
+                        granularR -= std::clamp((currMoveScore - BAD_NOISY_MOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
                     }
-                    granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
+                    granularR -= std::clamp((currMoveScore - GOOD_NOISY_MOVE - BAD_NOISY_MOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
                 }
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
@@ -585,7 +585,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
         if (!inCheck && moveCount >= 2) break;
         
         // SEE pruning : skip all moves that have see < of the adaptive capthist based threshold
-        if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
+        if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOOD_NOISY_MOVE)
             break;
 
         // Futility pruning
