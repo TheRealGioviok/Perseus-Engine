@@ -79,11 +79,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     if (stopped)
         return 0;
 
-    //print();
-    //std::cout << "lmove ";
-    //printMove((ss-1)->move);
-    //std::cout << " " << std::endl;
-
     assert(pos.hashKey == pos.generateHashKey());
     assert(pos.pawnHashKey == pos.generatePawnHashKey());
     assert(pos.nonPawnKeys[WHITE] == pos.generateNonPawnHashKey(WHITE));
@@ -226,8 +221,15 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     if (!PVNode && !excludedMove)
     {
         // RFP
-        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - futilityMargin(depth, improving) >= beta) // && !excludedMove)
+        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - std::max((Score)15,futilityMargin(depth, improving)) >= beta) // && !excludedMove)
             return eval;
+        
+        // Razoring
+        if (depth <= razorDepth() && abs(eval) < mateValue && eval + razorQ1() + depth * razorQ2() < alpha && alpha < KNOWNWIN)
+        {
+            const Score razorScore = quiescence(alpha, beta, ss);
+            if (razorScore <= alpha) return razorScore;
+        }
 
         // Null move pruning
         if (eval >= ss->staticEval &&
@@ -267,13 +269,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
                 if (verification >= beta)
                     return nullScore;
             }
-        }
-    
-        // Razoring
-        if (depth <= razorDepth() && abs(eval) < mateValue && eval + razorQ1() + depth * razorQ2() < alpha)
-        {
-            const Score razorScore = quiescence(alpha, beta, ss);
-            if (razorScore <= alpha) return razorScore;
         }
     
     }
