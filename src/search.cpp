@@ -364,12 +364,13 @@ skipPruning:
                         // Increase singular activations
                         // ++seActivations;
                     }
+                    
+                    else if (ttScore >= beta || cutNode){
+                        extension = -1;
+                    }
                     else if (singularBeta >= beta){ // Multicut
                         undo(undoer, currMove);
                         return singularBeta;
-                    }
-                    else if (ttScore >= beta || cutNode){
-                        extension = -1;
                     }
                     
                     // else{
