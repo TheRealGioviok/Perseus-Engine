@@ -703,6 +703,7 @@ inline void Position::addPromotion(MoveList* ml, ScoredMove move){
     return;
 }
 
+
 inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S16 *ply1contHist, const S16 *ply2contHist, const S16 *ply4contHist) {
     if (sameMovePos(move, killer1)){
         ml->moves[ml->count++] = (KILLER1SCORE << 32) | move;
