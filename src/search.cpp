@@ -368,7 +368,10 @@ skipPruning:
                         undo(undoer, currMove);
                         return singularBeta;
                     }
-                    else if (ttScore >= beta || cutNode){
+                    else if (ttScore >= beta){
+                        extension -= 1 + !PVNode;
+                    }
+                    else if (cutNode){
                         extension = -1;
                     }
                     
