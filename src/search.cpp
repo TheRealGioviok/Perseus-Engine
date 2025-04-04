@@ -360,6 +360,9 @@ skipPruning:
                             ++ss->doubleExtensions;
                             //std::cout << "Double extension counter "<<ss->doubleExtensions<<std::endl;
                             extension = 2;
+                            if (!PVNode && ttScore >= beta + 60){
+                                extension -= 1;
+                            }
                         }
                         // Increase singular activations
                         // ++seActivations;
