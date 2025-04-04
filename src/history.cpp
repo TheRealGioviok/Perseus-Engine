@@ -6,7 +6,7 @@
 #include <algorithm>
 
 // history table
-S16 historyTable[2][NUM_SQUARES * NUM_SQUARES][4];
+S16 historyTable[12][NUM_SQUARES * NUM_SQUARES][4];
 
 // capture history table
 S16 captureHistoryTable[NUM_PIECES * NUM_SQUARES][6][4];
@@ -27,11 +27,11 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
     const S32 malus = statMalus(depth);
     if (okToReduce(bestMove)) {
         // If bestMove is not noisy, we reduce the bonus of all other moves and increase the bonus of the bestMove
-        updateHistoryMove(side, threats, bestMove, bonus);
+        updateHistoryMove(threats, bestMove, bonus);
         updateContHist(ss, bestMove, bonus);
         for (int i = 0; i < quietsCount; i++) {
             if (quietMoves[i] == bestMove) continue;
-            updateHistoryMove(side, threats, quietMoves[i], -malus);
+            updateHistoryMove(threats, quietMoves[i], -malus);
             updateContHist(ss, quietMoves[i], -malus);
         }
     }

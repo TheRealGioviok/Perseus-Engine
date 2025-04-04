@@ -5,7 +5,7 @@
 #include "Position.h"
 
 // history table
-extern S16 historyTable[2][NUM_SQUARES * NUM_SQUARES][4];
+extern S16 historyTable[12][NUM_SQUARES * NUM_SQUARES][4];
 
 // capture history table
 extern S16 captureHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES / 2][4]; // The color of the captured piece is always the opposite of the color of the moving piece
@@ -118,8 +118,8 @@ Score correctStaticEval(Position& pos, const Score eval) {
 
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth);
 
-static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
-    S16 *current = &historyTable[side][indexFromTo(moveSource(move), moveTarget(move))][getThreatsIndexing(threats, move)];
+static inline void updateHistoryMove(const BitBoard threats, const Move move, const S32 delta) {
+    S16 *current = &historyTable[movePiece(move)][indexFromTo(moveSource(move), moveTarget(move))][getThreatsIndexing(threats, move)];
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 

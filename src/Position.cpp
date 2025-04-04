@@ -717,7 +717,7 @@ inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Squ
         return;
     }
     ml->moves[ml->count++] = ((
-        (S64)(historyTable[side][indexFromTo(source, target)][getThreatsIndexing(threats,move)])
+        (S64)(historyTable[movePiece(move)][indexFromTo(source, target)][getThreatsIndexing(threats,move)])
         + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply4contHist ? ply4contHist[indexPieceTo(movePiece(move), target)] : 0)
