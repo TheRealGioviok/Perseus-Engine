@@ -50,8 +50,7 @@ BitBoard fiveSquare[64]; // The 5x5 square
 BitBoard kingShelter[2][64]; // The king shelter
 BitBoard kingFlank[2][8];
 
-// Precomputed king safety tables
-
+// Precomputed sigmoid king safety tables
 std::array<S32, KSTABLESIZE> kingSafetyMgTable;
 std::array<S32, KSTABLESIZE> kingSafetyEgTable;
 
@@ -87,9 +86,12 @@ S32 lmpMargin[128][2] = { {0} };
  * @brief The initLMRTable function initializes the LMR reduction table
  */
 void initLMRTable(){
+    for (int i = 0; i < 64; i++){
+        reductionTable[0][i][0] = reductionTable[1][i][0] = reductionTable[0][0][i] = reductionTable[1][0][i] = 0;
+    }
     // std::cout << "Initializing lmrlmp tables" << std::endl;
-    for (int depth = 0; depth < 64; depth++) {
-        for (int move = 0; move < 64; move++) {
+    for (int depth = 1; depth < 64; depth++) {
+        for (int move = 1; move < 64; move++) {
             reductionTable[0][depth][move] = std::max(0, 
                 int(
                     lmrA0() *
