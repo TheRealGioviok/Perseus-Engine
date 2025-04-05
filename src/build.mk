@@ -21,7 +21,7 @@ ifeq ($(TARGET), Release)
 #	since the math library *should* be linked by default it's being removed from the flags. in case of errors, add an if that adds it in case of g++.
 	CXXFLAGS += -funroll-loops -O3 -flto -fno-exceptions -DNDEBUG
 else ifeq ($(TARGET), Debug)
-	CXXFLAGS += -g -O0 -fsanitize=address -fno-omit-frame-pointer -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC
+	CXXFLAGS += -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC
 else
 	$(error "Unknown target: $(TARGET)")
 endif
