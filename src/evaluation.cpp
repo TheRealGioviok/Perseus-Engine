@@ -365,13 +365,17 @@ template <bool side>
 static inline BitBoard advancePathMasked(BitBoard bb, BitBoard mask){
     if constexpr (side == WHITE){
         bb |= (bb >> 8) & mask;
-        bb |= (bb >> 16) & mask;
-        bb |= (bb >> 32) & mask;
+        bb |= (bb >> 8) & mask;
+        bb |= (bb >> 8) & mask;
+        bb |= (bb >> 8) & mask;
+        bb |= (bb >> 8) & mask;
     }
     else {
         bb |= (bb << 8) & mask;
-        bb |= (bb << 16) & mask;
-        bb |= (bb << 32) & mask;
+        bb |= (bb << 8) & mask;
+        bb |= (bb << 8) & mask;
+        bb |= (bb << 8) & mask;
+        bb |= (bb << 8) & mask;
     }
     return bb;
 }
@@ -386,7 +390,7 @@ static inline BitBoard pawnSpanPawns(BitBoard movers, BitBoard blockers){
     }
 }
 
-inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const BitBoard (&doubledPawns)[2], const BitBoard (&pawnFiles)[2], const BitBoard (&protectedPawns)[2], const BitBoard (&pawnBlockage)[2], const BitBoard (&occ)[3], const BitBoard(&attackedBy)[2], const BitBoard (multiAttacks)[2], const BitBoard (defendedByPawn)[2], S32& passedCount){
+inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const BitBoard (&doubledPawns)[2], const BitBoard (&pawnFiles)[2], const BitBoard (&protectedPawns)[2], const BitBoard (&pawnBlockage)[2], const BitBoard (&occ)[3], const BitBoard(&attackedBy)[2], const BitBoard (multiAttacks)[2], const BitBoard (&defendedByPawn)[2], const BitBoard (doublePawnAttackedSquares)[2], S32& passedCount){
     // Try probing for the correct side here
     PawnEvalHashEntry& entry = pawnEvalHash[hashKey & 0x3FFFF];
     // Init the score
@@ -397,7 +401,13 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
         BitBoard blackPassers = entry.passers & bb[p];
         passedCount += popcount(entry.passers); // May already be nonzero
         score = entry.score;
-        BitBoard block = occ[BOTH] | (~defendedByPawn[WHITE] & ((~attackedBy[WHITE] & attackedBy[BLACK]) | (multiAttacks[BLACK]))); 
+        BitBoard block = occ[BOTH] | // Physically blocked
+        ~defendedByPawn[WHITE] & (
+            defendedByPawn[BLACK] | // Pawns will recapture the passer
+            multiAttacks[BLACK] |
+            (~attackedBy[WHITE] & attackedBy[BLACK])
+        ) |
+        (doublePawnAttackedSquares[BLACK] & ~doublePawnAttackedSquares[WHITE]);
         while (whitePassers){
             Square sq = popLsb(whitePassers);
             BitBoard sqb = squareBB(sq);
@@ -405,7 +415,13 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
             BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~block);
             score += PASSEDPATHBONUS * popcount(passedPath);
         }
-        block = occ[BOTH] | (~defendedByPawn[BLACK] & ((~attackedBy[BLACK] & attackedBy[WHITE]) | (multiAttacks[WHITE]))); 
+        block = occ[BOTH] | // Physically blocked
+        ~defendedByPawn[BLACK] & (
+            defendedByPawn[WHITE] | // Pawns will recapture the passer
+            multiAttacks[WHITE] |
+            (~attackedBy[BLACK] & attackedBy[WHITE])
+        ) |
+        (doublePawnAttackedSquares[WHITE] & ~doublePawnAttackedSquares[BLACK]);
         while (blackPassers){
             Square sq = popLsb(blackPassers);
             BitBoard sqb = squareBB(sq);
@@ -419,7 +435,13 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
         PScore extraScore = PScore(0,0);
         BitBoard passers = 0ULL;
         BitBoard pieces = bb[P];
-        BitBoard block = occ[BOTH] | (~defendedByPawn[WHITE] & ((~attackedBy[WHITE] & attackedBy[BLACK]) | (multiAttacks[BLACK])));
+        BitBoard block = occ[BOTH] | // Physically blocked
+        ~defendedByPawn[WHITE] & (
+            defendedByPawn[BLACK] | // Pawns will recapture the passer
+            multiAttacks[BLACK] |
+            (~attackedBy[WHITE] & attackedBy[BLACK])
+        ) |
+        (doublePawnAttackedSquares[BLACK] & ~doublePawnAttackedSquares[WHITE]);
         while (pieces){
             // Evaluate isolated, backward, doubled pawns and connected pawns
             const Square sq = popLsb(pieces);
@@ -468,7 +490,13 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
 
         // Black pawns
         pieces = bb[p];
-        block = occ[BOTH] | (~defendedByPawn[BLACK] & ((~attackedBy[BLACK] & attackedBy[WHITE]) | (multiAttacks[WHITE])));
+        block = occ[BOTH] | // Physically blocked
+        ~defendedByPawn[BLACK] & (
+            defendedByPawn[WHITE] | // Pawns will recapture the passer
+            multiAttacks[WHITE] |
+            (~attackedBy[BLACK] & attackedBy[WHITE])
+        ) |
+        (doublePawnAttackedSquares[WHITE] & ~doublePawnAttackedSquares[BLACK]);
         while (pieces){
             // Evaluate isolated, backward, doubled pawns and connected pawns
             const Square sq = popLsb(pieces);
@@ -735,7 +763,7 @@ Score pestoEval(Position *pos){
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
 
-    score += pawnEval(pawnHashKey, bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, pawnAttackedSquares, passedCount);
+    score += pawnEval(pawnHashKey, bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, pawnAttackedSquares, doublePawnAttackedSquares, passedCount);
     
     // Calculate king safety
     // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
@@ -1381,7 +1409,13 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
     // White pawns
     BitBoard pieces = bb[P];
-    BitBoard block = occ[BOTH] | (~pawnAttackedSquares[WHITE] & ((~attackedBy[WHITE] & attackedBy[BLACK]) | (multiAttacks[BLACK])));
+    BitBoard block = occ[BOTH] | // Physically blocked
+        ~pawnAttackedSquares[WHITE] & (
+            pawnAttackedSquares[BLACK] | // Pawns will recapture the passer
+            multiAttacks[BLACK] |
+            (~attackedBy[WHITE] & attackedBy[BLACK])
+        ) |
+        (doublePawnAttackedSquares[BLACK] & ~doublePawnAttackedSquares[WHITE]);
     while (pieces){
         // Evaluate isolated, backward, doubled pawns and connected pawns
         Square sq = popLsb(pieces);
@@ -1426,7 +1460,13 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
 
     // Black pawns
     pieces = bb[p];
-    block = occ[BOTH] | (~pawnAttackedSquares[BLACK] & ((~attackedBy[BLACK] & attackedBy[WHITE]) | (multiAttacks[WHITE])));
+    block = occ[BOTH] | // Physically blocked
+        ~pawnAttackedSquares[BLACK] & (
+            pawnAttackedSquares[WHITE] | // Pawns will recapture the passer
+            multiAttacks[WHITE] |
+            (~attackedBy[BLACK] & attackedBy[WHITE])
+        ) |
+        (doublePawnAttackedSquares[WHITE] & ~doublePawnAttackedSquares[BLACK]);
     while (pieces){
         // Evaluate isolated, backward, doubled pawns and connected pawns
         Square sq = popLsb(pieces);
