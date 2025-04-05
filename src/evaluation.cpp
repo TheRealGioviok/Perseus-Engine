@@ -402,10 +402,12 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
         passedCount += popcount(entry.passers); // May already be nonzero
         score = entry.score;
         BitBoard block = occ[BOTH] | // Physically blocked
-        ~defendedByPawn[WHITE] & (
-            defendedByPawn[BLACK] | // Pawns will recapture the passer
-            multiAttacks[BLACK] |
-            (~attackedBy[WHITE] & attackedBy[BLACK])
+        (
+            ~defendedByPawn[WHITE] & (
+                defendedByPawn[BLACK] | // Pawns will recapture the passer
+                multiAttacks[BLACK] |
+                (~attackedBy[WHITE] & attackedBy[BLACK])
+            )
         ) |
         (doublePawnAttackedSquares[BLACK] & ~doublePawnAttackedSquares[WHITE]);
         while (whitePassers){
@@ -416,10 +418,12 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
             score += PASSEDPATHBONUS * popcount(passedPath);
         }
         block = occ[BOTH] | // Physically blocked
-        ~defendedByPawn[BLACK] & (
-            defendedByPawn[WHITE] | // Pawns will recapture the passer
-            multiAttacks[WHITE] |
-            (~attackedBy[BLACK] & attackedBy[WHITE])
+        (
+            ~defendedByPawn[BLACK] & (
+                defendedByPawn[WHITE] | // Pawns will recapture the passer
+                multiAttacks[WHITE] |
+                (~attackedBy[BLACK] & attackedBy[WHITE])
+            )
         ) |
         (doublePawnAttackedSquares[WHITE] & ~doublePawnAttackedSquares[BLACK]);
         while (blackPassers){
@@ -436,10 +440,12 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
         BitBoard passers = 0ULL;
         BitBoard pieces = bb[P];
         BitBoard block = occ[BOTH] | // Physically blocked
-        ~defendedByPawn[WHITE] & (
-            defendedByPawn[BLACK] | // Pawns will recapture the passer
-            multiAttacks[BLACK] |
-            (~attackedBy[WHITE] & attackedBy[BLACK])
+        (
+            ~defendedByPawn[WHITE] & (
+                defendedByPawn[BLACK] | // Pawns will recapture the passer
+                multiAttacks[BLACK] |
+                (~attackedBy[WHITE] & attackedBy[BLACK])
+            )
         ) |
         (doublePawnAttackedSquares[BLACK] & ~doublePawnAttackedSquares[WHITE]);
         while (pieces){
@@ -491,10 +497,12 @@ inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const Bi
         // Black pawns
         pieces = bb[p];
         block = occ[BOTH] | // Physically blocked
-        ~defendedByPawn[BLACK] & (
-            defendedByPawn[WHITE] | // Pawns will recapture the passer
-            multiAttacks[WHITE] |
-            (~attackedBy[BLACK] & attackedBy[WHITE])
+        (
+            ~defendedByPawn[BLACK] & (
+                defendedByPawn[WHITE] | // Pawns will recapture the passer
+                multiAttacks[WHITE] |
+                (~attackedBy[BLACK] & attackedBy[WHITE])
+            )
         ) |
         (doublePawnAttackedSquares[WHITE] & ~doublePawnAttackedSquares[BLACK]);
         while (pieces){
@@ -1410,10 +1418,12 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     // White pawns
     BitBoard pieces = bb[P];
     BitBoard block = occ[BOTH] | // Physically blocked
-        ~pawnAttackedSquares[WHITE] & (
-            pawnAttackedSquares[BLACK] | // Pawns will recapture the passer
-            multiAttacks[BLACK] |
-            (~attackedBy[WHITE] & attackedBy[BLACK])
+        (
+            ~pawnAttackedSquares[WHITE] & (
+                pawnAttackedSquares[BLACK] | // Pawns will recapture the passer
+                multiAttacks[BLACK] |
+                (~attackedBy[WHITE] & attackedBy[BLACK])
+            )
         ) |
         (doublePawnAttackedSquares[BLACK] & ~doublePawnAttackedSquares[WHITE]);
     while (pieces){
@@ -1461,10 +1471,12 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     // Black pawns
     pieces = bb[p];
     block = occ[BOTH] | // Physically blocked
-        ~pawnAttackedSquares[BLACK] & (
-            pawnAttackedSquares[WHITE] | // Pawns will recapture the passer
-            multiAttacks[WHITE] |
-            (~attackedBy[BLACK] & attackedBy[WHITE])
+        (
+            ~pawnAttackedSquares[BLACK] & (
+                pawnAttackedSquares[WHITE] | // Pawns will recapture the passer
+                multiAttacks[WHITE] |
+                (~attackedBy[BLACK] & attackedBy[WHITE])
+            )
         ) |
         (doublePawnAttackedSquares[WHITE] & ~doublePawnAttackedSquares[BLACK]);
     while (pieces){
