@@ -162,7 +162,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta, ss);
 
-    (ss)->doubleExtensions = (ss-1)->doubleExtensions;
 
     // else if (depth < ttDepth && (ttBound & hashLOWER)){
     //     if (ply == 1) depth += std::min(3, ttDepth - depth);
@@ -335,7 +334,7 @@ skipPruning:
             U64 nodesBefore = nodes;
             // // Singular extension
             Depth extension = 0;
-            if (!excludedMove && ply < currSearch * (1 + PVNode)){
+            if (!excludedMove){
                 
                 if (i == 0 // Can only happen on ttMove
                     && !RootNode 
@@ -356,9 +355,7 @@ skipPruning:
 
                     if (singularScore < singularBeta) {
                         extension = 1;
-                        if (!PVNode && ss->doubleExtensions < maximumDoubleExtensions() && singularScore + doubleExtensionMargin() < singularBeta) {
-                            ++ss->doubleExtensions;
-                            //std::cout << "Double extension counter "<<ss->doubleExtensions<<std::endl;
+                        if (!PVNode && singularScore + doubleExtensionMargin() < singularBeta) {
                             extension = 2;
                         }
                         // Increase singular activations
