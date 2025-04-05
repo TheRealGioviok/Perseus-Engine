@@ -334,50 +334,45 @@ skipPruning:
             U64 nodesBefore = nodes;
             // // Singular extension
             Depth extension = 0;
-            if (!excludedMove){
-                
-                if (i == 0 // Can only happen on ttMove
-                    && !RootNode 
-                    && depth >= singularSearchDepth()
-                    && (ttBound & hashLOWER) 
-                    && abs(ttScore) < mateValue 
-                    && ttDepth >= depth - 3
-                ){
-                    // Increase singular candidates
-                    //++seCandidates;
-                    const Score singularBeta = ttScore - singularDepthMultiplier() * depth / 10;
-                    const Depth singularDepth = (depth - 1) / 2;
-                    ss->excludedMove = currMove;
-                    undo(undoer, currMove);
-                    const Score singularScore = search(singularBeta - 1, singularBeta, singularDepth, cutNode, ss);
-                    makeMove(currMove);
-                    ss->excludedMove = noMove;
-
-                    if (singularScore < singularBeta) {
-                        extension = 1;
-                        if (!PVNode && singularScore + doubleExtensionMargin() < singularBeta) {
-                            extension = 2;
-                        }
-                        // Increase singular activations
-                        // ++seActivations;
-                    }
-                    else if (singularBeta >= beta){ // Multicut
+            if (!RootNode && !excludedMove && ply <= currSearch*2){
+                if (i == 0){
+                    if (depth >= singularSearchDepth()
+                        && (ttBound & hashLOWER) 
+                        && abs(ttScore) < mateValue 
+                        && ttDepth >= depth - 3
+                    ){
+                        // Increase singular candidates
+                        //++seCandidates;
+                        const Score singularBeta = ttScore - singularDepthMultiplier() * depth / 10;
+                        const Depth singularDepth = (depth - 1) / 2;
+                        ss->excludedMove = currMove;
                         undo(undoer, currMove);
-                        return singularBeta;
+                        const Score singularScore = search(singularBeta - 1, singularBeta, singularDepth, cutNode, ss);
+                        makeMove(currMove);
+                        ss->excludedMove = noMove;
+
+                        if (singularScore < singularBeta) {
+                            extension = 1;
+                            if (!PVNode && singularScore + doubleExtensionMargin() < singularBeta) {
+                                extension = 2;
+                            }
+                            // Increase singular activations
+                            // ++seActivations;
+                        }
+                        else if (singularBeta >= beta){ // Multicut
+                            undo(undoer, currMove);
+                            return singularBeta;
+                        }
+                        else if (ttScore >= beta){
+                            extension -= 1 + !PVNode;
+                        }
+                        else if (cutNode){
+                            extension = -1;
+                        }
                     }
-                    else if (ttScore >= beta){
-                        extension -= 1 + !PVNode;
-                    }
-                    else if (cutNode){
-                        extension = -1;
-                    }
-                    
-                    // else{
-                    //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
-                    // }
-                    // Update avg dist
-                    //avgDist += singularScore - singularBeta;
+                    else if (depth <= 7 && !inCheck && ss->staticEval <= alpha - ldseMargin() && ttFlags == hashLOWER) extension = 1;
                 }
+
                 else if (inCheck)
                     extension = 1;
             }
