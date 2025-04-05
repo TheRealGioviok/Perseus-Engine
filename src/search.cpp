@@ -408,10 +408,12 @@ skipPruning:
                 }
                 else {
                     if (currMoveScore < QUIETSCORE) { 
-                    if (cutNode) granularR += lmrBadNoisyCutNode();
+                        if (cutNode) granularR += lmrBadNoisyCutNode();
                         granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
                     }
-                    granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
+                    else {
+                        granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
+                    }
                 }
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
