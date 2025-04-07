@@ -211,7 +211,7 @@ TUNE_PARAM(doubleExtensionMargin, 23, 1, 50, 2.5, 0.002);
 NO_TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
 
 // LDSExtensions
-TUNE_PARAM(ldseMargin, 46, 10, 100, 5, 0.002)
+TUNE_PARAM(ldseMargin, 30, 10, 100, 5, 0.002)
 
 // History Pruning values
 TUNE_PARAM(historyPruningMultiplier, -1341, -5120, -1024, 205, 0.002);
