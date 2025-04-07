@@ -293,39 +293,48 @@ skipPruning:
         if (sameMovePos(currMove, excludedMove)) continue;
         const bool isQuiet = okToReduce(currMove);
         const bool quietOrLosing = currMoveScore < COUNTERSCORE;
-        if (moveSearched){
-            if (!skipQuiets) { 
-                if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
-                if (!PVNode
-                    && depth <= 8
+        if (!PVNode && moveSearched && bestScore > -KNOWNWIN){
+
+            // Late move pruning
+            if (moveSearched >= lmpMargin[depth][improving]) break;
+
+            // Quiet pruning techniques: futility pruning, history pruning, see pruning
+            if (isQuiet){
+                // Immediately skip quiets if skipquiets is set
+                if(skipQuiets) continue;
+                // Futility pruning: if we are not in check and the move is quiet, skip the move near the leaf if the static eval is reasonably lower than alpha
+                if (depth <= 8
                     && !inCheck
-                    && bestScore > -KNOWNWIN
-                    && std::abs(alpha) < KNOWNWIN
+                    && alpha < KNOWNWIN
                     && isQuiet
                     && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
                 {
                     skipQuiets = true;
                     continue;
                 }
-                if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
+                // History pruning: Skip moves that have a very low history score, based on depth
+                if (depth <= 4 && currMoveScore - QUIETSCORE < historyPruningMultiplier() * depth + historyPruningBias()){
                     skipQuiets = true;
                     continue;
                 }
+                // See pruning: prune moves which don't pass see margin test
+                const auto seeThresh = pvsSeeThresholdQuiet() * depth;
+                if (depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
             }
-            else if (quietOrLosing) continue;
-            const auto seeThresh = isQuiet
-                ? pvsSeeThresholdNoisy() * depth 
-                : pvsSeeThresholdQuiet() * depth * depth
-            ;
-            if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
+            // Noisy pruning techniques: history pruning, see pruning
+            else {
+                // History pruning
+                if (depth <= 4 && currMoveScore - BADNOISYMOVE < historyPruningMultiplier() * depth + historyPruningBias()){
+                    if (quietOrLosing) break;
+                    else continue;
+                }
+                // See pruning
+                const auto seeThresh = pvsSeeThresholdNoisy() * depth * depth;
+                if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
+            }
         }
-        // assert (
-        //     i != 0 || !excludedMove ||
-        //     (excludedMove == currMove)
-        // );
+        
         if (!currMove) continue; // || currMove == excludedMove
-
-        // const bool givesCheck = isCheck(currMove) || pos.inCheck();
         
         if (makeMove(currMove))
         {
