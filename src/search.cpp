@@ -293,11 +293,10 @@ skipPruning:
         if (sameMovePos(currMove, excludedMove)) continue;
         const bool isQuiet = okToReduce(currMove);
         const bool quietOrLosing = currMoveScore < COUNTERSCORE;
-        if (moveSearched){
+        if (!PVNode && moveSearched){
             if (!skipQuiets) { 
-                if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
-                if (!PVNode
-                    && depth <= 8
+                if (moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
+                if (depth <= 8
                     && !inCheck
                     && bestScore > -KNOWNWIN
                     && std::abs(alpha) < KNOWNWIN
@@ -307,7 +306,7 @@ skipPruning:
                     skipQuiets = true;
                     continue;
                 }
-                if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
+                if (depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
                     skipQuiets = true;
                     continue;
                 }
