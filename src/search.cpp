@@ -205,6 +205,12 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         writeTT(pos.hashKey, noScore, rawEval, 0, hashNONE, 0, ply, PVNode, ttPv, age);
     }
 
+    // Use static eval difference to improve opponents move ordering
+    if ((ss - 1)->staticEval != noScore && okToReduce((ss - 1)->move)){
+        S32 bonus = std::clamp(-10 * ((ss-1)->staticEval + ss->staticEval), -1830, 1427) + 624;
+        updateOpponentHistoryMove(pos.side, (ss - 1)->currThreatsIndexing, (ss - 1)->move, bonus);
+    }
+
     improvement = [&](){
         if ((ss - 2)->staticEval != noScore)
             return ss->staticEval - (ss - 2)->staticEval;
@@ -331,6 +337,8 @@ skipPruning:
         {
             // Prefetch tt
             prefetch(&tt[hashEntryFor(pos.hashKey)]);
+            // Update threats indexing
+            ss->currThreatsIndexing = getThreatsIndexing(pos.threats, currMove);
             U64 nodesBefore = nodes;
             // // Singular extension
             Depth extension = 0;

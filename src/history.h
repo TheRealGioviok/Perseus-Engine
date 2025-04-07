@@ -32,6 +32,7 @@ struct SStack {
     Move move = 0;
     Move killers[2] = {0, 0};
     S16* contHistEntry = continuationHistoryTable[0];
+    S32 currThreatsIndexing = 0;
 
     SStack() {
         excludedMove = noMove;
@@ -39,6 +40,7 @@ struct SStack {
         move = noMove;
         killers[0] = killers[1] = noMove;
         contHistEntry = continuationHistoryTable[0];
+        currThreatsIndexing = 0;
     }
 
     void wipe() {
@@ -47,6 +49,7 @@ struct SStack {
         move = noMove;
         killers[0] = killers[1] = noMove;
         contHistEntry = continuationHistoryTable[0];
+        currThreatsIndexing = 0;
     }
 };
 
@@ -117,6 +120,11 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth);
 
 static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
     S16 *current = &historyTable[side][indexFromTo(moveSource(move), moveTarget(move))][getThreatsIndexing(threats, move)];
+    *current += delta - *current * abs(delta) / MAXHISTORYABS;
+}
+
+static inline void updateOpponentHistoryMove(const bool side, const S32 threatsIndexing, const Move move, const S32 delta) {
+    S16 *current = &historyTable[!side][indexFromTo(moveSource(move), moveTarget(move))][threatsIndexing];
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
