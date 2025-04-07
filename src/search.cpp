@@ -313,7 +313,7 @@ skipPruning:
                     continue;
                 }
                 // History pruning: Skip moves that have a very low history score, based on depth
-                if (depth <= 4 && currMoveScore - QUIETSCORE < historyPruningMultiplier() * depth + historyPruningBias()){
+                if (depth <= 5 && currMoveScore - QUIETSCORE < historyPruningQuietMultiplier() * depth + historyPruningQuietBias()){
                     skipQuiets = true;
                     continue;
                 }
@@ -324,7 +324,7 @@ skipPruning:
             // Noisy pruning techniques: history pruning, see pruning
             else {
                 // History pruning
-                if (depth <= 4 && currMoveScore - BADNOISYMOVE < historyPruningMultiplier() * depth + historyPruningBias()){
+                if (depth <= 4 && currMoveScore - BADNOISYMOVE < historyPruningNoisyMultiplier() * depth * depth + historyPruningNoisyBias()){
                     if (quietOrLosing) break;
                     else continue;
                 }
