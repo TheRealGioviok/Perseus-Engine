@@ -296,7 +296,7 @@ skipPruning:
         if (!PVNode && moveSearched && bestScore > -KNOWNWIN){
 
             // Late move pruning
-            if (moveSearched >= lmpMargin[depth][improving]) break;
+            if (moveSearched >= lmpMargin[depth][improving] && quietOrLosing) break;
 
             // Quiet pruning techniques: futility pruning, history pruning, see pruning
             if (isQuiet){
