@@ -137,4 +137,5 @@ static inline void updateContHist(SStack* ss, const Move move, const S32 delta){
     updateContHistOffset(ss, move, delta, 1);
     updateContHistOffset(ss, move, delta, 2);
     updateContHistOffset(ss, move, delta, 4);
+    updateContHistOffset(ss, move, delta, 6);
 }

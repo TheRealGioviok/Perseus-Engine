@@ -639,10 +639,10 @@ void Game::startSearch(bool ageTT = true)
     seCandidates = 0;
     seActivations = 0;
     avgDist = 0;
-    SStack stack[4 + maxPly + 1]; // 4 is the max ply that we look back, 1 is the max ply that we look forward (for now it is actually -2, but hopefully we extend conthist to -4)
-    SStack* ss = stack + 4;
+    SStack stack[6 + maxPly + 1];
+    SStack* ss = stack + 6;
 
-    for (int i = -4; i < maxPly + 1; i++) (ss+i)->wipe();
+    for (int i = -6; i < maxPly + 1; i++) (ss+i)->wipe();
 
     Score delta = ASPIRATIONWINDOW;
     nodes = 0ULL;
