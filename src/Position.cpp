@@ -703,7 +703,7 @@ inline void Position::addPromotion(MoveList* ml, ScoredMove move){
     return;
 }
 
-inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S16 *ply1contHist, const S16 *ply2contHist, const S16 *ply4contHist) {
+inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S16 *ply1contHist, const S16 *ply2contHist, const S16 *ply4contHist, const S16 *ply6contHist) {
     if (sameMovePos(move, killer1)){
         ml->moves[ml->count++] = (KILLER1SCORE << 32) | move;
         return;
@@ -721,6 +721,7 @@ inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Squ
         + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply4contHist ? ply4contHist[indexPieceTo(movePiece(move), target)] : 0)
+        + (S64)(ply6contHist ? ply6contHist[indexPieceTo(movePiece(move), target)] : 0)
         + QUIETSCORE
     ) << 32) | move;
 }
@@ -921,6 +922,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
     const S16 *ply1contHist = lastMove ? (ss - 1)->contHistEntry : nullptr;
     const S16 *ply2contHist = (ss - 2)->move ? (ss - 2)->contHistEntry : nullptr;
     const S16 *ply4contHist = (ss - 4)->move ? (ss - 4)->contHistEntry : nullptr;
+    const S16 *ply6contHist = (ss - 6)->move ? (ss - 6)->contHistEntry : nullptr;
 
     BitBoard ourPawns   = bitboards[P + 6 * side];
     BitBoard ourKnights = bitboards[N + 6 * side];
@@ -1073,7 +1075,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (knightCheckers & squareBB(to)) > 0;
-            addQuiet(&moveList, encodeMove(from, to, N + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+            addQuiet(&moveList, encodeMove(from, to, N + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
     }
     // We will generate the bishop moves
@@ -1092,7 +1094,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (bishopCheckers & squareBB(to)) > 0;
-            addQuiet(&moveList, encodeMove(from, to, B + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+            addQuiet(&moveList, encodeMove(from, to, B + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
     }
     // We will generate the rook moves
@@ -1111,7 +1113,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (rookCheckers & squareBB(to)) > 0;
-            addQuiet(&moveList, encodeMove(from, to, R + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+            addQuiet(&moveList, encodeMove(from, to, R + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
     }
     // We will generate the queen moves
@@ -1130,7 +1132,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
         while (quiets) {
             Square to = popLsb(quiets);
             bool isCheck = (queenCheckers & squareBB(to)) > 0;
-            addQuiet(&moveList, encodeMove(from, to, Q + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+            addQuiet(&moveList, encodeMove(from, to, Q + 6 * side, NOPIECE, NOPIECE, false, false, false, isCheck), from, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
     }
     // We will generate the pawn pushes
@@ -1148,7 +1150,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
                 addPromotion<N>(&moveList, encodeMove(to + 8, to, P, NOPIECE, N, false, false, false, (knightCheckers & squareBB(to)) > 0));
             }
             else
-                addQuiet(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to + 8, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+                addQuiet(&moveList, encodeMove(to + 8, to, P, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to + 8, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
 
         BitBoard pawnDoublePushes = ourPawns & ranks(6);
@@ -1158,7 +1160,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
         pawnDoublePushes &= ~occupancy;
         while (pawnDoublePushes) {
             Square to = popLsb(pawnDoublePushes);
-            addQuiet(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to + 16, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+            addQuiet(&moveList, encodeMove(to + 16, to, P, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to + 16, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
     }
     else {
@@ -1174,7 +1176,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
                 addPromotion<n>(&moveList, encodeMove(to - 8, to, p, NOPIECE, n, false, false, false, (knightCheckers & squareBB(to)) > 0));
             }
             else
-                addQuiet(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to - 8, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+                addQuiet(&moveList, encodeMove(to - 8, to, p, NOPIECE, NOPIECE, false, false, false, (pawnCheckers & squareBB(to)) > 0), to - 8, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
         BitBoard pawnDoublePushes = ourPawns & ranks(1);
         pawnDoublePushes <<= 8;
@@ -1183,7 +1185,7 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
         pawnDoublePushes &= ~occupancy;
         while (pawnDoublePushes) {
             Square to = popLsb(pawnDoublePushes);
-            addQuiet(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to - 16, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+            addQuiet(&moveList, encodeMove(to - 16, to, p, NOPIECE, NOPIECE, true, false, false, (pawnCheckers & squareBB(to)) > 0), to - 16, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
     }
     // We will generate the king moves, including castling
@@ -1198,23 +1200,23 @@ void Position::generateMoves(MoveList& moveList, SStack* ss) {
     }
     while (kMoves) {
         Square to = popLsb(kMoves);
-        addQuiet(&moveList, encodeMove(king, to, K + 6 * side, NOPIECE, NOPIECE, false, false, false, false), king, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+        addQuiet(&moveList, encodeMove(king, to, K + 6 * side, NOPIECE, NOPIECE, false, false, false, false), king, to, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
     }
     // We will generate the castling moves
     if (side == WHITE) {
         if (castle & CastleRights::WK && !(occupancy & wKCastleMask)) {
-            addQuiet(&moveList, encodeMove(e1, g1, K, NOPIECE, NOPIECE, false, false, true, false), e1, g1, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+            addQuiet(&moveList, encodeMove(e1, g1, K, NOPIECE, NOPIECE, false, false, true, false), e1, g1, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
         if (castle & CastleRights::WQ && !(occupancy & wQCastleMask)) {
-            addQuiet(&moveList, encodeMove(e1, c1, K, NOPIECE, NOPIECE, false, false, true, false), e1, c1, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+            addQuiet(&moveList, encodeMove(e1, c1, K, NOPIECE, NOPIECE, false, false, true, false), e1, c1, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
     }
     else {
         if (castle & CastleRights::BK && !(occupancy & bKCastleMask)) {
-            addQuiet(&moveList, encodeMove(e8, g8, k, NOPIECE, NOPIECE, false, false, true, false), e8, g8, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+            addQuiet(&moveList, encodeMove(e8, g8, k, NOPIECE, NOPIECE, false, false, true, false), e8, g8, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
         if (castle & CastleRights::BQ && !(occupancy & bQCastleMask)) {
-            addQuiet(&moveList, encodeMove(e8, c8, k, NOPIECE, NOPIECE, false, false, true, false), e8, c8, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist);
+            addQuiet(&moveList, encodeMove(e8, c8, k, NOPIECE, NOPIECE, false, false, true, false), e8, c8, killer1, killer2, counterMove, ply1contHist, ply2contHist, ply4contHist, ply6contHist);
         }
     }
 }
