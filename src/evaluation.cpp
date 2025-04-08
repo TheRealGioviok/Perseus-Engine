@@ -625,6 +625,8 @@ void extractPawnStructureFeats(
 
 Score pestoEval(Position *pos){
     auto const& bb = pos->bitboards;
+    const S32 sign = 1 - 2 * pos->side;
+    return 100 * sign * (popcount(bb[P]) - popcount(bb[p]) + 3 * (popcount(bb[N]) - popcount(bb[n]) + popcount(bb[B]) - popcount(bb[b])) + 5 * (popcount(bb[R]) - popcount(bb[r])) + 9 * (popcount(bb[Q]) - popcount(bb[q])));
     auto const& occ = pos->occupancies;
     HashKey pawnHashKey = pos->pawnHashKey ^ enPassantKeysTable[pos->enPassant];
     prefetch(&pawnEvalHash[pawnHashKey & 0x3FFFF]);
@@ -1039,7 +1041,7 @@ Score pestoEval(Position *pos){
     dangerIndex[WHITE] += SAFETYOUTERSHELTER * popcount(outerShelters[BLACK]);
     dangerIndex[BLACK] += SAFETYINNERSHELTER * popcount(innerShelters[WHITE]);
     dangerIndex[BLACK] += SAFETYOUTERSHELTER * popcount(outerShelters[WHITE]);
-    const S32 sign = 1 - 2 * pos->side;
+    // const S32 sign = 1 - 2 * pos->side;
     dangerIndex[pos->side] += KSTEMPO;
 
     //const PScore dampenWhite = PScore(dangerIndex[WHITE].mg() * DAMPEN.mg() / RESOLUTION, dangerIndex[WHITE].eg() * DAMPEN.eg() / RESOLUTION);
