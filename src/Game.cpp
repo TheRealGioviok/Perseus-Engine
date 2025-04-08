@@ -268,7 +268,7 @@ Score Game::evaluate(){
         + popcount(pos.bitboards[R] | pos.bitboards[r]) * pieceValues[R]
         + popcount(pos.bitboards[Q] | pos.bitboards[q]) * pieceValues[Q];
 
-    return pestoEval(&pos) * (27075 + matScaleValues) / 32768;
+    return pestoEval(&pos) * (27075 + matScaleValues) / 32768 + (nodes % 3) - 1;
 }
 
 void Game::makeNullMove() {
