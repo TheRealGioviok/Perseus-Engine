@@ -583,17 +583,23 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     {
         Move move = onlyMove(moveList.moves[i]);
 
-        // Move count pruning
-        if (!inCheck && moveCount >= 2) break;
-        
-        // SEE pruning : skip all moves that have see < of the adaptive capthist based threshold
-        if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
-            break;
+        if (bestScore > -KNOWNWIN){
 
-        // Futility pruning
-        if (!inCheck && futility <= alpha && !pos.SEE(move, 1)){
-            bestScore = std::max(bestScore, futility);
-            continue;
+            // Avoid pruning promos and recaptures
+            if (!isPromotion(move) && moveTarget(move) != moveTarget(((ss-1)->move))){
+                // Move count pruning
+                if (!inCheck && moveCount >= 2) break;
+                
+                // Futility pruning
+                if (!inCheck && futility <= alpha && !pos.SEE(move, 1)){
+                    bestScore = std::max(bestScore, futility);
+                    continue;
+                }
+            }
+
+            // SEE pruning : skip all moves that have see < of the adaptive capthist based threshold
+            if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
+                break;
         }
         if (makeMove(move))
         {
