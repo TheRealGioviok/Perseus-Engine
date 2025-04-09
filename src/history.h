@@ -76,9 +76,13 @@ static inline S32 statMalus(S32 depth){
 void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);
 
 template <bool doCorrHist>
-Score correctStaticEval(Position& pos, const Score eval) {
+Score correctStaticEval(Position& pos, Score eval) {
 
     S32 corrected;
+
+    eval = static_cast<Score>(std::clamp(
+        (eval * (220 - pos.fiftyMove) / 220)
+    , -mateValue, +mateValue));
 
     if constexpr (doCorrHist){
 
@@ -106,11 +110,9 @@ Score correctStaticEval(Position& pos, const Score eval) {
         corrected = eval + bonus / (CORRHISTSCALE * CORRECTIONGRANULARITY);
     }
     else corrected = eval;
-
+    
     // Integral's fifty move scaling. I had previously tried sp's (200) but didn't get a passer
-    return static_cast<Score>(std::clamp(
-        (corrected * (220 - pos.fiftyMove) / 220)
-    , -mateValue, +mateValue));
+    return corrected;
 }
 
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth);
