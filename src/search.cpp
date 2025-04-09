@@ -483,13 +483,16 @@ skipPruning:
             undo(undoer, currMove);
     }
 
-    //// Check for checkmate /
+    // Check for checkmate / stalemate
     if (moveSearched == 0){
         return excludedMove ? alpha : (inCheck ? matedIn(ply) : randomizedDrawScore(nodes)); // Randomize draw score so that we try to explore different lines
-        // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes);
     }
-        // 
-        // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
+
+    // Prior quiet countermove bonus
+    if (!bestMove && (ss-1)->move && okToReduce(((ss-1)->move))){
+        const auto bonus = statBonus(depth);
+        updateContHist(ss-1, (ss-1)->move, bonus);
+    }
 
     if (!stopped && !excludedMove){
         if (!inCheck
