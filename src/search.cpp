@@ -169,6 +169,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     // }
     // Initialize the undoer
     UndoInfo undoer = UndoInfo(pos);
+    bool opponentWorsening;
 
     if (!excludedMove){
         if ((PVNode || cutNode) && depth >= IIRDepth() && (!ttMove || ttDepth + 3 < depth)) --depth; 
@@ -179,6 +180,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         ss->staticEval = eval = rawEval = noScore;
         improvement = 0;
         improving = false;
+        opponentWorsening = false;
         goto skipPruning;
     }
     
@@ -196,6 +198,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
         improvement = 0;
         improving = false;
+        opponentWorsening = false;
         goto skipPruning;
     }
     else {
@@ -216,11 +219,13 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     // Calculate the improving flag
     improving = improvement > 0;
 
+    opponentWorsening = !inCheck && !RootNode && (ss-1)->staticEval != noScore && ss->staticEval > -((ss-1)->staticEval) + 1;
+
     // Pruning time
     if (!PVNode && !excludedMove)
     {
         // RFP
-        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - std::max((Score)15,futilityMargin(depth, improving)) >= beta) // && !excludedMove)
+        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - std::max((Score)15,futilityMargin(depth, improving)) - 20*opponentWorsening >= beta) // && !excludedMove)
             return eval;
         
         // Razoring
