@@ -55,7 +55,14 @@ constexpr PScore SUPPORTEDPHALANX = S(0, 3);
 constexpr PScore ADVANCABLEPHALANX = S(8, 26);
 constexpr PScore R_SUPPORTEDPHALANX = S(3, 10);
 constexpr PScore R_ADVANCABLEPHALANX = S(1, 19);
-constexpr PScore passedRankBonus[7] = {S(0, 0), S(9, -80), S(-13, -51), S(-7, 3), S(29, 54), S(53, 150), S(146, 247), };
+constexpr PScore candidateRankBonus[2][7] = {
+    {S(0,0),S(0,0),S(0,0),S(0,0),S(0,0),S(0,0),S(0,0),},
+    {S(0,0),S(0,0),S(0,0),S(0,0),S(0,0),S(0,0),S(0,0),}
+};
+constexpr PScore passedRankBonus[2][7] = {
+    {S(0, 0), S(9, -80), S(-13, -51), S(-7, 3), S(29, 54), S(53, 150), S(146, 247), },
+    {S(0, 0), S(9+27, -80-1), S(-13+27, -51-1), S(-7+27, 3-1), S(29+27, 54-1), S(53+27, 150-1), S(146+27, 247-1), }
+};
 constexpr PScore PASSEDPATHBONUS = S(-4, 23);
 constexpr PScore SUPPORTEDPASSER = S(27, -1);
 constexpr PScore INNERSHELTER = S(4, -4);
@@ -386,8 +393,11 @@ PawnStructureResult pawnStructureEval(
     constexpr auto them = 1 - us;
     PawnStructureResult result = { PScore(0,0), PScore(0,0), 0ULL, 0 };
     // Use the appropriate pawn index: for WHITE we use P, for BLACK we use p.
-    constexpr int pawnIndex = (us == WHITE ? P : p);
-    BitBoard pieces = bb[pawnIndex];
+    constexpr int ourPawnsIndex = (us == WHITE ? P : p);
+    constexpr int theirPawnsIndex = (us == WHITE ? p : P);
+    constexpr auto pushUp = us == WHITE ? north : south;
+    constexpr auto ahead = us == WHITE ? squaresAhead : squaresBehind;
+    BitBoard pieces = bb[ourPawnsIndex];
 
     // Compute "block" used for passed pawn bonus.
     // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
@@ -403,18 +413,23 @@ PawnStructureResult pawnStructureEval(
 
         // Common pawn evaluation flags:
         bool doubled       = (doubledPawns[us] & sqb) != 0;
-        bool isolated      = !(isolatedPawnMask[sq] & bb[pawnIndex]);
+        bool isolated      = !(isolatedPawnMask[sq] & bb[ourPawnsIndex]);
         bool pawnOpposed   = !(pawnFiles[them] & sqb);
         bool supported     = (protectedPawns[us] & sqb) != 0;
-        bool advancable    = (us == WHITE ? !(pawnBlockage[WHITE] & north(sqb))
-                                             : !(pawnBlockage[BLACK] & south(sqb)));
-        bool phal          = (phalanx[sq] & bb[pawnIndex]) != 0;
-        // Candidate passed pawn check: note that the enemy pawn mask is used.
-        bool candidatePassed = (us == WHITE ? !(passedPawnMask[WHITE][sq] & bb[p])
-                                              : !(passedPawnMask[BLACK][sq] & bb[P]));
-
+        bool advancable    = pawnBlockage[us] & pushUp(sqb);
+        S8 phal          = popcount(phalanx[sq] & bb[ourPawnsIndex]);
+        // Fully passsed pawn check
+        const BitBoard stoppers = passedPawnMask[us][sq] & bb[theirPawnsIndex];
+        // Candidate passed logic
+        const BitBoard levers = popcount(makePawnAttacks<us>(sqb) & bb[theirPawnsIndex]);
+        const BitBoard leverPushes = popcount(pushUp(makePawnAttacks<us>(sqb)) & bb[theirPawnsIndex]);
+        S8 supportCount = popcount(makePawnAttacks<them>(sqb) & bb[ourPawnsIndex]);
+        const bool candidate = (stoppers == (levers | leverPushes)) // No extra pawns behind the blockade
+            && !(popcount(levers) - supportCount > 1)         // No levers outnumbering our support pawns
+            && !(popcount(leverPushes) - phal > 0)            // No lever pushes outnumbering our phalanx support
+            && !(popcount(levers) && popcount(leverPushes));  // No lever AND lever pushes (both pushing and not pushing the pawn gets it captured)
         // Backward pawn test.
-        bool backward = !( (backwardPawnMask[us][sq] & bb[pawnIndex]) || advancable );
+        bool backward = !( (backwardPawnMask[us][sq] & bb[ourPawnsIndex]) || advancable );
         
         // For white, structure penalties are subtracted and bonuses added.
         if (isolated) {
@@ -437,16 +452,21 @@ PawnStructureResult pawnStructureEval(
             score += ADVANCABLEPHALANX;
             score += R_ADVANCABLEPHALANX * (rank - 2);
         }
-
-        if (candidatePassed) {
-            score += passedRankBonus[rank];
-            result.passedCount++;
-            result.passers |= sqb;
-            // The passed–pawn path bonus.
-            extraScore += PASSEDPATHBONUS * popcount(advancePathMasked<us>(sqb, ~block));
-            // Bonus for connected or supported passed pawns
-            if (supported) score += SUPPORTEDPASSER;
-        }
+        // Only consider most advanced pawn in a file
+        //if (!(ahead(sq) & bb[ourPawnsIndex])){
+            // Fully passed pawn
+            if (!stoppers) {
+                score += passedRankBonus[supported][rank];
+                result.passedCount++;
+                result.passers |= sqb;
+                // The passed–pawn path bonus.
+                extraScore += PASSEDPATHBONUS * popcount(advancePathMasked<us>(sqb, ~block));
+            }
+            // Candidate passed pawn
+            else if (candidate){
+                score += candidateRankBonus[supported][rank];
+            }
+        //}
     }
     result.structureScore += us == WHITE ? score : -score;
     result.extraScore += us == WHITE ? extraScore : -extraScore;
@@ -531,8 +551,11 @@ void extractPawnStructureFeats(
 {
     constexpr auto them = 1 - us;
     // Use the appropriate pawn index: for WHITE we use P, for BLACK we use p.
-    constexpr int pawnIndex = (us == WHITE ? P : p);
-    BitBoard pieces = bb[pawnIndex];
+    constexpr int ourPawnsIndex = (us == WHITE ? P : p);
+    constexpr int theirPawnsIndex = (us == WHITE ? p : P);
+    constexpr auto pushUp = us == WHITE ? north : south;
+    constexpr auto ahead = us == WHITE ? squaresAhead : squaresBehind;
+    BitBoard pieces = bb[ourPawnsIndex];
 
     // Compute "block" used for passed pawn bonus.
     // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
@@ -546,18 +569,22 @@ void extractPawnStructureFeats(
 
         // Common pawn evaluation flags:
         bool doubled       = (doubledPawns[us] & sqb) != 0;
-        bool isolated      = !(isolatedPawnMask[sq] & bb[pawnIndex]);
+        bool isolated      = !(isolatedPawnMask[sq] & bb[ourPawnsIndex]);
         bool pawnOpposed   = !(pawnFiles[them] & sqb);
         bool supported     = (protectedPawns[us] & sqb) != 0;
-        bool advancable    = (us == WHITE ? !(pawnBlockage[WHITE] & north(sqb))
-                                             : !(pawnBlockage[BLACK] & south(sqb)));
-        bool phal          = (phalanx[sq] & bb[pawnIndex]) != 0;
-        // Candidate passed pawn check: note that the enemy pawn mask is used.
-        bool candidatePassed = (us == WHITE ? !(passedPawnMask[WHITE][sq] & bb[p])
-                                              : !(passedPawnMask[BLACK][sq] & bb[P]));
-
+        bool advancable    = pawnBlockage[us] & pushUp(sqb);
+        S8 phal          = popcount(phalanx[sq] & bb[ourPawnsIndex]);
+        // Candidate passed logic
+        const BitBoard levers = popcount(makePawnAttacks<us>(sqb) & bb[theirPawnsIndex]);
+        const BitBoard leverPushes = popcount(pushUp(makePawnAttacks<us>(sqb)) & bb[theirPawnsIndex]);
+        S8 supportCount = popcount(makePawnAttacks<them>(sqb) & bb[ourPawnsIndex]);
+        const BitBoard stoppers = passedPawnMask[us][sq] & bb[theirPawnsIndex];
+        const bool candidate = (stoppers == (levers | leverPushes)) // No extra pawns behind the blockade
+            && !(popcount(levers) - supportCount > 1)         // No levers outnumbering our support pawns
+            && !(popcount(leverPushes) - phal > 0)            // No lever pushes outnumbering our phalanx support
+            && !(popcount(levers) && popcount(leverPushes));  // No lever AND lever pushes (both pushing and not pushing the pawn gets it captured)
         // Backward pawn test.
-        bool backward = !( (backwardPawnMask[us][sq] & bb[pawnIndex]) || advancable );
+        bool backward = !( (backwardPawnMask[us][sq] & bb[ourPawnsIndex]) || advancable );
         
         // For white, structure penalties are subtracted and bonuses added.
         if (isolated) {
@@ -581,13 +608,17 @@ void extractPawnStructureFeats(
             features[7] += (us == WHITE ? 1 : -1) * (rank - 2);
         }
 
-        if (candidatePassed) {
-            features[8+rank] += us == WHITE ? 1 : -1;
-            // Bonus for connected or supported passed pawns
-            if (supported) 
-                features[8+7] += us == WHITE ? 1 : -1;
-            // The passed–pawn path bonus.
-            features[8+7+1] += (us == WHITE ? 1 : -1) * popcount(advancePathMasked<us>(sqb, ~block));
+        // Only consider most advanced pawn in a file
+        if (!(ahead(sq) & bb[ourPawnsIndex])){
+            // Fully passed pawn
+            if (!stoppers) {
+                features[8+7*supported+rank] += us == WHITE ? 1 : -1;
+                features[8+7+7+1] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
+            }
+            // Candidate passed pawn
+            else if (candidate){
+                features[8+7+7+1+7*supported+rank] += us == WHITE ? 1 : -1;
+            }
         }
     }
 }
@@ -1089,9 +1120,19 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(R_SUPPORTEDPHALANX.mg());
     weights.push_back(ADVANCABLEPHALANX.mg());
     weights.push_back(R_ADVANCABLEPHALANX.mg());
-    // Add the passed pawn bonus list
+   // Add the passed pawn bonus list
     for (U8 rank = 0; rank < 7; rank++){
-        weights.push_back(passedRankBonus[rank].mg());
+        weights.push_back(passedRankBonus[0][rank].mg());
+    }
+    for (U8 rank = 0; rank < 7; rank++){
+        weights.push_back(passedRankBonus[1][rank].mg());
+    }
+    weights.push_back(PASSEDPATHBONUS.eg());
+    for (U8 rank = 0; rank < 7; rank++){
+        weights.push_back(candidateRankBonus[0][rank].mg());
+    }
+    for (U8 rank = 0; rank < 7; rank++){
+        weights.push_back(candidateRankBonus[1][rank].mg());
     }
     weights.push_back(PASSEDPATHBONUS.mg());
     weights.push_back(SUPPORTEDPASSER.mg());
@@ -1171,10 +1212,18 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(R_ADVANCABLEPHALANX.eg());
     // Add the passed pawn bonus list
     for (U8 rank = 0; rank < 7; rank++){
-        weights.push_back(passedRankBonus[rank].eg());
+        weights.push_back(passedRankBonus[0][rank].eg());
+    }
+    for (U8 rank = 0; rank < 7; rank++){
+        weights.push_back(passedRankBonus[1][rank].eg());
     }
     weights.push_back(PASSEDPATHBONUS.eg());
-    weights.push_back(SUPPORTEDPASSER.eg());
+    for (U8 rank = 0; rank < 7; rank++){
+        weights.push_back(candidateRankBonus[0][rank].eg());
+    }
+    for (U8 rank = 0; rank < 7; rank++){
+        weights.push_back(candidateRankBonus[1][rank].eg());
+    }
 
     // Add the shelter weights
     weights.push_back(INNERSHELTER.eg());
@@ -1451,7 +1500,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     extractPawnStructureFeats<WHITE>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares,tensor);
     extractPawnStructureFeats<BLACK>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares,tensor);
 
-    tensor += 8 + 7 + 2;
+    tensor += 8 + 7 + 7 + 1 + 7 + 7 + 1;
 
     // Calculate king safety
     // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
