@@ -64,7 +64,6 @@ constexpr PScore passedRankBonus[2][7] = {
     {S(0, 0), S(9+27, -80-1), S(-13+27, -51-1), S(-7+27, 3-1), S(29+27, 54-1), S(53+27, 150-1), S(146+27, 247-1), }
 };
 constexpr PScore PASSEDPATHBONUS = S(-4, 23);
-constexpr PScore SUPPORTEDPASSER = S(27, -1);
 constexpr PScore INNERSHELTER = S(4, -4);
 constexpr PScore OUTERSHELTER = S(13, 6);
 constexpr PScore BISHOPPAIR = S(17, 114);
@@ -613,7 +612,7 @@ void extractPawnStructureFeats(
             // Fully passed pawn
             if (!stoppers) {
                 features[8+7*supported+rank] += us == WHITE ? 1 : -1;
-                features[8+7+7+1] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
+                features[8+7+7] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
             }
             // Candidate passed pawn
             else if (candidate){
@@ -1499,7 +1498,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     extractPawnStructureFeats<WHITE>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares,tensor);
     extractPawnStructureFeats<BLACK>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares,tensor);
 
-    tensor += 8 + 7 + 7 + 1 + 7 + 7 + 1;
+    tensor += 8 + 7 + 7 + 1 + 7 + 7;
 
     // Calculate king safety
     // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
