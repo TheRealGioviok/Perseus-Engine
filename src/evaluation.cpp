@@ -453,7 +453,7 @@ PawnStructureResult pawnStructureEval(
             score += R_ADVANCABLEPHALANX * (rank - 2);
         }
         // Only consider most advanced pawn in a file
-        //if (!(ahead(sq) & bb[ourPawnsIndex])){
+        if (!(ahead(sq) & bb[ourPawnsIndex])){
             // Fully passed pawn
             if (!stoppers) {
                 score += passedRankBonus[supported][rank];
@@ -466,7 +466,7 @@ PawnStructureResult pawnStructureEval(
             else if (candidate){
                 score += candidateRankBonus[supported][rank];
             }
-        //}
+        }
     }
     result.structureScore += us == WHITE ? score : -score;
     result.extraScore += us == WHITE ? extraScore : -extraScore;
