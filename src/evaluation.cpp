@@ -1134,8 +1134,6 @@ std::vector<Score> getCurrentEvalWeights(){
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(candidateRankBonus[1][rank].mg());
     }
-    weights.push_back(PASSEDPATHBONUS.mg());
-    weights.push_back(SUPPORTEDPASSER.mg());
 
     // Add the shelter weights
     weights.push_back(INNERSHELTER.mg());
@@ -1210,6 +1208,7 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(R_SUPPORTEDPHALANX.eg());
     weights.push_back(ADVANCABLEPHALANX.eg());
     weights.push_back(R_ADVANCABLEPHALANX.eg());
+
     // Add the passed pawn bonus list
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(passedRankBonus[0][rank].eg());
