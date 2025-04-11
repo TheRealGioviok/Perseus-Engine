@@ -47,10 +47,10 @@ void initTables() {
     }
 }
 
-constexpr PScore DOUBLEISOLATEDPEN = S(13, 48);
-constexpr PScore ISOLATEDPEN = S(17, 22);
-constexpr PScore BACKWARDPEN = S(4, 16);
-constexpr PScore DOUBLEDPEN = S(16, 22);
+constexpr PScore DOUBLEISOLATEDPEN = S(-13, -48);
+constexpr PScore ISOLATEDPEN = S(-17, -22);
+constexpr PScore BACKWARDPEN = S(-4, -16);
+constexpr PScore DOUBLEDPEN = S(-16, -22);
 constexpr PScore SUPPORTEDPHALANX = S(0, 3);
 constexpr PScore ADVANCABLEPHALANX = S(8, 26);
 constexpr PScore R_SUPPORTEDPHALANX = S(3, 10);
@@ -264,95 +264,71 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
     }
 } 
 
+// Refactored getPtPtThreatsFeat with a lambda to process each threat type.
 template <bool us>
-static inline PScore getPtPtThreatsFeat(Position& pos, const BitBoard (&weakPieces)[2], BitBoard (&pawnAttacks)[2], BitBoard (&ptAttacks)[2][4], S8* features){
+static inline PScore getPtPtThreatsFeat(Position &pos,
+                                        const BitBoard (&weakPieces)[2],
+                                        BitBoard (&pawnAttacks)[2],
+                                        BitBoard (&ptAttacks)[2][4],
+                                        S8* features)
+{
+    constexpr int them = !us;
     auto &occ = pos.occupancies;
-    constexpr bool them = !us;
-    PScore score = S(0,0);
-    BitBoard pawnThreats = pawnAttacks[us] & occ[them];
-    while (pawnThreats){
-        const Square sq = popLsb(pawnThreats);
-        Piece piece = pos.pieceOn(sq) - 6*them;
-        const bool weakTarget = weakPieces[them] & squareBB(sq);
-        features[5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
-    }
-    BitBoard knightThreats = ptAttacks[us][N-1] & occ[them];
-    while (knightThreats){
-        const Square sq = popLsb(knightThreats);
-        Piece piece = pos.pieceOn(sq) - 6*them;
-        if (piece == K) continue;
-        const bool weakTarget = weakPieces[them] & squareBB(sq);
-        features[10 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
-    }
-    BitBoard bishopThreats = ptAttacks[us][B-1] & occ[them];
-    while (bishopThreats){
-        const Square sq = popLsb(bishopThreats);
-        Piece piece = pos.pieceOn(sq) - 6*them;
-        if (piece == K) continue;
-        const bool weakTarget = weakPieces[them] & squareBB(sq);
-        features[20 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
-    }
-    BitBoard rookThreats = ptAttacks[us][R-1] & occ[them];
-    while (rookThreats){
-        const Square sq = popLsb(rookThreats);
-        Piece piece = pos.pieceOn(sq) - 6*them;
-        if (piece == K) continue;
-        const bool weakTarget = weakPieces[them] & squareBB(sq);
-        features[30 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
-    }
-    BitBoard queenThreats = ptAttacks[us][Q-1] & occ[them];
-    while (queenThreats){
-        const Square sq = popLsb(queenThreats);
-        Piece piece = pos.pieceOn(sq) - 6*them;
-        if (piece == K) continue;
-        const bool weakTarget = weakPieces[them] & squareBB(sq);
-        features[40 + 5 * (!weakTarget) + piece] += us == WHITE ? 1 : -1;
-    }
+    PScore score = S(0, 0);
+
+    // Lambda to process threats and update feature values.
+    auto processFeatThreats = [&](BitBoard threats, int offset) {
+        while (threats) {
+            const Square sq = popLsb(threats);
+            Piece piece = pos.pieceOn(sq) - 6 * them;
+            if (piece == K)
+                continue;
+            bool weakTarget = (weakPieces[them] & squareBB(sq)) != 0;
+            features[offset + 5 * (!weakTarget) + piece] += (us == WHITE ? 1 : -1);
+        }
+    };
+
+    processFeatThreats(pawnAttacks[us] & occ[them], 0);
+    processFeatThreats(ptAttacks[us][N - 1] & occ[them], 10);
+    processFeatThreats(ptAttacks[us][B - 1] & occ[them], 20);
+    processFeatThreats(ptAttacks[us][R - 1] & occ[them], 30);
+    processFeatThreats(ptAttacks[us][Q - 1] & occ[them], 40);
+
     return score;
 }
 
 template <bool us>
-static inline PScore evalPtPtThreats(Position& pos, const BitBoard (&weakPieces)[2], BitBoard (&pawnAttacks)[2], BitBoard (&ptAttacks)[2][4]){
+static inline PScore evalPtPtThreats(Position &pos,
+                                     const BitBoard (&weakPieces)[2],
+                                     BitBoard (&pawnAttacks)[2],
+                                     BitBoard (&ptAttacks)[2][4])
+{
+    constexpr int them = !us;
     auto &occ = pos.occupancies;
-    constexpr bool them = !us;
-    PScore score = S(0,0);
-    BitBoard pawnThreats = pawnAttacks[us] & occ[them];
-    while (pawnThreats){
-        const Square sq = popLsb(pawnThreats);
-        Piece piece = pos.pieceOn(sq) - 6*them;
-        if (piece == K) continue;
-        score += PAWNTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
-    }
-    BitBoard knightThreats = ptAttacks[us][N-1] & occ[them];
-    while (knightThreats){
-        const Square sq = popLsb(knightThreats);
-        Piece piece = pos.pieceOn(sq) - 6*them;
-        if (piece == K) continue;
-        score += KNIGHTTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
-    }
-    BitBoard bishopThreats = ptAttacks[us][B-1] & occ[them];
-    while (bishopThreats){
-        const Square sq = popLsb(bishopThreats);
-        Piece piece = pos.pieceOn(sq) - 6*them;
-        if (piece == K) continue;
-        score += BISHOPTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
-    }
-    BitBoard rookThreats = ptAttacks[us][R-1] & occ[them];
-    while (rookThreats){
-        const Square sq = popLsb(rookThreats);
-        Piece piece = pos.pieceOn(sq) - 6*them;
-        if (piece == K) continue;
-        score += ROOKTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
-    }
-    BitBoard queenThreats = ptAttacks[us][Q-1] & occ[them];
-    while (queenThreats){
-        const Square sq = popLsb(queenThreats);
-        Piece piece = pos.pieceOn(sq) - 6*them;
-        if (piece == K) continue;
-        score += QUEENTHREAT[!(weakPieces[them] & squareBB(sq))][piece];
-    }
+    PScore score = S(0, 0);
+
+    // This lambda takes a threat bitboard and a threat evaluation table.
+    // It uses the table internally to add the proper bonus to score.
+    auto processEvalThreats = [&](BitBoard threats, const auto &threatTable) {
+        while (threats) {
+            const Square sq = popLsb(threats);
+            Piece piece = pos.pieceOn(sq) - 6 * them;
+            if (piece == K)
+                continue;
+            // Uses the passed table to compute the bonus.
+            score += threatTable[!(weakPieces[them] & squareBB(sq))][piece];
+        }
+    };
+
+    processEvalThreats(pawnAttacks[us] & occ[them], PAWNTHREAT);
+    processEvalThreats(ptAttacks[us][N - 1] & occ[them], KNIGHTTHREAT);
+    processEvalThreats(ptAttacks[us][B - 1] & occ[them], BISHOPTHREAT);
+    processEvalThreats(ptAttacks[us][R - 1] & occ[them], ROOKTHREAT);
+    processEvalThreats(ptAttacks[us][Q - 1] & occ[them], QUEENTHREAT);
+
     return score;
 }
+
 
 static inline BitBoard filesFromBB(BitBoard bb){
     bb |= bb >> 8 | bb << 8;
@@ -386,142 +362,234 @@ static inline BitBoard pawnSpanPawns(BitBoard movers, BitBoard blockers){
     }
 }
 
-inline PScore pawnEval(const HashKey hashKey, const BitBoard (&bb)[12], const BitBoard (&doubledPawns)[2], const BitBoard (&pawnFiles)[2], const BitBoard (&protectedPawns)[2], const BitBoard (&pawnBlockage)[2], const BitBoard (&occ)[3], const BitBoard(&attackedBy)[2], const BitBoard (multiAttacks)[2], const BitBoard (defendedByPawn)[2], S32& passedCount){
-    // Try probing for the correct side here
+// A helper structure to bundle the evaluation results for one side.
+struct PawnStructureResult {
+    PScore structureScore; // The sum of structure bonuses/penalties (cacheable).
+    PScore extraScore;     // The extra passed pawn advance bonus (non-cacheable).
+    BitBoard passers;      // The bitboard of candidate passed pawns.
+    S32 passedCount;       // The number of candidate passed pawns.
+};
+
+// Template function to evaluate pawn structure for a single side.
+template <int us>
+PawnStructureResult pawnStructureEval(
+    const BitBoard (&bb)[12],
+    const BitBoard (&doubledPawns)[2],
+    const BitBoard (&pawnFiles)[2],
+    const BitBoard (&protectedPawns)[2],
+    const BitBoard (&pawnBlockage)[2],
+    const BitBoard (&occ)[3],
+    const BitBoard (&attackedBy)[2],
+    const BitBoard (multiAttacks)[2],
+    const BitBoard (defendedByPawn)[2])
+{
+    constexpr auto them = 1 - us;
+    PawnStructureResult result = { PScore(0,0), PScore(0,0), 0ULL, 0 };
+    // Use the appropriate pawn index: for WHITE we use P, for BLACK we use p.
+    constexpr int pawnIndex = (us == WHITE ? P : p);
+    BitBoard pieces = bb[pawnIndex];
+
+    // Compute "block" used for passed pawn bonus.
+    // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
+    BitBoard block = occ[BOTH] |
+                     (~defendedByPawn[us] & ((~attackedBy[us] & attackedBy[them]) | (multiAttacks[them])));
+    PScore score = S(0,0);
+    PScore extraScore = S(0,0);
+    while (pieces) {
+        Square sq = popLsb(pieces);
+        BitBoard sqb = squareBB(sq);
+        // For white, rank runs from 0 (promotion) to 7; for black the opposite.
+        U8 rank = (us == WHITE ? 7 - rankOf(sq) : rankOf(sq));
+
+        // Common pawn evaluation flags:
+        bool doubled       = (doubledPawns[us] & sqb) != 0;
+        bool isolated      = !(isolatedPawnMask[sq] & bb[pawnIndex]);
+        bool pawnOpposed   = !(pawnFiles[them] & sqb);
+        bool supported     = (protectedPawns[us] & sqb) != 0;
+        bool advancable    = (us == WHITE ? !(pawnBlockage[WHITE] & north(sqb))
+                                             : !(pawnBlockage[BLACK] & south(sqb)));
+        bool phal          = (phalanx[sq] & bb[pawnIndex]) != 0;
+        // Candidate passed pawn check: note that the enemy pawn mask is used.
+        bool candidatePassed = (us == WHITE ? !(passedPawnMask[WHITE][sq] & bb[p])
+                                              : !(passedPawnMask[BLACK][sq] & bb[P]));
+
+        // Backward pawn test.
+        bool backward = !( (backwardPawnMask[us][sq] & bb[pawnIndex]) || advancable );
+        
+        // For white, structure penalties are subtracted and bonuses added.
+        if (isolated) {
+            if (doubled && pawnOpposed)
+                score += DOUBLEISOLATEDPEN;
+            else
+                score += ISOLATEDPEN;
+        }
+        else if (backward) {
+            score += BACKWARDPEN;
+        }
+
+        if (doubled && !supported)
+            score += DOUBLEDPEN;
+        else if (supported && phal) {
+            score += SUPPORTEDPHALANX;
+            score += R_SUPPORTEDPHALANX * (rank - 2);
+        }
+        else if (advancable && phal) {
+            score += ADVANCABLEPHALANX;
+            score += R_ADVANCABLEPHALANX * (rank - 2);
+        }
+
+        if (candidatePassed) {
+            score += passedRankBonus[rank];
+            result.passedCount++;
+            result.passers |= sqb;
+            // The passed–pawn path bonus.
+            extraScore += PASSEDPATHBONUS * popcount(advancePathMasked<us>(sqb, ~block));
+            // Bonus for connected or supported passed pawns
+            if (supported) score += SUPPORTEDPASSER;
+        }
+    }
+    result.structureScore += us == WHITE ? score : -score;
+    result.extraScore += us == WHITE ? extraScore : -extraScore;
+    return result;
+}
+
+// The overall pawn evaluation function.
+inline PScore pawnEval(const HashKey hashKey,
+                         const BitBoard (&bb)[12],
+                         const BitBoard (&doubledPawns)[2],
+                         const BitBoard (&pawnFiles)[2],
+                         const BitBoard (&protectedPawns)[2],
+                         const BitBoard (&pawnBlockage)[2],
+                         const BitBoard (&occ)[3],
+                         const BitBoard (&attackedBy)[2],
+                         const BitBoard (multiAttacks)[2],
+                         const BitBoard (defendedByPawn)[2],
+                         S32& passedCount)
+{
     PawnEvalHashEntry& entry = pawnEvalHash[hashKey & 0x3FFFF];
-    // Init the score
-    PScore score = PScore(0,0);
-    // Check
-    if (entry.hash == hashKey){
-        BitBoard whitePassers = entry.passers & bb[P];
-        BitBoard blackPassers = entry.passers & bb[p];
-        passedCount += popcount(entry.passers); // May already be nonzero
+    PScore score = PScore(0, 0);
+
+    // If the pawn evaluation hash entry is valid, use cached structure score and then recompute the non-cacheable passed–pawn bonus.
+    if (entry.hash == hashKey) {
         score = entry.score;
-        BitBoard block = occ[BOTH] | (~defendedByPawn[WHITE] & ((~attackedBy[WHITE] & attackedBy[BLACK]) | (multiAttacks[BLACK]))); 
-        while (whitePassers){
-            Square sq = popLsb(whitePassers);
-            BitBoard sqb = squareBB(sq);
-            // Give bonus for how many squares the pawn can advance
-            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~block);
-            score += PASSEDPATHBONUS * popcount(passedPath);
+        // For white passers (cached by storing all passers together; white pawns are in bb[P]).
+        BitBoard whitePassers = entry.passers & bb[P];
+        {
+            BitBoard block = occ[BOTH] | (~defendedByPawn[WHITE] & ((~attackedBy[WHITE] & attackedBy[BLACK]) | (multiAttacks[BLACK])));
+            while (whitePassers) {
+                Square sq = popLsb(whitePassers);
+                BitBoard sqb = squareBB(sq);
+                score += PASSEDPATHBONUS * popcount(advancePathMasked<WHITE>(sqb, ~block));
+            }
         }
-        block = occ[BOTH] | (~defendedByPawn[BLACK] & ((~attackedBy[BLACK] & attackedBy[WHITE]) | (multiAttacks[WHITE]))); 
-        while (blackPassers){
-            Square sq = popLsb(blackPassers);
-            BitBoard sqb = squareBB(sq);
-            // Give bonus for how many squares the pawn can advance
-            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~block);
-            score -= PASSEDPATHBONUS * popcount(passedPath);
+        // For black passers.
+        BitBoard blackPassers = entry.passers & bb[p];
+        {
+            BitBoard block = occ[BOTH] | (~defendedByPawn[BLACK] & ((~attackedBy[BLACK] & attackedBy[WHITE]) | (multiAttacks[WHITE])));
+            while (blackPassers) {
+                Square sq = popLsb(blackPassers);
+                BitBoard sqb = squareBB(sq);
+                score -= PASSEDPATHBONUS * popcount(advancePathMasked<BLACK>(sqb, ~block));
+            }
         }
+        passedCount += popcount(entry.passers);
         return score;
     }
     else {
-        PScore extraScore = PScore(0,0);
-        BitBoard passers = 0ULL;
-        BitBoard pieces = bb[P];
-        BitBoard block = occ[BOTH] | (~defendedByPawn[WHITE] & ((~attackedBy[WHITE] & attackedBy[BLACK]) | (multiAttacks[BLACK])));
-        while (pieces){
-            // Evaluate isolated, backward, doubled pawns and connected pawns
-            const Square sq = popLsb(pieces);
-            const BitBoard sqb = squareBB(sq);
-            const U8 rank = 7 - rankOf(sq);
-            bool doubled = doubledPawns[WHITE] & sqb;
-            bool isolated = !(isolatedPawnMask[sq] & bb[P]);
-            bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
-            bool supported = protectedPawns[WHITE] & sqb;
-            bool advancable = !(pawnBlockage[WHITE] & north(sqb));
-            bool phal = phalanx[sq] & bb[P];
-            bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
-            
-            bool backward = !( // If the pawn
-                (backwardPawnMask[WHITE][sq] & bb[P]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
-                || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
-            );
-            // Check if the pawn is doubled
-            if (isolated){
-                if (doubled && pawnOpposed) score -= DOUBLEISOLATEDPEN;
-                else score -= ISOLATEDPEN;
-            }
-            else if (backward) score -= BACKWARDPEN;
+        // Recompute both sides’ pawn structure evaluation.
+        auto whiteEval = pawnStructureEval<WHITE>(bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, defendedByPawn);
+        auto blackEval = pawnStructureEval<BLACK>(bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, defendedByPawn);
+        
+        passedCount += whiteEval.passedCount + blackEval.passedCount;
+        // The overall score is the sum of the (cacheable) structure score and the (non-cached) passed–pawn path bonus.
+        score = whiteEval.structureScore + blackEval.structureScore + whiteEval.extraScore + blackEval.extraScore;
 
-            if (doubled && !supported) score -= DOUBLEDPEN;
-            else if (supported && phal){
-                score += SUPPORTEDPHALANX;
-                score += R_SUPPORTEDPHALANX * (rank - 2);
-            }
-            else if (advancable && phal){
-                score += ADVANCABLEPHALANX;
-                score += R_ADVANCABLEPHALANX * (rank - 2);
-            }
-            if (candidatePassed){
-                // Give bonus for how close the pawn is to the promotion square
-                score += passedRankBonus[rank];
-                // Bonus for connected or supported passed pawns
-                if (supported) score += SUPPORTEDPASSER;
-                ++passedCount;
-                passers |= sqb;
-                // Give bonus for how many squares the pawn can advance. This can't be stored into the entry, since it depends on the rest of the position.
-                BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~block);
-                extraScore += PASSEDPATHBONUS * popcount(passedPath);
-            }
-        }
-
-        // Black pawns
-        pieces = bb[p];
-        block = occ[BOTH] | (~defendedByPawn[BLACK] & ((~attackedBy[BLACK] & attackedBy[WHITE]) | (multiAttacks[WHITE])));
-        while (pieces){
-            // Evaluate isolated, backward, doubled pawns and connected pawns
-            const Square sq = popLsb(pieces);
-            const BitBoard sqb = squareBB(sq);
-            const U8 rank = rankOf(sq);
-            bool doubled = doubledPawns[BLACK] & sqb;
-            bool isolated = !(isolatedPawnMask[sq] & bb[p]);
-            bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
-            bool supported = protectedPawns[BLACK] & sqb;
-            bool advancable = !(pawnBlockage[BLACK] & south(sqb));
-            bool phal = phalanx[sq] & bb[p];
-            bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
-            
-            bool backward = !( // If the pawn
-                (backwardPawnMask[BLACK][sq] & bb[p]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
-                || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
-            );
-            // Check if the pawn is doubled
-            if (isolated){
-                if (doubled && pawnOpposed) score += DOUBLEISOLATEDPEN;
-                else score += ISOLATEDPEN;
-            }
-            else if (backward) score += BACKWARDPEN;
-
-            if (doubled && !supported) score += DOUBLEDPEN;
-            else if (supported && phal){
-                score -= SUPPORTEDPHALANX;
-                score -= R_SUPPORTEDPHALANX * (rank - 2);
-            }
-            else if (advancable && phal){
-                score -= ADVANCABLEPHALANX;
-                score -= R_ADVANCABLEPHALANX * (rank - 2);
-            }
-            if (candidatePassed){
-                // Give bonus for how close the pawn is to the promotion square
-                score -= passedRankBonus[rank];
-                // Bonus for connected or supported passed pawns
-                if (supported) score -= SUPPORTEDPASSER;
-                ++passedCount;
-                passers |= sqb;
-                // Give bonus for how many squares the pawn can advance. This can't be stored into the entry, since it depends on the rest of the position.
-                BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~block);
-                extraScore -= PASSEDPATHBONUS * popcount(passedPath);
-            }
-        }
-
-        // Save
+        // Save a new hash entry using only the structure (cacheable) part and
+        // the union of passed–pawn bitboards (so that on a hash hit we can recalc the extra bonus).
         entry.hash = hashKey;
-        entry.score = score;
-        entry.passers = passers;
-        return score + extraScore;
+        entry.score = whiteEval.structureScore + blackEval.structureScore;
+        entry.passers = whiteEval.passers | blackEval.passers;
+
+        return score;
     }
-    
+}
+
+// Template function to evaluate pawn structure for a single side.
+template <int us>
+void extractPawnStructureFeats(
+    const BitBoard (&bb)[12],
+    const BitBoard (&doubledPawns)[2],
+    const BitBoard (&pawnFiles)[2],
+    const BitBoard (&protectedPawns)[2],
+    const BitBoard (&pawnBlockage)[2],
+    const BitBoard (&occ)[3],
+    const BitBoard (&attackedBy)[2],
+    const BitBoard (multiAttacks)[2],
+    const BitBoard (defendedByPawn)[2],
+    S8* features
+)
+{
+    constexpr auto them = 1 - us;
+    // Use the appropriate pawn index: for WHITE we use P, for BLACK we use p.
+    constexpr int pawnIndex = (us == WHITE ? P : p);
+    BitBoard pieces = bb[pawnIndex];
+
+    // Compute "block" used for passed pawn bonus.
+    // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
+    BitBoard block = occ[BOTH] |
+                     (~defendedByPawn[us] & ((~attackedBy[us] & attackedBy[them]) | (multiAttacks[them])));
+    while (pieces) {
+        Square sq = popLsb(pieces);
+        BitBoard sqb = squareBB(sq);
+        // For white, rank runs from 0 (promotion) to 7; for black the opposite.
+        U8 rank = (us == WHITE ? 7 - rankOf(sq) : rankOf(sq));
+
+        // Common pawn evaluation flags:
+        bool doubled       = (doubledPawns[us] & sqb) != 0;
+        bool isolated      = !(isolatedPawnMask[sq] & bb[pawnIndex]);
+        bool pawnOpposed   = !(pawnFiles[them] & sqb);
+        bool supported     = (protectedPawns[us] & sqb) != 0;
+        bool advancable    = (us == WHITE ? !(pawnBlockage[WHITE] & north(sqb))
+                                             : !(pawnBlockage[BLACK] & south(sqb)));
+        bool phal          = (phalanx[sq] & bb[pawnIndex]) != 0;
+        // Candidate passed pawn check: note that the enemy pawn mask is used.
+        bool candidatePassed = (us == WHITE ? !(passedPawnMask[WHITE][sq] & bb[p])
+                                              : !(passedPawnMask[BLACK][sq] & bb[P]));
+
+        // Backward pawn test.
+        bool backward = !( (backwardPawnMask[us][sq] & bb[pawnIndex]) || advancable );
+        
+        // For white, structure penalties are subtracted and bonuses added.
+        if (isolated) {
+            if (doubled && pawnOpposed)
+                features[0] += us == WHITE ? 1 : -1;
+            else
+                features[1] += us == WHITE ? 1 : -1;
+        }
+        else if (backward) {
+            features[2] += us == WHITE ? 1 : -1;
+        }
+
+        if (doubled && !supported)
+            features[3] += us == WHITE ? 1 : -1;
+        else if (supported && phal) {
+            features[4] += us == WHITE ? 1 : -1;
+            features[5] += (us == WHITE ? 1 : -1) * (rank - 2);
+        }
+        else if (advancable && phal) {
+            features[6] += us == WHITE ? 1 : -1;
+            features[7] += (us == WHITE ? 1 : -1) * (rank - 2);
+        }
+
+        if (candidatePassed) {
+            features[8+rank] += us == WHITE ? 1 : -1;
+            // Bonus for connected or supported passed pawns
+            if (supported) 
+                features[8+7] += us == WHITE ? 1 : -1;
+            // The passed–pawn path bonus.
+            features[8+7+1] += (us == WHITE ? 1 : -1) * popcount(advancePathMasked<us>(sqb, ~block));
+        }
+    }
 }
 
 Score pestoEval(Position *pos){
@@ -1379,94 +1447,10 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
 
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
-    // White pawns
-    BitBoard pieces = bb[P];
-    BitBoard block = occ[BOTH] | (~pawnAttackedSquares[WHITE] & ((~attackedBy[WHITE] & attackedBy[BLACK]) | (multiAttacks[BLACK])));
-    while (pieces){
-        // Evaluate isolated, backward, doubled pawns and connected pawns
-        Square sq = popLsb(pieces);
-        BitBoard sqb = squareBB(sq);
-        U8 rank = 7 - rankOf(sq);
-        bool doubled = doubledPawns[WHITE] & squareBB(sq);
-        bool isolated = !(isolatedPawnMask[sq] & bb[P]);
-        bool pawnOpposed = !(pawnFiles[BLACK] & sqb);
-        bool supported = protectedPawns[WHITE] & sqb;
-        bool advancable = !(pawnBlockage[WHITE] & north(sqb));
-        bool phal = phalanx[sq] & bb[P];
-        bool candidatePassed = !(passedPawnMask[WHITE][sq] & bb[p]);
-        
-        bool backward = !( // If the pawn
-            (backwardPawnMask[WHITE][sq] & bb[P]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
-            || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
-        );
-        // Check if the pawn is doubled
-        if (doubled && isolated && pawnOpposed) tensor[0]--;
+    
+    extractPawnStructureFeats<WHITE>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares,tensor);
+    extractPawnStructureFeats<BLACK>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares,tensor);
 
-        else if (isolated) tensor[1]--;
-        else if (backward) tensor[2]--;
-        if (doubled && !supported) tensor[3]--;
-        else if (supported && phal) {
-            tensor[4]++;
-            tensor[5] += rank - 2;
-        }
-        else if (advancable && phal) {
-            tensor[6]++;
-            tensor[7] += rank - 2;
-        }
-        if (candidatePassed){
-            ++passedCount;
-            BitBoard passedPath = advancePathMasked<WHITE>(sqb, ~block);
-            // Give bonus for how close the pawn is to the promotion square
-            tensor[8 + rank] += 1;
-            tensor[8 + 7] += popcount(passedPath);
-            // Bonus for connected or supported passed pawns
-            if (supported) tensor[8 + 7 + 1]++;
-        }
-    }
-
-    // Black pawns
-    pieces = bb[p];
-    block = occ[BOTH] | (~pawnAttackedSquares[BLACK] & ((~attackedBy[BLACK] & attackedBy[WHITE]) | (multiAttacks[WHITE])));
-    while (pieces){
-        // Evaluate isolated, backward, doubled pawns and connected pawns
-        Square sq = popLsb(pieces);
-        BitBoard sqb = squareBB(sq);
-        U8 rank = rankOf(sq);
-        bool doubled = doubledPawns[BLACK] & squareBB(sq);
-        bool isolated = !(isolatedPawnMask[sq] & bb[p]);
-        bool pawnOpposed = !(pawnFiles[WHITE] & sqb);
-        bool supported = protectedPawns[BLACK] & sqb;
-        bool advancable = !(pawnBlockage[BLACK] & south(sqb));
-        bool phal = phalanx[sq] & bb[p];
-        bool candidatePassed = !(passedPawnMask[BLACK][sq] & bb[P]);
-        
-        bool backward = !( // If the pawn
-            (backwardPawnMask[BLACK][sq] & bb[p]) // If the pawn is doesn't have behind or adjacent pawns in adjacent files
-            || advancable // If the pawn can't advance (blocked by enemy pawn or enemy pawn capture square)
-        );
-        // Check if the pawn is doubled
-        if (doubled && isolated && pawnOpposed) tensor[0]++;
-        else if (isolated) tensor[1]++;
-        else if (backward) tensor[2]++;
-        if (doubled && !supported) tensor[3]++;
-        else if (supported && phal) {
-            tensor[4]--;
-            tensor[5] -= rank - 2;
-        }
-        else if (advancable && phal) {
-            tensor[6]--;
-            tensor[7] -= rank - 2;
-        }
-        if (candidatePassed){
-            ++passedCount;
-            BitBoard passedPath = advancePathMasked<BLACK>(sqb, ~block);
-            // Give bonus for how close the pawn is to the promotion square
-            tensor[8 + rank]--;
-            tensor[8 + 7] -= popcount(passedPath);
-            // Bonus for connected or supported passed pawns
-            if (supported) tensor[8 + 7 + 1]--;
-        }
-    }
     tensor += 8 + 7 + 2;
 
     // Calculate king safety
