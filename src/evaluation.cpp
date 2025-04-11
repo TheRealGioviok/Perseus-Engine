@@ -421,8 +421,8 @@ PawnStructureResult pawnStructureEval(
         // Fully passsed pawn check
         const BitBoard stoppers = passedPawnMask[us][sq] & bb[theirPawnsIndex];
         // Candidate passed logic
-        const BitBoard levers = popcount(makePawnAttacks<us>(sqb) & bb[theirPawnsIndex]);
-        const BitBoard leverPushes = popcount(pushUp(makePawnAttacks<us>(sqb)) & bb[theirPawnsIndex]);
+        const BitBoard levers = makePawnAttacks<us>(sqb) & bb[theirPawnsIndex];
+        const BitBoard leverPushes = pushUp(makePawnAttacks<us>(sqb)) & bb[theirPawnsIndex];
         S8 supportCount = popcount(makePawnAttacks<them>(sqb) & bb[ourPawnsIndex]);
         const bool candidate = (stoppers == (levers | leverPushes)) // No extra pawns behind the blockade
             && !(popcount(levers) - supportCount > 1)         // No levers outnumbering our support pawns
@@ -575,8 +575,8 @@ void extractPawnStructureFeats(
         bool advancable    = pawnBlockage[us] & pushUp(sqb);
         S8 phal          = popcount(phalanx[sq] & bb[ourPawnsIndex]);
         // Candidate passed logic
-        const BitBoard levers = popcount(makePawnAttacks<us>(sqb) & bb[theirPawnsIndex]);
-        const BitBoard leverPushes = popcount(pushUp(makePawnAttacks<us>(sqb)) & bb[theirPawnsIndex]);
+        const BitBoard levers = makePawnAttacks<us>(sqb) & bb[theirPawnsIndex];
+        const BitBoard leverPushes = pushUp(makePawnAttacks<us>(sqb)) & bb[theirPawnsIndex];
         S8 supportCount = popcount(makePawnAttacks<them>(sqb) & bb[ourPawnsIndex]);
         const BitBoard stoppers = passedPawnMask[us][sq] & bb[theirPawnsIndex];
         const bool candidate = (stoppers == (levers | leverPushes)) // No extra pawns behind the blockade
@@ -1127,7 +1127,7 @@ std::vector<Score> getCurrentEvalWeights(){
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(passedRankBonus[1][rank].mg());
     }
-    weights.push_back(PASSEDPATHBONUS.eg());
+    weights.push_back(PASSEDPATHBONUS.mg());
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(candidateRankBonus[0][rank].mg());
     }
