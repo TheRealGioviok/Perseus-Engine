@@ -208,6 +208,7 @@ NO_TUNE_PARAM(razorDepth, 3, 2, 5, .5, 0.002);
 TUNE_PARAM(singularDepthMultiplier, 10, 1, 30, 2, 0.002);
 TUNE_PARAM(maximumDoubleExtensions, 7, 1, 9, 1, 0.002);
 TUNE_PARAM(doubleExtensionMargin, 23, 1, 50, 2.5, 0.002);
+TUNE_PARAM(tripleExtensionMargin, 46, 25, 100, 3.75, 0.002);
 NO_TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
 TUNE_PARAM(doubleNegExtMargin, 25, 1, 100, 5, 0.002);
 
