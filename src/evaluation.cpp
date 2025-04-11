@@ -545,6 +545,7 @@ void extractPawnStructureFeats(
     const BitBoard (&attackedBy)[2],
     const BitBoard (multiAttacks)[2],
     const BitBoard (defendedByPawn)[2],
+    S32& passersCount,
     S8* features
 )
 {
@@ -613,6 +614,7 @@ void extractPawnStructureFeats(
             if (!stoppers) {
                 features[8+7*supported+rank] += us == WHITE ? 1 : -1;
                 features[8+7+7] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
+                passersCount += 1;
             }
             // Candidate passed pawn
             else if (candidate){
@@ -1495,8 +1497,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
     
-    extractPawnStructureFeats<WHITE>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares,tensor);
-    extractPawnStructureFeats<BLACK>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares,tensor);
+    extractPawnStructureFeats<WHITE>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares, passedCount, tensor);
+    extractPawnStructureFeats<BLACK>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares, passedCount, tensor);
 
     tensor += 8 + 7 + 7 + 1 + 7 + 7;
 
