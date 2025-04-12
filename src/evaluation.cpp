@@ -800,7 +800,7 @@ Score pestoEval(Position *pos){
     bool wkhside = fileOf(whiteKing) <= 3;
     bool bkhside = fileOf(blackKing) <= 3;
 
-    score += pos->psqtScores[indexColorKingsKingside(WHITE, wkhside != bkhside, wkhside)] + pos->psqtScores[indexColorKingsKingside(BLACK, wkhside != bkhside, bkhside)];
+    score += pos->psqtScores[indexColorKingsKingside(WHITE, wkhside == bkhside, wkhside)] + pos->psqtScores[indexColorKingsKingside(BLACK, wkhside == bkhside, bkhside)];
 
     // Weak pieces
     const BitBoard weakPieces[2] = {

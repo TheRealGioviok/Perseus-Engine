@@ -174,14 +174,14 @@ static inline void removePiece(Position& pos, const Piece piece, const Square sq
     pos.nonPawnKeys[pieceSide] ^= nonPawnKeysTable[piece][square];
     pos.ptKeys[piece - 6 * (pieceSide)] ^= pieceKeysTable[piece][square];
     // Update the psqt score
-    // Same side kings, own king on left
-    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 0)] -= PSQTs[0][piece][square];
     // Same side kings, own king on right (flip square)
-    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 1)] -= PSQTs[0][piece][flipSquareHorizontal(square)];
-    // Opposite side kings, own king on left
-    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 0)] -= PSQTs[1][piece][square];
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 0)] -= PSQTs[0][piece][flipSquareHorizontal(square)];
+    // Same side kings, own king on left 
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 1)] -= PSQTs[0][piece][square];
     // Opposite side kings, own king on right (flip square)
-    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 1)] -= PSQTs[1][piece][flipSquareHorizontal(square)];
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 0)] -= PSQTs[1][piece][flipSquareHorizontal(square)];
+    // Opposite side kings, own king on left 
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 1)] -= PSQTs[1][piece][square];
 }
 
 /**
@@ -213,14 +213,14 @@ static inline void addPiece(Position& pos, const Piece piece, const Square squar
     pos.nonPawnKeys[pieceSide] ^= nonPawnKeysTable[piece][square];
     pos.ptKeys[piece - 6 * (pieceSide)] ^= pieceKeysTable[piece][square];
     // Update the psqt score
-    // Same side kings, own king on left
-    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 0)] += PSQTs[0][piece][square];
     // Same side kings, own king on right (flip square)
-    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 1)] += PSQTs[0][piece][flipSquareHorizontal(square)];
-    // Opposite side kings, own king on left
-    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 0)] += PSQTs[1][piece][square];
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 0)] += PSQTs[0][piece][flipSquareHorizontal(square)];
+    // Same side kings, own king on left 
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 1)] += PSQTs[0][piece][square];
     // Opposite side kings, own king on right (flip square)
-    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 1)] += PSQTs[1][piece][flipSquareHorizontal(square)];
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 0)] += PSQTs[1][piece][flipSquareHorizontal(square)];
+    // Opposite side kings, own king on left
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 1)] += PSQTs[1][piece][square];
 }
 
 bool Position::parseFEN(char *fen) {
