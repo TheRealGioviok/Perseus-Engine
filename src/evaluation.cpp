@@ -1304,8 +1304,14 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
         Piece piece = pos->pieceOn(square);
         if (piece == NOPIECE) continue;
         Square sq = piece < p ? square : flipSquare(square);
+        U8 sqx = sq & 7;
+        sqx = (piece < p) ?
+            (wkhside ? sqx : 7 - sqx) :
+            (bkhside ? sqx : 7 - sqx) ;
+        U8 sqy = sq / 8; 
+        sq = sqx + 8 * sqy;
         bool pieceColor = piece >= p;
-        tensor[64 * (piece % 6) + sq] += (pieceColor ? 0b0100 : 0b0001) << (pieceColor ? bkhside : wkhside);
+        tensor[64 * (piece % 6) + sq] += (pieceColor ? 0b0100 : 0b0001) << (wkhside == bkhside);
     }
     tensor += 64 * 6;
 
