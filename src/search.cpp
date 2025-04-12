@@ -171,7 +171,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     UndoInfo undoer = UndoInfo(pos);
 
     if (!excludedMove){
-        if ((PVNode || cutNode) && depth >= IIRDepth() && (!ttMove || ttDepth + 3 < depth)) --depth; 
+        if ((PVNode || cutNode) && depth >= IIRDepth() - 2*PVNode && (!ttMove || ttDepth + 3 < depth)) --depth; 
     }
 
     if (inCheck)
@@ -268,7 +268,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
                     return nullScore;
             }
         }
-    
     }
 
 skipPruning:

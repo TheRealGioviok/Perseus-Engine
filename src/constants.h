@@ -216,7 +216,7 @@ TUNE_PARAM(historyPruningMultiplier, -1341, -5120, -1024, 205, 0.002);
 TUNE_PARAM(historyPruningBias, -94, -2048, 2048, 205, 0.002);
 
 // IIR values
-NO_TUNE_PARAM(IIRDepth, 5, 3, 8, .5, 0.002);
+NO_TUNE_PARAM(IIRDepth, 6, 3, 8, .5, 0.002);
 
 // FFP values
 TUNE_PARAM(futPruningMultiplier, 54, 30, 130, 5, 0.002);
