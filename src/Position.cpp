@@ -154,30 +154,37 @@ void Position::wipe(){
  */
 template<bool unsafe = true>
 static inline void removePiece(Position& pos, const Piece piece, const Square square){
+    const auto pieceSide = piece >= p;
     if constexpr (!unsafe){
         // Remove the piece from the bitboard
         clearBit(pos.bitboards[piece], square);
         // Add it also to the side and both bitboard
-        clearBit(pos.occupancies[piece >= p], square);
+        clearBit(pos.occupancies[pieceSide], square);
         clearBit(pos.occupancies[BOTH], square);
     }
     else {
         const BitBoard sqb = squareBB(square);
         pos.bitboards[piece] ^= sqb;
-        pos.occupancies[piece >= p] ^= sqb;
+        pos.occupancies[pieceSide] ^= sqb;
         pos.occupancies[BOTH] ^= sqb;
     }
     // Update the hash key
     pos.hashKey ^= pieceKeysTable[piece][square];
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
-    pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
-    pos.ptKeys[piece - 6 * (piece >= p)] ^= pieceKeysTable[piece][square];
+    pos.nonPawnKeys[pieceSide] ^= nonPawnKeysTable[piece][square];
+    pos.ptKeys[piece - 6 * (pieceSide)] ^= pieceKeysTable[piece][square];
     // Update the psqt score
-    pos.psqtScores[indexColorSide(piece >= p, 0)] -= PSQTs[0][piece][square];
-    pos.psqtScores[indexColorSide(piece >= p, 1)] -= PSQTs[1][piece][square];
+    // Same side kings, own king on right (flip square)
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 0)] -= PSQTs[0][piece][flipSquareHorizontal(square)];
+    // Same side kings, own king on left 
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 1)] -= PSQTs[0][piece][square];
+    // Opposite side kings, own king on right (flip square)
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 0)] -= PSQTs[1][piece][flipSquareHorizontal(square)];
+    // Opposite side kings, own king on left 
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 1)] -= PSQTs[1][piece][square];
 }
 
-/**l
+/**
  * @brief The addPiece function adds a piece to the board. It also incrementally updates psqt and various hash keys
  * @tparam unsafe Set it to true if we are removing a piece that we are sure is not already there
  * @param pos the Position object to update
@@ -186,6 +193,7 @@ static inline void removePiece(Position& pos, const Piece piece, const Square sq
  */
 template<bool unsafe = true>
 static inline void addPiece(Position& pos, const Piece piece, const Square square){
+    const auto pieceSide = piece >= p;
     if constexpr (!unsafe){
         // Remove the piece from the bitboard
         setBit(pos.bitboards[piece], square);
@@ -196,17 +204,23 @@ static inline void addPiece(Position& pos, const Piece piece, const Square squar
     else {
         const BitBoard sqb = squareBB(square);
         pos.bitboards[piece] ^= sqb;
-        pos.occupancies[piece >= p] ^= sqb;
+        pos.occupancies[pieceSide] ^= sqb;
         pos.occupancies[BOTH] ^= sqb;
     }
     // Update the hash key
     pos.hashKey ^= pieceKeysTable[piece][square];
     pos.pawnHashKey ^= pawnKeysTable[piece][square];
-    pos.nonPawnKeys[piece >= p] ^= nonPawnKeysTable[piece][square];
-    pos.ptKeys[piece - 6 * (piece >= p)] ^= pieceKeysTable[piece][square];
+    pos.nonPawnKeys[pieceSide] ^= nonPawnKeysTable[piece][square];
+    pos.ptKeys[piece - 6 * (pieceSide)] ^= pieceKeysTable[piece][square];
     // Update the psqt score
-    pos.psqtScores[indexColorSide(piece >= p, 0)] += PSQTs[0][piece][square];
-    pos.psqtScores[indexColorSide(piece >= p, 1)] += PSQTs[1][piece][square];
+    // Same side kings, own king on right (flip square)
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 0)] += PSQTs[0][piece][flipSquareHorizontal(square)];
+    // Same side kings, own king on left 
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 0, 1)] += PSQTs[0][piece][square];
+    // Opposite side kings, own king on right (flip square)
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 0)] += PSQTs[1][piece][flipSquareHorizontal(square)];
+    // Opposite side kings, own king on left
+    pos.psqtScores[indexColorKingsKingside(pieceSide, 1, 1)] += PSQTs[1][piece][square];
 }
 
 bool Position::parseFEN(char *fen) {
@@ -825,11 +839,12 @@ bool Position::SEE(const Move move, const Score threshold) {
 
 void Position::reflect() {
     // reflect psqt
-    std::swap(psqtScores[indexColorSide(WHITE,0)], psqtScores[indexColorSide(BLACK,0)]);
-    std::swap(psqtScores[indexColorSide(WHITE,1)], psqtScores[indexColorSide(BLACK,1)]);
+    std::swap(psqtScores[indexColorKingsKingside(WHITE,0,0)], psqtScores[indexColorKingsKingside(BLACK,0,0)]);
+    std::swap(psqtScores[indexColorKingsKingside(WHITE,0,1)], psqtScores[indexColorKingsKingside(BLACK,0,1)]);
+    std::swap(psqtScores[indexColorKingsKingside(WHITE,1,0)], psqtScores[indexColorKingsKingside(BLACK,1,0)]);
+    std::swap(psqtScores[indexColorKingsKingside(WHITE,1,1)], psqtScores[indexColorKingsKingside(BLACK,1,1)]);
     // First, swap white with black
     for (int i = P; i <= K; i++) {
-
         bitboards[i] ^= bitboards[i + 6];
         bitboards[i+6] ^= bitboards[i];
         bitboards[i] ^= bitboards[i + 6];
@@ -1729,7 +1744,7 @@ UndoInfo::UndoInfo(Position& position){
     side = position.side;
     checkers = position.checkers;
     threats = position.threats;
-    memcpy(psqtScores, position.psqtScores, sizeof(PScore) * 4);
+    memcpy(psqtScores, position.psqtScores, sizeof(psqtScores));
     memcpy(bitboards, position.bitboards, sizeof(BitBoard) * 12);
     memcpy(occupancies, position.occupancies, sizeof(BitBoard) * 3);
     memcpy(ptHashKey, position.ptKeys, sizeof(HashKey) * 6);
@@ -1762,7 +1777,7 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.bitboards[captured] = bitboards[captured];
     position.bitboards[aux] = bitboards[aux];
     position.checkers = checkers;
-    memcpy(position.psqtScores, psqtScores, sizeof(PScore) * 4);
+    memcpy(position.psqtScores, psqtScores, sizeof(PScore) * 8);
     memcpy(position.occupancies, occupancies, sizeof(BitBoard) * 3);
 }
 

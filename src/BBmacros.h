@@ -23,6 +23,7 @@ inline void 		clearBit(U8 &u8, U8 pos) { u8 &= ~(1 << pos); }
 inline U8 rankOf(Square square) 				{ return (square >> 3); }
 inline U8 fileOf(Square square) 				{ return (square & 7); }
 inline Square flipSquare(Square square) 		{ return (square ^ 56); }
+inline Square flipSquareHorizontal(Square square) { return (square ^ 7); }
 inline Square makeSquare(U8 rank, U8 file) 	{ return (rank * 8 + file); }
 
 inline constexpr BitBoard files(U8 fileNo) 				{ return (0x0101010101010101ULL << fileNo); }
@@ -42,7 +43,7 @@ static inline constexpr BitBoard sw(BitBoard bb) 		{ return (bb & notFile(0)) <<
 static inline constexpr BitBoard east(BitBoard bb) 		{ return (bb & notFile(7)) << 1; }
 static inline constexpr BitBoard west(BitBoard bb) 		{ return (bb & notFile(0)) >> 1; }
 
-static inline constexpr S32 indexColorSide(U8 color, U8 side) {return (color << 1) + side; }
+static inline constexpr S32 indexColorKingsKingside(U8 color, U8 sameside, U8 side) {return (color << 2) + (sameside << 1) + side; }
 
 #define bitScanForward _BitScanForward64 //ls1b
 #define bitScanReverse _BitScanReverse64 //ms1b

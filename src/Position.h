@@ -42,7 +42,7 @@ struct Position{
     HashKey pawnHashKey;
     HashKey nonPawnKeys[2];
     HashKey ptKeys[6];
-    PScore psqtScores[4]; // PSQT score, incrementally updated. White / Black - file <= 3 / >= 4
+    PScore psqtScores[8]; // PSQT score, incrementally updated.
 
     // The default constructor instantiates the position with the standard chess starting position.
     Position();
@@ -245,7 +245,7 @@ struct UndoInfo {
     U8 fiftyMove;
     Ply totalPly;
     Ply plyFromNull;
-    PScore psqtScores[4];
+    PScore psqtScores[8];
     U8 side;
     BitBoard threats;
     // Reversible information
