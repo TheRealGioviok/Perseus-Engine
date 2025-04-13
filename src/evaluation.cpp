@@ -558,8 +558,8 @@ void extractPawnStructureFeats(
     constexpr auto ahead = us == WHITE ? squaresAhead : squaresBehind;
     BitBoard pieces = bb[ourPawnsIndex];
 
-    constexpr Square ourKingSquare = lsb(bb[K + 6 * us]);
-    constexpr Square theirKingSquare = lsb(bb[K + 6 * them]);
+    const Square ourKingSquare = lsb(bb[K + 6 * us]);
+    const Square theirKingSquare = lsb(bb[K + 6 * them]);
 
     // Compute "block" used for passed pawn bonus.
     // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
