@@ -58,6 +58,8 @@ constexpr PScore passedRankBonus[2][7] = {
     {S(0, 0), S(10, -69), S(-5, -44), S(-2, 10), S(21, 64), S(44, 156), S(113, 230)}, 
     {S(0, 0), S(0, 0), S(8, -60), S(10, -4), S(57, 64), S(157, 178), S(395, 249)}
 };
+constexpr PScore ownKingPassedDist[7] = { S(0, 0),  S(0, 0),  S(0, 0), S(0, 0),  S(0, 0),  S(0, 0), S(0, 0)};
+constexpr PScore theirKingPassedDist[7] = { S(0, 0),  S(0, 0),  S(0, 0), S(0, 0),  S(0, 0),  S(0, 0), S(0, 0)};
 constexpr PScore PASSEDPATHBONUS = S(-5, 23);
 constexpr PScore candidateRankBonus[2][7] = {
     {S(0, 0), S(-35, 4), S(-25, 23), S(-9, 61), S(4, 128), S(34, 106), S(0, 0)}, 
@@ -556,6 +558,9 @@ void extractPawnStructureFeats(
     constexpr auto ahead = us == WHITE ? squaresAhead : squaresBehind;
     BitBoard pieces = bb[ourPawnsIndex];
 
+    constexpr Square ourKingSquare = lsb(bb[K + 6 * us]);
+    constexpr Square theirKingSquare = lsb(bb[K + 6 * them]);
+
     // Compute "block" used for passed pawn bonus.
     // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
     BitBoard block = occ[BOTH] |
@@ -612,12 +617,14 @@ void extractPawnStructureFeats(
             // Fully passed pawn
             if (!stoppers) {
                 features[8+7*supported+rank] += us == WHITE ? 1 : -1;
-                features[8+7+7] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
+                features[8+7+7+chebyshevDistance[ourKingSquare]][sq] += us == WHITE ? 1 : -1;
+                features[8+7+7+7+chebyshevDistance[theirKingSquare][sq]] += us == WHITE ? 1 : -1;
+                features[8+7+7+7+7] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
                 passersCount += 1;
             }
             // Candidate passed pawn
             else if (candidate){
-                features[8+7+7+1+7*supported+rank] += us == WHITE ? 1 : -1;
+                features[8+7+7+7+7+1+7*supported+rank] += us == WHITE ? 1 : -1;
             }
         }
     }
@@ -1130,6 +1137,12 @@ std::vector<Score> getCurrentEvalWeights(){
         weights.push_back(passedRankBonus[1][rank].mg());
     }
     weights.push_back(PASSEDPATHBONUS.mg());
+    for (U8 dist = 0; dist < 7; dist++){
+        weights.push_back(ownKingPassedDist[dist].mg());
+    }
+    for (U8 dist = 0; dist < 7; dist++){
+        weights.push_back(theirKingPassedDist[dist].mg());
+    }
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(candidateRankBonus[0][rank].mg());
     }
@@ -1217,6 +1230,12 @@ std::vector<Score> getCurrentEvalWeights(){
     }
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(passedRankBonus[1][rank].eg());
+    }
+    for (U8 dist = 0; dist < 7; dist++){
+        weights.push_back(ownKingPassedDist[dist].eg());
+    }
+    for (U8 dist = 0; dist < 7; dist++){
+        weights.push_back(theirKingPassedDist[dist].eg());
     }
     weights.push_back(PASSEDPATHBONUS.eg());
     for (U8 rank = 0; rank < 7; rank++){
@@ -1507,7 +1526,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     extractPawnStructureFeats<WHITE>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares, passedCount, tensor);
     extractPawnStructureFeats<BLACK>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares, passedCount, tensor);
 
-    tensor += 8 + 7 + 7 + 1 + 7 + 7;
+    tensor += 8 + 7 + 7 + 7 + 7 + 1 + 7 + 7;
 
     // Calculate king safety
     // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
