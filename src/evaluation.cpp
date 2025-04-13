@@ -617,7 +617,7 @@ void extractPawnStructureFeats(
             // Fully passed pawn
             if (!stoppers) {
                 features[8+7*supported+rank] += us == WHITE ? 1 : -1;
-                features[8+7+7+chebyshevDistance[ourKingSquare]][sq] += us == WHITE ? 1 : -1;
+                features[8+7+7+chebyshevDistance[ourKingSquare][sq]] += us == WHITE ? 1 : -1;
                 features[8+7+7+7+chebyshevDistance[theirKingSquare][sq]] += us == WHITE ? 1 : -1;
                 features[8+7+7+7+7] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
                 passersCount += 1;
