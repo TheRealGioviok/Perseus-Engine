@@ -1744,6 +1744,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[0] += popcount(kingRing[BLACK] & weakSquares[BLACK]);
     tensor[1] += popcount(outerRing[BLACK] & weakSquares[BLACK]);
     tensor += 2;
+    tensor[0] += kingAttacks[whiteKing] & mobilityArea[WHITE] & ~attackedBy[BLACK] == 0;
+    tensor[1] += popcount(kingAttacks[whiteKing] & mobilityArea[WHITE] & ~attackedBy[BLACK]);
+    tensor++;
     tensor[0] += us == WHITE ? 1 : -1;
     tensor++;
 
@@ -1783,6 +1786,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     // Ring weakness attacks
     tensor[0] += popcount(kingRing[WHITE] & weakSquares[WHITE]);
     tensor[1] += popcount(outerRing[WHITE] & weakSquares[WHITE]);
+    tensor += 2;
+    tensor[0] += kingAttacks[blackKing] & mobilityArea[BLACK] & ~attackedBy[WHITE] == 0;
+    tensor[1] += popcount(kingAttacks[blackKing] & mobilityArea[BLACK] & ~attackedBy[WHITE]);
     tensor += 2;
     tensor[0] += us == BLACK ? 1 : -1;
     tensor++;
