@@ -626,11 +626,8 @@ void extractPawnStructureFeats(
 Score pestoEval(Position *pos){
     auto const& bb = pos->bitboards;
     const S32 sign = 1 - 2 * pos->side;
-    return 100 * sign * (popcount(bb[P]) - popcount(bb[p]) + 3 * (popcount(bb[N]) - popcount(bb[n]) + popcount(bb[B]) - popcount(bb[b])) + 5 * (popcount(bb[R]) - popcount(bb[r])) + 9 * (popcount(bb[Q]) - popcount(bb[q])));
     auto const& occ = pos->occupancies;
-    HashKey pawnHashKey = pos->pawnHashKey ^ enPassantKeysTable[pos->enPassant];
-    prefetch(&pawnEvalHash[pawnHashKey & 0x3FFFF]);
-    // Setup the game phase
+    
     S32 gamePhase = gamephaseInc[P] * popcount(bb[P] | bb[p]) +
                     gamephaseInc[N] * popcount(bb[N] | bb[n]) +
                     gamephaseInc[B] * popcount(bb[B] | bb[b]) +
@@ -638,6 +635,27 @@ Score pestoEval(Position *pos){
                     gamephaseInc[Q] * popcount(bb[Q] | bb[q]) +
                     gamephaseInc[K] * popcount(bb[K] | bb[k]);
     gamePhase = std::min(gamePhase, (S32)24); // If we have a lot of pieces, we don't want to go over 24
+
+    PScore val = 
+        materialValues[P] * (popcount(bb[P]) - popcount(bb[p])) +
+        materialValues[N] * (popcount(bb[N]) - popcount(bb[n])) +
+        materialValues[B] * (popcount(bb[B]) - popcount(bb[b])) +
+        materialValues[R] * (popcount(bb[R]) - popcount(bb[r])) +
+        materialValues[Q] * (popcount(bb[Q]) - popcount(bb[q]))
+    ;
+
+    
+    
+    return Score(
+        sign * 
+        (
+            val.mg() * gamePhase +
+            val.eg() * (24 - gamePhase)
+        ) / 24
+    );
+
+    HashKey pawnHashKey = pos->pawnHashKey ^ enPassantKeysTable[pos->enPassant];
+    prefetch(&pawnEvalHash[pawnHashKey & 0x3FFFF]);
 
     const Square whiteKing = lsb(bb[K]);
     const Square blackKing = lsb(bb[k]);
