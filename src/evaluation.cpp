@@ -705,9 +705,20 @@ Score pestoEval(Position *pos){
         bb[B] | bb[Q],
         bb[b] | bb[q]
     };
+
+    BitBoard allPins[2] = {
+        getPinnedPieces(occ[BOTH], occ[BOTH], whiteKing, RQmask[BLACK], BQmask[BLACK]),
+        getPinnedPieces(occ[BOTH], occ[BOTH], blackKing, RQmask[WHITE], BQmask[WHITE])
+    }; 
+
     BitBoard pinned[2] = {
-        getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
-        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
+        allPins[WHITE] & occ[WHITE],
+        allPins[BLACK] & occ[BLACK]
+    };
+
+    BitBoard discoveries[2] = {
+        allPins[WHITE] & occ[BLACK],
+        allPins[BLACK] & occ[WHITE]
     };
 
     const BitBoard blockedPawns[2] = {
@@ -1386,9 +1397,20 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
         bb[B] | bb[Q],
         bb[b] | bb[q]
     };
+    
+    BitBoard allPins[2] = {
+        getPinnedPieces(occ[BOTH], occ[BOTH], whiteKing, RQmask[BLACK], BQmask[BLACK]),
+        getPinnedPieces(occ[BOTH], occ[BOTH], blackKing, RQmask[WHITE], BQmask[WHITE])
+    }; 
+
     BitBoard pinned[2] = {
-        getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
-        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
+        allPins[WHITE] & occ[WHITE],
+        allPins[BLACK] & occ[BLACK]
+    };
+
+    BitBoard discoveries[2] = {
+        allPins[WHITE] & occ[BLACK],
+        allPins[BLACK] & occ[WHITE]
     };
 
     BitBoard blockedPawns[2] = {
@@ -1706,7 +1728,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor += 9;
 
 
-#define KINGSAFETYCOLOREDPARAMS 58
+#define KINGSAFETYCOLOREDPARAMS 62
     tensor[P] = innerAttacks[WHITE][P];
     tensor[N] = innerAttacks[WHITE][N];
     tensor[B] = innerAttacks[WHITE][B];
@@ -1744,6 +1766,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[0] += popcount(kingRing[BLACK] & weakSquares[BLACK]);
     tensor[1] += popcount(outerRing[BLACK] & weakSquares[BLACK]);
     tensor += 2;
+    tensor[0] += popcount(discoveries[WHITE]);
+    tensor[1] += popcount(pinned[BLACK]);
+    tensor+=2;
     tensor[0] += us == WHITE ? 1 : -1;
     tensor++;
 
@@ -1783,6 +1808,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     // Ring weakness attacks
     tensor[0] += popcount(kingRing[WHITE] & weakSquares[WHITE]);
     tensor[1] += popcount(outerRing[WHITE] & weakSquares[WHITE]);
+    tensor += 2;
+    tensor[0] += popcount(discoveries[BLACK]);
+    tensor[1] += popcount(pinned[WHITE]);
     tensor += 2;
     tensor[0] += us == BLACK ? 1 : -1;
     tensor++;
