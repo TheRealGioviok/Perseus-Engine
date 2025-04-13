@@ -1746,7 +1746,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor += 2;
     tensor[0] += (kingAttacks[blackKing] & mobilityArea[BLACK] & ~attackedBy[WHITE]) == 0;
     tensor[1] += popcount(kingAttacks[blackKing] & mobilityArea[BLACK] & ~attackedBy[WHITE]);
-    tensor++;
+    tensor+=2;
     tensor[0] += us == WHITE ? 1 : -1;
     tensor++;
 
