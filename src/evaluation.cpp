@@ -46,98 +46,99 @@ void initTables() {
         PSQTs[1][k][flipSquare(square)] = -PSQTs[1][K][square];
     }
 }
-constexpr PScore DOUBLEISOLATEDPEN = S(-15, -35);
+
+constexpr PScore DOUBLEISOLATEDPEN = S(-11, -38);
 constexpr PScore ISOLATEDPEN = S(-18, -20);
-constexpr PScore BACKWARDPEN = S(-6, 7);
-constexpr PScore DOUBLEDPEN = S(-20, -24);
-constexpr PScore SUPPORTEDPHALANX = S(1, 9);
-constexpr PScore ADVANCABLEPHALANX = S(7, 8);
-constexpr PScore R_SUPPORTEDPHALANX = S(4, 1);
+constexpr PScore BACKWARDPEN = S(-7, 7);
+constexpr PScore DOUBLEDPEN = S(-21, -25);
+constexpr PScore SUPPORTEDPHALANX = S(2, 9);
+constexpr PScore ADVANCABLEPHALANX = S(6, 10);
+constexpr PScore R_SUPPORTEDPHALANX = S(4, 3);
 constexpr PScore R_ADVANCABLEPHALANX = S(4, 0);
 constexpr PScore passedRankBonus[2][7] = {
-    {S(0, 0), S(10, -69), S(-5, -44), S(-2, 10), S(21, 64), S(44, 156), S(113, 230)}, 
-    {S(0, 0), S(0, 0), S(8, -60), S(10, -4), S(57, 64), S(157, 178), S(395, 249)}
+    {S(0, 0), S(-14, -108), S(-21, -76), S(-8, -10), S(20, 61), S(44, 172), S(120, 252)}, 
+    {S(0, 0), S(0, 0), S(-4, -96), S(3, -18), S(54, 79), S(141, 224), S(382, 301)}
 };
-constexpr PScore ownKingPassedDist[7] = { S(0, 0),  S(0, 0),  S(0, 0), S(0, 0),  S(0, 0),  S(0, 0), S(0, 0)};
-constexpr PScore theirKingPassedDist[7] = { S(0, 0),  S(0, 0),  S(0, 0), S(0, 0),  S(0, 0),  S(0, 0), S(0, 0)};
-constexpr PScore PASSEDPATHBONUS = S(-5, 23);
+constexpr PScore ownKingPassedDist[8] = {S(0, 0), S(27, 87), S(19, 63), S(20, 36), S(27, 18), S(29, 19), S(46, 11),S(34, -4) };
+constexpr PScore theirKingPassedDist[8] = { S(0,0),S(-115, -135), S(-49, -42), S(-40, -14), S(-24, -6), S(-11, 5), S(-2, 13), S(0,0)};
+constexpr PScore PASSEDPATHBONUS = S(-6, 22);
 constexpr PScore candidateRankBonus[2][7] = {
-    {S(0, 0), S(-35, 4), S(-25, 23), S(-9, 61), S(4, 128), S(34, 106), S(0, 0)}, 
-    {S(0, 0), S(0, 0), S(-6, 33), S(2, 67), S(46, 143), S(123, 169), S(0, 0)}
+    {S(0, 0), S(-33, 4), S(-24, 21), S(-9, 60), S(4, 130), S(28, 95), S(0, 0)}, 
+    {S(0, 0), S(0, 0), S(-6, 31), S(1, 66), S(45, 142), S(117, 173), S(0, 0)}
 };
-constexpr PScore INNERSHELTER = S(3, -11);
-constexpr PScore OUTERSHELTER = S(13, -8);
-constexpr PScore BISHOPPAIR = S(18, 115);
-constexpr PScore ROOKONOPENFILE = S(20, 8);
-constexpr PScore ROOKONSEMIOPENFILE = S(24, 11);
-constexpr PScore KNIGHTONEXTOUTPOST = S(31, 37);
-constexpr PScore BISHOPONEXTOUTPOST = S(39, 3);
-constexpr PScore KNIGHTONINTOUTPOST = S(24, 40);
-constexpr PScore BISHOPONINTOUTPOST = S(37, -2);
-constexpr PScore KNIGHTPROTECTOR = S(-6, -2);
-constexpr PScore BISHOPPROTECTOR = S(-5, -3);
-constexpr PScore BISHOPPAWNS = S(1, -4);
-constexpr PScore THREATSAFEPAWN = S(46, -42);
-constexpr PScore THREATPAWNPUSH = S(21, 41);
-constexpr PScore PAWNHANGING = S(0, -51);
-constexpr PScore NONPAWNHANGING = S(-7, -39);
+constexpr PScore INNERSHELTER = S(86, -17);
+constexpr PScore OUTERSHELTER = S(84, -1);
+constexpr PScore BISHOPPAIR = S(19, 115);
+constexpr PScore ROOKONOPENFILE = S(19, 5);
+constexpr PScore ROOKONSEMIOPENFILE = S(24, 10);
+constexpr PScore KNIGHTONEXTOUTPOST = S(31, 41);
+constexpr PScore BISHOPONEXTOUTPOST = S(37, 6);
+constexpr PScore KNIGHTONINTOUTPOST = S(24, 44);
+constexpr PScore BISHOPONINTOUTPOST = S(35, 2);
+constexpr PScore KNIGHTPROTECTOR = S(-7, -2);
+constexpr PScore BISHOPPROTECTOR = S(-6, -2);
+constexpr PScore BISHOPPAWNS = S(1, -3);
+constexpr PScore THREATSAFEPAWN = S(45, -39);
+constexpr PScore THREATPAWNPUSH = S(22, 41);
+constexpr PScore PAWNHANGING = S(-3, -40);
+constexpr PScore NONPAWNHANGING = S(-7, -40);
 constexpr PScore PAWNTHREAT[2][5] = {
-    {S(11, -68), S(32, 78), S(29, 119), S(30, 42), S(8, 36)}, 
-    {S(4, -28), S(10, 126), S(12, 165), S(24, 93), S(14, 96)}
+    {S(10, -57), S(34, 75), S(34, 115), S(28, 41), S(14, 25)}, 
+    {S(5, -32), S(10, 123), S(14, 160), S(21, 91), S(17, 85)}
 };
 constexpr PScore KNIGHTTHREAT[2][5] = {
-    {S(7, 20), S(0, -28), S(27, 18), S(59, -13), S(40, 16)}, 
-    {S(-6, 9), S(1, 21), S(27, 73), S(53, 57), S(43, 45)}
+    {S(6, 26), S(7, -41), S(28, 18), S(57, -9), S(40, 11)}, 
+    {S(-5, 9), S(6, 8), S(27, 72), S(51, 60), S(43, 39)}
 };
 constexpr PScore BISHOPTHREAT[2][5] = {
-    {S(13, 22), S(34, 25), S(-8, -38), S(59, -6), S(56, 26)}, 
-    {S(2, 15), S(35, 75), S(-6, 13), S(51, 67), S(50, 77)}
+    {S(12, 28), S(35, 27), S(-6, -39), S(57, -4), S(59, 21)}, 
+    {S(3, 13), S(35, 74), S(-5, 10), S(51, 66), S(51, 70)}
 };
 constexpr PScore ROOKTHREAT[2][5] = {
-    {S(2, 19), S(13, 46), S(22, 33), S(-5, -60), S(60, -15)}, 
-    {S(-10, 4), S(2, 24), S(7, 20), S(2, -5), S(45, 39)}
+    {S(-1, 25), S(12, 50), S(23, 37), S(2, -67), S(60, -15)}, 
+    {S(-10, 3), S(3, 22), S(9, 19), S(14, -18), S(45, 36)}
 };
 constexpr PScore QUEENTHREAT[2][5] = {
-    {S(12, -3), S(27, -3), S(27, 21), S(-1, -21), S(5, -137)}, 
-    {S(-1, 7), S(8, -2), S(5, 12), S(1, 5), S(10, -118)}
+    {S(10, 4), S(27, -1), S(27, 19), S(-1, -23), S(13, -158)}, 
+    {S(-2, 7), S(7, 0), S(4, 13), S(0, 5), S(18, -141)}
 };
-constexpr PScore KINGTHREAT = S(-5, -4);
-constexpr PScore QUEENINFILTRATION = S(6, 5);
+constexpr PScore KINGTHREAT = S(-3, -5);
+constexpr PScore QUEENINFILTRATION = S(15, -3);
 constexpr PScore RESTRICTEDSQUARES = S(4, 4);
-constexpr PScore TEMPO = S(20, 25);
+constexpr PScore TEMPO = S(44, 30);
 
-constexpr PScore PAWNATTACKINNERRING = S(23, -348);
-constexpr PScore KNIGHTATTACKINNERRING = S(83, -143);
-constexpr PScore BISHOPATTACKINNERRING = S(119, 12);
-constexpr PScore ROOKATTACKINNERRING = S(122, -7);
-constexpr PScore QUEENATTACKINNERRING = S(83, -219);
-constexpr PScore PAWNATTACKOUTERRING = S(77, -99);
-constexpr PScore KNIGHTATTACKOUTERRING = S(83, 90);
-constexpr PScore BISHOPATTACKOUTERRING = S(83, 138);
-constexpr PScore ROOKATTACKOUTERRING = S(32, 19);
-constexpr PScore QUEENATTACKOUTERRING = S(56, 185);
-constexpr PScore NOQUEENDANGER = S(-873, -542);
-constexpr PScore PINNEDSHELTERDANGER = S(103, -112);
-constexpr PScore FLANKATTACKS[2] = {S(31, -70), S(41, -86), };
-constexpr PScore FLANKDEFENSES[2] = {S(-34, 27), S(-10, 17), };
-constexpr PScore SAFECHECK[4] = {S(312, -31), S(86, 80), S(242, 160), S(226, 44), };
-constexpr PScore ALLCHECKS[4] = {S(77, 8), S(33, 134), S(70, 33), S(11, 61), };
-constexpr PScore SAFETYINNERSHELTER = S(-55, -46);
-constexpr PScore SAFETYOUTERSHELTER = S(-3, -241);
-constexpr PScore INNERWEAKNESS = S(94, -15);
-constexpr PScore OUTERWEAKNESS = S(15, 22);
-constexpr PScore KSTEMPO = S(31, 55);
+constexpr PScore PAWNATTACKINNERRING = S(14, 32);
+constexpr PScore KNIGHTATTACKINNERRING = S(-1, 106);
+constexpr PScore BISHOPATTACKINNERRING = S(27, 161);
+constexpr PScore ROOKATTACKINNERRING = S(27, 156);
+constexpr PScore QUEENATTACKINNERRING = S(21, -4);
+constexpr PScore PAWNATTACKOUTERRING = S(8, 38);
+constexpr PScore KNIGHTATTACKOUTERRING = S(25, 163);
+constexpr PScore BISHOPATTACKOUTERRING = S(30, 140);
+constexpr PScore ROOKATTACKOUTERRING = S(18, 61);
+constexpr PScore QUEENATTACKOUTERRING = S(28, 97);
+constexpr PScore NOQUEENDANGER = S(-440, -2274);
+constexpr PScore PINNEDSHELTERDANGER = S(0, 148);
+constexpr PScore FLANKATTACKS[2] = {S(-2, 23), S(4, 55), };
+constexpr PScore FLANKDEFENSES[2] = {S(-1, -50), S(3, 8), };
+constexpr PScore SAFECHECK[4] = {S(176, 100), S(25, 146), S(128, 252), S(74, 174), };
+constexpr PScore ALLCHECKS[4] = {S(3, 184), S(11, 115), S(12, 139), S(14, 23), };
+constexpr PScore SAFETYINNERSHELTER = S(233, -17);
+constexpr PScore SAFETYOUTERSHELTER = S(201, 25);
+constexpr PScore INNERWEAKNESS = S(36, 55);
+constexpr PScore OUTERWEAKNESS = S(8, -14);
+constexpr PScore KSTEMPO = S(-32, 26);
 
-constexpr Score COMPLEXITYPASSERS = 478;
-constexpr Score COMPLEXITYPAWNS = 1103;
-constexpr Score COMPLEXITYBLOCKEDPAIRS = -381;
-constexpr Score COMPLEXITYPAWNTENSION = -847;
-constexpr Score COMPLEXITYOUTFLANKING = -54;
-constexpr Score COMPLEXITYINFILTRATION = -716;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS = 10136;
-constexpr Score COMPLEXITYPAWNENDING = 13063;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3274;
-constexpr Score COMPLEXITYBIAS = -21045;
+constexpr Score COMPLEXITYPASSERS = 284;
+constexpr Score COMPLEXITYPAWNS = 1237;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -415;
+constexpr Score COMPLEXITYPAWNTENSION = -760;
+constexpr Score COMPLEXITYOUTFLANKING = -20;
+constexpr Score COMPLEXITYINFILTRATION = -812;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS = 10306;
+constexpr Score COMPLEXITYPAWNENDING = 13173;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3199;
+constexpr Score COMPLEXITYBIAS = -22451;
 
 // Function to access the table values
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
@@ -387,10 +388,13 @@ PawnStructureResult pawnStructureEval(
     const BitBoard (&pawnBlockage)[2],
     const BitBoard (&occ)[3],
     const BitBoard (&attackedBy)[2],
-    const BitBoard (multiAttacks)[2],
-    const BitBoard (defendedByPawn)[2])
+    const BitBoard (&multiAttacks)[2],
+    const BitBoard (&defendedByPawn)[2],
+    const Square   (kings)[2])
 {
     constexpr auto them = 1 - us;
+    const auto ourKing = kings[us];
+    const auto theirKing = kings[them];
     PawnStructureResult result = { PScore(0,0), PScore(0,0), 0ULL, 0 };
     // Use the appropriate pawn index: for WHITE we use P, for BLACK we use p.
     constexpr int ourPawnsIndex = (us == WHITE ? P : p);
@@ -459,8 +463,12 @@ PawnStructureResult pawnStructureEval(
                 score += passedRankBonus[supported][rank];
                 result.passedCount++;
                 result.passers |= sqb;
+                // Own king and opp king distance
+                extraScore += ownKingPassedDist[chebyshevDistance[ourKing][sq]];
+                extraScore += theirKingPassedDist[chebyshevDistance[theirKing][sq]];
                 // The passed–pawn path bonus.
                 extraScore += PASSEDPATHBONUS * popcount(advancePathMasked<us>(sqb, ~block));
+
             }
             // Candidate passed pawn
             else if (candidate){
@@ -482,8 +490,9 @@ inline PScore pawnEval(const HashKey hashKey,
                          const BitBoard (&pawnBlockage)[2],
                          const BitBoard (&occ)[3],
                          const BitBoard (&attackedBy)[2],
-                         const BitBoard (multiAttacks)[2],
-                         const BitBoard (defendedByPawn)[2],
+                         const BitBoard (&multiAttacks)[2],
+                         const BitBoard (&defendedByPawn)[2],
+                         const Square   (&kings)[2],
                          S32& passedCount)
 {
     PawnEvalHashEntry& entry = pawnEvalHash[hashKey & 0x3FFFF];
@@ -491,6 +500,11 @@ inline PScore pawnEval(const HashKey hashKey,
 
     // If the pawn evaluation hash entry is valid, use cached structure score and then recompute the non-cacheable passed–pawn bonus.
     if (entry.hash == hashKey) {
+
+        
+        const auto whiteKing = kings[WHITE];
+        const auto blackKing = kings[BLACK];
+
         score = entry.score;
         // For white passers (cached by storing all passers together; white pawns are in bb[P]).
         BitBoard whitePassers = entry.passers & bb[P];
@@ -499,6 +513,14 @@ inline PScore pawnEval(const HashKey hashKey,
             while (whitePassers) {
                 Square sq = popLsb(whitePassers);
                 BitBoard sqb = squareBB(sq);
+                // Own king and opp king distance
+                score += ownKingPassedDist[chebyshevDistance[whiteKing][sq]];
+                assert(blackKing <= h1);
+                assert(whiteKing <= h1);
+                assert(sq <= h1);
+                if (chebyshevDistance[blackKing][sq] >= 8) getchar();
+                score += theirKingPassedDist[chebyshevDistance[blackKing][sq]];
+                // The passed–pawn path bonus.
                 score += PASSEDPATHBONUS * popcount(advancePathMasked<WHITE>(sqb, ~block));
             }
         }
@@ -509,6 +531,10 @@ inline PScore pawnEval(const HashKey hashKey,
             while (blackPassers) {
                 Square sq = popLsb(blackPassers);
                 BitBoard sqb = squareBB(sq);
+                // Own king and opp king distance
+                score -= ownKingPassedDist[chebyshevDistance[blackKing][sq]];
+                score -= theirKingPassedDist[chebyshevDistance[whiteKing][sq]];
+                // The passed–pawn path bonus.
                 score -= PASSEDPATHBONUS * popcount(advancePathMasked<BLACK>(sqb, ~block));
             }
         }
@@ -517,8 +543,8 @@ inline PScore pawnEval(const HashKey hashKey,
     }
     else {
         // Recompute both sides’ pawn structure evaluation.
-        auto whiteEval = pawnStructureEval<WHITE>(bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, defendedByPawn);
-        auto blackEval = pawnStructureEval<BLACK>(bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, defendedByPawn);
+        auto whiteEval = pawnStructureEval<WHITE>(bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, defendedByPawn, kings);
+        auto blackEval = pawnStructureEval<BLACK>(bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, defendedByPawn, kings);
         
         passedCount += whiteEval.passedCount + blackEval.passedCount;
         // The overall score is the sum of the (cacheable) structure score and the (non-cached) passed–pawn path bonus.
@@ -618,13 +644,13 @@ void extractPawnStructureFeats(
             if (!stoppers) {
                 features[8+7*supported+rank] += us == WHITE ? 1 : -1;
                 features[8+7+7+chebyshevDistance[ourKingSquare][sq]] += us == WHITE ? 1 : -1;
-                features[8+7+7+7+chebyshevDistance[theirKingSquare][sq]] += us == WHITE ? 1 : -1;
-                features[8+7+7+7+7] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
+                features[8+7+7+8+chebyshevDistance[theirKingSquare][sq]] += us == WHITE ? 1 : -1;
+                features[8+7+7+8+8] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
                 passersCount += 1;
             }
             // Candidate passed pawn
             else if (candidate){
-                features[8+7+7+7+7+1+7*supported+rank] += us == WHITE ? 1 : -1;
+                features[8+7+7+8+8+1+7*supported+rank] += us == WHITE ? 1 : -1;
             }
         }
     }
@@ -843,7 +869,9 @@ Score pestoEval(Position *pos){
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
 
-    score += pawnEval(pawnHashKey, bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, pawnAttackedSquares, passedCount);
+    Square kings[2] = {whiteKing, blackKing};
+
+    score += pawnEval(pawnHashKey, bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, pawnAttackedSquares, kings, passedCount);
     
     // Calculate king safety
     // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
@@ -1137,10 +1165,10 @@ std::vector<Score> getCurrentEvalWeights(){
         weights.push_back(passedRankBonus[1][rank].mg());
     }
     weights.push_back(PASSEDPATHBONUS.mg());
-    for (U8 dist = 0; dist < 7; dist++){
+    for (U8 dist = 0; dist < 8; dist++){
         weights.push_back(ownKingPassedDist[dist].mg());
     }
-    for (U8 dist = 0; dist < 7; dist++){
+    for (U8 dist = 0; dist < 8; dist++){
         weights.push_back(theirKingPassedDist[dist].mg());
     }
     for (U8 rank = 0; rank < 7; rank++){
@@ -1231,10 +1259,10 @@ std::vector<Score> getCurrentEvalWeights(){
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(passedRankBonus[1][rank].eg());
     }
-    for (U8 dist = 0; dist < 7; dist++){
+    for (U8 dist = 0; dist < 8; dist++){
         weights.push_back(ownKingPassedDist[dist].eg());
     }
-    for (U8 dist = 0; dist < 7; dist++){
+    for (U8 dist = 0; dist < 8; dist++){
         weights.push_back(theirKingPassedDist[dist].eg());
     }
     weights.push_back(PASSEDPATHBONUS.eg());
@@ -1526,7 +1554,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     extractPawnStructureFeats<WHITE>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares, passedCount, tensor);
     extractPawnStructureFeats<BLACK>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares, passedCount, tensor);
 
-    tensor += 8 + 7 + 7 + 7 + 7 + 1 + 7 + 7;
+    tensor += 8 + 7 + 7 + 8 + 8 + 1 + 7 + 7;
 
     // Calculate king safety
     // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
