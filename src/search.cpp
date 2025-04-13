@@ -397,13 +397,13 @@ skipPruning:
 
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
-                S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
+                S32 granularR = reduction(depth, moveSearched, isQuiet, PVNode);
+                if (ttPv) granularR -= cutNode * lmrQuietTTPV();
                 if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
                     granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
                     if (cutNode) granularR += lmrQuietCutNode();
-                    if (ttPv) granularR -= cutNode * lmrQuietTTPV();
                 }
                 else {
                     if (currMoveScore < QUIETSCORE) { 
