@@ -515,10 +515,6 @@ inline PScore pawnEval(const HashKey hashKey,
                 BitBoard sqb = squareBB(sq);
                 // Own king and opp king distance
                 score += ownKingPassedDist[chebyshevDistance[whiteKing][sq]];
-                assert(blackKing <= h1);
-                assert(whiteKing <= h1);
-                assert(sq <= h1);
-                if (chebyshevDistance[blackKing][sq] >= 8) getchar();
                 score += theirKingPassedDist[chebyshevDistance[blackKing][sq]];
                 // The passed–pawn path bonus.
                 score += PASSEDPATHBONUS * popcount(advancePathMasked<WHITE>(sqb, ~block));
