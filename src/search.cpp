@@ -395,7 +395,7 @@ skipPruning:
             else noisy[noisyCount++] = currMove;
             // if (RootNode && depth >= LOGROOTMOVEDEPTH) std::cout << "info depth " << std::dec << (int)currSearch << " currmove " << getMoveString(currMove) << " currmovenumber " << moveSearched + 1 << " currmovescore " << currMoveScore << " hashfull " << hashfull(age) << std::endl; // << " kCoffs: " << kCoffs << "/" << kEncounters << std::endl;
 
-            if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
+            if (moveSearched > PVNode * 3 && depth >= 3 && (quietOrLosing || !ttPv))
             {
                 S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
                 if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
