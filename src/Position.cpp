@@ -822,6 +822,9 @@ bool Position::SEE(const Move move, const Score threshold) {
     while (true){
         attackers &= occupied;
         BitBoard ourAttackers = attackers & occupancies[side];
+
+        // MISSING HERE CHECK FOR PIN
+
         if (!ourAttackers) break; // We run out of attackers
 
         // Find the least valuable attacker
