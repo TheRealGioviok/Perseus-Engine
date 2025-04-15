@@ -372,6 +372,8 @@ FENkeyEval:
     ptKeys[K] = generatePtHashKey<K>();
     checkers = calculateCheckers();
     generateThreats();
+    blockers[WHITE] = getPinnedPieces(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q]);
+    blockers[BLACK] = getPinnedPieces(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q]);
     return true;
 }
 
@@ -633,6 +635,8 @@ bool Position::makeMove(Move move)
         fiftyMove++;
     checkers = calculateCheckers();
     generateThreats();
+    blockers[WHITE] = getPinnedPieces(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q]);
+    blockers[BLACK] = getPinnedPieces(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q]);
     return true;
 }
 
@@ -802,6 +806,19 @@ bool Position::SEE(const Move move, const Score threshold) {
 
     U8 side = us ^ 1; // Side of the attacker, flipped (one move already executed)
 
+    BitBoard pinned[2] = {
+        blockers[WHITE] & occupancies[WHITE],
+        blockers[BLACK] & occupancies[BLACK]
+    };
+
+    BitBoard kingRays[2] = {
+        alignedSquares[to][lsb(bitboards[K])],
+        alignedSquares[to][lsb(bitboards[k])],
+    };
+
+    BitBoard pinned = pinned[WHITE] | pinned[BLACK];
+    BitBoard pinnedAligned = (pinned[WHITE] & kingRays[WHITE]) | (pinned[BLACK] & kingRays[BLACK]);
+
     while (true){
         attackers &= occupied;
         BitBoard ourAttackers = attackers & occupancies[side];
@@ -880,6 +897,8 @@ void Position::reflect() {
     ptKeys[Q] = generatePtHashKey<Q>();
     ptKeys[K] = generatePtHashKey<K>();
     generateThreats();
+    blockers[WHITE] = getPinnedPieces(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q]);
+    blockers[BLACK] = getPinnedPieces(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q]);
 }
 
 std::string Position::getFEN() {
@@ -1729,6 +1748,7 @@ void Position::makeNullMove(){
     plyFromNull = 0;
     checkers = 0ULL; // null moves will never be done while in check.
     generateThreats();
+    // Pins dont change after null move
 }
 
 UndoInfo::UndoInfo(Position& position){
@@ -1748,6 +1768,7 @@ UndoInfo::UndoInfo(Position& position){
     memcpy(bitboards, position.bitboards, sizeof(BitBoard) * 12);
     memcpy(occupancies, position.occupancies, sizeof(BitBoard) * 3);
     memcpy(ptHashKey, position.ptKeys, sizeof(HashKey) * 6);
+    memcpy(blockers, position.blockers, sizeof(BitBoard) * 2);
 }
 
 void UndoInfo::undoMove(Position& position, Move move){
@@ -1779,6 +1800,7 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.checkers = checkers;
     memcpy(position.psqtScores, psqtScores, sizeof(PScore) * 8);
     memcpy(position.occupancies, occupancies, sizeof(BitBoard) * 3);
+    memcpy(position.blockers, blockers, sizeof(BitBoard) * 2);
 }
 
 void UndoInfo::undoNullMove(Position& position){
@@ -1795,4 +1817,5 @@ void UndoInfo::undoNullMove(Position& position){
     position.side = side;
     position.checkers = checkers;
     position.threats = threats;
+    // Pins dont change with null moves
 }

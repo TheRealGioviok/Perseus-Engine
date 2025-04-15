@@ -31,6 +31,7 @@ struct Position{
     BitBoard bitboards[12];
     BitBoard occupancies[3];
     BitBoard checkers;
+    BitBoard blockers[2];
     U8 side;
     U8 enPassant;
     U8 fiftyMove; // 50 move rule counter, number of plies since the last irreversible move
@@ -252,6 +253,7 @@ struct UndoInfo {
     BitBoard bitboards[12];
     BitBoard occupancies[3];
     BitBoard checkers;
+    BitBoard blockers[2];
     /**
      * @brief The constructor of the UndoInfo class.
      * @param position The position to store the information from.

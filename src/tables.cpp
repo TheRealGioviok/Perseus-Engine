@@ -49,6 +49,7 @@ BitBoard outerRing[64];
 BitBoard fiveSquare[64]; // The 5x5 square
 BitBoard kingShelter[2][64]; // The king shelter
 BitBoard kingFlank[2][8];
+BitBoard alignedSquares[64][64];
 
 // Precomputed sigmoid king safety tables
 std::array<S32, KSTABLESIZE> kingSafetyMgTable;
@@ -316,6 +317,37 @@ void initEvalTables() {
         flank = east(east(flank));
         kingFlank[WHITE][5] = kingFlank[WHITE][6] = flank;
     }
+    // Aligned squares
+    {
+        for (Square sq1 = a8; sq1 <= h1; sq1++) {
+            int f1 = fileOf(sq1);
+            int r1 = rankOf(sq1);
+
+            for (Square sq2 = a8; sq2 <= h1; sq2++) {
+                int f2 = fileOf(sq2);
+                int r2 = rankOf(sq2);
+
+                if (sq1 == sq2) {
+                    alignedSquares[sq1][sq2] = 0ULL;
+                }
+                else if (r1 == r2) {
+                    alignedSquares[sq1][sq2] = ranks(r1);
+                }
+                else if (f1 == f2) {
+                    alignedSquares[sq1][sq2] = files(f1);
+                }
+                else if (abs(f1 - f2) == abs(r1 - r2)) {
+                    // Use bishop attacks with empty occupancy to get full diagonals
+                    alignedSquares[sq1][sq2] = (getBishopAttacksOnTheFly(sq1, 0ULL) & getBishopAttacksOnTheFly(sq2, 0ULL)) | squareBB(sq1) | squareBB(sq2);
+                }
+                else {
+                    alignedSquares[sq1][sq2] = 0ULL;
+                }
+            }
+        }
+    }
+
+
 }
 
 void initTropism(){
