@@ -333,7 +333,7 @@ skipPruning:
             U64 nodesBefore = nodes;
             // // Singular extension
             Depth extension = 0;
-            if (!excludedMove){
+            if (!excludedMove && ply < currSearch * 2){
                 
                 if (i == 0 // Can only happen on ttMove
                     && !RootNode 
@@ -356,6 +356,9 @@ skipPruning:
                         extension = 1;
                         if (!PVNode && singularScore + doubleExtensionMargin() < singularBeta) {
                             extension = 2;
+                            if (okToReduce(currMove) && singularScore + tripleExtensionMargin() < singularBeta) {
+                                extension = 3;
+                            }
                         }
                         // Increase singular activations
                         // ++seActivations;

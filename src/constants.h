@@ -210,6 +210,7 @@ TUNE_PARAM(maximumDoubleExtensions, 7, 1, 9, 1, 0.002);
 TUNE_PARAM(doubleExtensionMargin, 23, 1, 50, 2.5, 0.002);
 NO_TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
 TUNE_PARAM(doubleNegExtMargin, 25, 1, 100, 5, 0.002);
+TUNE_PARAM(tripleExtensionMargin, 92, 25, 225, 10, 0.002);
 
 // History Pruning values
 TUNE_PARAM(historyPruningMultiplier, -1341, -5120, -1024, 205, 0.002);
