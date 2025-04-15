@@ -770,21 +770,24 @@ bool Position::insufficientMaterial() {
     }
 }
 
-// Thanks to Weiss chess engine for a clean implementation of this function
-bool Position::SEE(const Move move, const Score threshold) {
-    if (isCastling(move)) return threshold <= 0; // Castling moves don't capture anything, and they don't put the king nor the rook in danger (because of the check rule for castling)
+bool Position::SEE(const Move move, const Score threshold){
 
-    Square from = moveSource(move);
-    Square to = moveTarget(move);
+    // Castling early exit
+    if (isCastling(move)) return threshold <= 0;
+
+    const Square src = moveSource(move);
+    const Square dst = moveTarget(move);
+
+    Score value = 0;
 
     Piece target = moveCapture(move);
     Piece promo = movePromotion(move);
-    Score value = pieceValues[target] - threshold;
+    Score value = (isEnPassant(move) ? pieceValues[P] : pieceValues[target]) - threshold;
 
     // If the move is a promotion, we need to consider the value of the promoted piece (and remove the value of the pawn)
     if (promo != NOPIECE) value += pieceValues[promo] - pieceValues[P];
 
-    // Check for early SEE exit (if the threshold is still negative)
+    // Check for early SEE exit (if the threshold is still negative, so even if we dont get recaptured we lose)
     if (value < 0) return false;
 
     Piece attacker = movePiece(move);
@@ -793,14 +796,13 @@ bool Position::SEE(const Move move, const Score threshold) {
     value -= promo != NOPIECE ? pieceValues[promo] : pieceValues[attacker];
     if (value >= 0) return true;
 
-    // Initialize the attackers, occupancies, vertical and horizontal sliders
-    BitBoard occupied = occupancies[BOTH] ^ squareBB(from);
-    if (isEnPassant(move)) occupied ^= squareBB(to + (side == WHITE ? 8 : -8));
-
+    // Init bbs
     BitBoard diagonalSliders = bitboards[Q] | bitboards[q] | bitboards[B] | bitboards[b];
     BitBoard orthogonalSliders = bitboards[Q] | bitboards[q] | bitboards[R] | bitboards[r];
 
-    BitBoard attackers = attacksToPre(to, occupied, diagonalSliders, orthogonalSliders);
+    BitBoard allPieces = occupancies[BOTH] ^ squareBB(src);
+    if (isEnPassant(move)) allPieces ^= squareBB(dst + (side == WHITE ? 8 : -8));
+    BitBoard attackers = attacksToPre(dst, allPieces, diagonalSliders, orthogonalSliders) ^ squareBB(src);
 
     const U8 us = attacker < 6 ? WHITE : BLACK; // Side of the attacker
 
@@ -812,18 +814,21 @@ bool Position::SEE(const Move move, const Score threshold) {
     };
 
     BitBoard kingRays[2] = {
-        alignedSquares[to][lsb(bitboards[K])],
-        alignedSquares[to][lsb(bitboards[k])],
+        alignedSquares[dst][lsb(bitboards[K])],
+        alignedSquares[dst][lsb(bitboards[k])],
     };
 
-    BitBoard pinned = pinned[WHITE] | pinned[BLACK];
-    BitBoard pinnedAligned = (pinned[WHITE] & kingRays[WHITE]) | (pinned[BLACK] & kingRays[BLACK]);
+    const BitBoard pinned = pinned[WHITE] | pinned[BLACK];
+    const BitBoard pinnedAligned = (pinned[WHITE] & kingRays[WHITE]) | (pinned[BLACK] & kingRays[BLACK]);
 
     while (true){
-        attackers &= occupied;
+        attackers &= allPieces;
         BitBoard ourAttackers = attackers & occupancies[side];
 
         // MISSING HERE CHECK FOR PIN
+        if (pinners[us] & allPieces){
+            ourAttackers &= ~pinned | pinnedAligned;
+        }
 
         if (!ourAttackers) break; // We run out of attackers
 
@@ -845,17 +850,16 @@ bool Position::SEE(const Move move, const Score threshold) {
         }
 
         // Remove the used piece from the board
-        clearBit(occupied, lsb(ourAttackers & (bitboards[pt] | bitboards[pt + 6])));
+        clearBit(allPieces, lsb(ourAttackers & (bitboards[pt] | bitboards[pt + 6])));
 
         // Update the attackers
-        if (pt == P || pt == B || pt == Q) attackers |= getBishopAttack(to, occupied) & diagonalSliders;
-        if (pt == R || pt == Q) attackers |= getRookAttack(to, occupied) & orthogonalSliders;
+        if (pt == P || pt == B || pt == Q) attackers |= getBishopAttack(dst, allPieces) & diagonalSliders;
+        if (pt == R || pt == Q) attackers |= getRookAttack(dst, allPieces) & orthogonalSliders;
     }
 
     // Check who runs out of attackers
     return side != us;
 }
-
 
 void Position::reflect() {
     // reflect psqt
