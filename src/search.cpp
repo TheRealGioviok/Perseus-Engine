@@ -158,6 +158,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     clearKillers(ss+1);
     // Clear excluded move
     (ss+1)->excludedMove = noMove;
+    // Update own threats on stack
+    ss->threats = pos.threats;
 
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta, ss);
@@ -487,8 +489,10 @@ skipPruning:
         return excludedMove ? alpha : (inCheck ? matedIn(ply) : randomizedDrawScore(nodes)); // Randomize draw score so that we try to explore different lines
         // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes);
     }
-        // 
-        // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
+    
+    if (!bestMove && okToReduce((ss-1)->move) && (ss-1)->move){
+        updateHistoryMove(!pos.side, (ss-1)->move, (ss-1)->threats, statBonus(depth));
+    }
 
     if (!stopped && !excludedMove){
         if (!inCheck
@@ -547,6 +551,9 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
             }
         }
     }
+
+    // Update threats
+    ss->threats = pos.threats;
 
     const bool ttPv = PVNode || (ttFlags & hashPVMove); 
 
@@ -643,6 +650,8 @@ void Game::startSearch(bool ageTT = true)
     SStack* ss = stack + 4;
 
     for (int i = -4; i < maxPly + 1; i++) (ss+i)->wipe();
+
+    ss->threats = pos.threats;
 
     Score delta = ASPIRATIONWINDOW;
     nodes = 0ULL;
