@@ -199,7 +199,7 @@ inline BitBoard xRayBishopAttacks(BitBoard occupancy, BitBoard blockers, Square 
 }
 
 /**
- * @brief The getPinnedPieces function returns the squares of a certain bitboard that are pinned to a certain square.
+ * @brief The getPinnedPieces function returns the squares of a certain bitboard that are blockers to a certain square. It also updates the pinner and discover pieces.
  * @param occupancy The general occupancy.
  * @param ownPieces The own pieces. (the pieces that are candidates to be pinned)
  * @param pinSquare The square that is pinned.
@@ -207,13 +207,16 @@ inline BitBoard xRayBishopAttacks(BitBoard occupancy, BitBoard blockers, Square 
  * @param opBQ The opponent's Bishop and Queen bitboard.
  * @return The pinned pieces, if any.
  */
-inline BitBoard getPinnedPieces(BitBoard occupancy, BitBoard ownPieces, Square pinSquare, BitBoard opRQ, BitBoard opBQ){
-    BitBoard pinned = 0;
-    BitBoard pinner = (xRayRookAttacks(occupancy, ownPieces, pinSquare) & opRQ) | (xRayBishopAttacks(occupancy, ownPieces, pinSquare) & opBQ); // We generate the pinners for the rooks
+inline BitBoard getPinnedPieces(BitBoard occupancy, BitBoard ownPieces, Square pinSquare, BitBoard opRQ, BitBoard opBQ, BitBoard& pinners, BitBoard& discover){
+    BitBoard blockers = 0;
+    BitBoard pinner = (xRayRookAttacks(occupancy, occupancy, pinSquare) & opRQ) | (xRayBishopAttacks(occupancy, occupancy, pinSquare) & opBQ); // We generate the pinners for the rooks
+    
     while (pinner){
         Square sq = popLsb(pinner);
-        pinned |= squaresBetween[sq][pinSquare]; // We add the squares between the pin square and the pinner to the pinned pieces
+        const BitBoard between = squaresBetween[sq][pinSquare]; // Either empty or one square, bc of pinner calculation
+        blockers |= between;
+        if (between & ownPieces) 
     }
     // Only return own pieces
-    return pinned & ownPieces;
+    return blockers & ownPieces;
 }
