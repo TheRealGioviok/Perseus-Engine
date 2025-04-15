@@ -194,9 +194,9 @@ NO_TUNE_PARAM(RFPDepth, 8, 5, 10, .5, 0.002);
 // NMP values
 TUNE_PARAM(nmpMarginBias, 175, 100, 300, 10, 0.002);
 TUNE_PARAM(nmpDepthMargin, 25, 10, 50, 2, 0.002);
-NO_TUNE_PARAM(nmpDepthDivisor, 4, 2, 6, .5, 0.002);
+NO_TUNE_PARAM(nmpDepthDivisor, 5, 2, 6, .5, 0.002);
 TUNE_PARAM(nmpScoreDivisor, 216, 100, 300, 10, 0.002);
-NO_TUNE_PARAM(nmpQ1, 3, 1, 5, .5, 0.002);
+NO_TUNE_PARAM(nmpQ1, 4, 1, 5, .5, 0.002);
 NO_TUNE_PARAM(nmpQ2, 3, 0, 5, .5, 0.002);
 
 // Razoring value

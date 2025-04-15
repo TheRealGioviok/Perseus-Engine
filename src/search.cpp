@@ -232,8 +232,9 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
         // Null move pruning
         if (ply >= nmpPlies &&
-            depth >= 3 &&
+            depth >= 4 &&
             eval >= beta &&
+            !(ttFlags == hashUPPER && ttScore < beta) &&
             ss->staticEval >= beta + nmpMarginBias() - depth * nmpDepthMargin() &&
             pos.hasNonPawns())
         {
