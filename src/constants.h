@@ -156,12 +156,12 @@ TUNE_PARAM(historyMalusLinDepth, 243, 1, 1024, 51, 0.002);
 TUNE_PARAM(historyMalusOffset, -66, -1024, 1024, 102, 0.002);
 
 // LMR table values
-TUNE_PARAM(lmrDepthValue, 965, 250, 1750, 75, 0.002);
-TUNE_PARAM(lmrMoveValue, 1120, 250, 1750, 75, 0.002);
-TUNE_PARAM(lmrA0, 794, 250, 1750, 75, 0.002);
+TUNE_PARAM(lmrDepthValue, 965, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrMoveValue, 1120, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrA0, 794, 500, 1500, 50, 0.002);
 TUNE_PARAM(lmrC0, -293, -1000, 1000, 100, 0.002);
-TUNE_PARAM(lmrA1, 716, 250, 1750, 75, 0.002);
-TUNE_PARAM(lmrC1, 669, 250, 1750, 75, 0.002);
+TUNE_PARAM(lmrA1, 716, 500, 1500, 50, 0.002);
+TUNE_PARAM(lmrC1, 669, 500, 1500, 50, 0.002);
 
 // LMR additionals
 TUNE_PARAM(lmrCieckA, 4238, 2048, 8192, 307, 0.002)
@@ -191,7 +191,7 @@ TUNE_PARAM(lmpA1, 997, 250, 1750, 75, 0.002);
 TUNE_PARAM(lmpC1, 2958, 500, 5000, 225, 0.002);
 
 // RFP values
-TUNE_PARAM(futilityMarginDelta, 99, 45, 195, 8, 0.002);
+TUNE_PARAM(futilityMarginDelta, 99, 45, 145, 5, 0.002);
 NO_TUNE_PARAM(RFPDepth, 8, 5, 10, .5, 0.002);
 
 // NMP values
@@ -209,7 +209,7 @@ NO_TUNE_PARAM(razorDepth, 3, 2, 5, .5, 0.002);
 
 // Singular Extensions
 TUNE_PARAM(singularDepthMultiplier, 10, 1, 30, 2, 0.002);
-TUNE_PARAM(doubleExtensionMargin, 23, 1, 50, 3, 0.002);
+TUNE_PARAM(doubleExtensionMargin, 23, 1, 50, 2.5, 0.002);
 NO_TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
 TUNE_PARAM(doubleNegExtMargin, 25, 1, 100, 5, 0.002);
 
@@ -224,21 +224,21 @@ NO_TUNE_PARAM(IIRDepth, 6, 3, 8, .5, 0.002);
 TUNE_PARAM(futPruningMultiplier, 54, 30, 130, 5, 0.002);
 TUNE_PARAM(futPruningAdd, 241, 150, 350, 10, 0.002);
 NO_TUNE_PARAM(futPruningDepth, 9, 6, 10, 0.5, 0.002);
-TUNE_PARAM(qsFutilityMargin, 68, 0, 250, 13, 0.002)
+TUNE_PARAM(qsFutilityMargin, 68, 0, 150, 8, 0.002)
 
 // Move ordering values
 TUNE_PARAM(captScoreMvvMultiplier, 14, 8, 32, 1, 0.002)
 
 // Time management values
-TUNE_PARAM(timeTmA, 140, 10, 200, 9, 0.002)
-TUNE_PARAM(timeTmB, 979, 0, 1000, 50, 0.002)
-TUNE_PARAM(timeTmOptimScale, 403, 100, 1000, 45, 0.002)
-TUNE_PARAM(nodesTmMax, 1869, 1500, 2500, 50, 0.002)
-TUNE_PARAM(nodesTmMul, 1346, 750, 1500, 38, 0.002)
+TUNE_PARAM(timeTmA, 140, 10, 200, 2, 0.002)
+TUNE_PARAM(timeTmB, 979, 0, 1000, 13, 0.002)
+TUNE_PARAM(timeTmOptimScale, 403, 100, 1000, 11, 0.002)
+TUNE_PARAM(nodesTmMax, 1869, 1500, 2500, 13, 0.002)
+TUNE_PARAM(nodesTmMul, 1346, 750, 1500, 10, 0.002)
 
 // CorrHist scale values
-TUNE_PARAM(MAXCORRHISTUNSCALED, 29, 8, 128, 6, 0.002)
-TUNE_PARAM(MAXCORRHISTMILLIUPDATE, 222, 16, 512, 25, 0.002)
+TUNE_PARAM(MAXCORRHISTUNSCALED, 29, 16, 128, 6, 0.002)
+TUNE_PARAM(MAXCORRHISTMILLIUPDATE, 222, 128, 512, 19, 0.002)
 
 // CorrHist correction values
 TUNE_PARAM(pawnCorrWeight, 1096, 0, 2048, 204, 0.002)
@@ -255,7 +255,7 @@ TUNE_PARAM(T8CorrWeight, 962, 0, 2048, 204, 0.002)
 TUNE_PARAM(T9CorrWeight, 1067, 0, 2048, 204, 0.002)
 
 // CorrHist update values
-TUNE_PARAM(pawnCorrUpdate, 1014, 0, 2048, 20425000, 0.002)
+TUNE_PARAM(pawnCorrUpdate, 1014, 0, 2048, 204, 0.002)
 TUNE_PARAM(nonPawnCorrUpdate, 1029, 0, 2048, 204, 0.002)
 TUNE_PARAM(T0CorrUpdate, 1009, 0, 2048, 204, 0.002)
 TUNE_PARAM(T1CorrUpdate, 1000, 0, 2048, 204, 0.002)
