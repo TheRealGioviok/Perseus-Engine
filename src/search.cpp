@@ -134,7 +134,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
     if (ttScore != noScore)
     {
-        if (!PVNode && ttDepth >= depth)
+        if (!PVNode && ttDepth >= depth && (ttScore <= alpha || cutNode))
         {
             if (ttBound == hashEXACT)
                 return ttScore;
@@ -370,12 +370,6 @@ skipPruning:
                     else if (cutNode){
                         extension = -1;
                     }
-                    
-                    // else{
-                    //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
-                    // }
-                    // Update avg dist
-                    //avgDist += singularScore - singularBeta;
                 }
                 else if (inCheck)
                     extension = 1;
