@@ -151,9 +151,9 @@ TUNE_PARAM(historyBonusLinDepth, 204, 1, 1024, 51, 0.002);
 TUNE_PARAM(historyBonusOffset, -147, -1024, 1024, 102, 0.002);
 
 TUNE_PARAM(maxHistoryMalus, 1039, 1, 4096, 205, 0.002);
-TUNE_PARAM(historyMalusQuadDepth, 5, 1, 32, 154, 0.002);
-TUNE_PARAM(historyMalusLinDepth, 243, 1, 1536, 154, 0.002);
-TUNE_PARAM(historyMalusOffset, -66, -1024, 1024, 204, 0.002);
+TUNE_PARAM(historyMalusQuadDepth, 5, 1, 32, 2, 0.002);
+TUNE_PARAM(historyMalusLinDepth, 243, 1, 1024, 51, 0.002);
+TUNE_PARAM(historyMalusOffset, -66, -1024, 1024, 102, 0.002);
 
 // LMR table values
 TUNE_PARAM(lmrDepthValue, 965, 250, 1750, 75, 0.002);
@@ -255,7 +255,7 @@ TUNE_PARAM(T8CorrWeight, 962, 0, 2048, 204, 0.002)
 TUNE_PARAM(T9CorrWeight, 1067, 0, 2048, 204, 0.002)
 
 // CorrHist update values
-TUNE_PARAM(pawnCorrUpdate, 1014, 0, 2048, 204, 0.002)
+TUNE_PARAM(pawnCorrUpdate, 1014, 0, 2048, 20425000, 0.002)
 TUNE_PARAM(nonPawnCorrUpdate, 1029, 0, 2048, 204, 0.002)
 TUNE_PARAM(T0CorrUpdate, 1009, 0, 2048, 204, 0.002)
 TUNE_PARAM(T1CorrUpdate, 1000, 0, 2048, 204, 0.002)
