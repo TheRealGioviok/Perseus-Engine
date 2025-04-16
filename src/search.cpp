@@ -136,19 +136,13 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     {
         if (!PVNode && ttDepth >= depth)
         {
-            if (ttBound == hashEXACT)
+            if (ttBound == hashEXACT
+                || (ttBound == hashLOWER && ttScore >= beta)
+                || (ttBound == hashUPPER && ttScore <= alpha) )
                 return ttScore;
-            if ((ttBound == hashLOWER))
-                alpha = std::max(alpha, ttScore);
-            else if ((ttBound == hashUPPER))
-                beta = std::min(beta, ttScore);
-            if (alpha >= beta) {
-                // Update best move history
-                // Square from = moveSource(ttMove);
-                // Square to = moveTarget(ttMove);
-                // updateHistoryBonus(&historyTable[pos.side][indexFromTo(from, to)], depth, true);
-                return ttScore;
-            }
+            // Extension idea from stormphrax: if we don't cut at low depth with a higher depth entry, extend this node
+            else if (depth <= 6)
+                ++depth;
         }
     }
 
@@ -220,7 +214,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     if (!PVNode && !excludedMove)
     {
         // RFP
-        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - std::max((Score)15,futilityMargin(depth, improving)) >= beta) // && !excludedMove)
+        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - std::max(15,futilityMargin(depth, improving) - 60*cutNode) >= beta) // && !excludedMove)
             return eval;
         
         // Razoring
