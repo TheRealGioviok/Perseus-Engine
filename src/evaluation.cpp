@@ -58,11 +58,13 @@ constexpr PScore passedRankBonus[2][7] = {
     {S(0, 0), S(10, -69), S(-5, -44), S(-2, 10), S(21, 64), S(44, 156), S(113, 230)}, 
     {S(0, 0), S(0, 0), S(8, -60), S(10, -4), S(57, 64), S(157, 178), S(395, 249)}
 };
+constexpr PScore passedFileBonus[4] = {S(0,0),S(0,0),S(0,0),S(0,0)};
 constexpr PScore PASSEDPATHBONUS = S(-5, 23);
 constexpr PScore candidateRankBonus[2][7] = {
     {S(0, 0), S(-35, 4), S(-25, 23), S(-9, 61), S(4, 128), S(34, 106), S(0, 0)}, 
     {S(0, 0), S(0, 0), S(-6, 33), S(2, 67), S(46, 143), S(123, 169), S(0, 0)}
 };
+constexpr PScore candidatePassedFileBonus[4] = {S(0,0),S(0,0),S(0,0),S(0,0)};
 constexpr PScore INNERSHELTER = S(3, -11);
 constexpr PScore OUTERSHELTER = S(13, -8);
 constexpr PScore BISHOPPAIR = S(18, 115);
@@ -459,10 +461,12 @@ PawnStructureResult pawnStructureEval(
                 result.passers |= sqb;
                 // The passed–pawn path bonus.
                 extraScore += PASSEDPATHBONUS * popcount(advancePathMasked<us>(sqb, ~block));
+                score += passedFileBonus[std::min(7-fileOf(sq), (S32)fileOf(sq))];
             }
             // Candidate passed pawn
             else if (candidate){
                 score += candidateRankBonus[supported][rank];
+                score += candidatePassedFileBonus[std::min(7-fileOf(sq), (S32)fileOf(sq))];
             }
         }
     }
@@ -612,12 +616,15 @@ void extractPawnStructureFeats(
             // Fully passed pawn
             if (!stoppers) {
                 features[8+7*supported+rank] += us == WHITE ? 1 : -1;
-                features[8+7+7] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
+
+                features[8+7+7+std::min(7-fileOf(sq), (S32)fileOf(sq))] += us == WHITE ? 1 : -1;
+                features[8+7+7+4] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
                 passersCount += 1;
             }
             // Candidate passed pawn
             else if (candidate){
-                features[8+7+7+1+7*supported+rank] += us == WHITE ? 1 : -1;
+                features[8+7+7+4+1+7*supported+rank] += us == WHITE ? 1 : -1;
+                features[8+7+7+4+1+7+7+std::min(7-fileOf(sq), (S32)fileOf(sq))] += us == WHITE ? 1 : -1;
             }
         }
     }
@@ -1129,12 +1136,18 @@ std::vector<Score> getCurrentEvalWeights(){
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(passedRankBonus[1][rank].mg());
     }
+    for (U8 file = 0; file < 4; file++){
+        weights.push_back(passedFileBonus[file].mg());
+    }
     weights.push_back(PASSEDPATHBONUS.mg());
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(candidateRankBonus[0][rank].mg());
     }
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(candidateRankBonus[1][rank].mg());
+    }
+    for (U8 file = 0; file < 4; file++){
+        weights.push_back(candidatePassedFileBonus[file].mg());
     }
 
     // Add the shelter weights
@@ -1218,12 +1231,18 @@ std::vector<Score> getCurrentEvalWeights(){
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(passedRankBonus[1][rank].eg());
     }
+    for (U8 file = 0; file < 4; file++){
+        weights.push_back(passedFileBonus[file].eg());
+    }
     weights.push_back(PASSEDPATHBONUS.eg());
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(candidateRankBonus[0][rank].eg());
     }
     for (U8 rank = 0; rank < 7; rank++){
         weights.push_back(candidateRankBonus[1][rank].eg());
+    }
+    for (U8 file = 0; file < 4; file++){
+        weights.push_back(candidatePassedFileBonus[file].eg());
     }
 
     // Add the shelter weights
@@ -1507,7 +1526,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     extractPawnStructureFeats<WHITE>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares, passedCount, tensor);
     extractPawnStructureFeats<BLACK>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares, passedCount, tensor);
 
-    tensor += 8 + 7 + 7 + 1 + 7 + 7;
+    tensor += 8 + 7 + 7 + 4 + 1 + 7 + 7 + 4;
 
     // Calculate king safety
     // King shield. The inner shield is direcly in front of the king so it should be at least supported by the king itself
