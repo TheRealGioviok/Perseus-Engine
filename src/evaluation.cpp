@@ -615,16 +615,20 @@ void extractPawnStructureFeats(
         if (!(ahead(sq) & bb[ourPawnsIndex])){
             // Fully passed pawn
             if (!stoppers) {
+                U8 file = fileOf(sq);
+                if (file >= 4) file = 7 - file;
                 features[8+7*supported+rank] += us == WHITE ? 1 : -1;
 
-                features[8+7+7+std::min(7-fileOf(sq), (S32)fileOf(sq))] += us == WHITE ? 1 : -1;
+                features[8+7+7+file] += us == WHITE ? 1 : -1;
                 features[8+7+7+4] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
                 passersCount += 1;
             }
             // Candidate passed pawn
             else if (candidate){
+                U8 file = fileOf(sq);
+                if (file >= 4) file = 7 - file;
                 features[8+7+7+4+1+7*supported+rank] += us == WHITE ? 1 : -1;
-                features[8+7+7+4+1+7+7+std::min(7-fileOf(sq), (S32)fileOf(sq))] += us == WHITE ? 1 : -1;
+                features[8+7+7+4+1+7+7+file] += us == WHITE ? 1 : -1;
             }
         }
     }
