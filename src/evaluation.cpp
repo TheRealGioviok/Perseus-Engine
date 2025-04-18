@@ -46,6 +46,8 @@ void initTables() {
         PSQTs[1][k][flipSquare(square)] = -PSQTs[1][K][square];
     }
 }
+
+constexpr PScore REACHABLEMOBDIFF = S(0,0);
 constexpr PScore DOUBLEISOLATEDPEN = S(-15, -35);
 constexpr PScore ISOLATEDPEN = S(-18, -20);
 constexpr PScore BACKWARDPEN = S(-6, 7);
@@ -1113,6 +1115,7 @@ std::vector<Score> getCurrentEvalWeights(){
     for (U8 mobcount = 0; mobcount < 28; mobcount++){
         weights.push_back(queenMob[mobcount].mg());
     }
+    weights.push_back(REACHABLEMOBDIFF.mg());
     // Add the pawn evaluation weights
     weights.push_back(DOUBLEISOLATEDPEN.mg());
     weights.push_back(ISOLATEDPEN.mg());
@@ -1201,6 +1204,7 @@ std::vector<Score> getCurrentEvalWeights(){
     for (U8 mobcount = 0; mobcount < 28; mobcount++){
         weights.push_back(queenMob[mobcount].eg());
     }
+    weights.push_back(REACHABLEMOBDIFF.eg());
     // Add the pawn evaluation weights
     weights.push_back(DOUBLEISOLATEDPEN.eg());
     weights.push_back(ISOLATEDPEN.eg());
@@ -1468,6 +1472,20 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     getMobilityFeat<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][Q], outerAttacks[WHITE][Q], kingDist[0]);
     getMobilityFeat<q>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][Q], outerAttacks[BLACK][Q], kingDist[0]);
     tensor += 28;
+
+    const BitBoard reachableMobility[2] = {
+        attackedBy[WHITE] & mobilityArea[WHITE],
+        attackedBy[BLACK] & mobilityArea[BLACK]
+    };
+
+    const BitBoard uniqueMobility[2] = {
+        reachableMobility[WHITE] & ~reachableMobility[BLACK],
+        reachableMobility[BLACK] & ~reachableMobility[WHITE],
+    };
+
+    tensor[0] += popcount(uniqueMobility[WHITE]) - popcount(uniqueMobility[BLACK]);
+    tensor++;
+
 
     // Weak pieces
     BitBoard weakPieces[2] = {
