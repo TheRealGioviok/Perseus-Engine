@@ -740,6 +740,10 @@ void Game::startSearch(bool ageTT = true)
             if (stopped)
                 goto bmove;
             U64 timer2 = getTime64();
+            if (currSearch >= 6){
+                // 1.242 felt cute, maybe it gains
+                nodesTmScale = ((S64)nodesTmMax() - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * (S64)nodesTmMul()) / RESOLUTION;    
+            }
 
             if (score <= alpha)
             {
@@ -770,7 +774,7 @@ void Game::startSearch(bool ageTT = true)
                 std::cout << " nps " << (((nodes - locNodes) * 1000) / (timer2 - timer1 + 1)) << std::endl;
                 delta *= 1.44;
                 currSearch = std::max(4,std::max(searchDepth - 5, currSearch - 1));
-                // Check optim time quit (score >= beta)
+                // Check optim time quit (score >= beta and would quit search due to time optim)
                 if (prevBestMove == bestMove && getTime64() > startTime + optim * nodesTmScale) break;
             }
             else
@@ -788,16 +792,11 @@ void Game::startSearch(bool ageTT = true)
                     std::cout << " ";
                 }
                 std::cout << " nps " << (((nodes - locNodes) * 1000) / (timer2 - timer1 + 1)) << std::endl;
-                // Check optim time quit (Exact scores)
-                if (getTime64() > startTime + optim * nodesTmScale) break;
                 break;
             }
-        }
-        if (currSearch >= 6){
-            // 1.242 felt cute, maybe it gains
-            nodesTmScale = ((S64)nodesTmMax() - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * (S64)nodesTmMul()) / RESOLUTION;    
-        }
-        
+        }        
+        // Check optim time quit
+        if (getTime64() > startTime + optim * nodesTmScale) break;
     }
 
 bmove:
