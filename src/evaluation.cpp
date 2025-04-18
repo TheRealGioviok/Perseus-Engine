@@ -640,6 +640,7 @@ void extractPawnStructureFeats(
                 features[CANDIDATE_FILE + file] += us == WHITE ? 1 : -1;
             }
         }
+    }
 }
 
 Score pestoEval(Position *pos){
