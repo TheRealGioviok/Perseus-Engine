@@ -702,6 +702,7 @@ void Game::startSearch(bool ageTT = true)
 
     Score score = search(noScore, infinity, 1, false, ss);
     Move bestMove = pvTable[0][0];
+    Move prevBestMove;
 
     std::cout << "info depth 1 score cp " << score << " nodes " << nodes << " moves ";
     printMove(bestMove);
@@ -733,9 +734,11 @@ void Game::startSearch(bool ageTT = true)
             // Clear the first sstack entry
             ss->wipe();
             score = search(alpha, beta, currSearch, false, ss); // Search at depth currSearch
+            prevBestMove = bestMove;
+            bestMove = pvTable[0][0];
+
             if (stopped)
                 goto bmove;
-            bestMove = pvTable[0][0];
             U64 timer2 = getTime64();
 
             if (score <= alpha)
@@ -767,6 +770,8 @@ void Game::startSearch(bool ageTT = true)
                 std::cout << " nps " << (((nodes - locNodes) * 1000) / (timer2 - timer1 + 1)) << std::endl;
                 delta *= 1.44;
                 currSearch = std::max(4,std::max(searchDepth - 5, currSearch - 1));
+                // Check optim time quit (score >= beta)
+                if (prevBestMove == bestMove && getTime64() > startTime + optim * nodesTmScale) break;
             }
             else
             {
@@ -783,6 +788,8 @@ void Game::startSearch(bool ageTT = true)
                     std::cout << " ";
                 }
                 std::cout << " nps " << (((nodes - locNodes) * 1000) / (timer2 - timer1 + 1)) << std::endl;
+                // Check optim time quit (Exact scores)
+                if (getTime64() > startTime + optim * nodesTmScale) break;
                 break;
             }
         }
@@ -790,8 +797,7 @@ void Game::startSearch(bool ageTT = true)
             // 1.242 felt cute, maybe it gains
             nodesTmScale = ((S64)nodesTmMax() - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * (S64)nodesTmMul()) / RESOLUTION;    
         }
-        // Check optim time quit
-        if (getTime64() > startTime + optim * nodesTmScale) break;
+        
     }
 
 bmove:
