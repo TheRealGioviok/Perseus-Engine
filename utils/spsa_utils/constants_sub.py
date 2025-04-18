@@ -12,30 +12,28 @@ def load_new_values(mapping_file):
     return new_values
 
 def update_tune_params(input_file, output_file, mapping_file):
-    """Update the first number argument in TUNE_PARAM or NO_TUNE_PARAM based on the mapping, preserving comments."""
+    """Update the first number argument in TUNE_PARAM or NO_TUNE_PARAM based on the mapping."""
     new_values = load_new_values(mapping_file)
-    pattern = re.compile(r'^(.*?\b(TUNE_PARAM|NO_TUNE_PARAM)\((\w+),\s*)(\d+)(,.*)$')
-    
+
+    # allow optional + or - in the old value
+    pattern = re.compile(
+        r'^(.*?\b(TUNE_PARAM|NO_TUNE_PARAM)\((\w+),\s*)'  # prefix up to first value
+        r'([+-]?\d+)'                                     # capture signed integer
+        r'(,.*)$'                                         # rest of the line
+    )
+
     with open(input_file, 'r') as f:
         lines = f.readlines()
-    
-    updated_lines = []
-    
-    for line in lines:
-        match = pattern.match(line)
-        if match:
-            prefix, param_type, param_name, old_value, suffix = match.groups()
-            if param_name in new_values:
-                updated_line = f"{prefix}{new_values[param_name]}{suffix}\n"
-            else:
-                updated_line = line
-        else:
-            updated_line = line
-        
-        updated_lines.append(updated_line)
-    
-    with open(output_file, 'w') as f:
-        f.writelines(updated_lines)
+
+    with open(output_file, 'w') as f_out:
+        for line in lines:
+            m = pattern.match(line)
+            if m:
+                prefix, _, param_name, old_value, suffix = m.groups()
+                if param_name in new_values:
+                    new_val = new_values[param_name]
+                    line = f"{prefix}{new_val}{suffix}\n"
+            f_out.write(line)
 
 # Example usage
 update_tune_params('original.txt', 'output.txt', 'spsa_out.txt')
