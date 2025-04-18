@@ -611,27 +611,35 @@ void extractPawnStructureFeats(
             features[7] += (us == WHITE ? 1 : -1) * (rank - 2);
         }
 
+        constexpr int BASE = 0;
+        constexpr int PASSED_PAWN = BASE + 8;               // 8–21 (14 slots)
+        constexpr int PASSED_FILE = PASSED_PAWN + 14;       // 22–25 (4 slots)
+        constexpr int PASSED_ADV = PASSED_FILE + 4;         // 26 (1 slot)
+        constexpr int CANDIDATE_PAWN = PASSED_ADV + 1;      // 27–40 (14 slots)
+        constexpr int CANDIDATE_FILE = CANDIDATE_PAWN + 14; // 41–44 (4 slots)
+
+
         // Only consider most advanced pawn in a file
-        if (!(ahead(sq) & bb[ourPawnsIndex])){
+        if (!(ahead(sq) & bb[ourPawnsIndex])) {
             // Fully passed pawn
             if (!stoppers) {
                 U8 file = fileOf(sq);
                 if (file >= 4) file = 7 - file;
-                features[8+7*supported+rank] += us == WHITE ? 1 : -1;
 
-                features[8+7+7+file] += us == WHITE ? 1 : -1;
-                features[8+7+7+4] += (us == WHITE ? 1 : -1) *  popcount(advancePathMasked<us>(sqb, ~block));
+                features[PASSED_PAWN + 7 * supported + rank] += us == WHITE ? 1 : -1;
+                features[PASSED_FILE + file] += us == WHITE ? 1 : -1;
+                features[PASSED_ADV] += (us == WHITE ? 1 : -1) * popcount(advancePathMasked<us>(sqb, ~block));
                 passersCount += 1;
             }
             // Candidate passed pawn
-            else if (candidate){
+            else if (candidate) {
                 U8 file = fileOf(sq);
                 if (file >= 4) file = 7 - file;
-                features[8+7+7+4+1+7*supported+rank] += us == WHITE ? 1 : -1;
-                features[8+7+7+4+1+7+7+file] += us == WHITE ? 1 : -1;
+
+                features[CANDIDATE_PAWN + 7 * supported + rank] += us == WHITE ? 1 : -1;
+                features[CANDIDATE_FILE + file] += us == WHITE ? 1 : -1;
             }
         }
-    }
 }
 
 Score pestoEval(Position *pos){
