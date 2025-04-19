@@ -162,12 +162,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta, ss);
 
-
-    // else if (depth < ttDepth && (ttBound & hashLOWER)){
-    //     if (ply == 1) depth += std::min(3, ttDepth - depth);
-    //     else depth++; // Principled iterative extensions: If the tt entry is a lower bound (or exact), we don't search shallower than the tt depth
-    // }
-    // Initialize the undoer
     UndoInfo undoer = UndoInfo(pos);
 
     if (!excludedMove){
@@ -424,7 +418,7 @@ skipPruning:
                 score = -search(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
                 // If failed high on reduced search, research at full depth
                 if (score > alpha && R){
-                    bool deeper = score > bestScore + 35 + 2 * newDepth;
+                    bool deeper = score > bestScore + doDeeperMargin() + 2 * newDepth;
                     bool shallower = score < bestScore + 8;
                     newDepth += deeper - shallower; 
                     score = -search(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
