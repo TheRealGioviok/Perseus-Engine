@@ -27,7 +27,7 @@ inline bool okToReducePacked(Position &pos, PackedMove move)
 
 static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv)
 {
-    return reductionTable[isQuiet][std::min((int)d,64)][std::min((int)m,64)] - lmrPV() * isPv;
+    return reductionTable[isQuiet][std::min((int)d,63)][std::min((int)m,63)] - lmrPV() * isPv;
 }
 
 static inline Score futilityMargin(Depth depth, bool improving)
