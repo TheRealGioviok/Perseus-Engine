@@ -95,6 +95,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         return evaluate();
     const bool RootNode = ply == 0;
     const bool PVNode = (beta - alpha) > 1;
+    ss->PVNode = PVNode;
 
     Score eval;
     Score rawEval; // for corrhist
@@ -411,7 +412,7 @@ skipPruning:
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
                 Depth R = granularR / RESOLUTION;
-                R = std::max(Depth(0), R);
+                R = std::max(Depth(0 - (!cutNode && (ss-1)->PVNode && moveSearched <= 6)), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
                 Depth reducedDepth = newDepth - R;
                 // Search at reduced depth
