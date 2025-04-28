@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Position.h"
 #include "tables.h"
 #include "constants.h"
 #include "history.h"
@@ -212,9 +213,11 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
     // Pruning time
     if (!PVNode && !excludedMove)
-    {
+    {   
+        bool prevGoodNoisy = !okToReduce((ss-1)->move) && (ss-1)->moveScore > KILLER1SCORE;
+        bool prevPrevGoodNoisy = !okToReduce((ss-2)->move) && (ss-2)->moveScore > KILLER1SCORE;
         // RFP
-        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - std::max((Score)15,futilityMargin(depth, improving)) >= beta) // && !excludedMove)
+        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - std::max((Score)15,futilityMargin(depth + (prevGoodNoisy && !prevPrevGoodNoisy), improving)) >= beta) // && !excludedMove)
             return eval;
         
         // Razoring
@@ -236,6 +239,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
             makeNullMove();
             prefetch(&tt[hashEntryFor(pos.hashKey)]);
             ss->move = noMove;
+            ss->moveScore = 0;
             ss->contHistEntry = continuationHistoryTable[0];
 
             Depth R = nmpQ1() + (depth / nmpDepthDivisor()) + std::min((eval - beta) / nmpScoreDivisor(), nmpQ2()) + improving;
@@ -379,6 +383,7 @@ skipPruning:
             Depth newDepth = std::max(0,depth - 1 + extension);
 
             ss->move = currMove;
+            ss->moveScore = currMoveScore;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
             
             Score score;
@@ -593,6 +598,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
             // Prefetch tt
             prefetch(&tt[hashEntryFor(pos.hashKey)]);
             ss->move = move;
+            ss->moveScore = getScore(moveList.moves[i]);
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(move), moveTarget(move))];
             moveCount++;
             Score score = -quiescence(-beta, -alpha, ss+1);
