@@ -30,9 +30,9 @@ static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv)
     return reductionTable[isQuiet][std::min((int)d,63)][std::min((int)m,63)] - lmrPV() * isPv;
 }
 
-static inline Score futilityMargin(Depth depth, bool improving)
+static inline Score futilityMargin(Depth depth, Score improvement)
 {
-    return futilityMarginDelta() * (depth - improving);
+    return futilityMarginDelta() * depth - (improvement > 0) * std::clamp(improvement, (Score)futilityMinImprovement(), (Score)futilityMaxImprovement());
 }
 
 static inline int sortTTUp(MoveList &ml, PackedMove ttMove)
