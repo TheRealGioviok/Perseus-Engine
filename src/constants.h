@@ -210,6 +210,8 @@ NO_TUNE_PARAM(razorDepth, 3, 2, 5, .5, 0.002);
 // Singular Extensions
 TUNE_PARAM(singularDepthMultiplier, 8, 1, 30, 1, 0.002);
 TUNE_PARAM(doubleExtensionMargin, 21, 1, 50, 2, 0.002);
+TUNE_PARAM(tripleExtensionMargin, 120, 70, 170, 5, 0.002);
+
 NO_TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
 
 // History Pruning values
