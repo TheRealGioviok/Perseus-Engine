@@ -204,7 +204,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
             return ss->staticEval - (ss - 2)->staticEval;
         else if ((ss - 4)->staticEval != noScore)
             return ss->staticEval - (ss - 4)->staticEval;
-        return 1; // speculative improvement to cut less
+        return 0; // speculative improvement to cut less
     }();
 
     // Calculate the improving flag
