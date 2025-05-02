@@ -935,7 +935,22 @@ Score pestoEval(Position *pos){
     score += QUEENINFILTRATION * queenInfiltrationDiff;
 
     // Latent invasions
-    const Score invasionsSquaresDiff = popcount(~pawnSpan[BLACK] & multiAttacks[WHITE] & ~attackedBy[BLACK] & ~doublePawnAttackedSquares[WHITE]) - popcount(~pawnSpan[WHITE] & multiAttacks[BLACK] & ~attackedBy[WHITE] & ~doublePawnAttackedSquares[BLACK]);
+
+    const Score invasionsSquaresDiff = popcount(
+        (ranks(0) | ranks(1) | ranks(2) | ranks(3))
+        & ~pawnSpan[BLACK] 
+        & ~makePawnAttacks<BLACK>(pawnSpan[BLACK])
+        & multiAttacks[WHITE] 
+        & ~attackedBy[BLACK] 
+        & ~doublePawnAttackedSquares[WHITE]
+    ) - popcount(
+        (ranks(7) | ranks(6) | ranks(5) | ranks(4))
+        & ~pawnSpan[WHITE] 
+        & ~makePawnAttacks<WHITE>(pawnSpan[WHITE])
+        & multiAttacks[BLACK] 
+        & ~attackedBy[WHITE] 
+        & ~doublePawnAttackedSquares[BLACK]
+    );
     score += INVASIONSQUARES * invasionsSquaresDiff;
 
     // Square restriction
@@ -1635,7 +1650,21 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     ++tensor;
 
     // Latent invasions
-    const Score invasionsSquaresDiff = popcount(~pawnSpan[BLACK] & multiAttacks[WHITE] & ~attackedBy[BLACK] & ~doublePawnAttackedSquares[WHITE]) - popcount(~pawnSpan[WHITE] & multiAttacks[BLACK] & ~attackedBy[WHITE] & ~doublePawnAttackedSquares[BLACK]);
+    const Score invasionsSquaresDiff = popcount(
+        (ranks(0) | ranks(1) | ranks(2) | ranks(3))
+        & ~pawnSpan[BLACK] 
+        & ~makePawnAttacks<BLACK>(pawnSpan[BLACK])
+        & multiAttacks[WHITE] 
+        & ~attackedBy[BLACK] 
+        & ~doublePawnAttackedSquares[WHITE]
+    ) - popcount(
+        (ranks(7) | ranks(6) | ranks(5) | ranks(4))
+        & ~pawnSpan[WHITE] 
+        & ~makePawnAttacks<WHITE>(pawnSpan[WHITE])
+        & multiAttacks[BLACK] 
+        & ~attackedBy[WHITE] 
+        & ~doublePawnAttackedSquares[BLACK]
+    );
     tensor[0] = invasionsSquaresDiff;
     ++tensor;
 
