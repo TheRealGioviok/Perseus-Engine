@@ -1341,7 +1341,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     // Add the game phase
     tensor[0] = gamePhase;
     ++tensor;
-    
+
     // Add the psqt weights. Only add them once, no need to bloat the data.
     for (Square square = a8; square < noSquare; square++){
         Piece piece = pos->pieceOn(square);
@@ -1356,7 +1356,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
         bool pieceColor = piece >= p;
         tensor[64 * (piece % 6) + sq] += (pieceColor ? 0b0100 : 0b0001) << (wkhside == bkhside);
     }
-    }
+    
     tensor += 64 * 6;
 
     // Add the material weights
