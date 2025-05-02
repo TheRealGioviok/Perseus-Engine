@@ -78,6 +78,8 @@ constexpr PScore BISHOPPROTECTOR = S(-5, -3);
 constexpr PScore BISHOPPAWNS = S(1, -3);
 constexpr PScore THREATSAFEPAWN = S(46, -42);
 constexpr PScore THREATPAWNPUSH = S(20, 39);
+constexpr PScore THREATSUPPORTEDSAFEPAWN = S(0, 0);
+constexpr PScore THREATSUPPORTEDPAWNPUSH = S(0, 0);
 constexpr PScore PAWNHANGING = S(-1, -52);
 constexpr PScore NONPAWNHANGING = S(-8, -40);
 constexpr PScore PAWNTHREAT[2][5] = {
@@ -902,6 +904,10 @@ Score pestoEval(Position *pos){
         makePawnAttacks<WHITE>(bb[P] & (attackedBy[WHITE] | ~attackedBy[BLACK])) & nonPawns[BLACK],
         makePawnAttacks<BLACK>(bb[p] & (attackedBy[BLACK] | ~attackedBy[WHITE])) & nonPawns[WHITE],
     };
+    const BitBoard threatSupportedSafePawns[2] = {
+        makePawnAttacks<WHITE>(bb[P] & pawnAttackedSquares[WHITE] & ((~attackedBy[BLACK]) | (multiAttacks[WHITE] & ~multiAttacks[BLACK]))) & nonPawns[BLACK],
+        makePawnAttacks<BLACK>(bb[p] & pawnAttackedSquares[BLACK] & ((~attackedBy[WHITE]) | (multiAttacks[BLACK] & ~multiAttacks[WHITE]))) & nonPawns[WHITE],
+    };
 
     BitBoard pushes[2] = {
         north(bb[P]) & ~(occ[BOTH] | pawnAttackedSquares[BLACK]),
@@ -915,11 +921,20 @@ Score pestoEval(Position *pos){
         makePawnAttacks<BLACK>(pushes[BLACK] & (attackedBy[BLACK] | ~attackedBy[WHITE])) & nonPawns[WHITE],
     };
 
+    const BitBoard threatSupportedPawnPush[2] = {
+        makePawnAttacks<WHITE>(pushes[WHITE] & pawnAttackedSquares[WHITE] & ((~attackedBy[BLACK]) | (multiAttacks[WHITE] & ~multiAttacks[BLACK]))) & nonPawns[BLACK],
+        makePawnAttacks<BLACK>(pushes[BLACK] & pawnAttackedSquares[BLACK] & ((~attackedBy[WHITE]) | (multiAttacks[BLACK] & ~multiAttacks[WHITE]))) & nonPawns[WHITE],
+    };
+
     const Score safePawnThreatDiff = popcount(threatSafePawns[WHITE]) - popcount(threatSafePawns[BLACK]);
     const Score pawnPushThreatDiff = popcount(threatPawnPush[WHITE]) - popcount(threatPawnPush[BLACK]);
+    const Score safeSupportedPawnThreatDiff = popcount(threatSupportedSafePawns[WHITE]) - popcount(threatSupportedSafePawns[BLACK]);
+    const Score supportedPawnPushThreatDiff = popcount(threatSupportedPawnPush[WHITE]) - popcount(threatSupportedPawnPush[BLACK]);
 
     score += THREATSAFEPAWN * safePawnThreatDiff;
     score += THREATPAWNPUSH * pawnPushThreatDiff;
+    score += THREATSUPPORTEDSAFEPAWN * safeSupportedPawnThreatDiff;
+    score += THREATSUPPORTEDPAWNPUSH * supportedPawnPushThreatDiff;
 
     const Score pawnHangingDiff = popcount(hanging[WHITE] & bb[P]) - popcount(hanging[BLACK] & bb[p]);
     const Score nonPawnHangingDiff = popcount(hanging[WHITE] & nonPawns[WHITE]) - popcount(hanging[BLACK] & nonPawns[BLACK]);
@@ -1185,6 +1200,8 @@ std::vector<Score> getCurrentEvalWeights(){
     // Now, threats
     weights.push_back(THREATSAFEPAWN.mg());
     weights.push_back(THREATPAWNPUSH.mg());
+    weights.push_back(THREATSUPPORTEDSAFEPAWN.mg());
+    weights.push_back(THREATSUPPORTEDPAWNPUSH.mg());
     weights.push_back(PAWNHANGING.mg());
     weights.push_back(NONPAWNHANGING.mg());
     
@@ -1275,6 +1292,8 @@ std::vector<Score> getCurrentEvalWeights(){
     // Now, threats
     weights.push_back(THREATSAFEPAWN.eg());
     weights.push_back(THREATPAWNPUSH.eg());
+    weights.push_back(THREATSUPPORTEDSAFEPAWN.eg());
+    weights.push_back(THREATSUPPORTEDPAWNPUSH.eg());
     weights.push_back(PAWNHANGING.eg());
     weights.push_back(NONPAWNHANGING.eg());
     
@@ -1323,6 +1342,10 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[0] = gamePhase;
     ++tensor;
 
+    // Add whether the kings are on same or opposite side
+    tensor[0] = wkhside == bkhside;
+    ++tensor;
+
     // Add the psqt weights. Only add them once, no need to bloat the data.
     for (Square square = a8; square < noSquare; square++){
         Piece piece = pos->pieceOn(square);
@@ -1335,7 +1358,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
         U8 sqy = sq / 8; 
         sq = sqx + 8 * sqy;
         bool pieceColor = piece >= p;
-        tensor[64 * (piece % 6) + sq] += (pieceColor ? 0b0100 : 0b0001) << (wkhside == bkhside);
+        tensor[64 * (piece % 6) + sq] += pieceColor == WHITE ? 1 : -1;
     }
     tensor += 64 * 6;
 
@@ -1606,9 +1629,13 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor++;
 
     // Threats
-    BitBoard threatSafePawns[2] = {
+    const BitBoard threatSafePawns[2] = {
         makePawnAttacks<WHITE>(bb[P] & (attackedBy[WHITE] | ~attackedBy[BLACK])) & nonPawns[BLACK],
         makePawnAttacks<BLACK>(bb[p] & (attackedBy[BLACK] | ~attackedBy[WHITE])) & nonPawns[WHITE],
+    };
+    const BitBoard threatSupportedSafePawns[2] = {
+        makePawnAttacks<WHITE>(bb[P] & pawnAttackedSquares[WHITE] & ((~attackedBy[BLACK]) | (multiAttacks[WHITE] & ~multiAttacks[BLACK]))) & nonPawns[BLACK],
+        makePawnAttacks<BLACK>(bb[p] & pawnAttackedSquares[BLACK] & ((~attackedBy[WHITE]) | (multiAttacks[BLACK] & ~multiAttacks[WHITE]))) & nonPawns[WHITE],
     };
 
     BitBoard pushes[2] = {
@@ -1618,17 +1645,26 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     pushes[WHITE] |= north(pushes[WHITE] & ranks(5)) & ~(occ[BOTH] | pawnAttackedSquares[BLACK]);
     pushes[BLACK] |= south(pushes[BLACK] & ranks(2)) & ~(occ[BOTH] | pawnAttackedSquares[WHITE]);
 
-    BitBoard threatPawnPush[2] = {
+    const BitBoard threatPawnPush[2] = {
         makePawnAttacks<WHITE>(pushes[WHITE] & (attackedBy[WHITE] | ~attackedBy[BLACK])) & nonPawns[BLACK],
         makePawnAttacks<BLACK>(pushes[BLACK] & (attackedBy[BLACK] | ~attackedBy[WHITE])) & nonPawns[WHITE],
     };
 
-    Score safePawnThreatDiff = popcount(threatSafePawns[WHITE]) - popcount(threatSafePawns[BLACK]);
-    Score pawnPushThreatDiff = popcount(threatPawnPush[WHITE]) - popcount(threatPawnPush[BLACK]);
+    const BitBoard threatSupportedPawnPush[2] = {
+        makePawnAttacks<WHITE>(pushes[WHITE] & pawnAttackedSquares[WHITE] & ((~attackedBy[BLACK]) | (multiAttacks[WHITE] & ~multiAttacks[BLACK]))) & nonPawns[BLACK],
+        makePawnAttacks<BLACK>(pushes[BLACK] & pawnAttackedSquares[BLACK] & ((~attackedBy[WHITE]) | (multiAttacks[BLACK] & ~multiAttacks[WHITE]))) & nonPawns[WHITE],
+    };
+
+    const Score safePawnThreatDiff = popcount(threatSafePawns[WHITE]) - popcount(threatSafePawns[BLACK]);
+    const Score pawnPushThreatDiff = popcount(threatPawnPush[WHITE]) - popcount(threatPawnPush[BLACK]);
+    const Score safeSupportedPawnThreatDiff = popcount(threatSupportedSafePawns[WHITE]) - popcount(threatSupportedSafePawns[BLACK]);
+    const Score supportedPawnPushThreatDiff = popcount(threatSupportedPawnPush[WHITE]) - popcount(threatSupportedPawnPush[BLACK]);
 
     tensor[0] = safePawnThreatDiff;
     tensor[1] = pawnPushThreatDiff;
-    tensor += 2;
+    tensor[2] = safeSupportedPawnThreatDiff;
+    tensor[3] = supportedPawnPushThreatDiff;
+    tensor += 4;
 
     const Score pawnHangingDiff = popcount(hanging[WHITE] & bb[P]) - popcount(hanging[BLACK] & bb[p]);
     const Score nonPawnHangingDiff = popcount(hanging[WHITE] & nonPawns[WHITE]) - popcount(hanging[BLACK] & nonPawns[BLACK]);
@@ -1832,7 +1868,6 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     // Also assert the last element we wrote is the penultimate element
     // assert(tensorStart + tensorSize - 2 == tensor);
 }
-
 
 /**
  * @brief The convertToFeatures function converts a set of positions to a set of features
