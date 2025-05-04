@@ -217,7 +217,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         if (depth <= RFPDepth() 
             && abs(eval) < mateValue 
             && eval - std::max((Score)15,futilityMargin(depth, improving)) >= beta
-            && (!ttMove || pos.pieceOn(moveTarget(ttMove)))) // && !excludedMove)
+            && (!ttMove || pos.pieceOn(moveTarget(ttMove))!= NOPIECE)) // && !excludedMove)
             return eval;
         
         // Razoring
