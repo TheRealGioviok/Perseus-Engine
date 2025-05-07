@@ -81,7 +81,7 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
 
 // correctStaticEval remains unchanged: it reads only from the static tables
 template <bool doCorrHist>
-Score correctStaticEval(Position& pos, Score eval) {
+Score correctStaticEval(Position& pos, Score eval, Score& dynEval) {
     // fifty‐move decay
     eval = static_cast<Score>(std::clamp(
         (eval * (220 - pos.fiftyMove) / 220),
@@ -97,24 +97,38 @@ Score correctStaticEval(Position& pos, Score eval) {
                 + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
               ) * nonPawnCorrWeight();
 
+        S32 dynBonus = pawnsCorrHistDyn[side][pos.pawnHashKey % CORRHISTSIZE] * pawnCorrWeight()
+            + (
+                + nonPawnsCorrHistDyn[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE]
+                + nonPawnsCorrHistDyn[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
+              ) * nonPawnCorrWeight();
+
         // triplet weights T0CorrWeight()+i// triplets
-        static constexpr int TRIPIDX[10][3] = {
+        static constexpr S32 TRIPIDX[10][3] = {
             {K,P,N},{K,P,B},{K,P,R},{K,P,Q},
-            {K,N,B},{K,N,R},{K,N,Q},{K,B,R},
-            {K,B,Q},{K,R,Q}
+            {K,N,B},{K,N,R},{K,N,Q},
+            {K,B,R},{K,B,Q},
+            {K,R,Q}
+        };
+        static constexpr S32 weights[10] = {
+            T0CorrWeight(), T1CorrWeight(), T2CorrWeight(), T3CorrWeight(),
+            T4CorrWeight(),T5CorrWeight(),T6CorrWeight(),
+            T7CorrWeight(),T8CorrWeight(),
+            T9CorrWeight()
         };
         for (int t = 0; t < 10; ++t){
             int idx = (k[TRIPIDX[t][0]]
                      ^ k[TRIPIDX[t][1]]
                      ^ k[TRIPIDX[t][2]])
                      % CORRHISTSIZE;
-            bonus += tripletCorrHist[t][side][idx]
-                   * (T0CorrWeight() + t);
+            bonus += tripletCorrHist[t][side][idx] * weights[t];
+            dynBonus += tripletCorrHistDyn[t][side][idx] * weights[t];
         }
-
+        dynEval = eval + dynBonus / (CORRHISTSCALE * CORRECTIONGRANULARITY);
         return eval + bonus / (CORRHISTSCALE * CORRECTIONGRANULARITY);
     }
     else {
+        dynEval = eval;
         return eval;
     }
 }

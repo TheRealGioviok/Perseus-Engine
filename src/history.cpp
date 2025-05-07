@@ -1,4 +1,5 @@
 #include "history.h"
+#include "constants.h"
 #include "types.h"
 #include "BBmacros.h"
 #include "move.h"
@@ -94,8 +95,15 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth)
     // triplets
     static constexpr int TRIPIDX[10][3] = {
       {K,P,N},{K,P,B},{K,P,R},{K,P,Q},
-      {K,N,B},{K,N,R},{K,N,Q},{K,B,R},
-      {K,B,Q},{K,R,Q}
+      {K,N,B},{K,N,R},{K,N,Q},
+      {K,B,R},{K,B,Q},
+      {K,R,Q}
+    };
+    static constexpr S32 weights[10] = {
+        T0CorrUpdate(), T1CorrUpdate(), T2CorrUpdate(), T3CorrUpdate(),
+        T4CorrUpdate(),T5CorrUpdate(),T6CorrUpdate(),
+        T7CorrUpdate(),T8CorrUpdate(),
+        T9CorrUpdate()
     };
     for (int t = 0; t < 10; ++t){
         auto& te = tripletCorrHistDyn[t][side]
@@ -103,7 +111,7 @@ void updateCorrHist(Position& pos, const Score bonus, const Depth depth)
             ^ k[TRIPIDX[t][1]]
             ^ k[TRIPIDX[t][2]])
             % CORRHISTSIZE];
-        const S32 up = scaledBonus * (T0CorrUpdate()+t) / CORRECTIONGRANULARITY;
+        const S32 up = scaledBonus * weights[t] / CORRECTIONGRANULARITY;
         updateSingleCorrHist(te, up, weight);
     }
 }

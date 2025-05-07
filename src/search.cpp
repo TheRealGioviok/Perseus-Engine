@@ -96,7 +96,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     const bool RootNode = ply == 0;
     const bool PVNode = (beta - alpha) > 1;
 
-    Score eval;
+    Score eval, dynEval;
     Score rawEval; // for corrhist
     Score improvement;
     bool improving = true;
@@ -170,7 +170,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
     if (inCheck)
     {
-        ss->staticEval = eval = rawEval = noScore;
+        ss->staticEval = eval = rawEval = dynEval = noScore;
         improvement = 0;
         improving = false;
         goto skipPruning;
@@ -181,20 +181,20 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     {
         // Check if the eval is stored in the TT
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
-        eval = ss->staticEval = correctStaticEval<true>(pos, rawEval);
+        eval = ss->staticEval = correctStaticEval<true>(pos, rawEval, dynEval);
         // Also, we might be able to use the score as a better eval
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
             eval = ttScore;
     }
     else if (excludedMove){
-        rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
+        rawEval = eval = dynEval = ss->staticEval; // We already have the eval from the main search in the current ss entry
         improvement = 0;
         improving = false;
         goto skipPruning;
     }
     else {
         rawEval = evaluate();
-        eval = ss->staticEval = correctStaticEval<true>(pos, rawEval);
+        eval = ss->staticEval = correctStaticEval<true>(pos, rawEval, dynEval);
         // Store the eval in the TT if not in exclusion mode (in which we might already have the entry)
         writeTT(pos.hashKey, noScore, rawEval, 0, hashNONE, 0, ply, PVNode, ttPv, age);
     }
@@ -489,7 +489,7 @@ skipPruning:
             && (!bestMove || okToReduce(bestMove))
             && !(ttBound == hashLOWER && bestScore <= ss->staticEval)
             && !(ttBound == hashUPPER && bestScore >= ss->staticEval)){
-                updateCorrHist(pos, bestScore - ss->staticEval, depth);
+                updateCorrHist(pos, bestScore - dynEval, depth);
         }
         U8 ttStoreFlag = bestScore >= beta ? hashLOWER : alpha != origAlpha ? hashEXACT : hashUPPER;
         writeTT(pos.hashKey, bestScore, rawEval, depth, ttStoreFlag, bestMove, ply, PVNode, ttPv, age);
@@ -507,7 +507,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
             return randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
     Score bestScore;
-    Score rawEval;
+    Score rawEval, dynEval;
 
     if (ply >= maxPly - 1)
         return inCheck ? 0 : evaluate();
@@ -549,13 +549,13 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
     }
     else if (ttHit){
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
-        ss->staticEval = bestScore = correctStaticEval<true>(pos, rawEval);
+        ss->staticEval = bestScore = correctStaticEval<true>(pos, rawEval, dynEval);
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < bestScore) || (ttBound == hashLOWER && ttScore > bestScore)))
             bestScore = ttScore;
     }
     else {
         rawEval = evaluate();
-        ss->staticEval = bestScore = correctStaticEval<true>(pos, rawEval);
+        ss->staticEval = bestScore = correctStaticEval<true>(pos, rawEval, dynEval);
         writeTT(pos.hashKey, noScore, rawEval, 0, hashNONE, 0, ply, PVNode, ttPv, age);
     }
 
@@ -695,9 +695,9 @@ void Game::startSearch(bool ageTT = true)
     currSearch = 1;
 
     // Corrhist ddqn
-    std::memcpy(pawnsCorrHistDyn, pawnsCorrHist, sizeof pawnsCorrHist);
-    std::memcpy(nonPawnsCorrHistDyn, nonPawnsCorrHist, sizeof nonPawnsCorrHist);
-    std::memcpy(tripletCorrHistDyn, tripletCorrHist, sizeof tripletCorrHist);
+    std::memcpy(pawnsCorrHist, pawnsCorrHistDyn, sizeof pawnsCorrHist);
+    std::memcpy(nonPawnsCorrHist, nonPawnsCorrHistDyn, sizeof nonPawnsCorrHist);
+    std::memcpy(tripletCorrHist, tripletCorrHistDyn, sizeof tripletCorrHist);
 
     Score score = search(noScore, infinity, 1, false, ss);
     Move bestMove = pvTable[0][0];
@@ -714,9 +714,10 @@ void Game::startSearch(bool ageTT = true)
 
     for (Depth searchDepth = 2; (searchDepth <= depth) && searchDepth >= 2 && !stopped; searchDepth++)
     {
-        std::memcpy(pawnsCorrHistDyn, pawnsCorrHist, sizeof pawnsCorrHist);
-        std::memcpy(nonPawnsCorrHistDyn, nonPawnsCorrHist, sizeof nonPawnsCorrHist);
-        std::memcpy(tripletCorrHistDyn, tripletCorrHist, sizeof tripletCorrHist);
+        std::memcpy(pawnsCorrHist, pawnsCorrHistDyn, sizeof pawnsCorrHist);
+        std::memcpy(nonPawnsCorrHist, nonPawnsCorrHistDyn, sizeof nonPawnsCorrHist);
+        std::memcpy(tripletCorrHist, tripletCorrHistDyn, sizeof tripletCorrHist);
+    
         currSearch = searchDepth;
         delta = ASPIRATIONWINDOW;
         if (currSearch >= 4)
