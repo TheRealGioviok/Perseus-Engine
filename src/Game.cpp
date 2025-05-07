@@ -117,9 +117,11 @@ void Game::reset(){
     memset(captureHistoryTable, 0, sizeof(captureHistoryTable));
     memset(continuationHistoryTable, 0, sizeof(continuationHistoryTable));
     memset(pawnsCorrHist, 0, sizeof(pawnsCorrHist));
+    memset(pawnsCorrHistDyn, 0, sizeof(pawnsCorrHistDyn));
     memset(nonPawnsCorrHist, 0, sizeof(nonPawnsCorrHist));
+    memset(nonPawnsCorrHistDyn, 0, sizeof(nonPawnsCorrHistDyn));
     memset(tripletCorrHist, 0, sizeof(tripletCorrHist));
-
+    memset(tripletCorrHistDyn, 0, sizeof(tripletCorrHistDyn));
 
     // Clear pv len and pv table
     memset(pvLen, 0, sizeof(pvLen));

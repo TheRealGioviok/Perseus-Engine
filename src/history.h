@@ -20,11 +20,15 @@ constexpr S32 CORRHISTSIZE = 16384;
 constexpr S32 CORRHISTSCALE = 256;
 constexpr S32 CORRECTIONGRANULARITY = 1024;
 
-// Correction History
+// static (read‑only during search) correction histories
 extern S32 pawnsCorrHist[2][CORRHISTSIZE];
 extern S32 nonPawnsCorrHist[2][2][CORRHISTSIZE];
+extern S32 tripletCorrHist[10][2][CORRHISTSIZE];
 
-extern S32 tripletCorrHist[10][2][CORRHISTSIZE]; // 10 is the number of triplet indexing of type KXY, with X and Y satisfying X != K, Y != K, X != Y
+// dynamic (write‑only during search) correction histories
+extern S32 pawnsCorrHistDyn[2][CORRHISTSIZE];
+extern S32 nonPawnsCorrHistDyn[2][2][CORRHISTSIZE];
+extern S32 tripletCorrHistDyn[10][2][CORRHISTSIZE];
 
 struct SStack {
     Move excludedMove = 0;
@@ -75,44 +79,44 @@ static inline S32 statMalus(S32 depth){
 #define MAXHISTORYABS 16384LL
 void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount);
 
+// correctStaticEval remains unchanged: it reads only from the static tables
 template <bool doCorrHist>
 Score correctStaticEval(Position& pos, Score eval) {
-
-    S32 corrected;
-
+    // fifty‐move decay
     eval = static_cast<Score>(std::clamp(
-        (eval * (220 - pos.fiftyMove) / 220)
-    , -mateValue, +mateValue));
+        (eval * (220 - pos.fiftyMove) / 220),
+        -mateValue, +mateValue));
 
-    if constexpr (doCorrHist){
-
+    if constexpr (doCorrHist) {
         const bool side = pos.side;
         auto const& k = pos.ptKeys;
-
-        const S32 bonus = 
-            + pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE]           * pawnCorrWeight()
+        S32 bonus =
+            + pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE] * pawnCorrWeight()
             + (
                 + nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE]
                 + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
-            )                                                               * nonPawnCorrWeight()
-            + tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE] * T0CorrWeight()
-            + tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE] * T1CorrWeight()
-            + tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE] * T2CorrWeight()
-            + tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE] * T3CorrWeight()
-            + tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE] * T4CorrWeight()
-            + tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE] * T5CorrWeight()
-            + tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE] * T6CorrWeight()
-            + tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE] * T7CorrWeight()
-            + tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE] * T8CorrWeight()
-            + tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE] * T9CorrWeight()
-        ;
+              ) * nonPawnCorrWeight();
 
-        corrected = eval + bonus / (CORRHISTSCALE * CORRECTIONGRANULARITY);
+        // triplet weights T0CorrWeight()+i// triplets
+        static constexpr int TRIPIDX[10][3] = {
+            {K,P,N},{K,P,B},{K,P,R},{K,P,Q},
+            {K,N,B},{K,N,R},{K,N,Q},{K,B,R},
+            {K,B,Q},{K,R,Q}
+        };
+        for (int t = 0; t < 10; ++t){
+            int idx = (k[TRIPIDX[t][0]]
+                     ^ k[TRIPIDX[t][1]]
+                     ^ k[TRIPIDX[t][2]])
+                     % CORRHISTSIZE;
+            bonus += tripletCorrHist[t][side][idx]
+                   * (T0CorrWeight() + t);
+        }
+
+        return eval + bonus / (CORRHISTSCALE * CORRECTIONGRANULARITY);
     }
-    else corrected = eval;
-    
-    // Integral's fifty move scaling. I had previously tried sp's (200) but didn't get a passer
-    return corrected;
+    else {
+        return eval;
+    }
 }
 
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth);

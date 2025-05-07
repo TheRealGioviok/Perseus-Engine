@@ -17,10 +17,15 @@ Move counterMoveTable[NUM_SQUARES * NUM_SQUARES];
 // Continuation History table
 S16 continuationHistoryTable[NUM_PIECES * NUM_SQUARES][NUM_PIECES * NUM_SQUARES];
 
-// Correction History
-S32 pawnsCorrHist[2][CORRHISTSIZE]; // stm - hash
-S32 nonPawnsCorrHist[2][2][CORRHISTSIZE]; // stm - side - hash
-S32 tripletCorrHist[10][2][CORRHISTSIZE]; // stm - hash
+// ——— Static tables ———
+S32 pawnsCorrHist[2][CORRHISTSIZE];
+S32 nonPawnsCorrHist[2][2][CORRHISTSIZE];
+S32 tripletCorrHist[10][2][CORRHISTSIZE];
+
+// ——— Dynamic tables ———
+S32 pawnsCorrHistDyn[2][CORRHISTSIZE];
+S32 nonPawnsCorrHistDyn[2][2][CORRHISTSIZE];
+S32 tripletCorrHistDyn[10][2][CORRHISTSIZE];
 
 void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMove, Move *quietMoves, U16 quietsCount, Move *noisyMoves, U16 noisyCount) {
     const S32 bonus = statBonus(depth);
@@ -45,38 +50,60 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
     }
 }
 
-static inline void updateSingleCorrHist(S32& entry, const S32 bonus, const S32 weight){
+// single‐entry update (identical to before)
+static inline void updateSingleCorrHist(
+    S32& entry, const S32 bonus, const S32 weight)
+{
     const S32 MAXCORRHIST = CORRHISTSCALE * MAXCORRHISTUNSCALED();
-    const S32 MAXCORRHISTUPDATE = MAXCORRHIST * MAXCORRHISTMILLIUPDATE() / CORRECTIONGRANULARITY;
+    const S32 MAXCORRHISTUPDATE =
+        MAXCORRHIST * MAXCORRHISTMILLIUPDATE() / CORRECTIONGRANULARITY;
 
-    S32 newValue = (entry * (256 - weight) + bonus * weight) / 256;
-    newValue = std::clamp(newValue, entry - MAXCORRHISTUPDATE, entry + MAXCORRHISTUPDATE);
-    entry = std::clamp(newValue, -MAXCORRHIST, MAXCORRHIST);
+    S32 newValue =
+        (entry * (256 - weight) + bonus * weight) / 256;
+    newValue = std::clamp(newValue, entry - MAXCORRHISTUPDATE,
+                                     entry + MAXCORRHISTUPDATE);
+    entry = std::clamp(newValue, -MAXCORRHIST, +MAXCORRHIST);
 }
 
-void updateCorrHist(Position& pos, const Score bonus, const Depth depth){
+// redirect updates into the *Dyn tables
+void updateCorrHist(Position& pos, const Score bonus, const Depth depth)
+{
     const bool side = pos.side;
-    const S64 scaledBonus = bonus * CORRHISTSCALE; 
+    const S64 scaledBonus = bonus * CORRHISTSCALE;
     const S32 weight = 2 * std::min(1 + depth, 16);
-
     auto const& k = pos.ptKeys;
 
-    auto& pawnEntry = pawnsCorrHist[side][pos.pawnHashKey % CORRHISTSIZE];
-    auto& wNonPawnEntry = nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE];
-    auto& bNonPawnEntry = nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE];
+    // pawn
+    auto& pawnE = pawnsCorrHistDyn[side]
+                             [pos.pawnHashKey % CORRHISTSIZE];
+    updateSingleCorrHist(
+        pawnE,
+        scaledBonus * pawnCorrUpdate() / CORRECTIONGRANULARITY,
+        weight);
 
-    updateSingleCorrHist(pawnEntry, scaledBonus * pawnCorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(wNonPawnEntry, scaledBonus * nonPawnCorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(bNonPawnEntry, scaledBonus * nonPawnCorrUpdate() / CORRECTIONGRANULARITY, weight);
+    // non‑pawn white & black
+    for (int c = 0; c < 2; ++c){
+        auto& npE = nonPawnsCorrHistDyn[side][c]
+                              [pos.nonPawnKeys[c] % CORRHISTSIZE];
+        updateSingleCorrHist(
+            npE,
+            scaledBonus * nonPawnCorrUpdate() / CORRECTIONGRANULARITY,
+            weight);
+    }
 
-    updateSingleCorrHist(tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE], scaledBonus * T0CorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE], scaledBonus * T1CorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE], scaledBonus * T2CorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE], scaledBonus * T3CorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE], scaledBonus * T4CorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE], scaledBonus * T5CorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE], scaledBonus * T6CorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE], scaledBonus * T7CorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE], scaledBonus * T8CorrUpdate() / CORRECTIONGRANULARITY, weight);
-    updateSingleCorrHist(tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE], scaledBonus * T9CorrUpdate() / CORRECTIONGRANULARITY, weight);
+    // triplets
+    static constexpr int TRIPIDX[10][3] = {
+      {K,P,N},{K,P,B},{K,P,R},{K,P,Q},
+      {K,N,B},{K,N,R},{K,N,Q},{K,B,R},
+      {K,B,Q},{K,R,Q}
+    };
+    for (int t = 0; t < 10; ++t){
+        auto& te = tripletCorrHistDyn[t][side]
+            [(k[TRIPIDX[t][0]]
+            ^ k[TRIPIDX[t][1]]
+            ^ k[TRIPIDX[t][2]])
+            % CORRHISTSIZE];
+        const S32 up = scaledBonus * (T0CorrUpdate()+t) / CORRECTIONGRANULARITY;
+        updateSingleCorrHist(te, up, weight);
+    }
 }

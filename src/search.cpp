@@ -694,6 +694,11 @@ void Game::startSearch(bool ageTT = true)
     rootDelta = 2 * infinity;
     currSearch = 1;
 
+    // Corrhist ddqn
+    std::memcpy(pawnsCorrHistDyn, pawnsCorrHist, sizeof pawnsCorrHist);
+    std::memcpy(nonPawnsCorrHistDyn, nonPawnsCorrHist, sizeof nonPawnsCorrHist);
+    std::memcpy(tripletCorrHistDyn, tripletCorrHist, sizeof tripletCorrHist);
+
     Score score = search(noScore, infinity, 1, false, ss);
     Move bestMove = pvTable[0][0];
 
@@ -709,6 +714,9 @@ void Game::startSearch(bool ageTT = true)
 
     for (Depth searchDepth = 2; (searchDepth <= depth) && searchDepth >= 2 && !stopped; searchDepth++)
     {
+        std::memcpy(pawnsCorrHistDyn, pawnsCorrHist, sizeof pawnsCorrHist);
+        std::memcpy(nonPawnsCorrHistDyn, nonPawnsCorrHist, sizeof nonPawnsCorrHist);
+        std::memcpy(tripletCorrHistDyn, tripletCorrHist, sizeof tripletCorrHist);
         currSearch = searchDepth;
         delta = ASPIRATIONWINDOW;
         if (currSearch >= 4)
