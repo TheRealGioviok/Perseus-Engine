@@ -164,6 +164,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
     UndoInfo undoer = UndoInfo(pos);
 
+    Score corrplexity;
+
     if (!excludedMove){
         if ((PVNode || cutNode) && depth >= IIRDepth() - 2*PVNode && (!ttMove || ttDepth + 3 < depth)) --depth; 
     }
@@ -173,6 +175,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         ss->staticEval = eval = rawEval = noScore;
         improvement = 0;
         improving = false;
+        corrplexity = 0;
         goto skipPruning;
     }
     
@@ -190,6 +193,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
         improvement = 0;
         improving = false;
+        corrplexity = 0;
         goto skipPruning;
     }
     else {
@@ -210,11 +214,13 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     // Calculate the improving flag
     improving = improvement > 0;
 
+    corrplexity = abs(ss->staticEval - rawEval);
+
     // Pruning time
     if (!PVNode && !excludedMove)
     {
         // RFP
-        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - std::max((Score)15,futilityMargin(depth, improving)) >= beta) // && !excludedMove)
+        if (depth <= RFPDepth() && abs(eval) < mateValue && eval - std::max((Score)15,futilityMargin(depth, improving)) - (corrplexity / 3) >= beta) // && !excludedMove)
             return eval;
         
         // Razoring
