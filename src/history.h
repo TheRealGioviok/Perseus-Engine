@@ -89,12 +89,12 @@ Score correctStaticEval(Position& pos, Score eval) {
         const bool side = pos.side;
         auto const& k = pos.ptKeys;
 
-        const S32 ptcnts[5] = {
-            popcount(pos.bitboards[P] | pos.bitboards[p]),
-            popcount(pos.bitboards[N] | pos.bitboards[n]),
-            popcount(pos.bitboards[B] | pos.bitboards[b]),
-            popcount(pos.bitboards[R] | pos.bitboards[r]),
-            popcount(pos.bitboards[Q] | pos.bitboards[Q]),
+        const S32 ptvls[5] = {
+            popcount(pos.bitboards[P] | pos.bitboards[p]) * pieceValues[P],
+            popcount(pos.bitboards[N] | pos.bitboards[n]) * pieceValues[N],
+            popcount(pos.bitboards[B] | pos.bitboards[b]) * pieceValues[B],
+            popcount(pos.bitboards[R] | pos.bitboards[r]) * pieceValues[R],
+            popcount(pos.bitboards[Q] | pos.bitboards[Q]) * pieceValues[Q],
         };
 
         const S32 bonus = 
@@ -103,16 +103,16 @@ Score correctStaticEval(Position& pos, Score eval) {
                 + nonPawnsCorrHist[side][WHITE][pos.nonPawnKeys[WHITE] % CORRHISTSIZE]
                 + nonPawnsCorrHist[side][BLACK][pos.nonPawnKeys[BLACK] % CORRHISTSIZE]
             )                                                               * nonPawnCorrWeight()
-            + static_cast<S64>(tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE]) * T0CorrWeight() * (ptcnts[P] * 50 + ptcnts[N] * 300) / 2000
-            + static_cast<S64>(tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE]) * T1CorrWeight() * (ptcnts[P] * 50 + ptcnts[B] * 300) / 2000
-            + static_cast<S64>(tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE]) * T2CorrWeight() * (ptcnts[P] * 50 + ptcnts[N] * 300) / 2000
-            + static_cast<S64>(tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE]) * T3CorrWeight() * (ptcnts[P] * 25 + ptcnts[Q] * 900) / 2200
-            + static_cast<S64>(tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE]) * T4CorrWeight() * (ptcnts[N] * 300 + ptcnts[B] * 300) / 2400
-            + static_cast<S64>(tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE]) * T5CorrWeight() * (ptcnts[N] * 300 + ptcnts[R] * 300) / 2400
-            + static_cast<S64>(tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE]) * T6CorrWeight() * (ptcnts[N] * 300 + ptcnts[Q] * 600) / 2400
-            + static_cast<S64>(tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE]) * T7CorrWeight() * (ptcnts[B] * 300 + ptcnts[R] * 300) / 2400
-            + static_cast<S64>(tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE]) * T8CorrWeight() * (ptcnts[B] * 300 + ptcnts[Q] * 300) / 2400
-            + static_cast<S64>(tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE]) * T9CorrWeight() * (ptcnts[R] * 300 + ptcnts[Q] * 600) / 2400
+            + static_cast<S64>(tripletCorrHist[0][side][(k[K] ^ k[P] ^ k[N]) % CORRHISTSIZE]) * T0CorrWeight() * (ptvls[P] + ptvls[N]) / (16 * pieceValues[P] + 4 * pieceValues[N])
+            + static_cast<S64>(tripletCorrHist[1][side][(k[K] ^ k[P] ^ k[B]) % CORRHISTSIZE]) * T1CorrWeight() * (ptvls[P] + ptvls[B]) / (16 * pieceValues[P] + 4 * pieceValues[B])
+            + static_cast<S64>(tripletCorrHist[2][side][(k[K] ^ k[P] ^ k[R]) % CORRHISTSIZE]) * T2CorrWeight() * (ptvls[P] + ptvls[R]) / (16 * pieceValues[P] + 4 * pieceValues[R])
+            + static_cast<S64>(tripletCorrHist[3][side][(k[K] ^ k[P] ^ k[Q]) % CORRHISTSIZE]) * T3CorrWeight() * (ptvls[P] + ptvls[Q]) / (16 * pieceValues[P] + 2 * pieceValues[Q])
+            + static_cast<S64>(tripletCorrHist[4][side][(k[K] ^ k[N] ^ k[B]) % CORRHISTSIZE]) * T4CorrWeight() * (ptvls[N] + ptvls[B]) / (4 * pieceValues[N] + 4 * pieceValues[B])
+            + static_cast<S64>(tripletCorrHist[5][side][(k[K] ^ k[N] ^ k[R]) % CORRHISTSIZE]) * T5CorrWeight() * (ptvls[N] + ptvls[R]) / (4 * pieceValues[N] + 4 * pieceValues[R])
+            + static_cast<S64>(tripletCorrHist[6][side][(k[K] ^ k[N] ^ k[Q]) % CORRHISTSIZE]) * T6CorrWeight() * (ptvls[N] + ptvls[Q]) / (4 * pieceValues[N] + 2 * pieceValues[Q])
+            + static_cast<S64>(tripletCorrHist[7][side][(k[K] ^ k[B] ^ k[R]) % CORRHISTSIZE]) * T7CorrWeight() * (ptvls[B] + ptvls[R]) / (4 * pieceValues[B] + 4 * pieceValues[R])
+            + static_cast<S64>(tripletCorrHist[8][side][(k[K] ^ k[B] ^ k[Q]) % CORRHISTSIZE]) * T8CorrWeight() * (ptvls[B] + ptvls[Q]) / (4 * pieceValues[B] + 2 * pieceValues[Q])
+            + static_cast<S64>(tripletCorrHist[9][side][(k[K] ^ k[R] ^ k[Q]) % CORRHISTSIZE]) * T9CorrWeight() * (ptvls[R] + ptvls[Q]) / (4 * pieceValues[R] + 2 * pieceValues[Q])
         ;
 
         corrected = eval + bonus / (CORRHISTSCALE * CORRECTIONGRANULARITY);
