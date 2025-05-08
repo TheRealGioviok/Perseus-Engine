@@ -134,21 +134,15 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
     if (ttScore != noScore)
     {
-        if (!PVNode && ttDepth >= depth)
+        if (ttDepth >= depth)
         {
-            if (ttBound == hashEXACT)
-                return ttScore;
-            if ((ttBound == hashLOWER))
-                alpha = std::max(alpha, ttScore);
-            else if ((ttBound == hashUPPER))
-                beta = std::min(beta, ttScore);
-            if (alpha >= beta) {
-                // Update best move history
-                // Square from = moveSource(ttMove);
-                // Square to = moveTarget(ttMove);
-                // updateHistoryBonus(&historyTable[pos.side][indexFromTo(from, to)], depth, true);
-                return ttScore;
-            }
+            if (ttBound == hashEXACT
+                || (ttBound == hashUPPER && ttScore <= alpha)
+                || (ttBound == hashLOWER && ttScore >= beta))
+                {
+                    if (PVNode) depth--;
+                    else return ttScore;
+                }
         }
     }
 
