@@ -125,7 +125,7 @@ public:
      * @param ss The SStack object to store the search information in
      * @return The score of the position
      */
-    Score search(Score alpha, Score beta, Depth depth, bool cutnode, SStack* ss);
+    Score search(Score alpha, Score beta, Depth depth, bool cutnode, SStack* ss, S32 prevRed = 0);
 
     /**
      * @brief The makeNullMove function makes a null move on the board.
