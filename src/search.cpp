@@ -69,7 +69,7 @@ static inline void clearKillers(SStack *ss)
     ss->killers[1] = noMove;
 }
 
-Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *ss)
+Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *ss, S32 prevRed)
 {
     // Comms
     if (nodes >= hardNodesLimit)
@@ -408,6 +408,7 @@ skipPruning:
                         granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
                     }
                 }
+                if (moveSearched >= 3) granularR -= prevRed * 512;
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
                 Depth R = granularR / RESOLUTION;
@@ -415,7 +416,7 @@ skipPruning:
                 R = std::min(Depth(newDepth - Depth(1)), R);
                 Depth reducedDepth = newDepth - R;
                 // Search at reduced depth
-                score = -search(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
+                score = -search(-alpha - 1, -alpha, reducedDepth, true, ss + 1, R);
                 // If failed high on reduced search, research at full depth
                 if (score > alpha && R){
                     bool deeper = score > bestScore + doDeeperMargin() + 2 * newDepth;
