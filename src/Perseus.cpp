@@ -107,6 +107,9 @@ int main(int argc, char* argv[]){
             return 0;
         }
     }
-    uciLoop(&game);
+    
+    UCIHandler uci(&game);
+    uci.start();
+
     return 0;
 }

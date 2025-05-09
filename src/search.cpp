@@ -69,14 +69,20 @@ static inline void clearKillers(SStack *ss)
     ss->killers[1] = noMove;
 }
 
+void Game::checkTimeOut(){
+    if (getTimeMs()>static_cast<uint64_t>(searchLimits.timeToQuit)) {
+        searchLimits.stopped=true;
+    }
+}
+
 Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *ss)
 {
     // Comms
-    if (nodes >= hardNodesLimit)
-        stopped = true;
+    if (nodes >= searchLimits.hardNodesLimit)
+        searchLimits.stopped = true;
     if ((nodes & comfrequency) == 0)
-        communicate();
-    if (stopped)
+        checkTimeOut();
+    if (searchLimits.stopped)
         return 0;
 
     assert(pos.hashKey == pos.generateHashKey());
@@ -243,7 +249,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
             undoNullMove(undoer);
 
-            if (stopped)
+            if (searchLimits.stopped)
                 return 0;
 
             if (nullScore >= beta)
@@ -439,7 +445,7 @@ skipPruning:
             undo(undoer, currMove);
 
 
-            if (stopped)
+            if (searchLimits.stopped)
                 return 0;
 
             if (RootNode) nodesPerMoveTable[indexFromTo(moveSource(currMove), moveTarget(currMove))] += nodes - nodesBefore;
@@ -484,7 +490,7 @@ skipPruning:
         // 
         // return inCheck ? matedIn(ply) : randomizedDrawScore(nodes); // Randomize draw score so that we try to explore different lines
 
-    if (!stopped && !excludedMove){
+    if (!searchLimits.stopped && !excludedMove){
         if (!inCheck
             && (!bestMove || okToReduce(bestMove))
             && !(ttBound == hashLOWER && bestScore <= ss->staticEval)
@@ -629,6 +635,8 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
 #define ASPIRATIONWINDOW 25
 void Game::startSearch(bool ageTT = true)
 {
+    searching = true;
+    searchLimits.stopped = false;
     // Set SE counters to 0
     seCandidates = 0;
     seActivations = 0;
@@ -640,7 +648,6 @@ void Game::startSearch(bool ageTT = true)
 
     Score delta = ASPIRATIONWINDOW;
     nodes = 0ULL;
-    stopped = false;
     ply = 0;
     seldepth = 0;
     nmpPlies = 0;
@@ -649,33 +656,21 @@ void Game::startSearch(bool ageTT = true)
 
     lastScore = 0;
 
-    startTime = getTime64();
     U64 optim = 0xffffffffffffffffULL;
 #define UCILATENCYMS 20
-    switch (searchMode) {
-        case 0:               // Infinite search
-            depth = maxPly - 1; // Avoid overflow
-        case 1: // Fixed depth
-            optim = moveTime = 0xffffffffffffffffULL;
-            break;
-        case 2: // Time control
-            moveTime = getTime64();
+    if (searchLimits.timeControl) {
+            searchLimits.timeToQuit = startTime;
             U64 totalTime;
             if (pos.side == WHITE) totalTime = (U64)(wtime * timeTmA() / RESOLUTION) + winc * timeTmB() / RESOLUTION;
             else totalTime = (U64)(btime * timeTmA() / RESOLUTION) + binc * timeTmB() / RESOLUTION;
             totalTime -= UCILATENCYMS;
             optim = totalTime * timeTmOptimScale() / 1000;
 
-            moveTime += totalTime;
-            depth = maxPly - 1;
-            break;
-        case 3:
-            moveTime -= UCILATENCYMS;
-            optim = moveTime;
-            depth = maxPly - 1;
-            break;
+            searchLimits.timeToQuit += totalTime;
+            searchLimits.depthLimit = maxPly - 1;
     }
-
+    else 
+        searchLimits.timeToQuit -= UCILATENCYMS;
 
     double nodesTmScale = 1.0;
 
@@ -701,13 +696,13 @@ void Game::startSearch(bool ageTT = true)
     printMove(bestMove);
     std::cout << std::endl;
     
-    depth = std::min(depth, Depth(maxPly - 3));
-    if (depth < 0)
-        depth = maxPly - 3;
-    if (stopped)
+    searchLimits.depthLimit = std::min(searchLimits.depthLimit, Depth(maxPly - 3));
+    if (searchLimits.depthLimit < 0)
+        searchLimits.depthLimit = maxPly - 3;
+    if (searchLimits.stopped)
         goto bmove;
 
-    for (Depth searchDepth = 2; (searchDepth <= depth) && searchDepth >= 2 && !stopped; searchDepth++)
+    for (Depth searchDepth = 2; (searchDepth <= searchLimits.depthLimit) && searchDepth >= 2 && !searchLimits.stopped; searchDepth++)
     {
         currSearch = searchDepth;
         delta = ASPIRATIONWINDOW;
@@ -723,14 +718,14 @@ void Game::startSearch(bool ageTT = true)
             seldepth = 0; // Reset seldepth
             ply = 0;
             S64 locNodes = nodes;                        // Save nodes for nps calculation
-            U64 timer1 = getTime64();                    // Save time for nps calculation
+            U64 timer1 = getTimeMs();                    // Save time for nps calculation
             // Clear the first sstack entry
             ss->wipe();
             score = search(alpha, beta, currSearch, false, ss); // Search at depth currSearch
-            if (stopped)
+            if (searchLimits.stopped)
                 goto bmove;
             bestMove = pvTable[0][0];
-            U64 timer2 = getTime64();
+            U64 timer2 = getTimeMs();
 
             if (score <= alpha)
             {
@@ -780,15 +775,16 @@ void Game::startSearch(bool ageTT = true)
                 break;
             }
         }
-        if (currSearch >= 6){
+        if (searchLimits.timeControl && currSearch >= 6){
             // 1.242 felt cute, maybe it gains
             nodesTmScale = ((S64)nodesTmMax() - ((double)nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)nodes) * (S64)nodesTmMul()) / RESOLUTION;    
+            // Check optim time quit
+            if (getTimeMs() > startTime + optim * nodesTmScale) break;
         }
-        // Check optim time quit
-        if (getTime64() > startTime + optim * nodesTmScale) break;
     }
 
 bmove:
+    searching = false;
     // Report final search info (6307869)
     std::cout << "info nodes " << nodes << std::endl;
     std::cout << "bestmove ";

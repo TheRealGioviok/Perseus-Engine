@@ -32,7 +32,7 @@ U64 Game::perft(Depth depth){
 U64 Game::divide(Depth depth) {
     std::cout << "Starting divide at depth " << (int)depth << std::endl;
     // Get time
-    auto start = getTime64();
+    auto start = getTimeMs();
     nodes = 0;
     MoveList moveList;
     pos.generateUnsortedMoves(moveList);
@@ -52,16 +52,12 @@ U64 Game::divide(Depth depth) {
             undoer.undoMove(pos, moveList.moves[i]);
         }
     }
-    auto end = getTime64();
+    auto end = getTimeMs();
 
     std::cout << "Divide results: " << nodes << "\n"
         << "Time: " << (end - start) << " ms\n"
         << "nps: " << std::to_string((nodes * 1000) / (end - start)) << std::endl;
     return nodes;
-}
-
-void Game::communicate() {
-    UCICommunicate(this);
 }
 
 /**
@@ -97,19 +93,22 @@ U64 Game::_perft(Depth depth) {
  */
 void Game::reset(){
     pos.parseFEN((char*)std::string(startPosition).c_str());
-    depth = 0;
-    moveTime = 0;
     wtime = 0;
     btime = 0;
     winc = 0;
     binc = 0;
-    stopped = false;
     lastScore = 0;
     ply = 0;
     seldepth = 0;
     rootDelta = infinity;
     nmpPlies = 0;
     age = 0;
+    
+    searchLimits.depthLimit = 0;
+    searchLimits.hardNodesLimit = 0;
+    searchLimits.stopped = true;
+    searchLimits.timeToQuit = 0;
+    
 
     // Clear history, killer and counter move tables
     memset(historyTable, 0, sizeof(historyTable));

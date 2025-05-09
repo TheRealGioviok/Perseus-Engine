@@ -7,6 +7,8 @@
 constexpr U64 ttEntryCount = 1048576;                      // 2^20
 constexpr U64 ttBucketSize = 4;                            // 2^2
 constexpr U64 ttBucketCount = ttEntryCount / ttBucketSize; // 2^18
+extern U32 hashSize;
+
 
 // The enum of hashFlags
 enum HashFlag

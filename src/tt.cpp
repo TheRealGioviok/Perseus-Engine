@@ -1,8 +1,9 @@
 #include "tt.h"
 #include "constants.h"
 #include "move.h"
-#include "uci.h"
 #include <vector>
+
+U32 hashSize = 64;
 
 ttEntry::ttEntry(HashKey h, U16 b, Depth d, U8 f, Score s) {
     hashKey = h;

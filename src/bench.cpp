@@ -3,6 +3,7 @@
 #include "tables.h"
 #include "tt.h"
 #include "uci.h"
+#include <climits>
 const char *benchmarkfens[50] = {
     "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14",
     "4rrk1/2p1b1p1/p1p3q1/4p3/2P2n1p/1P1NR2P/PB3PP1/3R1QK1 b - - 2 24",
@@ -64,17 +65,15 @@ S32 benchmark(Depth depth){
     double avgNodeProportion = 0;
     for(int i = 0; i < 50; i++){
         std::cout << "Benchmarking position " << i << std::endl;
-        U64 currTime = getTime64();
+        U64 currTime = getTimeMs();
         game.reset();
-        game.searchMode = 1;
-        game.depth = depth;
+        game.searchLimits.depthLimitedSearch(depth);
         game.parseFEN((char*)benchmarkfens[i]);
-        game.hardNodesLimit = 0xFFFFFFFFFFFFFFFF;
         game.startSearch(false);
         nodes += game.nodes;
         Move bestMove = pvTable[0][0]; // Bench never returns half searches, hence this is always a bestmove
         avgNodeProportion += (double)game.nodesPerMoveTable[indexFromTo(moveSource(bestMove), moveTarget(bestMove))] / (double)game.nodes;
-        totalTime += getTime64() - currTime;
+        totalTime += getTimeMs() - currTime;
     }
     game.reset();
     std::cout << "Time: " << totalTime << " ms - Mainline nodecount proportion: " << avgNodeProportion / 50 << std::endl;

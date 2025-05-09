@@ -1,6 +1,8 @@
 #pragma once
 #include "Position.h"
+#include "constants.h"
 #include "history.h"
+#include <climits>
 
 extern S64 seCandidates;
 extern U64 seActivations;
@@ -8,15 +10,63 @@ extern S64 avgDist;
 
 class Game {
 public:
+    bool searching = false;
+
+    struct SearchLimits {
+        U64 hardNodesLimit = 0;
+        Depth depthLimit = 0;
+        U64 timeToQuit = 0;
+        bool stopped = true;
+        bool timeControl = false;
+
+        void nodesSearch(U64 nodes){
+            hardNodesLimit = nodes;
+            depthLimit = maxPly - 1;
+            timeToQuit = ULLONG_MAX;
+            timeControl = false;
+            stopped = false;
+        }
+
+        void depthLimitedSearch(Depth depth){
+            hardNodesLimit = ULLONG_MAX;
+            depthLimit = depth;
+            timeToQuit = ULLONG_MAX;
+            timeControl = false;
+            stopped = false;
+        }
+
+        void infiniteSearch(){
+            hardNodesLimit = ULLONG_MAX;
+            depthLimit = maxPly - 1;
+            timeToQuit = ULLONG_MAX;
+            timeControl = false;
+            stopped = false;
+        }
+
+        void moveTimeSearch(U64 moveTime){
+            hardNodesLimit = ULLONG_MAX;
+            depthLimit = maxPly - 1;
+            timeToQuit = moveTime;
+            timeControl = false;
+            stopped = false;
+        }
+
+        void timeControlSearch(){
+            hardNodesLimit = ULLONG_MAX;
+            depthLimit = maxPly - 1;
+            timeToQuit = ULLONG_MAX;
+            timeControl = true;
+            stopped = false;
+        }
+
+    } searchLimits;
+
     U64 nodes = 0;
-    U64 hardNodesLimit = 0;
     Ply ply;
     Position pos;
-    Depth depth;
     Depth currSearch;
     U16 seldepth = 0;
-    U64 moveTime;
-    U8 searchMode = 0;
+    U64 startTime;
     U32 wtime;
     U32 btime;
     U32 winc;
@@ -25,7 +75,6 @@ public:
     Score lastScore = 0;
     U64 nodesPerMoveTable[64 * 64];
     S16 nmpPlies = 0;
-    bool stopped = false;
     U8 age = 0;
 
     /**
@@ -169,10 +218,7 @@ public:
      */
     Score contempt();
 
-    /**
-     * @brief The communicate function communicates with the GUI.
-     * @note This is a call to the uci communicate(Game) function.
-     */
-    void communicate();
+    void checkTimeOut();
+
 };
 
