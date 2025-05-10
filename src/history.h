@@ -65,11 +65,11 @@ static inline S32 getThreatsIndexing(const BitBoard threats, const Move move){
 }
 
 static inline S32 statBonus(S32 depth){
-    return std::min(maxHistoryBonus(), depth * depth * historyBonusQuadDepth() + depth * historyBonusLinDepth() + historyBonusOffset());
+    return std::clamp(depth * depth * historyBonusQuadDepth() + depth * historyBonusLinDepth() + historyBonusOffset(),1,maxHistoryBonus());
 }
 
 static inline S32 statMalus(S32 depth){
-    return std::min(maxHistoryMalus(), depth * depth * historyMalusQuadDepth() + depth * historyMalusLinDepth() + historyMalusOffset());
+    return std::clamp( depth * depth * historyMalusQuadDepth() + depth * historyMalusLinDepth() + historyMalusOffset(), 1, maxHistoryMalus());
 }
 
 #define MAXHISTORYABS 16384LL
