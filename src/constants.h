@@ -179,6 +179,10 @@ TUNE_PARAM(lmrNoisyHistoryDivisorB, 6587, 2000, 14000, 500, 0.002)
 // Deeper / shallower
 TUNE_PARAM(doDeeperMargin, 33, 10, 50, 2, 0.002)
 
+// Alpha raise params
+NO_TUNE_PARAM(alphaReductionMinDepth, 2, 1, 5, 0.5, 0.002)
+NO_TUNE_PARAM(alphaReductionMaxDepth, 12, 8, 16, 0.5, 0.002)
+
 // PVS SEE
 TUNE_PARAM(pvsSeeThresholdNoisy, -16, -160, -10, 6, 0.002)
 TUNE_PARAM(pvsSeeThresholdQuiet, -109, -160, -10, 6, 0.002)
@@ -187,7 +191,7 @@ NO_TUNE_PARAM(pvsSeeMaxDepth, 7, 5, 10, 0.5, 0.002)
 // LMP values
 TUNE_PARAM(lmpA0, 597, 250, 1750, 64, 0.002);
 TUNE_PARAM(lmpC0, 1929, 500, 5000, 198, 0.002);
-TUNE_PARAM(lmpA1, 1023, 250, 1750, 64, 0.002);
+TUNE_PARAM(lmpA1, 1023, 250, 1750, 64, 0.002); 
 TUNE_PARAM(lmpC1, 2795, 500, 5000, 198, 0.002);
 
 // RFP values

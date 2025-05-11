@@ -469,9 +469,12 @@ skipPruning:
                         break;
                     }
                     alpha = score;
+                    // Alpha raise reduction
+                    if (depth > alphaReductionMinDepth() && depth < alphaReductionMaxDepth() && abs(bestScore) < mateValue)
+                        depth--;
                 }
             }
-        }
+        } 
         else
             undo(undoer, currMove);
     }
