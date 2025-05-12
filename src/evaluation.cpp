@@ -1909,6 +1909,7 @@ void convertToFeatures(std::string filename, std::string output) {
         }
         // Parse the position
         if (pos.parseFEN((char*)tokens[0].c_str())){
+            if (pos.checkers) continue;
             // Get the features
             getEvalFeaturesTensor(&pos, features);
 
