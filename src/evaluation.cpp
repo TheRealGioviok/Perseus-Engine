@@ -1323,21 +1323,48 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[0] = gamePhase;
     ++tensor;
 
-    // Add the psqt weights. Only add them once, no need to bloat the data.
-    for (Square square = a8; square < noSquare; square++){
+    // Save the "wkhside == bkhside" flag as the first byte of the tensor
+tensor[0] = (wkhside == bkhside) ? 1 : 0;
+tensor++;
+
+    // Create a temporary table to collect all PSQT info first (6 piece types * 64 squares)
+    S8 psqtTable[6 * 64] = {0}; // Initialize all to 0
+
+    // Fill the table with PSQT info: 0 (no piece/both colors), 1 (white), -1 (black)
+    for (Square square = a8; square < noSquare; square++) {
         Piece piece = pos->pieceOn(square);
         if (piece == NOPIECE) continue;
+        
         Square sq = piece < p ? square : flipSquare(square);
         U8 sqx = sq & 7;
         sqx = (piece < p) ?
             (wkhside ? sqx : 7 - sqx) :
-            (bkhside ? sqx : 7 - sqx) ;
-        U8 sqy = sq / 8; 
+            (bkhside ? sqx : 7 - sqx);
+        U8 sqy = sq / 8;
         sq = sqx + 8 * sqy;
+        
         bool pieceColor = piece >= p;
-        tensor[64 * (piece % 6) + sq] += (pieceColor ? 0b0100 : 0b0001) << (wkhside == bkhside);
+        int index = 64 * (piece % 6) + sq;
+        
+        // White piece: 1, Black piece: -1
+        psqtTable[index] = pieceColor ? -1 : 1;
     }
-    tensor += 64 * 6;
+
+    // Pack the table values efficiently (2 bits per square: 00=0, 01=1, 10=-1, 11=unused)
+    for (int i = 0; i < 6 * 64; i += 4) {
+        U8 packed = 0;
+        for (int j = 0; j < 4 && (i + j) < 6 * 64; j++) {
+            U8 code;
+            switch (psqtTable[i + j]) {
+                case 0:  code = 0b00; break; // 00 for 0
+                case 1:  code = 0b01; break; // 01 for 1
+                case -1: code = 0b10; break; // 10 for -1
+                default: code = 0b00; break; // Default to 0
+            }
+            packed |= (code << (j * 2));
+        }
+        *tensor++ = packed;
+    }
 
     // Add the material weights
     for (Piece piece = P; piece <= Q; piece++){
