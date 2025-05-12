@@ -1878,7 +1878,7 @@ void convertToFeatures(std::string filename, std::string output) {
     // Get the count of weights by getting the current eval weights
     auto weights = getCurrentEvalWeights();
     U32 weightCount = weights.size();
-    U32 PSQTweights = 6 * 64; // PSQTS + 2 king buckets
+    U32 PSQTweights = 6 * 64 / 4 + 1; // PSQTS + 2 king buckets
     U32 entrySize = 1 + PSQTweights + weightCount / 2 + 1; // The entry size is the 1 (gamephase) + number of weights divided by 2 + 1, since we add the result at the end, but we don't need to write the features twice for each side
     entrySize += KINGSAFETYCOLOREDPARAMS;
     entrySize += COMPLEXITYFEATURES;
