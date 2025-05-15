@@ -408,7 +408,7 @@ skipPruning:
                         granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
                     }
                 }
-                granularR -= 512 * pos.checkers;
+                granularR -= 512 * !!(pos.checkers);
                 granularR -= 512 * inCheck;
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
