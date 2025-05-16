@@ -395,17 +395,17 @@ skipPruning:
                 if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
-                    granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
+                    granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -24000000LL, 24000000LL) / lmrQuietHistoryDivisor();
                     if (cutNode) granularR += lmrQuietCutNode();
                     if (ttPv) granularR -= cutNode * lmrQuietTTPV();
                 }
                 else {
                     if (currMoveScore < QUIETSCORE) { 
                         if (cutNode) granularR += lmrBadNoisyCutNode();
-                        granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
+                        granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -24000000LL, 24000000LL) / lmrNoisyHistoryDivisorA();
                     }
                     else {
-                        granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
+                        granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -24000000LL, 24000000LL) / lmrNoisyHistoryDivisorB();
                     }
                 }
                 // The function looked cool on desmos
