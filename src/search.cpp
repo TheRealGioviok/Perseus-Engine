@@ -300,7 +300,7 @@ skipPruning:
                     skipQuiets = true;
                     continue;
                 }
-                if (!PVNode && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
+                if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
                     skipQuiets = true;
                     continue;
                 }
@@ -310,7 +310,7 @@ skipPruning:
                 ? pvsSeeThresholdNoisy() * depth 
                 : pvsSeeThresholdQuiet() * depth * depth
             ;
-            if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
+            if (quietOrLosing && !pos.SEE(currMove, seeThresh)) continue;
         }
         // assert (
         //     i != 0 || !excludedMove ||
