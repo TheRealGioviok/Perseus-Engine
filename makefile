@@ -1,35 +1,40 @@
-# Detect the operating system
-ifeq ($(OS),Windows_NT)
-	EXE_EXT := .exe
-    MOVE_CMD := move
-	PATH_SEPARATOR := \$()
-else
-	EXE_EXT :=
-    MOVE_CMD := mv
-	PATH_SEPARATOR := /
+# This file is part of Serendipity, an UCI chess engine written in Java.
+#
+# Copyright (C) 2024-2025  Shawn Xu <shawn@shawnxu.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+EXE = Serendipity-Dev
+EMBEDDED_NET_LOCATION = ./Serendipity/src/main/resources/embedded.nnue
+NET_NAME = net1.nnue
+ifndef MAVEN_EXE
+	MAVEN_EXE = mvn
 endif
 
-ifdef CPU
-	SUFX := _$(CPU)
+all:
+ifdef EVALFILE
+	cp $(EVALFILE) $(EMBEDDED_NET_LOCATION)
 else
-	SUFX :=
+	$(MAKE) net
 endif
-
-EXE := Perseus
-
-# Default target (release build)
-all: release
-
-# Release target
-release:
-	$(MAKE) -C src release EXE=$(EXE)$(EXE_EXT)
-	@$(MOVE_CMD) src$(PATH_SEPARATOR)$(EXE)$(EXE_EXT) $(EXE)$(SUFX)$(EXE_EXT)
-
-# Debug target
-debug:
-	$(MAKE) -C src debug EXE=$(EXE)$(EXE_EXT)
-	@$(MOVE_CMD) src$(PATH_SEPARATOR)$(EXE)$(EXE_EXT) $(EXE)$(SUFX)$(EXE_EXT)
-
-# Clean target
-clean:
-	$(MAKE) -C src clean EXE=$(EXE)$(EXE_EXT)
+ifdef JAVA_HOME
+	JAVA_HOME=$(JAVA_HOME) $(MAVEN_EXE) -f ./Serendipity/pom.xml package
+else
+	$(MAVEN_EXE) -f ./Serendipity/pom.xml package
+endif
+	cat header.sh ./Serendipity/target/Serendipity-Test.jar > $(EXE)
+	chmod +x $(EXE)
+	cp ./Serendipity/target/Serendipity-Test.jar Serendipity.jar
+net:
+	wget -O $(EMBEDDED_NET_LOCATION) https://github.com/xu-shawn/Serendipity-Networks/raw/main/$(NET_NAME)
