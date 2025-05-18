@@ -302,17 +302,17 @@ skipPruning:
                     skipQuiets = true;
                     continue;
                 }
-                if (!PVNode && lmrDepth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * lmrDepth) + historyPruningBias()){
+                if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
                     skipQuiets = true;
                     continue;
                 }
             }
             else if (quietOrLosing) continue;
             const auto seeThresh = isQuiet
-                ? pvsSeeThresholdNoisy() * depth 
-                : pvsSeeThresholdQuiet() * depth * depth
+                ? pvsSeeThresholdNoisy() * lmrDepth 
+                : pvsSeeThresholdQuiet() * lmrDepth * lmrDepth
             ;
-            if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
+            if (quietOrLosing && lmrDepth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
         }
         // assert (
         //     i != 0 || !excludedMove ||
