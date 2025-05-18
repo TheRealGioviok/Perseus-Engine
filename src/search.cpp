@@ -310,7 +310,7 @@ skipPruning:
                 ? pvsSeeThresholdNoisy() * depth 
                 : pvsSeeThresholdQuiet() * depth * depth
             ;
-            if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
+            if (!PVNode && quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
         }
         // assert (
         //     i != 0 || !excludedMove ||
