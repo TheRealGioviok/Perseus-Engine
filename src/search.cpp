@@ -281,21 +281,24 @@ skipPruning:
     // Iterate through moves
     for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
     {
-        S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
         Move currMove = onlyMove(moveList.moves[i]);
-        if (sameMovePos(currMove, excludedMove)) continue;
+        S32 currMoveScore = getScore(moveList.moves[i]);
         const bool isQuiet = okToReduce(currMove);
+        Depth newDepth = std::max(0,depth - 1);
+        S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
+        Depth lmrDepth = std::max(1,newDepth - granularR / RESOLUTION);
+        if (sameMovePos(currMove, excludedMove)) continue;
         const bool quietOrLosing = currMoveScore < COUNTERSCORE;
         if (moveSearched){
             if (!skipQuiets) { 
                 if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
                 if (!PVNode
-                    && depth <= 8
+                    && lmrDepth <= 8
                     && !inCheck
                     && bestScore > -KNOWNWIN
                     && std::abs(alpha) < KNOWNWIN
                     && isQuiet
-                    && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
+                    && ss->staticEval + futPruningAdd() + futPruningMultiplier() * lmrDepth <= alpha)
                 {
                     skipQuiets = true;
                     continue;
@@ -375,8 +378,7 @@ skipPruning:
                     extension = 1;
             }
             cutNode |= extension < 0;
-
-            Depth newDepth = std::max(0,depth - 1 + extension);
+            newDepth += extension;
 
             ss->move = currMove;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
@@ -391,7 +393,6 @@ skipPruning:
 
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
-                S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
                 if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
