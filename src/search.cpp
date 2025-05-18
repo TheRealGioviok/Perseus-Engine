@@ -284,9 +284,8 @@ skipPruning:
         Move currMove = onlyMove(moveList.moves[i]);
         S32 currMoveScore = getScore(moveList.moves[i]);
         const bool isQuiet = okToReduce(currMove);
-        Depth newDepth = std::max(0,depth - 1);
         S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
-        Depth lmrDepth = std::max(1,newDepth - granularR / RESOLUTION);
+        Depth lmrDepth = std::max(1,depth - granularR / RESOLUTION);
         if (sameMovePos(currMove, excludedMove)) continue;
         const bool quietOrLosing = currMoveScore < COUNTERSCORE;
         if (moveSearched){
@@ -378,7 +377,7 @@ skipPruning:
                     extension = 1;
             }
             cutNode |= extension < 0;
-            newDepth += extension;
+            Depth newDepth = std::max(0,depth - 1 + extension);
 
             ss->move = currMove;
             ss->contHistEntry = continuationHistoryTable[indexPieceTo(movePiece(currMove), moveTarget(currMove))];
