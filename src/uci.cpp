@@ -417,7 +417,7 @@ void execCommand(Game* game, char* command){
         else if (strstr((char *)command, "pinned")){
             std::cout << "pinned pieces: \n";
             bool side = game->pos.side;
-            printBitBoard(game->pos.blockers[side] & game->pos.occupancies[side]);
+            printBitBoard(game->pos.blockersFor[side] & game->pos.occupancies[side]);
         }
         else if (strstr((char* )command, "btwn")){
             // read the next two squares. Each square is two characters long, so we need to read two characters for each square

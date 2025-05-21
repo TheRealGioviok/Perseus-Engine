@@ -701,8 +701,8 @@ Score pestoEval(Position *pos){
     // Pinned mask
     
     BitBoard pinned[2] = {
-        pos->blockers[WHITE] & occ[WHITE],
-        pos->blockers[BLACK] & occ[BLACK]
+        pos->blockersFor[WHITE] & occ[WHITE],
+        pos->blockersFor[BLACK] & occ[BLACK]
     };
 
     const BitBoard blockedPawns[2] = {
@@ -1395,8 +1395,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
 
     // Pinned mask
     BitBoard pinned[2] = {
-        pos->blockers[WHITE] & occ[WHITE],
-        pos->blockers[BLACK] & occ[BLACK]
+        pos->blockersFor[WHITE] & occ[WHITE],
+        pos->blockersFor[BLACK] & occ[BLACK]
     };
 
     BitBoard blockedPawns[2] = {

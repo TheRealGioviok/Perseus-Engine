@@ -46,7 +46,7 @@ struct Position{
     BitBoard checkers;
     BitBoard threats;
 
-    BitBoard blockers[2];
+    BitBoard blockersFor[2];
     BitBoard pinners[2];
     BitBoard discover[2];
 
@@ -260,7 +260,7 @@ struct UndoInfo {
     BitBoard threats;
     BitBoard checkers;
     
-    BitBoard blockers[2];
+    BitBoard blockersFor[2];
     BitBoard pinners[2];
     BitBoard discover[2];
 

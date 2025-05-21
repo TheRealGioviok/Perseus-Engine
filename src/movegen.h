@@ -207,17 +207,41 @@ inline BitBoard xRayBishopAttacks(BitBoard occupancy, BitBoard blockers, Square 
  * @param opBQ The opponent's Bishop and Queen bitboard.
  */
 inline void updateBlockers(BitBoard occupancy, BitBoard enemyPieces, Square pinSquare, BitBoard opRQ, BitBoard opBQ, BitBoard& blockers, BitBoard& pinners, BitBoard& discover){
-    BitBoard pinner = (xRayRookAttacks(occupancy, occupancy, pinSquare) & opRQ) | (xRayBishopAttacks(occupancy, occupancy, pinSquare) & opBQ); 
-    pinner &= enemyPieces;
-    
+    BitBoard pinner = (
+        (xRayRookAttacks(occupancy, occupancy, pinSquare) & opRQ) 
+        | (xRayBishopAttacks(occupancy, occupancy, pinSquare) & opBQ)
+    ); 
+        
     while (pinner){
         Square sq = popLsb(pinner);
         const BitBoard between = squaresBetween[sq][pinSquare] & occupancy; // Either empty or one square, bc of pinner calculation
         // Add the pinned piece
         if (between){
             blockers |= between;
-            if (between & enemyPieces) pinners |= squareBB(sq);
-            else discover |= squareBB(sq);
+            BitBoard pinnerBB = squareBB(sq);
+            pinners |= pinnerBB;
+            if (pinnerBB & enemyPieces) discover |= squareBB(sq);
         }
     }
+}
+
+
+/**
+ * @brief The getPinnedPieces function returns the squares of a certain bitboard that are pinned to a certain square.
+ * @param occupancy The general occupancy.
+ * @param ownPieces The own pieces. (the pieces that are candidates to be pinned)
+ * @param pinSquare The square that is pinned.
+ * @param opRQ The opponent's Rook and Queen bitboard.
+ * @param opBQ The opponent's Bishop and Queen bitboard.
+ * @return The pinned pieces, if any.
+ */
+inline BitBoard getPinnedPieces(BitBoard occupancy, BitBoard ownPieces, Square pinSquare, BitBoard opRQ, BitBoard opBQ){
+    BitBoard pinned = 0;
+    BitBoard pinner = (xRayRookAttacks(occupancy, ownPieces, pinSquare) & opRQ) | (xRayBishopAttacks(occupancy, ownPieces, pinSquare) & opBQ); // We generate the pinners for the rooks
+    while (pinner){
+        Square sq = popLsb(pinner);
+        pinned |= squaresBetween[sq][pinSquare]; // We add the squares between the pin square and the pinner to the pinned pieces
+    }
+    // Only return own pieces
+    return pinned & ownPieces;
 }
