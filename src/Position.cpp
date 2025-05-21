@@ -820,7 +820,7 @@ bool Position::SEE(const Move move, const Score threshold){
     };
 
     const BitBoard pinnedPieces = pinnedSides[WHITE] | pinnedSides[BLACK];
-    const BitBoard allowed = ~pinnedPieces | (pinnedSides[WHITE & kingRays[WHITE]]) | (pinnedSides[BLACK & kingRays[BLACK]]);
+    const BitBoard allowed = ~pinnedPieces | (pinnedSides[WHITE] & kingRays[WHITE]) | (pinnedSides[BLACK] & kingRays[BLACK]);
 
     while (true){
         attackers &= allPieces;
@@ -847,7 +847,7 @@ bool Position::SEE(const Move move, const Score threshold){
         }
 
         // Remove the used piece from the board
-        clearBit(allPieces, lsb(ourAttackers & (bb[pt] | bb[pt + 6])));
+        clearBit(allPieces, lsb(ourAttackers & bb[pt + 6 * (side ^ 1)]));
 
         // Update the attackers
         if (pt == P || pt == B || pt == Q) attackers |= getBishopAttack(dst, allPieces) & diagonalSliders;
