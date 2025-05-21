@@ -578,16 +578,16 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
 
         // Move count pruning
         if (!inCheck && moveCount >= 2) break;
-        
+        bool wouldPrune = false;
         // SEE pruning : skip all moves that have see < of the adaptive capthist based threshold
-        if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
-            break;
+        if (!inCheck && moveCount && !pos.SEE(move, 0)) // getScore(moveList.moves[i]) < GOODNOISYMOVE)
+            wouldPrune = true;
 
         // Futility pruning
-        if (!inCheck && futility <= alpha && !pos.SEE(move, 1)){
-            bestScore = std::max(bestScore, futility);
-            continue;
-        }
+        //if (!inCheck && futility <= alpha && !pos.SEE(move, 1)){
+        //    bestScore = std::max(bestScore, futility);
+        //    continue;
+        //}
         if (makeMove(move))
         {
             // Prefetch tt
@@ -602,6 +602,14 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
                 bestScore = score;
                 if (score > alpha)
                 {
+                    if (wouldPrune){
+                        std::cout << "Kekkos! \n";
+                        std::cout << "On fen: " << pos.getFEN() << "\n";
+                        std::cout << "Move: ";
+                        printMove(move);
+                        std::cout << "\n";
+                        getchar();
+                    }
                     bestMove = move;
                     if (score >= beta)
                         break;
