@@ -30,20 +30,25 @@ struct Position{
     
     BitBoard bitboards[12];
     BitBoard occupancies[3];
-    BitBoard checkers;
-    BitBoard blockers[2];
     U8 side;
     U8 enPassant;
     U8 fiftyMove; // 50 move rule counter, number of plies since the last irreversible move
     Ply totalPly; // Total number of plies since the start of the game
     Ply plyFromNull; // Ply from the last null move (see Null Move Pruning for more information)
     U8 castle;
-    BitBoard threats;
     HashKey hashKey;
     HashKey pawnHashKey;
     HashKey nonPawnKeys[2];
     HashKey ptKeys[6];
     PScore psqtScores[8]; // PSQT score, incrementally updated.
+
+
+    BitBoard checkers;
+    BitBoard threats;
+
+    BitBoard blockers[2];
+    BitBoard pinners[2];
+    BitBoard discover[2];
 
     // The default constructor instantiates the position with the standard chess starting position.
     Position();
@@ -248,12 +253,17 @@ struct UndoInfo {
     Ply plyFromNull;
     PScore psqtScores[8];
     U8 side;
-    BitBoard threats;
     // Reversible information
     BitBoard bitboards[12];
     BitBoard occupancies[3];
+
+    BitBoard threats;
     BitBoard checkers;
+    
     BitBoard blockers[2];
+    BitBoard pinners[2];
+    BitBoard discover[2];
+
     /**
      * @brief The constructor of the UndoInfo class.
      * @param position The position to store the information from.
