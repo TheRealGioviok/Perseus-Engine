@@ -373,8 +373,8 @@ FENkeyEval:
     ptKeys[K] = generatePtHashKey<K>();
     checkers = calculateCheckers();
     generateThreats();
-    updateBlockers(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q], blockersFor[WHITE], pinners[WHITE], discover[WHITE]);
-    updateBlockers(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q], blockersFor[BLACK], pinners[BLACK], discover[BLACK]);
+    updateBlockers(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q], blockersFor[WHITE], pinners[WHITE], discover[WHITE]);
+    updateBlockers(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q], blockersFor[BLACK], pinners[BLACK], discover[BLACK]);
     return true;
 }
 
@@ -636,8 +636,8 @@ bool Position::makeMove(Move move)
         fiftyMove++;
     checkers = calculateCheckers();
     generateThreats();
-    updateBlockers(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q], blockersFor[WHITE], pinners[WHITE], discover[WHITE]);
-    updateBlockers(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q], blockersFor[BLACK], pinners[BLACK], discover[BLACK]);
+    updateBlockers(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q], blockersFor[WHITE], pinners[WHITE], discover[WHITE]);
+    updateBlockers(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q], blockersFor[BLACK], pinners[BLACK], discover[BLACK]);
     return true;
 }
 
@@ -817,8 +817,8 @@ bool Position::SEE(const Move move, const Score threshold) {
     BitBoard pinned = pinnedWhite | pinnedBlack;
 
     BitBoard allowed = ~pinned;
-    allowed |= pinnedWhite & (alignedSquares[to][lsb(bb[K])] | squareBB(to));
-    allowed |= pinnedBlack & (alignedSquares[to][lsb(bb[k])] | squareBB(to));
+    allowed |= pinnedWhite & (squaresBetween[to][lsb(bb[K])]);
+    allowed |= pinnedBlack & (squaresBetween[to][lsb(bb[k])]);
 
     while (true) {
         attackers &= allPieces;
@@ -906,8 +906,8 @@ void Position::reflect() {
     ptKeys[K] = generatePtHashKey<K>();
     generateThreats();
     checkers = calculateCheckers();
-    updateBlockers(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q], blockersFor[WHITE], pinners[WHITE], discover[WHITE]);
-    updateBlockers(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q], blockersFor[BLACK], pinners[BLACK], discover[BLACK]);
+    updateBlockers(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q], blockersFor[WHITE], pinners[WHITE], discover[WHITE]);
+    updateBlockers(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q], blockersFor[BLACK], pinners[BLACK], discover[BLACK]);
 }
 
 std::string Position::getFEN() {

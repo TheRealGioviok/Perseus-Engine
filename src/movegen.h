@@ -206,25 +206,38 @@ inline BitBoard xRayBishopAttacks(BitBoard occupancy, BitBoard blockers, Square 
  * @param opRQ The opponent's Rook and Queen bitboard.
  * @param opBQ The opponent's Bishop and Queen bitboard.
  */
-inline void updateBlockers(BitBoard occupancy, BitBoard enemyPieces, Square pinSquare, BitBoard opRQ, BitBoard opBQ, BitBoard& blockers, BitBoard& pinners, BitBoard& discover){
-    BitBoard pinner = (
-        (xRayRookAttacks(occupancy, occupancy, pinSquare) & opRQ) 
-        | (xRayBishopAttacks(occupancy, occupancy, pinSquare) & opBQ)
-    ); 
-        
-    while (pinner){
-        Square sq = popLsb(pinner);
-        const BitBoard between = squaresBetween[sq][pinSquare] & occupancy; // Either empty or one square, bc of pinner calculation
-        // Add the pinned piece
-        if (between){
+ inline void updateBlockers(
+    BitBoard occupancy,
+    BitBoard ownPieces,
+    Square pinSquare,
+    BitBoard opRQ,
+    BitBoard opBQ,
+    BitBoard& blockers,
+    BitBoard& pinners,
+    BitBoard& discover
+) {
+    // Potential pinners are enemy sliders that can x-ray the pin square
+    BitBoard potentialPinners =
+        (xRayRookAttacks(occupancy, occupancy, pinSquare) & opRQ) |
+        (xRayBishopAttacks(occupancy, occupancy, pinSquare) & opBQ);
+
+    while (potentialPinners) {
+        Square sq = popLsb(potentialPinners);
+        BitBoard between = squaresBetween[sq][pinSquare] & occupancy;
+
+        // Add *all* blockers along the ray — own or enemy
+        if (between) {
             blockers |= between;
-            BitBoard pinnerBB = squareBB(sq);
-            pinners |= pinnerBB;
-            if (pinnerBB & enemyPieces) discover |= squareBB(sq);
+
+            // If there's exactly one blocker, it's a pin candidate
+            pinners |= squareBB(sq);
+
+            // Only own pieces can move to cause discovery
+            if (between & ownPieces)
+                discover |= between;
         }
     }
 }
-
 
 /**
  * @brief The getPinnedPieces function returns the squares of a certain bitboard that are pinned to a certain square.
