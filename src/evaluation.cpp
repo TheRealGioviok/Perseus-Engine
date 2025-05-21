@@ -1,6 +1,5 @@
 #include "evaluation.h"
 #include "tables.h"
-#include "tt.h"
 #include "movegen.h"
 #include "zobrist.h"
 #include "types.h"
@@ -699,7 +698,6 @@ Score pestoEval(Position *pos){
     }
 
     // Pinned mask
-    
     BitBoard pinned[2] = {
         pos->blockersFor[WHITE] & occ[WHITE],
         pos->blockersFor[BLACK] & occ[BLACK]

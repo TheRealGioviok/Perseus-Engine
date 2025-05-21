@@ -221,17 +221,19 @@ inline BitBoard xRayBishopAttacks(BitBoard occupancy, BitBoard blockers, Square 
         (xRayRookAttacks(occupancy, occupancy, pinSquare) & opRQ) |
         (xRayBishopAttacks(occupancy, occupancy, pinSquare) & opBQ);
 
+    blockers = 0ULL;
+    pinners = 0ULL;
+    discover = 0ULL;
     while (potentialPinners) {
         Square sq = popLsb(potentialPinners);
         BitBoard between = squaresBetween[sq][pinSquare] & occupancy;
 
-        // Add *all* blockers along the ray — own or enemy
+        // Add all blockers along the ray 
         if (between) {
+            // There can only be one bc of the definition of xray attacks, so we can add it for sure
             blockers |= between;
-
-            // If there's exactly one blocker, it's a pin candidate
+            
             pinners |= squareBB(sq);
-
             // Only own pieces can move to cause discovery
             if (between & ownPieces)
                 discover |= between;
