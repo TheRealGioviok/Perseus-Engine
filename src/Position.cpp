@@ -909,7 +909,7 @@ void Position::reflect() {
 std::string Position::getFEN() {
 	std::string fen = "";
 	int empty = 0;
-	for (Square square = a8; square < noSquare; ++square) {
+	for (Square square = a8; square < noSquare; square++) {
         Piece p = pieceOn(square);
         if ( p == NOPIECE) empty++;
         else {
@@ -917,10 +917,10 @@ std::string Position::getFEN() {
             empty = 0;
             fen.append(1, getPieceChar(p));
         }
-        if ((square % 8 == 7) && (square != h1)) {
+        if (square % 8 == 7) {
             if (empty) fen.append(1, ('0' + empty));
             empty = 0;
-            fen += "/";
+            if (square != h1) fen += "/";
         }
 	}
 	

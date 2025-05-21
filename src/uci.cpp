@@ -434,6 +434,13 @@ void execCommand(Game* game, char* command){
             // bb is unsigned long long
             printBitBoard((BitBoard)std::stoull(bb + 8));
         }
+        else if(strstr((char *)command, "see")){
+            char* marginchr = strstr((char *)command, "see") + 4;
+            char* movechr = strstr((char*)command, "move") + 5;
+            Move parsedMove = game->getLegal(movechr);
+            // bb is unsigned long long
+            std::cout << "SEE with margin " << std::stoi(marginchr) << ": " << (int)game->pos.SEE(parsedMove, std::stoi(marginchr)) << "\n";
+        }
     }
 }
 
