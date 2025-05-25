@@ -1,4 +1,5 @@
 #include "evaluation.h"
+#include "BBmacros.h"
 #include "tables.h"
 #include "tt.h"
 #include "movegen.h"
@@ -1092,7 +1093,7 @@ Score pestoEval(Position *pos){
     const bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
     const bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
     const bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
-    const S32 pawnAsymmetry = (pawnFiles[WHITE] ^ pawnFiles[BLACK]) / 8;
+    const S32 pawnAsymmetry = popcount(pawnFiles[WHITE] ^ pawnFiles[BLACK]) / 8;
     const Score complexity = (COMPLEXITYPASSERS * passedCount
                         +  COMPLEXITYPAWNS * popcount(pawns)
                         +  COMPLEXITYBLOCKEDPAIRS * blockedPairs
@@ -1737,7 +1738,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
     bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
     bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
-    const S32 pawnAsymmetry = (pawnFiles[WHITE] ^ pawnFiles[BLACK]) / 8;
+    const S32 pawnAsymmetry = popcount(pawnFiles[WHITE] ^ pawnFiles[BLACK]) / 8;
     
     tensor[0] = passedCount;
     tensor[1] = popcount(pawns);
