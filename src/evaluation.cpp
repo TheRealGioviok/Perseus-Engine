@@ -131,6 +131,7 @@ constexpr PScore KSTEMPO = S(32, 57);
 constexpr Score COMPLEXITYPASSERS = 467;
 constexpr Score COMPLEXITYPAWNS = 1105;
 constexpr Score COMPLEXITYBLOCKEDPAIRS = -407;
+constexpr Score COMPLEXITYPAWNASIMMETRY = 0;
 constexpr Score COMPLEXITYPAWNTENSION = -758;
 constexpr Score COMPLEXITYOUTFLANKING = -39;
 constexpr Score COMPLEXITYINFILTRATION = -846;
@@ -1091,9 +1092,11 @@ Score pestoEval(Position *pos){
     const bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
     const bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
     const bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
+    const S32 pawnAsymmetry = (pawnFiles[WHITE] ^ pawnFiles[BLACK]) / 8;
     const Score complexity = (COMPLEXITYPASSERS * passedCount
                         +  COMPLEXITYPAWNS * popcount(pawns)
                         +  COMPLEXITYBLOCKEDPAIRS * blockedPairs
+                        +  COMPLEXITYPAWNASIMMETRY * pawnAsymmetry
                         +  COMPLEXITYPAWNTENSION * pawnTension
                         +  COMPLEXITYOUTFLANKING * outflanking
                         +  COMPLEXITYINFILTRATION * infiltration
@@ -1724,7 +1727,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     safeChecks[WHITE][Q-1] &= ~safeChecks[WHITE][R-1];
     safeChecks[BLACK][Q-1] &= ~safeChecks[BLACK][R-1];
 
-#define COMPLEXITYFEATURES 9
+#define COMPLEXITYFEATURES 10
 
     // Complexity adjustment, so we avoid going into drawish barely better endgames
     Score outflanking = std::abs(fileOf(whiteKing)- fileOf(blackKing)) - std::abs(rankOf(whiteKing)- rankOf(blackKing));
@@ -1734,19 +1737,20 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     bool pawnsOnBothFlanks = (boardSide[0] & pawns) && (boardSide[1] & pawns);
     bool almostUnwinnable = outflanking < 0 && !pawnsOnBothFlanks;
     bool infiltration = rankOf(whiteKing) <= 3 || rankOf(blackKing) >= 4;
+    const S32 pawnAsymmetry = (pawnFiles[WHITE] ^ pawnFiles[BLACK]) / 8;
     
     tensor[0] = passedCount;
     tensor[1] = popcount(pawns);
     tensor[2] = blockedPairs;
-    tensor[3] = pawnTension;
-    tensor[4] = outflanking;
-    tensor[5] = infiltration;
-    tensor[6] = pawnsOnBothFlanks;
-    tensor[7] = !(nonPawns[WHITE] | nonPawns[BLACK]);
-    tensor[8] = almostUnwinnable;
+    tensor[3] = pawnAsymmetry;
+    tensor[4] = pawnTension;
+    tensor[5] = outflanking;
+    tensor[6] = infiltration;
+    tensor[7] = pawnsOnBothFlanks;
+    tensor[8] = !(nonPawns[WHITE] | nonPawns[BLACK]);
+    tensor[9] = almostUnwinnable;
 
-    tensor += 9;
-
+    tensor += 10;
 
 #define KINGSAFETYCOLOREDPARAMS 58
     tensor[P] = innerAttacks[WHITE][P];
