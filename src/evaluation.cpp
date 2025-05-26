@@ -141,10 +141,34 @@ constexpr Score COMPLEXITYBIAS = -21141;
 
 // Function to access the table values
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
-    // Map x to the table index range
-    S32 index = ((x - MIN_X) * (KSTABLESIZE - 1) + (MAX_X - MIN_X)/2) / (MAX_X - MIN_X);
-    return table[std::clamp(index, 0, KSTABLESIZE-1)];
+    // Precompute these once (or make them constexpr globals)
+    const int range   = MAX_X - MIN_X;            // > 0
+    const int maxIdx  = KSTABLESIZE - 1;          // >= 1
+
+    // Bring x into [0..range]
+    const int dx = x - MIN_X;
+    if (dx <= 0)      return table[0];
+    if (dx >= range)  return table[maxIdx];
+
+    // Compute a fixed‐point index = dx * maxIdx / range
+    //   idx   = integer part
+    //   rem   = fractional numerator
+    const int idxTimes = dx * maxIdx;            // up to ~range*maxIdx
+    const int idx      = idxTimes / range;       // floor
+    const int rem      = idxTimes - idx * range; // = idxTimes % range
+
+    // Fetch endpoints
+    const int v0 = table[idx];
+    const int v1 = table[idx+1];
+
+    // Interpolate:  v0 + (v1−v0) * (rem / range)
+    // We do: v0 + ((v1−v0)*rem + range/2) / range  → rounds to nearest
+    const int dv = v1 - v0;
+    const int interp = v0 + ( (dv * rem + (range >> 1)) / range );
+
+    return S32(interp);
 }
+
 
 int getKingSafetyMg(int x) {
     return getKingSafetyFromTable(kingSafetyMgTable, x);
@@ -335,7 +359,6 @@ static inline PScore evalPtPtThreats(Position &pos,
 
     return score;
 }
-
 
 static inline BitBoard filesFromBB(BitBoard bb){
     bb |= bb >> 8 | bb << 8;
