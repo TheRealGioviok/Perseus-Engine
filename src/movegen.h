@@ -199,6 +199,49 @@ inline BitBoard xRayBishopAttacks(BitBoard occupancy, BitBoard blockers, Square 
 }
 
 /**
+ * @brief The getBlockers function returns the blocker pieces for a certain square.
+ * @param occupancy The general occupancy (The candidates to be blockers).
+ * @param enemyPieces The enemy pieces (the pieces that are candidates to be a pinner)
+ * @param pinSquare The square that we calculate pins and discoveries on.
+ * @param opRQ The opponent's Rook and Queen bitboard.
+ * @param opBQ The opponent's Bishop and Queen bitboard.
+ */
+ inline void updateBlockers(
+    BitBoard occupancy,
+    BitBoard ownPieces,
+    Square pinSquare,
+    BitBoard opRQ,
+    BitBoard opBQ,
+    BitBoard& blockers,
+    BitBoard& pinners,
+    BitBoard& discover
+) {
+    // Potential pinners are enemy sliders that can x-ray the pin square
+    BitBoard potentialPinners =
+        (xRayRookAttacks(occupancy, occupancy, pinSquare) & opRQ) |
+        (xRayBishopAttacks(occupancy, occupancy, pinSquare) & opBQ);
+
+    blockers = 0ULL;
+    pinners = 0ULL;
+    discover = 0ULL;
+    while (potentialPinners) {
+        Square sq = popLsb(potentialPinners);
+        BitBoard between = squaresBetween[sq][pinSquare] & occupancy;
+
+        // Add all blockers along the ray 
+        if (between) {
+            // There can only be one bc of the definition of xray attacks, so we can add it for sure
+            blockers |= between;
+            
+            pinners |= squareBB(sq);
+            // Only own pieces can move to cause discovery
+            if (between & ownPieces)
+                discover |= between;
+        }
+    }
+}
+
+/**
  * @brief The getPinnedPieces function returns the squares of a certain bitboard that are pinned to a certain square.
  * @param occupancy The general occupancy.
  * @param ownPieces The own pieces. (the pieces that are candidates to be pinned)

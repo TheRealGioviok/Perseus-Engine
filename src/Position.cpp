@@ -1,4 +1,5 @@
-#include "Game.h"
+#include "Position.h"
+#include "move.h"
 #include "movegen.h"
 #include "tables.h"
 #include "history.h"
@@ -372,6 +373,8 @@ FENkeyEval:
     ptKeys[K] = generatePtHashKey<K>();
     checkers = calculateCheckers();
     generateThreats();
+    updateBlockers(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q], blockersFor[WHITE], pinners[WHITE], discover[WHITE]);
+    updateBlockers(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q], blockersFor[BLACK], pinners[BLACK], discover[BLACK]);
     return true;
 }
 
@@ -633,6 +636,8 @@ bool Position::makeMove(Move move)
         fiftyMove++;
     checkers = calculateCheckers();
     generateThreats();
+    updateBlockers(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q], blockersFor[WHITE], pinners[WHITE], discover[WHITE]);
+    updateBlockers(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q], blockersFor[BLACK], pinners[BLACK], discover[BLACK]);
     return true;
 }
 
@@ -766,76 +771,96 @@ bool Position::insufficientMaterial() {
     }
 }
 
-// Thanks to Weiss chess engine for a clean implementation of this function
 bool Position::SEE(const Move move, const Score threshold) {
-    if (isCastling(move)) return threshold <= 0; // Castling moves don't capture anything, and they don't put the king nor the rook in danger (because of the check rule for castling)
+    const Square from = moveSource(move);
+    const Square to = moveTarget(move);
+    const auto bb = bitboards;
 
-    Square from = moveSource(move);
-    Square to = moveTarget(move);
+    // Handle castling - no material change
+    if (isCastling(move))
+        return threshold <= 0;
 
-    Piece target = moveCapture(move);
-    Piece promo = movePromotion(move);
-    Score value = pieceValues[target] - threshold;
+    const Piece attacker = movePiece(move);
+    const Piece promotion = movePromotion(move);
+    const Piece captured = isEnPassant(move) ? P : moveCapture(move);
 
-    // If the move is a promotion, we need to consider the value of the promoted piece (and remove the value of the pawn)
-    if (promo != NOPIECE) value += pieceValues[promo] - pieceValues[P];
+    const int us = attacker < 6 ? WHITE : BLACK;
+    int side = us ^ 1;  // start with opponent after the first capture
 
-    // Check for early SEE exit (if the threshold is still negative)
-    if (value < 0) return false;
+    Score value = pieceValues[captured] - threshold;
 
-    Piece attacker = movePiece(move);
+    if (promotion != NOPIECE)
+        value += pieceValues[promotion] - pieceValues[P];
 
-    // Check for another early SEE exit (if immediate recapture still beats the threshold)
-    value -= promo != NOPIECE ? pieceValues[promo] : pieceValues[attacker];
-    if (value >= 0) return true;
+    if (value < 0)
+        return false;
 
-    // Initialize the attackers, occupancies, vertical and horizontal sliders
-    BitBoard occupied = occupancies[BOTH] ^ squareBB(from);
-    if (isEnPassant(move)) occupied ^= squareBB(to + (side == WHITE ? 8 : -8));
+    value -= (promotion != NOPIECE) ? pieceValues[promotion] : pieceValues[attacker];
 
-    BitBoard diagonalSliders = bitboards[Q] | bitboards[q] | bitboards[B] | bitboards[b];
-    BitBoard orthogonalSliders = bitboards[Q] | bitboards[q] | bitboards[R] | bitboards[r];
+    if (value >= 0)
+        return true;
 
-    BitBoard attackers = attacksToPre(to, occupied, diagonalSliders, orthogonalSliders);
+    // Create working copy of board state
+    BitBoard allPieces = occupancies[BOTH] ^ squareBB(from);
+    if (isEnPassant(move)) {
+        Square epPawnSq = to + (us == WHITE ? -8 : 8);
+        allPieces ^= squareBB(epPawnSq);
+    }
 
-    const U8 us = attacker < 6 ? WHITE : BLACK; // Side of the attacker
+    BitBoard diagonalSliders = bb[B] | bb[Q] | bb[b] | bb[q];
+    BitBoard orthogonalSliders = bb[R] | bb[Q] | bb[r] | bb[q];
 
-    U8 side = us ^ 1; // Side of the attacker, flipped (one move already executed)
+    BitBoard attackers = attacksToPre(to, allPieces, diagonalSliders, orthogonalSliders);
 
-    while (true){
-        attackers &= occupied;
-        BitBoard ourAttackers = attackers & occupancies[side];
-        if (!ourAttackers) break; // We run out of attackers
+    BitBoard pinnedWhite = blockersFor[WHITE] & occupancies[WHITE];
+    BitBoard pinnedBlack = blockersFor[BLACK] & occupancies[BLACK];
+    BitBoard pinned = pinnedWhite | pinnedBlack;
 
-        // Find the least valuable attacker
+    BitBoard allowed = ~pinned;
+    allowed |= pinnedWhite & (squaresBetween[to][lsb(bb[K])]);
+    allowed |= pinnedBlack & (squaresBetween[to][lsb(bb[k])]);
+
+    while (true) {
+        attackers &= allPieces;
+        BitBoard ourAttackers = attackers & occupancies[side] & allowed;
+
+        if (!ourAttackers)
+            break;
+
         Piece pt;
-        for (pt = P; pt < K; ++pt)
-            if (ourAttackers & bitboards[pt + 6 * side]) break;
-        
+        for (pt = P; pt < K; ++pt) {
+            if (ourAttackers & bb[pt + 6 * side])
+                break;
+        }
+
+        // Find square of capturing piece
+        Square fromSq = lsb(ourAttackers & bb[pt + 6 * side]);
+
+        // Remove attacker from board
+        clearBit(allPieces, fromSq);
+
+        // Flip side for next iteration
         side ^= 1;
 
-        // Update the value
-        value = -value -1 - pieceValues[pt];
+        value = -value - 1 - pieceValues[pt];
 
-        // Check if value beats threshold
         if (value >= 0) {
-            // Special case for king captures, as we need to check if the king is in check after the capture
-            if (pt == K && (attackers & occupancies[side])) side ^= 1; // So that if our kings ends up in check we fail, if their king ends up in check we succeed
+            // Handle special case of king capture
+            if (pt == K && (attackers & occupancies[side])) {
+                side ^= 1;
+            }
             break;
         }
 
-        // Remove the used piece from the board
-        clearBit(occupied, lsb(ourAttackers & (bitboards[pt] | bitboards[pt + 6])));
-
-        // Update the attackers
-        if (pt == P || pt == B || pt == Q) attackers |= getBishopAttack(to, occupied) & diagonalSliders;
-        if (pt == R || pt == Q) attackers |= getRookAttack(to, occupied) & orthogonalSliders;
+        // Update attackers with new X-rays
+        if (pt == B || pt == Q || pt == P)
+            attackers |= getBishopAttack(to, allPieces) & diagonalSliders;
+        if (pt == R || pt == Q)
+            attackers |= getRookAttack(to, allPieces) & orthogonalSliders;
     }
 
-    // Check who runs out of attackers
     return side != us;
 }
-
 
 void Position::reflect() {
     // reflect psqt
@@ -880,12 +905,15 @@ void Position::reflect() {
     ptKeys[Q] = generatePtHashKey<Q>();
     ptKeys[K] = generatePtHashKey<K>();
     generateThreats();
+    checkers = calculateCheckers();
+    updateBlockers(occupancies[BOTH], occupancies[WHITE], lsb(bitboards[K]), bitboards[r] | bitboards[q], bitboards[b] | bitboards[q], blockersFor[WHITE], pinners[WHITE], discover[WHITE]);
+    updateBlockers(occupancies[BOTH], occupancies[BLACK], lsb(bitboards[k]), bitboards[R] | bitboards[Q], bitboards[B] | bitboards[Q], blockersFor[BLACK], pinners[BLACK], discover[BLACK]);
 }
 
 std::string Position::getFEN() {
 	std::string fen = "";
 	int empty = 0;
-	for (Square square = a8; square < noSquare; ++square) {
+	for (Square square = a8; square < noSquare; square++) {
         Piece p = pieceOn(square);
         if ( p == NOPIECE) empty++;
         else {
@@ -893,10 +921,10 @@ std::string Position::getFEN() {
             empty = 0;
             fen.append(1, getPieceChar(p));
         }
-        if ((square % 8 == 7) && (square != h1)) {
+        if (square % 8 == 7) {
             if (empty) fen.append(1, ('0' + empty));
             empty = 0;
-            fen += "/";
+            if (square != h1) fen += "/";
         }
 	}
 	
@@ -1729,6 +1757,7 @@ void Position::makeNullMove(){
     plyFromNull = 0;
     checkers = 0ULL; // null moves will never be done while in check.
     generateThreats();
+    // Pins dont change after null move
 }
 
 UndoInfo::UndoInfo(Position& position){
@@ -1748,6 +1777,9 @@ UndoInfo::UndoInfo(Position& position){
     memcpy(bitboards, position.bitboards, sizeof(BitBoard) * 12);
     memcpy(occupancies, position.occupancies, sizeof(BitBoard) * 3);
     memcpy(ptHashKey, position.ptKeys, sizeof(HashKey) * 6);
+    memcpy(blockersFor, position.blockersFor, sizeof(BitBoard) * 2);
+    memcpy(pinners, position.pinners, sizeof(pinners));
+    memcpy(discover, position.discover, sizeof(discover));
 }
 
 void UndoInfo::undoMove(Position& position, Move move){
@@ -1779,6 +1811,9 @@ void UndoInfo::undoMove(Position& position, Move move){
     position.checkers = checkers;
     memcpy(position.psqtScores, psqtScores, sizeof(PScore) * 8);
     memcpy(position.occupancies, occupancies, sizeof(BitBoard) * 3);
+    memcpy(position.blockersFor, blockersFor, sizeof(BitBoard) * 2);
+    memcpy(position.pinners, pinners, sizeof(pinners));
+    memcpy(position.discover, discover, sizeof(discover));
 }
 
 void UndoInfo::undoNullMove(Position& position){

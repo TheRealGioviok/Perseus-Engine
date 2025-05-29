@@ -417,25 +417,7 @@ void execCommand(Game* game, char* command){
         else if (strstr((char *)command, "pinned")){
             std::cout << "pinned pieces: \n";
             bool side = game->pos.side;
-            BitBoard whitePieces = game->pos.occupancies[WHITE];
-            BitBoard blackPieces = game->pos.occupancies[BLACK];
-            BitBoard pieces = whitePieces | blackPieces;
-            BitBoard toPrint = 0;
-            if (side == WHITE){
-                BitBoard blackBQ = game->pos.bitboards[8] | game->pos.bitboards[10];
-                BitBoard blackRQ = game->pos.bitboards[9] | game->pos.bitboards[10];
-                BitBoard ourKing = game->pos.bitboards[5];
-                Square ourKingSquare = popLsb(ourKing);
-                toPrint = getPinnedPieces(pieces, whitePieces, ourKingSquare, blackRQ, blackBQ);
-            }
-            else{
-                BitBoard whiteBQ = game->pos.bitboards[2] | game->pos.bitboards[4];
-                BitBoard whiteRQ = game->pos.bitboards[3] | game->pos.bitboards[4];
-                BitBoard ourKing = game->pos.bitboards[11];
-                Square ourKingSquare = popLsb(ourKing);
-                toPrint = getPinnedPieces(pieces, blackPieces, ourKingSquare, whiteRQ, whiteBQ);
-            }
-            printBitBoard(toPrint);
+            printBitBoard(game->pos.blockersFor[side] & game->pos.occupancies[side]);
         }
         else if (strstr((char* )command, "btwn")){
             // read the next two squares. Each square is two characters long, so we need to read two characters for each square
@@ -451,6 +433,13 @@ void execCommand(Game* game, char* command){
             char* bb = strstr((char *)command, "printBB");
             // bb is unsigned long long
             printBitBoard((BitBoard)std::stoull(bb + 8));
+        }
+        else if(strstr((char *)command, "see")){
+            char* marginchr = strstr((char *)command, "see") + 4;
+            char* movechr = strstr((char*)command, "move") + 5;
+            Move parsedMove = game->getLegal(movechr);
+            // bb is unsigned long long
+            std::cout << "SEE with margin " << std::stoi(marginchr) << ": " << (int)game->pos.SEE(parsedMove, std::stoi(marginchr)) << "\n";
         }
     }
 }

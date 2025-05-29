@@ -146,6 +146,7 @@ extern BitBoard passedPawnMask[2][64];
 extern BitBoard isolatedPawnMask[64];
 extern BitBoard backwardPawnMask[2][64];
 extern BitBoard phalanx[64];
+extern BitBoard alignedSquares[64][64];
 const PScore kingSafety[64] = { // TODO: Replace with PScore tuned values
 	S( 10 , 15 ), S( 12 , 17 ), S( 13 , 19 ), S( 15 , 22 ), S( 17 , 25 ), S( 19 , 28 ), S( 21 , 31 ), S( 24 , 35 ), 
 	S( 27 , 40 ), S( 31 , 45 ), S( 34 , 51 ), S( 39 , 57 ), S( 43 , 64 ), S( 49 , 72 ), S( 55 , 80 ), S( 61 , 90 ), 

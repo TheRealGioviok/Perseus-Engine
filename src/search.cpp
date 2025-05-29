@@ -578,11 +578,9 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
 
         // Move count pruning
         if (!inCheck && moveCount >= 2) break;
-        
         // SEE pruning : skip all moves that have see < of the adaptive capthist based threshold
         if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
             break;
-
         // Futility pruning
         if (!inCheck && futility <= alpha && !pos.SEE(move, 1)){
             bestScore = std::max(bestScore, futility);
