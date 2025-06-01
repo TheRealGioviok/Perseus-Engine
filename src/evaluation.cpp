@@ -831,19 +831,19 @@ Score pestoEval(Position *pos){
     // std::cout << "PSQT scores are :\t"<<-score.mg()<<"\t"<<-score.eg()<<std::endl;
     
     // Black mobility
-    mobility<N>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][N-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<B>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][B-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<R>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][R-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<Q>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<N>(bb+6, occ[BOTH], ~pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][N-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<B>(bb+6, occ[BOTH], ~pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][B-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<R>(bb+6, occ[BOTH], ~pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][R-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<Q>(bb+6, occ[BOTH], ~pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
 
     // Flip
     score = -score;
 
     // White mobility
-    mobility<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][N-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][B-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][R-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<N>(bb, occ[BOTH], ~pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][N-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<B>(bb, occ[BOTH], ~pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][B-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<R>(bb, occ[BOTH], ~pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][R-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<Q>(bb, occ[BOTH], ~pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
 
     bool wkhside = fileOf(whiteKing) <= 3;
     bool bkhside = fileOf(blackKing) <= 3;
