@@ -179,8 +179,9 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
         BitBoard mobMoves;
         Square sq = popLsb(pieces);
         if constexpr (pt == N || pt == n) {
-            moves = knightAttacks[sq];
+            // Pinned knight always has no moves
             if (squareBB(sq) & unpinned){
+                moves = knightAttacks[sq];
                 mobMoves = moves & mob;
 
                 U8 moveCount = popcount(mobMoves);
@@ -188,7 +189,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
                 kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
             }
             else {
-                moves &= alignedSquares[kingSquare][sq];
+                moves = 0;
             }
         }
         else if constexpr (pt == B || pt == b) { // X-ray through our queens
@@ -238,9 +239,9 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoard pinned, const BitBoard mobilityArea, PScore &score, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, PScore &innerAttacks, PScore &outerAttacks){
+static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoard unpinned, const BitBoard mobilityArea, PScore &score, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, PScore &innerAttacks, PScore &outerAttacks){
     // constexpr Side them = us ? BLACK : WHITE;
-    BitBoard pieces = bb[pt] & ~pinned; // TODO: try to exclude xray through pinned pieces
+    BitBoard pieces = bb[pt]; // TODO: try to exclude xray through pinned pieces
 
     // Consider diagonal xrays through our queens
     if constexpr (pt == B || pt == Q)                   occCheck ^= bb[Q];
@@ -255,40 +256,61 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
         BitBoard mobMoves;
         Square sq = popLsb(pieces);
         if constexpr (pt == N) {
-            moves = knightAttacks[sq];
-            mobMoves = moves & mobilityArea;
-            U8 moveCount = popcount(mobMoves);
-            // Add the mobility score
-            score += knightMob[moveCount] + KNIGHTPROTECTOR * chebyshevDistance[kingSquare][sq];
-            innerAttacks += KNIGHTATTACKINNERRING * popcount(mobMoves & kingRing);
-            outerAttacks += KNIGHTATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            if (unpinned & squareBB(sq)){
+                moves = knightAttacks[sq];
+                mobMoves = moves & mobilityArea;
+                U8 moveCount = popcount(mobMoves);
+                // Add the mobility score
+                score += knightMob[moveCount] + KNIGHTPROTECTOR * chebyshevDistance[kingSquare][sq];
+                innerAttacks += KNIGHTATTACKINNERRING * popcount(mobMoves & kingRing);
+                outerAttacks += KNIGHTATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            }
+            else {
+                moves = 0ULL;
+            }
         }
         else if constexpr (pt == B) {
             moves = getBishopAttack(sq, occCheck);
-            mobMoves = moves & mobilityArea;
-            U8 moveCount = popcount(mobMoves); // X-ray through our queens
-            // Add the mobility score
-            score += bishopMob[moveCount] + BISHOPPROTECTOR * chebyshevDistance[kingSquare][sq];
-            innerAttacks += BISHOPATTACKINNERRING * popcount(mobMoves & kingRing);
-            outerAttacks += BISHOPATTACKOUTERRING * popcount(mobMoves & kingOuter);
+
+            if (unpinned & squareBB(sq)){
+                mobMoves = moves & mobilityArea;
+                U8 moveCount = popcount(mobMoves); // X-ray through our queens
+                // Add the mobility score
+                score += bishopMob[moveCount] + BISHOPPROTECTOR * chebyshevDistance[kingSquare][sq];
+                innerAttacks += BISHOPATTACKINNERRING * popcount(mobMoves & kingRing);
+                outerAttacks += BISHOPATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            }
+            else {
+                moves &= alignedSquares[kingSquare][sq];
+            }
         }
         else if constexpr (pt == R) {
             moves = getRookAttack(sq, occCheck);
-            mobMoves = moves & mobilityArea;
-            U8 moveCount = popcount(mobMoves); // X-ray through our queens and rooks
-            // Add the mobility score
-            score += rookMob[moveCount];
-            innerAttacks += ROOKATTACKINNERRING * popcount(mobMoves & kingRing);
-            outerAttacks += ROOKATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            if (unpinned & squareBB(sq)){
+                mobMoves = moves & mobilityArea;
+                U8 moveCount = popcount(mobMoves); // X-ray through our queens and rooks
+                // Add the mobility score
+                score += rookMob[moveCount];
+                innerAttacks += ROOKATTACKINNERRING * popcount(mobMoves & kingRing);
+                outerAttacks += ROOKATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            }
+            else {
+                moves &= alignedSquares[kingSquare][sq];
+            }
         }
         else if constexpr (pt == Q) {
             moves = getQueenAttack(sq, occCheck);
-            mobMoves = moves & mobilityArea;
-            U8 moveCount = popcount(mobMoves); // X-ray through our queens
-            // Add the mobility score
-            score += queenMob[moveCount];
-            innerAttacks += QUEENATTACKINNERRING * popcount(mobMoves & kingRing);
-            outerAttacks += QUEENATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            if (unpinned & squareBB(sq)){
+                mobMoves = moves & mobilityArea;
+                U8 moveCount = popcount(mobMoves); // X-ray through our queens
+                // Add the mobility score
+                score += queenMob[moveCount];
+                innerAttacks += QUEENATTACKINNERRING * popcount(mobMoves & kingRing);
+                outerAttacks += QUEENATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            }
+            else {
+                moves &= alignedSquares[kingSquare][sq];
+            }
         }
         ourMultiAttacks |= attackedByUs & moves;
         attackedByUs |= moves;
