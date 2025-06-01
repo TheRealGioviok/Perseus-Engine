@@ -218,7 +218,6 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
         }
         else if constexpr (pt == Q || pt == q) { // X-ray through our queens
             moves = getQueenAttack(sq, occCheck);
-            moves = knightAttacks[sq];
             if (squareBB(sq) & unpinned){
                 mobMoves = moves & mob;
 
