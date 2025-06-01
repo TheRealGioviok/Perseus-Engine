@@ -16,7 +16,6 @@ PScore PSQTs[2][12][64];
 
 PawnEvalHashEntry pawnEvalHash[PAWNHASHSIZE];
 
-
 void initTables() {
     for(Square square = a8; square < noSquare; square++) {
         // White
