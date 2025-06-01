@@ -1,5 +1,7 @@
 #include "evaluation.h"
+#include "BBmacros.h"
 #include "tables.h"
+#include "tt.h"
 #include "movegen.h"
 #include "zobrist.h"
 #include "types.h"
@@ -157,10 +159,10 @@ static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) |
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, const BitBoard pinned, const BitBoard mob, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, S8 *features, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, S32 &innerAttacks, S32 &outerAttacks, S32 &kingDist) {
+static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, const BitBoard unpinned, const BitBoard mob, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, S8 *features, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, S32 &innerAttacks, S32 &outerAttacks, S32 &kingDist) {
     constexpr Side us = pt < p ? WHITE : BLACK;
     // constexpr Side them = us ? BLACK : WHITE;
-    BitBoard pieces = bb[pt] & ~pinned;
+    BitBoard pieces = bb[pt];
 
     // Consider diagonal xrays through our queens
     if constexpr (pt == B || pt == Q)                   occCheck ^= bb[Q];
@@ -178,32 +180,57 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
         Square sq = popLsb(pieces);
         if constexpr (pt == N || pt == n) {
             moves = knightAttacks[sq];
-            mobMoves = moves & mob;
-            U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : -1;
-            kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
+            if (squareBB(sq) & unpinned){
+                mobMoves = moves & mob;
+
+                U8 moveCount = popcount(mobMoves);
+                features[moveCount] += us == WHITE ? 1 : -1;
+                kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
+            }
+            else {
+                moves &= alignedSquares[kingSquare][sq];
+            }
         }
         else if constexpr (pt == B || pt == b) { // X-ray through our queens
             moves = getBishopAttack(sq, occCheck);
-            mobMoves = moves & mob;
-            U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : -1;
-            kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
+            if (squareBB(sq) & unpinned){
+                mobMoves = moves & mob;
+
+                U8 moveCount = popcount(mobMoves);
+                features[moveCount] += us == WHITE ? 1 : -1;
+                kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
+            }
+            else {
+                moves &= alignedSquares[kingSquare][sq];
+            }
         }
         else if constexpr (pt == R || pt == r) { // X-ray through our queens and rooks
             moves = getRookAttack(sq, occCheck);
-            mobMoves = moves & mob;
-            U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : -1;
+            if (squareBB(sq) & unpinned){
+                mobMoves = moves & mob;
+
+                U8 moveCount = popcount(mobMoves);
+                features[moveCount] += us == WHITE ? 1 : -1;
+            }
+            else {
+                moves &= alignedSquares[kingSquare][sq];
+            }
         }
         else if constexpr (pt == Q || pt == q) { // X-ray through our queens
             moves = getQueenAttack(sq, occCheck);
-            mobMoves = moves & mob;
-            U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : -1;
+            moves = knightAttacks[sq];
+            if (squareBB(sq) & unpinned){
+                mobMoves = moves & mob;
+
+                U8 moveCount = popcount(mobMoves);
+                features[moveCount] += us == WHITE ? 1 : -1;
+            }
+            else {
+                moves &= alignedSquares[kingSquare][sq];
+            }
         }
-        innerAttacks += popcount(mobMoves & kingRing);
-        outerAttacks += popcount(mobMoves & kingOuter);
+        innerAttacks += popcount(moves & kingRing);
+        outerAttacks += popcount(moves & kingOuter);
         ourMultiAttacks |= attackedByUs & moves;
         attackedByUs |= moves;
         ptAttacks |= moves;
@@ -698,9 +725,17 @@ Score pestoEval(Position *pos){
     }
 
     // Pinned mask
+    BitBoard RQmask[2] = {
+        bb[R] | bb[Q],
+        bb[r] | bb[q]
+    };
+    BitBoard BQmask[2] = {
+        bb[B] | bb[Q],
+        bb[b] | bb[q]
+    };
     BitBoard pinned[2] = {
-        pos->blockersFor[WHITE] & occ[WHITE],
-        pos->blockersFor[BLACK] & occ[BLACK]
+        getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
+        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
     };
 
     const BitBoard blockedPawns[2] = {
@@ -736,8 +771,8 @@ Score pestoEval(Position *pos){
     };
 
     const BitBoard nonPawns[2] = {
-        bb[N] | bb[B] | bb[R] | bb[Q],
-        bb[n] | bb[b] | bb[r] | bb[q],
+        bb[N] | bb[B] | RQmask[WHITE],
+        bb[n] | bb[b] | RQmask[BLACK],
     };
 
     const BitBoard kingRing[2] = {
@@ -1392,9 +1427,17 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     }
 
     // Pinned mask
+    BitBoard RQmask[2] = {
+        bb[R] | bb[Q],
+        bb[r] | bb[q]
+    };
+    BitBoard BQmask[2] = {
+        bb[B] | bb[Q],
+        bb[b] | bb[q]
+    };
     BitBoard pinned[2] = {
-        pos->blockersFor[WHITE] & occ[WHITE],
-        pos->blockersFor[BLACK] & occ[BLACK]
+        getPinnedPieces(occ[BOTH], occ[WHITE], whiteKing, RQmask[BLACK], BQmask[BLACK]),
+        getPinnedPieces(occ[BOTH], occ[BLACK], blackKing, RQmask[WHITE], BQmask[WHITE])
     };
 
     BitBoard blockedPawns[2] = {
