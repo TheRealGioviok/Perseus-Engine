@@ -409,6 +409,8 @@ skipPruning:
                     }
                 }
                 // The function looked cool on desmos
+                granularR += 527;
+                granularR -= abs(rawEval - ss->staticEval) * 8;
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
                 Depth R = granularR / RESOLUTION;
                 R = std::max(Depth(0), R);
