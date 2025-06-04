@@ -44,7 +44,7 @@ void initTables() {
         PSQTs[0][k][flipSquare(square)] = -PSQTs[0][K][square];
         PSQTs[1][k][flipSquare(square)] = -PSQTs[1][K][square];
     }
-}
+} 
 
 constexpr PScore DOUBLEISOLATEDPEN = S(-19, -41);
 constexpr PScore ISOLATEDPEN = S(-18, -17);
