@@ -125,7 +125,7 @@ constexpr PScore SAFETYINNERSHELTER = S(-50, -130);
 constexpr PScore SAFETYOUTERSHELTER = S(6, -154);
 constexpr PScore INNERWEAKNESS = S(110, -37);
 constexpr PScore OUTERWEAKNESS = S(14, 10);
-constexpr PScore KSTEMPO = S(31, 3);
+constexpr PScore KSTEMPO = S(31, 3); 
 
 constexpr Score COMPLEXITYPASSERS = 468;
 constexpr Score COMPLEXITYPAWNS = 1135;
