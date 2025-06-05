@@ -145,12 +145,12 @@ TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxV
 		constexpr S32 name() { return defaultValue; }
 
 // History stuff
-TUNE_PARAM(maxHistoryBonus, 2272, 1, 4096, 128, 0.002);
+TUNE_PARAM(maxHistoryBonus, 3072, 1, 4096, 128, 0.002);
 TUNE_PARAM(historyBonusQuadDepth, 9, 1, 32, 1, 0.002);
 TUNE_PARAM(historyBonusLinDepth, 216, 1, 1024, 16, 0.002);
 TUNE_PARAM(historyBonusOffset, -340, -1024, 1024, 52, 0.002);
 
-TUNE_PARAM(maxHistoryMalus, 710, 1, 4096, 128, 0.002);
+TUNE_PARAM(maxHistoryMalus, 1536, 1, 4096, 128, 0.002);
 TUNE_PARAM(historyMalusQuadDepth, 4, 1, 32, 1, 0.002);
 TUNE_PARAM(historyMalusLinDepth, 266, 1, 1024, 16, 0.002);
 TUNE_PARAM(historyMalusOffset, 26, -1024, 1024, 52, 0.002);
@@ -236,7 +236,7 @@ TUNE_PARAM(nodesTmMax, 1867, 1500, 2500, 13, 0.002)
 TUNE_PARAM(nodesTmMul, 1359, 750, 1500, 10, 0.002)
 
 // CorrHist scale values
-TUNE_PARAM(MAXCORRHISTUNSCALED, 39, 16, 128, 8, 0.002)
+TUNE_PARAM(MAXCORRHISTUNSCALED, 64, 16, 128, 8, 0.002)
 TUNE_PARAM(MAXCORRHISTMILLIUPDATE, 193, 128, 512, 18, 0.002)
 
 // CorrHist correction values
