@@ -704,8 +704,8 @@ Score pestoEval(Position *pos){
     };
 
     const BitBoard blockedPawns[2] = {
-        bb[P] & (occ[BOTH] >> 8),
-        bb[p] & (occ[BOTH] << 8)
+        bb[P] & (occ[BOTH] << 8),
+        bb[p] & (occ[BOTH] >> 8)
     };
 
     BitBoard underDevelopedPawns[2] = {
@@ -1398,8 +1398,8 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     };
 
     BitBoard blockedPawns[2] = {
-        bb[P] & (occ[BOTH] >> 8),
-        bb[p] & (occ[BOTH] << 8)
+        bb[P] & (occ[BOTH] << 8),
+        bb[p] & (occ[BOTH] >> 8)
     };
 
     BitBoard underDevelopedPawns[2] = {
