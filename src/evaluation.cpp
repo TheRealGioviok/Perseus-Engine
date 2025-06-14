@@ -400,8 +400,8 @@ PawnStructureResult pawnStructureEval(
 
     // Compute "block" used for passed pawn bonus.
     // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
-    BitBoard block = occ[BOTH] | (~attackedBy[us] & attackedBy[them]) | 
-                     (~defendedByPawn[us] & ~multiAttacks[us] & (multiAttacks[them]));
+    BitBoard block = occ[BOTH] |
+                     (~defendedByPawn[us] & ((~attackedBy[us] & attackedBy[them]) | (multiAttacks[them])));
     PScore score = S(0,0);
     PScore extraScore = S(0,0);
     while (pieces) {
@@ -494,7 +494,8 @@ inline PScore pawnEval(const HashKey hashKey,
         // For white passers (cached by storing all passers together; white pawns are in bb[P]).
         BitBoard whitePassers = entry.passers & bb[P];
         {
-            BitBoard block = occ[BOTH] | (~defendedByPawn[WHITE] & ((~attackedBy[WHITE] & attackedBy[BLACK]) | (multiAttacks[BLACK])));
+            BitBoard block = occ[BOTH] | (~attackedBy[WHITE] & attackedBy[BLACK]) | 
+            (~defendedByPawn[WHITE] & ~multiAttacks[WHITE] & multiAttacks[BLACK]);
             while (whitePassers) {
                 Square sq = popLsb(whitePassers);
                 BitBoard sqb = squareBB(sq);
@@ -504,7 +505,8 @@ inline PScore pawnEval(const HashKey hashKey,
         // For black passers.
         BitBoard blackPassers = entry.passers & bb[p];
         {
-            BitBoard block = occ[BOTH] | (~defendedByPawn[BLACK] & ((~attackedBy[BLACK] & attackedBy[WHITE]) | (multiAttacks[WHITE])));
+            BitBoard block = occ[BOTH] | (~attackedBy[BLACK] & attackedBy[WHITE]) | 
+            (~defendedByPawn[BLACK] & ~multiAttacks[BLACK] & multiAttacks[WHITE]);
             while (blackPassers) {
                 Square sq = popLsb(blackPassers);
                 BitBoard sqb = squareBB(sq);
@@ -559,8 +561,8 @@ void extractPawnStructureFeats(
 
     // Compute "block" used for passed pawn bonus.
     // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
-    BitBoard block = occ[BOTH] | (~attackedBy[us] & attackedBy[them]) | 
-                     (~defendedByPawn[us] & ~multiAttacks[us] & (multiAttacks[them]));
+    BitBoard block = occ[BOTH] |
+                     (~defendedByPawn[us] & ((~attackedBy[us] & attackedBy[them]) | (multiAttacks[them])));
     while (pieces) {
         Square sq = popLsb(pieces);
         BitBoard sqb = squareBB(sq);
