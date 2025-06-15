@@ -46,28 +46,28 @@ void initTables() {
     }
 }
 
-constexpr PScore DOUBLEISOLATEDPEN = S(-16, -36);
+constexpr PScore DOUBLEISOLATEDPEN = S(-17, -37);
 constexpr PScore ISOLATEDPEN = S(-18, -20);
-constexpr PScore BACKWARDPEN = S(-6, 8);
-constexpr PScore DOUBLEDPEN = S(-17, -22);
+constexpr PScore BACKWARDPEN = S(-7, 7);
+constexpr PScore DOUBLEDPEN = S(-17, -23);
 constexpr PScore SUPPORTEDPHALANX = S(2, 8);
 constexpr PScore ADVANCABLEPHALANX = S(6, 8);
 constexpr PScore R_SUPPORTEDPHALANX = S(3, 0);
 constexpr PScore R_ADVANCABLEPHALANX = S(3, 0);
 constexpr PScore passedRankBonus[2][7] = {
-    {S(0, 0), S(13, -66), S(-2, -42), S(1, 10), S(20, 67), S(44, 158), S(118, 231)}, 
-    {S(0, 0), S(0, 0), S(10, -57), S(12, -2), S(55, 66), S(155, 182), S(400, 254)}
+    {S(0, 0), S(14, -66), S(-2, -42), S(1, 11), S(20, 66), S(44, 157), S(118, 232)}, 
+    {S(0, 0), S(0, 0), S(11, -57), S(12, -2), S(55, 66), S(155, 181), S(400, 254)}
 };
 constexpr PScore PASSEDPATHBONUS = S(-6, 23);
 constexpr PScore candidateRankBonus[2][7] = {
-    {S(0, 0), S(-35, 5), S(-24, 22), S(-12, 60), S(2, 127), S(28, 106), S(0, 0)}, 
-    {S(0, 0), S(0, 0), S(-5, 33), S(2, 67), S(42, 144), S(119, 168), S(0, 0)}
+    {S(0, 0), S(-35, 5), S(-24, 23), S(-11, 60), S(2, 127), S(28, 106), S(0, 0)}, 
+    {S(0, 0), S(0, 0), S(-5, 33), S(2, 67), S(42, 143), S(119, 168), S(0, 0)}
 };
 constexpr PScore INNERSHELTER = S(3, -18);
 constexpr PScore OUTERSHELTER = S(12, -11);
-constexpr PScore BISHOPPAIR = S(18, 116);
-constexpr PScore ROOKONOPENFILE = S(21, 6);
-constexpr PScore ROOKONSEMIOPENFILE = S(23, 10);
+constexpr PScore BISHOPPAIR = S(19, 116);
+constexpr PScore ROOKONOPENFILE = S(20, 7);
+constexpr PScore ROOKONSEMIOPENFILE = S(22, 10);
 constexpr PScore KNIGHTONEXTOUTPOST = S(31, 36);
 constexpr PScore BISHOPONEXTOUTPOST = S(38, 3);
 constexpr PScore KNIGHTONINTOUTPOST = S(22, 38);
@@ -80,63 +80,63 @@ constexpr PScore THREATPAWNPUSH = S(20, 38);
 constexpr PScore PAWNHANGING = S(-1, -53);
 constexpr PScore NONPAWNHANGING = S(-8, -40);
 constexpr PScore PAWNTHREAT[2][5] = {
-    {S(11, -68), S(31, 76), S(27, 114), S(27, 40), S(9, 32)}, 
-    {S(5, -26), S(12, 128), S(13, 162), S(22, 92), S(15, 92)}
+    {S(11, -68), S(31, 77), S(27, 114), S(27, 39), S(8, 32)}, 
+    {S(6, -27), S(11, 127), S(13, 162), S(23, 92), S(15, 92)}
 };
 constexpr PScore KNIGHTTHREAT[2][5] = {
-    {S(7, 18), S(0, -31), S(25, 18), S(59, -12), S(41, 14)}, 
-    {S(-7, 6), S(1, 17), S(26, 71), S(53, 60), S(44, 45)}
+    {S(7, 18), S(0, -32), S(26, 19), S(60, -12), S(41, 14)}, 
+    {S(-7, 6), S(2, 17), S(26, 72), S(53, 60), S(45, 45)}
 };
 constexpr PScore BISHOPTHREAT[2][5] = {
-    {S(11, 17), S(32, 22), S(-12, -40), S(58, -9), S(55, 21)}, 
-    {S(0, 7), S(33, 69), S(-8, 11), S(51, 65), S(50, 69)}
+    {S(11, 17), S(32, 22), S(-12, -40), S(57, -9), S(55, 21)}, 
+    {S(1, 8), S(33, 69), S(-8, 11), S(50, 65), S(50, 69)}
 };
 constexpr PScore ROOKTHREAT[2][5] = {
-    {S(4, 19), S(12, 47), S(22, 36), S(-8, -61), S(61, -19)}, 
-    {S(-10, 5), S(2, 24), S(7, 21), S(-1, -5), S(45, 37)}
+    {S(4, 18), S(11, 47), S(22, 36), S(-8, -61), S(61, -19)}, 
+    {S(-10, 5), S(2, 24), S(6, 21), S(-1, -6), S(46, 38)}
 };
 constexpr PScore QUEENTHREAT[2][5] = {
-    {S(12, -3), S(27, -3), S(27, 23), S(-2, -22), S(4, -140)}, 
-    {S(-2, 9), S(7, -1), S(5, 15), S(1, 5), S(10, -119)}
+    {S(12, -3), S(27, -4), S(27, 24), S(-2, -22), S(4, -140)}, 
+    {S(-2, 9), S(7, -1), S(5, 14), S(0, 4), S(10, -120)}
 };
-constexpr PScore KINGTHREAT = S(-6, -3);
-constexpr PScore QUEENINFILTRATION = S(7, 3);
-constexpr PScore INVASIONSQUARES = S(7, 6);
+constexpr PScore KINGTHREAT = S(-6, -4);
+constexpr PScore QUEENINFILTRATION = S(7, 2);
+constexpr PScore INVASIONSQUARES = S(6, 6);
 constexpr PScore RESTRICTEDSQUARES = S(4, 4);
-constexpr PScore TEMPO = S(21, 27);
+constexpr PScore TEMPO = S(21, 26);
 
-constexpr PScore PAWNATTACKINNERRING = S(66, -123);
-constexpr PScore KNIGHTATTACKINNERRING = S(81, -18);
-constexpr PScore BISHOPATTACKINNERRING = S(116, 54);
-constexpr PScore ROOKATTACKINNERRING = S(119, 49);
-constexpr PScore QUEENATTACKINNERRING = S(77, -78);
-constexpr PScore PAWNATTACKOUTERRING = S(74, -41);
-constexpr PScore KNIGHTATTACKOUTERRING = S(82, 49);
-constexpr PScore BISHOPATTACKOUTERRING = S(83, 47);
-constexpr PScore ROOKATTACKOUTERRING = S(29, 12);
-constexpr PScore QUEENATTACKOUTERRING = S(57, 102);
-constexpr PScore NOQUEENDANGER = S(-887, -697);
-constexpr PScore PINNEDSHELTERDANGER = S(106, -68);
-constexpr PScore FLANKATTACKS[2] = {S(32, -40), S(42, -51), };
-constexpr PScore FLANKDEFENSES[2] = {S(-33, 18), S(-8, 12), };
-constexpr PScore SAFECHECK[4] = {S(321, -55), S(80, 38), S(233, 104), S(228, 32), };
-constexpr PScore ALLCHECKS[4] = {S(80, 14), S(20, 97), S(69, 27), S(12, 34), };
-constexpr PScore SAFETYINNERSHELTER = S(-45, -103);
-constexpr PScore SAFETYOUTERSHELTER = S(8, -188);
-constexpr PScore INNERWEAKNESS = S(107, -60);
-constexpr PScore OUTERWEAKNESS = S(15, 12);
-constexpr PScore KSTEMPO = S(30, 23);
+constexpr PScore PAWNATTACKINNERRING = S(64, -123);
+constexpr PScore KNIGHTATTACKINNERRING = S(80, -19);
+constexpr PScore BISHOPATTACKINNERRING = S(111, 54);
+constexpr PScore ROOKATTACKINNERRING = S(120, 48);
+constexpr PScore QUEENATTACKINNERRING = S(78, -78);
+constexpr PScore PAWNATTACKOUTERRING = S(73, -39);
+constexpr PScore KNIGHTATTACKOUTERRING = S(81, 50);
+constexpr PScore BISHOPATTACKOUTERRING = S(82, 48);
+constexpr PScore ROOKATTACKOUTERRING = S(32, 13);
+constexpr PScore QUEENATTACKOUTERRING = S(57, 101);
+constexpr PScore NOQUEENDANGER = S(-878, -688);
+constexpr PScore PINNEDSHELTERDANGER = S(104, -71);
+constexpr PScore FLANKATTACKS[2] = {S(32, -40), S(42, -52), };
+constexpr PScore FLANKDEFENSES[2] = {S(-33, 16), S(-8, 12), };
+constexpr PScore SAFECHECK[4] = {S(319, -54), S(85, 36), S(229, 104), S(221, 25), };
+constexpr PScore ALLCHECKS[4] = {S(75, 16), S(24, 97), S(70, 25), S(12, 32), };
+constexpr PScore SAFETYINNERSHELTER = S(-47, -105);
+constexpr PScore SAFETYOUTERSHELTER = S(5, -189);
+constexpr PScore INNERWEAKNESS = S(104, -60);
+constexpr PScore OUTERWEAKNESS = S(12, 15);
+constexpr PScore KSTEMPO = S(26, 20);
 
-constexpr Score COMPLEXITYPASSERS = 487;
-constexpr Score COMPLEXITYPAWNS = 1131;
-constexpr Score COMPLEXITYBLOCKEDPAIRS = -396;
+constexpr Score COMPLEXITYPASSERS = 483;
+constexpr Score COMPLEXITYPAWNS = 1127;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -381;
 constexpr Score COMPLEXITYPAWNTENSION = -750;
-constexpr Score COMPLEXITYOUTFLANKING = -52;
-constexpr Score COMPLEXITYINFILTRATION = -760;
+constexpr Score COMPLEXITYOUTFLANKING = -45;
+constexpr Score COMPLEXITYINFILTRATION = -795;
 constexpr Score COMPLEXITYPAWNBOTHFLANKS = 10208;
-constexpr Score COMPLEXITYPAWNENDING = 13247;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3225;
-constexpr Score COMPLEXITYBIAS = -21458;
+constexpr Score COMPLEXITYPAWNENDING = 13268;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3227;
+constexpr Score COMPLEXITYBIAS = -21466;
 
 // Function to access the table values
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
@@ -400,8 +400,7 @@ PawnStructureResult pawnStructureEval(
 
     // Compute "block" used for passed pawn bonus.
     // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
-    BitBoard block = occ[BOTH] |
-                     (~defendedByPawn[us] & ((~attackedBy[us] & attackedBy[them]) | (multiAttacks[them])));
+    BitBoard block = occ[BOTH] | (~defendedByPawn[us] & ((~attackedBy[us] & attackedBy[them]) | (multiAttacks[them])));
     PScore score = S(0,0);
     PScore extraScore = S(0,0);
     while (pieces) {
@@ -494,8 +493,8 @@ inline PScore pawnEval(const HashKey hashKey,
         // For white passers (cached by storing all passers together; white pawns are in bb[P]).
         BitBoard whitePassers = entry.passers & bb[P];
         {
-            BitBoard block = occ[BOTH] | (~attackedBy[WHITE] & attackedBy[BLACK]) | 
-            (~defendedByPawn[WHITE] & ~multiAttacks[WHITE] & multiAttacks[BLACK]);
+            
+            BitBoard block = occ[BOTH] | (~defendedByPawn[WHITE] & ((~attackedBy[WHITE] & attackedBy[BLACK]) | (multiAttacks[BLACK])));
             while (whitePassers) {
                 Square sq = popLsb(whitePassers);
                 BitBoard sqb = squareBB(sq);
@@ -505,8 +504,8 @@ inline PScore pawnEval(const HashKey hashKey,
         // For black passers.
         BitBoard blackPassers = entry.passers & bb[p];
         {
-            BitBoard block = occ[BOTH] | (~attackedBy[BLACK] & attackedBy[WHITE]) | 
-            (~defendedByPawn[BLACK] & ~multiAttacks[BLACK] & multiAttacks[WHITE]);
+            
+                BitBoard block = occ[BOTH] | (~defendedByPawn[BLACK] & ((~attackedBy[BLACK] & attackedBy[WHITE]) | (multiAttacks[WHITE])));
             while (blackPassers) {
                 Square sq = popLsb(blackPassers);
                 BitBoard sqb = squareBB(sq);
@@ -561,8 +560,7 @@ void extractPawnStructureFeats(
 
     // Compute "block" used for passed pawn bonus.
     // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
-    BitBoard block = occ[BOTH] |
-                     (~defendedByPawn[us] & ((~attackedBy[us] & attackedBy[them]) | (multiAttacks[them])));
+    BitBoard block = occ[BOTH] | (~defendedByPawn[us] & ((~attackedBy[us] & attackedBy[them]) | (multiAttacks[them])));
     while (pieces) {
         Square sq = popLsb(pieces);
         BitBoard sqb = squareBB(sq);
