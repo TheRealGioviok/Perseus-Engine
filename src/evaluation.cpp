@@ -180,27 +180,27 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
             moves = knightAttacks[sq];
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : 0b0001;
+            features[moveCount] += us == WHITE ? 1 : 0b10000;
             kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
         }
         else if constexpr (pt == B || pt == b) { // X-ray through our queens
             moves = getBishopAttack(sq, occCheck);
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : 0b0001;
+            features[moveCount] += us == WHITE ? 1 : 0b10000;
             kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
         }
         else if constexpr (pt == R || pt == r) { // X-ray through our queens and rooks
             moves = getRookAttack(sq, occCheck);
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : 0b0001;
+            features[moveCount] += us == WHITE ? 1 : 0b10000;
         }
         else if constexpr (pt == Q || pt == q) { // X-ray through our queens
             moves = getQueenAttack(sq, occCheck);
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
-            features[moveCount] += us == WHITE ? 1 : 0b0001;
+            features[moveCount] += us == WHITE ? 1 : 0b10000;
         }
         innerAttacks += popcount(mobMoves & kingRing);
         outerAttacks += popcount(mobMoves & kingOuter);
