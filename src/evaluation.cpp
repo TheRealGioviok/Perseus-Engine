@@ -400,8 +400,7 @@ PawnStructureResult pawnStructureEval(
 
     // Compute "block" used for passed pawn bonus.
     // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
-    BitBoard block = occ[BOTH] | (~attackedBy[us] & attackedBy[them]) | 
-                     (~defendedByPawn[us] & ~multiAttacks[us] & (multiAttacks[them]));
+    BitBoard block = occ[BOTH] | (~defendedByPawn[us] & ((~attackedBy[us] & attackedBy[them]) | (multiAttacks[them])));
     PScore score = S(0,0);
     PScore extraScore = S(0,0);
     while (pieces) {
@@ -559,8 +558,7 @@ void extractPawnStructureFeats(
 
     // Compute "block" used for passed pawn bonus.
     // (For the side being evaluated, the block mask combines the overall occupancy with the enemy pawns’ defensive gaps.)
-    BitBoard block = occ[BOTH] | (~attackedBy[us] & attackedBy[them]) | 
-                     (~defendedByPawn[us] & ~multiAttacks[us] & (multiAttacks[them]));
+    BitBoard block = occ[BOTH] | (~defendedByPawn[us] & ((~attackedBy[us] & attackedBy[them]) | (multiAttacks[them])));
     while (pieces) {
         Square sq = popLsb(pieces);
         BitBoard sqb = squareBB(sq);
