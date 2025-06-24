@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "tables.h"
 #include "constants.h"
+#include "movepicker.h"
 #include "history.h"
 #include "zobrist.h"
 #include "evaluation.h"
@@ -33,20 +34,6 @@ static inline S32 reduction(Depth d, U16 m, bool isQuiet, bool isPv)
 static inline Score futilityMargin(Depth depth, bool improving)
 {
     return futilityMarginDelta() * (depth - improving);
-}
-
-static inline int sortTTUp(MoveList &ml, PackedMove ttMove)
-{
-    for (int i = 0; i < ml.count; i++)
-    {
-        if (packedMoveCompare(ttMove, (Move)ml.moves[i]))
-        {
-            ml.moves[0] = ml.moves[i];
-            ml.moves[i] = 0;
-            return 0;
-        }
-    }
-    return 1;
 }
 
 static inline void updateKillers(SStack* ss, Move killerMove)
@@ -275,15 +262,14 @@ skipPruning:
 
     Move quiets[256], noisy[256];
     U16 quietsCount = 0, noisyCount = 0;
-
-    MoveList moveList;
-    generateMoves(moveList, ss);
+    MovePicker movePicker(pos, excludedMove, ttMove, ss, MovegenTypeAll);
     // Iterate through moves
-    for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
+    while (movePicker.hasNext())
     {
-        S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
-        Move currMove = onlyMove(moveList.moves[i]);
-        if (sameMovePos(currMove, excludedMove)) continue;
+        ScoredMove scoredMove = movePicker.next();
+        if (!scoredMove) continue; // skip illegal moves
+        S32 currMoveScore = getScore(scoredMove);
+        Move currMove = onlyMove(scoredMove);
         const bool isQuiet = okToReduce(currMove);
         const bool quietOrLosing = currMoveScore < COUNTERSCORE;
         if (moveSearched){
@@ -329,7 +315,7 @@ skipPruning:
             Depth extension = 0;
             if (!excludedMove){
                 
-                if (i == 0 // Can only happen on ttMove
+                if (packedMoveCompare(ttMove, currMove) // Can only happen on ttMove
                     && !RootNode 
                     && depth >= singularSearchDepth()
                     && (ttBound & hashLOWER) 
@@ -365,11 +351,6 @@ skipPruning:
                         extension = -1;
                     }
                     
-                    // else{
-                    //     std::cout << "info string Singular failed with score: " << singularScore << " beta: " << singularBeta << std::endl;
-                    // }
-                    // Update avg dist
-                    //avgDist += singularScore - singularBeta;
                 }
                 else if (inCheck)
                     extension = 1;
@@ -563,23 +544,25 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
         return bestScore;
     alpha = std::max(alpha, bestScore);
 
-    // Generate moves
-    MoveList moveList;
+    MovePicker movePicker(pos, noMove, ttMove, ss, MovegenTypeNoisy);
 
-    inCheck ? generateMoves(moveList, ss) : generateCaptures(moveList);
     Score futility = inCheck ? -infinity : ss->staticEval + qsFutilityMargin();
 
     UndoInfo undoer = UndoInfo(pos);
     U16 moveCount = 0;
     Move bestMove = noMove;
-    for (int i = sortTTUp(moveList, ttMove); i < moveList.count; i++)
-    {
-        Move move = onlyMove(moveList.moves[i]);
+
+    // Iterate through moves
+    while (movePicker.hasNext()){
+        ScoredMove scoredMove = movePicker.next();
+        if (!scoredMove) continue; // skip illegal moves
+        S32 moveScore = getScore(scoredMove);
+        Move move = onlyMove(scoredMove);
 
         // Move count pruning
         if (!inCheck && moveCount >= 2) break;
         // SEE pruning : skip all moves that have see < of the adaptive capthist based threshold
-        if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
+        if (!inCheck && moveCount && moveScore < GOODNOISYMOVE)
             break;
         // Futility pruning
         if (!inCheck && futility <= alpha && !pos.SEE(move, 1)){
