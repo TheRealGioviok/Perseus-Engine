@@ -74,6 +74,8 @@ constexpr PScore KNIGHTONINTOUTPOST = S(22, 38);
 constexpr PScore BISHOPONINTOUTPOST = S(33, -6);
 constexpr PScore KNIGHTPROTECTOR = S(-6, -2);
 constexpr PScore BISHOPPROTECTOR = S(-5, -1);
+constexpr PScore KNIGHTBEHINDPAWN = S(0,0);
+constexpr PScore BISHOPBEHINDPAWN = S(0, 0);
 constexpr PScore BISHOPPAWNS = S(0, -7);
 constexpr PScore THREATSAFEPAWN = S(46, -41);
 constexpr PScore THREATPAWNPUSH = S(20, 38);
@@ -877,6 +879,12 @@ Score pestoEval(Position *pos){
     const Score intBishopOutpostDiff = popcount(outpostSquares[WHITE] & (notFile(1) & notFile(6)) & bb[B]) - popcount(outpostSquares[BLACK] & (notFile(1) & notFile(6)) & bb[b]);
     score += BISHOPONINTOUTPOST * intBishopOutpostDiff;
 
+    // Minor behind pawns 
+    const Score knightBehindPawnDiff = popcount(north(bb[N]) & bb[P]) - popcount(south(bb[n]) & bb[p]);
+    score += KNIGHTBEHINDPAWN * knightBehindPawnDiff;
+    const Score bishopBehindPawnDiff = popcount(north(bb[B]) & bb[P]) - popcount(south(bb[b]) & bb[p]);
+    score += BISHOPBEHINDPAWN * bishopBehindPawnDiff;
+
     // Add bonus for bishop-pawn concordance
     const Score bishopPawnsDiff =
         popcount(bb[B] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B])) -
@@ -1168,6 +1176,10 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(KNIGHTPROTECTOR.mg());
     weights.push_back(BISHOPPROTECTOR.mg());
 
+    // Now, minor behind pawns
+    weights.push_back(KNIGHTBEHINDPAWN.mg());
+    weights.push_back(BISHOPBEHINDPAWN.mg());
+
     // Now, bishop pawns
     weights.push_back(BISHOPPAWNS.mg());
 
@@ -1257,6 +1269,10 @@ std::vector<Score> getCurrentEvalWeights(){
     // Now, king protector
     weights.push_back(KNIGHTPROTECTOR.eg());
     weights.push_back(BISHOPPROTECTOR.eg());
+
+    // Now, minor behind pawns
+    weights.push_back(KNIGHTBEHINDPAWN.eg());
+    weights.push_back(BISHOPBEHINDPAWN.eg());
 
     // Now, bishop pawns
     weights.push_back(BISHOPPAWNS.eg());
@@ -1571,8 +1587,16 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[3] += intBishopOutpostDiff;
     tensor += 4;
 
+    // Minor protectors for king
     tensor[0] = kingDist[0];
     tensor[1] = kingDist[1];
+    tensor += 2;
+
+    // Minor behind pawns
+    const Score knightBehindPawnDiff = popcount(north(bb[N]) & bb[P]) - popcount(south(bb[n]) & bb[p]);
+    tensor[0] = knightBehindPawnDiff;
+    const Score bishopBehindPawnDiff = popcount(north(bb[B]) & bb[P]) - popcount(south(bb[b]) & bb[p]);
+    tensor[1] = bishopBehindPawnDiff;
     tensor += 2;
 
     // Add bonus for bishop-pawn concordance (technically broken in two same colored bishop cases, but kek)
