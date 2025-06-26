@@ -157,7 +157,7 @@ static inline constexpr BitBoard centralFiles = files(2) | files(3) | files(4) |
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, const BitBoard pinned, const BitBoard mob, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, S8 *features, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, S32 &innerAttacks, S32 &outerAttacks, S32 &kingDist) {
+static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, const BitBoard pinned, const BitBoard mob, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, S8 *features, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, S32 &innerAttacks, S32 &outerAttacks, S32 &kingDist, S32 &lowmob) {
     constexpr Side us = pt < p ? WHITE : BLACK;
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard pieces = bb[pt] & ~pinned;
@@ -182,25 +182,29 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
             U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
             kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
-        }
+            lowmob += (moveCount == 0) + (moveCount < 3); // Penalize low mobility. 3 for knights is a good number.
+                }
         else if constexpr (pt == B || pt == b) { // X-ray through our queens
             moves = getBishopAttack(sq, occCheck);
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
             kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
+            lowmob += (moveCount == 0) + (moveCount < 3); // Penalize low mobility. 3 for bishops is a good number.
         }
         else if constexpr (pt == R || pt == r) { // X-ray through our queens and rooks
             moves = getRookAttack(sq, occCheck);
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
+            lowmob += (moveCount == 0) + (moveCount < 4); // Penalize low mobility. 4 for rooks is a good number.
         }
         else if constexpr (pt == Q || pt == q) { // X-ray through our queens
             moves = getQueenAttack(sq, occCheck);
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
+            lowmob += (moveCount == 0) + (moveCount < 5); // Penalize low mobility. 5 for queens is a good number.
         }
         innerAttacks += popcount(mobMoves & kingRing);
         outerAttacks += popcount(mobMoves & kingOuter);
@@ -212,7 +216,7 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
 
 template <Piece pt>
 //(bb, occ, pinned, mobilityArea, mobilityScore);
-static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoard pinned, const BitBoard mobilityArea, PScore &score, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, PScore &innerAttacks, PScore &outerAttacks){
+static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoard pinned, const BitBoard mobilityArea, PScore &score, BitBoard &attackedByUs, BitBoard &ourMultiAttacks, BitBoard &ptAttacks, const Square kingSquare, const BitBoard kingRing, const BitBoard kingOuter, PScore &innerAttacks, PScore &outerAttacks, S32& lowmob) {
     // constexpr Side them = us ? BLACK : WHITE;
     BitBoard pieces = bb[pt] & ~pinned; // TODO: try to exclude xray through pinned pieces
 
@@ -236,6 +240,7 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             score += knightMob[moveCount] + KNIGHTPROTECTOR * chebyshevDistance[kingSquare][sq];
             innerAttacks += KNIGHTATTACKINNERRING * popcount(mobMoves & kingRing);
             outerAttacks += KNIGHTATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            lowmob += (moveCount == 0) + (moveCount < 3); // Penalize low mobility. 3 for knights is a good number.
         }
         else if constexpr (pt == B) {
             moves = getBishopAttack(sq, occCheck);
@@ -245,6 +250,7 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             score += bishopMob[moveCount] + BISHOPPROTECTOR * chebyshevDistance[kingSquare][sq];
             innerAttacks += BISHOPATTACKINNERRING * popcount(mobMoves & kingRing);
             outerAttacks += BISHOPATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            lowmob += (moveCount == 0) + (moveCount < 3); // Penalize low mobility. 3 for bishops is a good number.
         }
         else if constexpr (pt == R) {
             moves = getRookAttack(sq, occCheck);
@@ -254,6 +260,7 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             score += rookMob[moveCount];
             innerAttacks += ROOKATTACKINNERRING * popcount(mobMoves & kingRing);
             outerAttacks += ROOKATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            lowmob += (moveCount == 0) + (moveCount < 4); // Penalize low mobility. 4 for rooks is a good number.
         }
         else if constexpr (pt == Q) {
             moves = getQueenAttack(sq, occCheck);
@@ -263,6 +270,7 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             score += queenMob[moveCount];
             innerAttacks += QUEENATTACKINNERRING * popcount(mobMoves & kingRing);
             outerAttacks += QUEENATTACKOUTERRING * popcount(mobMoves & kingOuter);
+            lowmob += (moveCount == 0) + (moveCount < 5); // Penalize low mobility. 5 for queens is a good number.
         }
         ourMultiAttacks |= attackedByUs & moves;
         attackedByUs |= moves;
@@ -772,22 +780,27 @@ Score pestoEval(Position *pos){
     PScore score = PScore(0,0);
 
     // std::cout << "PSQT scores are :\t"<<-score.mg()<<"\t"<<-score.eg()<<std::endl;
+    S32 lowmob[2] = {0, 0};
     
     // Black mobility
-    mobility<N>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][N-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<B>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][B-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<R>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][R-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
-    mobility<Q>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK]);
+    mobility<N>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][N-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK], lowmob[BLACK]);
+    mobility<B>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][B-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK], lowmob[BLACK]);
+    mobility<R>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][R-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK], lowmob[BLACK]);
+    mobility<Q>(bb+6, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], score, attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK], outerAttacks[BLACK], lowmob[BLACK]);
 
     // Flip
     score = -score;
 
     // White mobility
-    mobility<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][N-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][B-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][R-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
-    mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE]);
+    mobility<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][N-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE], lowmob[WHITE]);
+    mobility<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][B-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE], lowmob[WHITE]);
+    mobility<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][R-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE], lowmob[WHITE]);
+    mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE], lowmob[WHITE]);
 
+    // Lowmob 
+    score += lowmobCorrectionTable[std::min(16, lowmob[WHITE])] - lowmobCorrectionTable[std::min(16, lowmob[BLACK])];
+
+    // Psqt scores
     bool wkhside = fileOf(whiteKing) <= 3;
     bool bkhside = fileOf(blackKing) <= 3;
 
@@ -1123,6 +1136,10 @@ std::vector<Score> getCurrentEvalWeights(){
     for (U8 mobcount = 0; mobcount < 28; mobcount++){
         weights.push_back(queenMob[mobcount].mg());
     }
+    // lowmob table
+    for (U8 lowmobcount = 0; lowmobcount < 17; lowmobcount++){
+        weights.push_back(lowmobCorrectionTable[lowmobcount].mg());
+    }
     // Add the pawn evaluation weights
     weights.push_back(DOUBLEISOLATEDPEN.mg());
     weights.push_back(ISOLATEDPEN.mg());
@@ -1211,6 +1228,10 @@ std::vector<Score> getCurrentEvalWeights(){
     }
     for (U8 mobcount = 0; mobcount < 28; mobcount++){
         weights.push_back(queenMob[mobcount].eg());
+    }
+    // lowmob table
+    for (U8 lowmobcount = 0; lowmobcount < 17; lowmobcount++){
+        weights.push_back(lowmobCorrectionTable[lowmobcount].eg());
     }
     // Add the pawn evaluation weights
     weights.push_back(DOUBLEISOLATEDPEN.eg());
@@ -1459,19 +1480,26 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     outerAttacks[WHITE][P] = popcount(pawnAttackedSquares[WHITE] & kingOuter[BLACK]);
     outerAttacks[BLACK][P] = popcount(pawnAttackedSquares[BLACK] & kingOuter[WHITE]);
 
+    S32 lowmob[2] = {0, 0};
+
     // Calculate the mobility scores (index by phase and color)
-    getMobilityFeat<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][N-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][N], outerAttacks[WHITE][N], kingDist[0]);
-    getMobilityFeat<n>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][N-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][N], outerAttacks[BLACK][N], kingDist[0]);
+    getMobilityFeat<N>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][N-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][N], outerAttacks[WHITE][N], kingDist[0], lowmob[WHITE]);
+    getMobilityFeat<n>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][N-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][N], outerAttacks[BLACK][N], kingDist[0], lowmob[BLACK]);
     tensor += 9;
-    getMobilityFeat<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][B-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][B], outerAttacks[WHITE][B], kingDist[1]);
-    getMobilityFeat<b>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][B-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][B], outerAttacks[BLACK][B], kingDist[1]);
+    getMobilityFeat<B>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][B-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][B], outerAttacks[WHITE][B], kingDist[1], lowmob[WHITE]);
+    getMobilityFeat<b>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][B-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][B], outerAttacks[BLACK][B], kingDist[1], lowmob[BLACK]);
     tensor += 14;
-    getMobilityFeat<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][R-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][R], outerAttacks[WHITE][R], kingDist[0]);
-    getMobilityFeat<r>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][R-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][R], outerAttacks[BLACK][R], kingDist[0]);
+    getMobilityFeat<R>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][R-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][R], outerAttacks[WHITE][R], kingDist[0], lowmob[WHITE]);
+    getMobilityFeat<r>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][R-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][R], outerAttacks[BLACK][R], kingDist[0], lowmob[BLACK]);
     tensor += 15;
-    getMobilityFeat<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][Q], outerAttacks[WHITE][Q], kingDist[0]);
-    getMobilityFeat<q>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][Q], outerAttacks[BLACK][Q], kingDist[0]);
+    getMobilityFeat<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], tensor, whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE][Q], outerAttacks[WHITE][Q], kingDist[0], lowmob[WHITE]);
+    getMobilityFeat<q>(bb, occ[BOTH], pinned[BLACK], mobilityArea[BLACK], attackedBy[BLACK], multiAttacks[BLACK], ptAttacks[BLACK][Q-1], tensor, blackKing, kingRing[WHITE], kingOuter[WHITE], innerAttacks[BLACK][Q], outerAttacks[BLACK][Q], kingDist[0], lowmob[BLACK]);
     tensor += 28;
+
+    // Lowmob
+    tensor[std::min(16, lowmob[WHITE])]++; // Cap to 16
+    tensor[std::min(16, lowmob[BLACK])]--; // Cap to 16
+    tensor += 17; // Size of the lowmob table
 
     // Weak pieces
     BitBoard weakPieces[2] = {
