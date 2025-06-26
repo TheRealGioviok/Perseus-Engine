@@ -182,29 +182,33 @@ static inline void getMobilityFeat(const BitBoard (&bb)[12], BitBoard occCheck, 
             U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
             kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
-            lowmob += (moveCount == 0) + (moveCount < 3); // Penalize low mobility. 3 for knights is a good number.
-                }
+            S32 f = std::max(0, 3 - moveCount);
+            lowmob += f * f;
+        }
         else if constexpr (pt == B || pt == b) { // X-ray through our queens
             moves = getBishopAttack(sq, occCheck);
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
             kingDist += chebyshevDistance[kingSquare][sq] * (us == WHITE ? 1 : -1);
-            lowmob += (moveCount == 0) + (moveCount < 3); // Penalize low mobility. 3 for bishops is a good number.
+            S32 f = std::max(0, 3 - moveCount);
+            lowmob += f * f; 
         }
         else if constexpr (pt == R || pt == r) { // X-ray through our queens and rooks
             moves = getRookAttack(sq, occCheck);
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
-            lowmob += (moveCount == 0) + (moveCount < 4); // Penalize low mobility. 4 for rooks is a good number.
+            S32 f = std::max(0, 4 - moveCount);
+            lowmob += f * f;
         }
         else if constexpr (pt == Q || pt == q) { // X-ray through our queens
             moves = getQueenAttack(sq, occCheck);
             mobMoves = moves & mob;
             U8 moveCount = popcount(mobMoves);
             features[moveCount] += us == WHITE ? 1 : -1;
-            lowmob += (moveCount == 0) + (moveCount < 5); // Penalize low mobility. 5 for queens is a good number.
+            S32 f = std::max(0, 5 - moveCount);
+            lowmob += f * f;
         }
         innerAttacks += popcount(mobMoves & kingRing);
         outerAttacks += popcount(mobMoves & kingOuter);
@@ -240,7 +244,9 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             score += knightMob[moveCount] + KNIGHTPROTECTOR * chebyshevDistance[kingSquare][sq];
             innerAttacks += KNIGHTATTACKINNERRING * popcount(mobMoves & kingRing);
             outerAttacks += KNIGHTATTACKOUTERRING * popcount(mobMoves & kingOuter);
-            lowmob += (moveCount == 0) + (moveCount < 3); // Penalize low mobility. 3 for knights is a good number.
+            S32 f = std::max(0, 3 - moveCount);
+            lowmob += f * f;
+
         }
         else if constexpr (pt == B) {
             moves = getBishopAttack(sq, occCheck);
@@ -250,7 +256,8 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             score += bishopMob[moveCount] + BISHOPPROTECTOR * chebyshevDistance[kingSquare][sq];
             innerAttacks += BISHOPATTACKINNERRING * popcount(mobMoves & kingRing);
             outerAttacks += BISHOPATTACKOUTERRING * popcount(mobMoves & kingOuter);
-            lowmob += (moveCount == 0) + (moveCount < 3); // Penalize low mobility. 3 for bishops is a good number.
+            S32 f = std::max(0, 3 - moveCount);
+            lowmob += f * f;
         }
         else if constexpr (pt == R) {
             moves = getRookAttack(sq, occCheck);
@@ -260,7 +267,8 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             score += rookMob[moveCount];
             innerAttacks += ROOKATTACKINNERRING * popcount(mobMoves & kingRing);
             outerAttacks += ROOKATTACKOUTERRING * popcount(mobMoves & kingOuter);
-            lowmob += (moveCount == 0) + (moveCount < 4); // Penalize low mobility. 4 for rooks is a good number.
+            S32 f = std::max(0, 4 - moveCount);
+            lowmob += f * f;
         }
         else if constexpr (pt == Q) {
             moves = getQueenAttack(sq, occCheck);
@@ -270,7 +278,8 @@ static inline void mobility(const BitBoard *bb, BitBoard occCheck, const BitBoar
             score += queenMob[moveCount];
             innerAttacks += QUEENATTACKINNERRING * popcount(mobMoves & kingRing);
             outerAttacks += QUEENATTACKOUTERRING * popcount(mobMoves & kingOuter);
-            lowmob += (moveCount == 0) + (moveCount < 5); // Penalize low mobility. 5 for queens is a good number.
+            S32 f = std::max(0, 5 - moveCount);
+            lowmob += f * f;
         }
         ourMultiAttacks |= attackedByUs & moves;
         attackedByUs |= moves;
@@ -798,7 +807,7 @@ Score pestoEval(Position *pos){
     mobility<Q>(bb, occ[BOTH], pinned[WHITE], mobilityArea[WHITE], score, attackedBy[WHITE], multiAttacks[WHITE], ptAttacks[WHITE][Q-1], whiteKing, kingRing[BLACK], kingOuter[BLACK], innerAttacks[WHITE], outerAttacks[WHITE], lowmob[WHITE]);
 
     // Lowmob 
-    score += lowmobCorrectionTable[std::min(16, lowmob[WHITE])] - lowmobCorrectionTable[std::min(16, lowmob[BLACK])];
+    score += lowmobCorrectionTable[std::min(7, lowmob[WHITE] / 12)] - lowmobCorrectionTable[std::min(7, lowmob[BLACK] / 12)];
 
     // Psqt scores
     bool wkhside = fileOf(whiteKing) <= 3;
@@ -1137,7 +1146,7 @@ std::vector<Score> getCurrentEvalWeights(){
         weights.push_back(queenMob[mobcount].mg());
     }
     // lowmob table
-    for (U8 lowmobcount = 0; lowmobcount < 17; lowmobcount++){
+    for (U8 lowmobcount = 0; lowmobcount < 8; lowmobcount++){
         weights.push_back(lowmobCorrectionTable[lowmobcount].mg());
     }
     // Add the pawn evaluation weights
@@ -1230,7 +1239,7 @@ std::vector<Score> getCurrentEvalWeights(){
         weights.push_back(queenMob[mobcount].eg());
     }
     // lowmob table
-    for (U8 lowmobcount = 0; lowmobcount < 17; lowmobcount++){
+    for (U8 lowmobcount = 0; lowmobcount < 8; lowmobcount++){
         weights.push_back(lowmobCorrectionTable[lowmobcount].eg());
     }
     // Add the pawn evaluation weights
@@ -1497,9 +1506,9 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor += 28;
 
     // Lowmob
-    tensor[std::min(16, lowmob[WHITE])]++; // Cap to 16
-    tensor[std::min(16, lowmob[BLACK])]--; // Cap to 16
-    tensor += 17; // Size of the lowmob table
+    tensor[std::min(7, lowmob[WHITE] / 12)]++; // Cap to 7
+    tensor[std::min(7, lowmob[BLACK] / 12)]--; // Cap to 7
+    tensor += 8; // Size of the lowmob table
 
     // Weak pieces
     BitBoard weakPieces[2] = {
