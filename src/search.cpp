@@ -275,6 +275,7 @@ skipPruning:
 
     Move quiets[256], noisy[256];
     U16 quietsCount = 0, noisyCount = 0;
+    S16 bestIndex = 0;
 
     MoveList moveList;
     generateMoves(moveList, ss);
@@ -392,6 +393,7 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
+                granularR -= bestIndex * lmrBestIndex(); // If the best move is found later, we reduce less, since we suspect that the position is more complex
                 if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
@@ -450,6 +452,7 @@ skipPruning:
                 bestScore = score;
                 if (score > alpha) {
                     bestMove = currMove;
+                    bestIndex = i;
                     
                     if (PVNode) {
                         pvTable[ply][ply] = currMove;

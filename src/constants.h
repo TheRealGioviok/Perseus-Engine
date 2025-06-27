@@ -175,6 +175,7 @@ TUNE_PARAM(lmrQuietTTPV, 980, 250, 2750, 125, 0.002)
 TUNE_PARAM(lmrBadNoisyCutNode, 648, 250, 2750, 125, 0.002);
 TUNE_PARAM(lmrNoisyHistoryDivisorA, 5192, 2000, 14000, 500, 0.002)
 TUNE_PARAM(lmrNoisyHistoryDivisorB, 6587, 2000, 14000, 500, 0.002)
+TUNE_PARAM(lmrBestIndex, 64, 1, 10, 1, 0.002) // The best index is the index of the best move in the move list. It is used to reduce the search depth if the best move is found later.
 
 // Deeper / shallower
 TUNE_PARAM(doDeeperMargin, 33, 10, 50, 2, 0.002)
