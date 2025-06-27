@@ -315,7 +315,7 @@ skipPruning:
             Depth extension = 0;
             if (!excludedMove){
                 
-                if (packedMoveCompare(ttMove, currMove) // Can only happen on ttMove
+                if (movePicker.currentIndex == 1 // Can only happen on ttMove (TODO: substitute this with movePicker emitting ttmove when staged movegen is done)
                     && !RootNode 
                     && depth >= singularSearchDepth()
                     && (ttBound & hashLOWER) 
