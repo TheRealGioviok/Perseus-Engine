@@ -393,7 +393,7 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
-                granularR -= bestIndex * lmrBestIndex(); // If the best move is found later, we reduce less, since we suspect that the position is more complex
+                if ((ttMove) && (ttBound == hashLOWER) && !bestScore) granularR -= lmrNoTTBeta() * ttDepth / depth;
                 if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
