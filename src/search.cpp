@@ -544,7 +544,7 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
         return bestScore;
     alpha = std::max(alpha, bestScore);
 
-    MovePicker movePicker(pos, noMove, ttMove, ss, MovegenTypeNoisy);
+    MovePicker movePicker(pos, noMove, ttMove, ss, inCheck ? MovegenTypeAll : MovegenTypeNoisy);
 
     Score futility = inCheck ? -infinity : ss->staticEval + qsFutilityMargin();
 
