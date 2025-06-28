@@ -451,7 +451,6 @@ skipPruning:
                 bestScore = score;
                 if (score > alpha) {
                     bestMove = currMove;
-                    bestIndex = i;
                     
                     if (PVNode) {
                         pvTable[ply][ply] = currMove;
