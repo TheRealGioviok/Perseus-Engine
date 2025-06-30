@@ -281,11 +281,29 @@ skipPruning:
     // Iterate through moves
     for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
     {
-        S32 currMoveScore = getScore(moveList.moves[i]); // - BADNOISYMOVE;
         Move currMove = onlyMove(moveList.moves[i]);
-        if (sameMovePos(currMove, excludedMove)) continue;
         const bool isQuiet = okToReduce(currMove);
+        if (currMove == noMove) continue; // Skip no moves
+        S32 currMoveScore = 0;
+
+        S32 pieceToIndex = indexPieceTo(movePiece(currMove), moveTarget(currMove));
+        Piece pieceCaptured = moveCapture(currMove);
+        // TODO: substitute this with movepicker stage once we have the move picker
         const bool quietOrLosing = currMoveScore < COUNTERSCORE;
+
+        if (!isQuiet)
+            currMoveScore = captureHistoryTable
+                [indexPieceTo(movePiece(currMove), moveTarget(currMove))]
+                [isCapture(currMove) ? (pieceCaptured - 6 * (pieceCaptured > 6)) : P]
+                [getThreatsIndexing(pos.threats, moveList.moves[i])];
+        else {
+            currMoveScore = historyTable[pos.side][indexFromTo(moveSource(currMove), moveTarget(currMove))][getThreatsIndexing(pos.threats,currMove)]
+                + ((ss-1)->move ? (ss-1)->contHistEntry[pieceToIndex] : 0)
+                + ((ss-2)->move ? (ss-2)->contHistEntry[pieceToIndex] : 0)
+                + ((ss-4)->move ? (ss-4)->contHistEntry[pieceToIndex] : 0);   
+        }
+        if (sameMovePos(currMove, excludedMove)) continue;
+
         if (moveSearched){
             if (!skipQuiets) { 
                 if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
@@ -300,15 +318,15 @@ skipPruning:
                     skipQuiets = true;
                     continue;
                 }
-                if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
+                if (!PVNode && depth <= 4 && currMoveScore < historyPruningMultiplier() * depth + historyPruningBias()){
                     skipQuiets = true;
                     continue;
                 }
             }
             else if (quietOrLosing) continue;
             const auto seeThresh = isQuiet
-                ? pvsSeeThresholdNoisy() * depth - (currMoveScore - BADNOISYMOVE) / pvsSeeThresholdNoisyHHDiv()
-                : pvsSeeThresholdQuiet() * depth * depth - (currMoveScore - QUIETSCORE) / pvsSeeThresholdQuietHHDiv()
+                ? pvsSeeThresholdNoisy() * depth
+                : pvsSeeThresholdQuiet() * depth * depth
             ;
             if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
         }
@@ -392,20 +410,20 @@ skipPruning:
             if (moveSearched > PVNode * 3 && depth >= 3 && (isQuiet || !ttPv))
             {
                 S32 granularR = reduction(depth, moveSearched, isQuiet, ttPv);
-                if (currMoveScore >= COUNTERSCORE) granularR -= lmrExpectedDecent();
+                if (!quietOrLosing) granularR -= lmrExpectedDecent();
                 if (isQuiet){
                     // R -= givesCheck;
-                    granularR -= std::clamp((currMoveScore - QUIETSCORE) * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
+                    granularR -= std::clamp((S64)currMoveScore * RESOLUTION, -16000000LL, 16000000LL) / lmrQuietHistoryDivisor();
                     if (cutNode) granularR += lmrQuietCutNode();
                     if (ttPv) granularR -= cutNode * lmrQuietTTPV();
                 }
                 else {
-                    if (currMoveScore < QUIETSCORE) { 
+                    if (quietOrLosing) { 
                         if (cutNode) granularR += lmrBadNoisyCutNode();
-                        granularR -= std::clamp((currMoveScore - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
+                        granularR -= std::clamp((S64)currMoveScore * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorA();
                     }
                     else {
-                        granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
+                        granularR -= std::clamp((S64)currMoveScore * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
                     }
                 }
                 // The function looked cool on desmos
