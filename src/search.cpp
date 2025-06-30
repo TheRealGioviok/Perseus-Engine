@@ -283,7 +283,10 @@ skipPruning:
     {
         Move currMove = onlyMove(moveList.moves[i]);
         const bool isQuiet = okToReduce(currMove);
-        if (currMove == noMove) continue; // Skip no moves
+        if (currMove == noMove)
+            continue; // Skip no moves
+        if (skipQuiets && isQuiet) // Skip quiets if moveloop pruning told us to
+            continue;
         S32 currMoveScore = 0;
 
         S32 pieceToIndex = indexPieceTo(movePiece(currMove), moveTarget(currMove));
@@ -304,26 +307,29 @@ skipPruning:
         }
         if (sameMovePos(currMove, excludedMove)) continue;
 
-        if (moveSearched){
-            if (!skipQuiets) { 
-                if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
-                if (!PVNode
-                    && depth <= 8
-                    && !inCheck
-                    && bestScore > -KNOWNWIN
-                    && std::abs(alpha) < KNOWNWIN
-                    && isQuiet
-                    && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
-                {
-                    skipQuiets = true;
-                    continue;
-                }
-                if (!PVNode && depth <= 4 && currMoveScore < historyPruningMultiplier() * depth + historyPruningBias()){
-                    skipQuiets = true;
-                    continue;
-                }
+        if (!RootNode && quietOrLosing && bestScore >= -mateValue){
+            // Late move pruning
+            if (!PVNode && moveSearched > lmpMargin[depth][improving]) break;
+
+            // Futility pruning
+            if (!PVNode
+                && depth <= 8
+                && !inCheck
+                && bestScore > -KNOWNWIN
+                && std::abs(alpha) < KNOWNWIN
+                && isQuiet
+                && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
+            {
+                skipQuiets = true;
+                continue;
             }
-            else if (quietOrLosing) continue;
+            
+            // History pruning
+            if (!PVNode && depth <= 4 && currMoveScore < historyPruningMultiplier() * depth + historyPruningBias()) {
+                continue;
+            }
+            
+            // SEE pruning
             const auto seeThresh = isQuiet
                 ? pvsSeeThresholdNoisy() * depth
                 : pvsSeeThresholdQuiet() * depth * depth
