@@ -292,7 +292,7 @@ skipPruning:
         S32 pieceToIndex = indexPieceTo(movePiece(currMove), moveTarget(currMove));
         Piece pieceCaptured = moveCapture(currMove);
         // TODO: substitute this with movepicker stage once we have the move picker
-        const bool quietOrLosing = getScore(moveList.moves[i]) < QUIETSCORE;
+        const bool quietOrLosing = getScore(moveList.moves[i]) < COUNTERSCORE;
 
         if (!isQuiet)
             currMoveScore = captureHistoryTable
