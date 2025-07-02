@@ -161,6 +161,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta, ss);
+    bool betterEval = false;
 
     UndoInfo undoer = UndoInfo(pos);
 
@@ -175,7 +176,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         improving = false;
         goto skipPruning;
     }
-    
     // Get static eval of the position
     if (ttHit)
     {
@@ -183,8 +183,10 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
         eval = ss->staticEval = correctStaticEval<true>(pos, rawEval);
         // Also, we might be able to use the score as a better eval
-        if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
+        if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval))) {
             eval = ttScore;
+            betterEval = true;
+        }
     }
     else if (excludedMove){
         rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
@@ -222,6 +224,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         {
             const Score razorScore = quiescence(alpha, beta, ss);
             if (razorScore <= alpha) return razorScore;
+            else if (betterEval == false) ss->staticEval = eval = razorScore; // Update static eval if we didn't have a better eval
         }
 
         // Null move pruning
