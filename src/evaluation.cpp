@@ -824,7 +824,7 @@ Score pestoEval(Position *pos){
 
     S32 passedCount = 0;
 
-    BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
+    BitBoard doubledPawns[2] = {bb[P] & (bb[P] >> 8), bb[p] & (bb[p] << 8)};
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
 
     score += pawnEval(pawnHashKey, bb, doubledPawns, pawnFiles, protectedPawns, pawnBlockage, occ, attackedBy, multiAttacks, pawnAttackedSquares, passedCount);
@@ -1505,7 +1505,7 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
 
     S32 passedCount = 0;
 
-    BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
+    BitBoard doubledPawns[2] = { bb[P] & (bb[P] >> 8), bb[p] & (bb[p] << 8) };
     BitBoard pawnFiles[2] = { filesFromBB(bb[P]), filesFromBB(bb[p]) };
     
     extractPawnStructureFeats<WHITE>(bb,doubledPawns,pawnFiles,protectedPawns,pawnBlockage,occ,attackedBy,multiAttacks,pawnAttackedSquares, passedCount, tensor);
