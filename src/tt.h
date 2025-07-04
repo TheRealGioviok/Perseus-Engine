@@ -19,26 +19,17 @@ enum HashFlag
 };
 
 #ifdef _MSC_VER
-__declspec(align(16)) struct ttEntry {
+__declspec(align(64)) struct ttEntry {
     ttEntry(HashKey h, U16 b, Depth d, U8 f, Score s);
     ttEntry();
     HashKey hashKey;         // 8
     PackedMove bestMove;     // 2
     Depth depth;             // 1
-    U8 flags = hashINVALID;  // 1
-    Score score = noScore; // 2
-    Score eval = noScore;  // 2
-};
+    U8 agePvFlag = hashNONE; // 1
+    Score score = noScore;   // 2
+    Score eval = noScore;    // 2
+} __attribute__((aligned(64)));
 
-__declspec(align(64))struct ttBucket {
-    ttEntry entries[ttBucketSize];
-    ttBucket(){
-		for (U64 i = 0; i < ttBucketSize; i++){
-			entries[i] = ttEntry(0, 0, 0, hashINVALID, 0);
-			entries[i].eval = noScore;
-		}
-	}
-};
 #elif __GNUC__
 struct ttEntry {
     ttEntry(HashKey h, U16 b, Depth d, U8 f, Score s);
@@ -50,22 +41,10 @@ struct ttEntry {
     Score score = noScore; // 2
     Score eval = noScore;  // 2
 } __attribute__((aligned(16)));
-
-struct ttBucket {
-    ttEntry entries[ttBucketSize];
-    ttBucket(){
-        for (U64 i = 0; i < ttBucketSize; i++){
-            entries[i] = ttEntry(0, 0, 0, hashNONE, 0);
-            entries[i].eval = noScore;
-        }
-    }
-} __attribute__((aligned(64)));
 #else
 // TODO: Add support for other compilers
 #error "Compiler not supported"
 #endif
-
-
 
 // Transposition table and evaluation hash table
 extern std::vector<ttEntry> tt;
