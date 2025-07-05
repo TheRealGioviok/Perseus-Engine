@@ -99,6 +99,9 @@ constexpr PScore QUEENTHREAT[2][5] = {
     {S(12, -3), S(27, -3), S(27, 23), S(-2, -22), S(4, -140)}, 
     {S(-2, 9), S(7, -1), S(5, 15), S(1, 5), S(10, -119)}
 };
+constexpr PScore KNIGHTONQUEEN = S(0, 0);
+constexpr PScore BISHOPONQUEEN = S(0, 0);
+constexpr PScore ROOKONQUEEN = S(0, 0);
 constexpr PScore KINGTHREAT = S(-6, -3);
 constexpr PScore QUEENINFILTRATION = S(7, 3);
 constexpr PScore INVASIONSQUARES = S(7, 6);
@@ -276,6 +279,9 @@ static inline PScore getPtPtThreatsFeat(Position &pos,
                                         const BitBoard (&weakPieces)[2],
                                         BitBoard (&pawnAttacks)[2],
                                         BitBoard (&ptAttacks)[2][4],
+                                        BitBoard (&mobilityArea)[2],
+                                        BitBoard (&multiAttacks)[2],
+                                        const BitBoard (&stronglyProtectedSquares)[2],
                                         S8* features)
 {
     constexpr int them = !us;
@@ -299,6 +305,22 @@ static inline PScore getPtPtThreatsFeat(Position &pos,
     processFeatThreats(ptAttacks[us][B - 1] & occ[them], 20);
     processFeatThreats(ptAttacks[us][R - 1] & occ[them], 30);
     processFeatThreats(ptAttacks[us][Q - 1] & occ[them], 40);
+
+    auto &bb = pos.bitboards;
+
+    // Queen threats (TODO: try imbalance terms later when only one queen is present)
+    if (bb[Q + 6 * them]){
+        Square queenSquare = lsb(bb[Q + 6 * them]);
+        BitBoard safe = mobilityArea[us] & ~bb[P + 6 * us] & ~stronglyProtectedSquares[them];
+        BitBoard knightThreats = ptAttacks[us][N - 1] & knightAttacks[queenSquare];
+        features[50] += popcount(safe & knightThreats) * (us == WHITE ? 1 : -1);
+        // Change safe definition to have two attackers for sliders, since queen can recapture the attacker
+        safe &= multiAttacks[us];
+        BitBoard bishopThreats = ptAttacks[us][B - 1] & getBishopAttack(queenSquare, occ[BOTH]);
+        features[51] += popcount(safe & bishopThreats) * (us == WHITE ? 1 : -1);
+        BitBoard rookThreats = ptAttacks[us][R - 1] & getRookAttack(queenSquare, occ[BOTH]);
+        features[52] += popcount(safe & rookThreats) * (us == WHITE ? 1 : -1);
+    }
 
     return score;
 }
@@ -822,6 +844,11 @@ Score pestoEval(Position *pos){
         bb[P] | bb[p] | pawnAttackedSquares[WHITE]
     };
 
+    const BitBoard stronglyProtectedSquares[2] = {
+        pawnAttackedSquares[WHITE] | (multiAttacks[WHITE] & ~multiAttacks[BLACK]),
+        pawnAttackedSquares[BLACK] | (multiAttacks[BLACK] & ~multiAttacks[WHITE])
+    };
+
     S32 passedCount = 0;
 
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
@@ -1185,6 +1212,10 @@ std::vector<Score> getCurrentEvalWeights(){
         }
     }
 
+    weights.push_back(KNIGHTONQUEEN.mg());
+    weights.push_back(BISHOPONQUEEN.mg());
+    weights.push_back(ROOKONQUEEN.mg());
+
     weights.push_back(KINGTHREAT.mg());
     weights.push_back(QUEENINFILTRATION.mg());
     weights.push_back(INVASIONSQUARES.mg());
@@ -1274,6 +1305,10 @@ std::vector<Score> getCurrentEvalWeights(){
             }
         }
     }
+
+    weights.push_back(KNIGHTONQUEEN.eg());
+    weights.push_back(BISHOPONQUEEN.eg());
+    weights.push_back(ROOKONQUEEN.eg());
 
     weights.push_back(KINGTHREAT.eg());
     weights.push_back(QUEENINFILTRATION.eg());
@@ -1503,6 +1538,11 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
         bb[P] | bb[p] | pawnAttackedSquares[WHITE]
     };
 
+    const BitBoard stronglyProtectedSquares[2] = {
+        pawnAttackedSquares[WHITE] | (multiAttacks[WHITE] & ~multiAttacks[BLACK]),
+        pawnAttackedSquares[BLACK] | (multiAttacks[BLACK] & ~multiAttacks[WHITE])
+    };
+
     S32 passedCount = 0;
 
     BitBoard doubledPawns[2] = { bb[P] & (bb[P] << 8), bb[p] & (bb[p] >> 8) };
@@ -1617,10 +1657,10 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor[1] = nonPawnHangingDiff;
     tensor += 2;
 
-    getPtPtThreatsFeat<WHITE>(*pos, weakPieces, pawnAttackedSquares, ptAttacks, tensor);
-    getPtPtThreatsFeat<BLACK>(*pos, weakPieces, pawnAttackedSquares, ptAttacks, tensor);
+    getPtPtThreatsFeat<WHITE>(*pos, weakPieces, pawnAttackedSquares, ptAttacks, mobilityArea, multiAttacks, stronglyProtectedSquares, tensor);
+    getPtPtThreatsFeat<BLACK>(*pos, weakPieces, pawnAttackedSquares, ptAttacks, mobilityArea, multiAttacks, stronglyProtectedSquares, tensor);
 
-    tensor += 50;
+    tensor += 53;
 
     const Score kingThreatsDiff = (!!kingThreats[WHITE]) - (!!kingThreats[BLACK]);
     tensor[0] = kingThreatsDiff;
