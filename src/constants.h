@@ -129,7 +129,7 @@ struct TunableParam {
 std::vector<TunableParam>&  tunableParams();
 TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd);
 
-//#define TUNE
+#define TUNE
 
 #ifdef TUNE
 	#define TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd) \
@@ -180,8 +180,8 @@ TUNE_PARAM(lmrNoisyHistoryDivisorB, 6587, 2000, 14000, 500, 0.002)
 TUNE_PARAM(doDeeperMargin, 33, 10, 50, 2, 0.002)
 
 // PVS SEE
-TUNE_PARAM(pvsSeeThresholdNoisy, -16, -160, -10, 6, 0.002)
-TUNE_PARAM(pvsSeeThresholdQuiet, -109, -160, -10, 6, 0.002)
+TUNE_PARAM(pvsSeeThresholdQuiet, -16, -160, -10, 6, 0.002)
+TUNE_PARAM(pvsSeeThresholdNoisy, -109, -160, -10, 6, 0.002)
 NO_TUNE_PARAM(pvsSeeMaxDepth, 7, 5, 10, 0.5, 0.002)
 
 // LMP values
@@ -213,8 +213,10 @@ TUNE_PARAM(doubleExtensionMargin, 21, 1, 50, 2, 0.002);
 NO_TUNE_PARAM(singularSearchDepth, 7, 5, 10, .5, 0.002);
 
 // History Pruning values
-TUNE_PARAM(historyPruningMultiplier, -1508, -5120, -1024, 205, 0.002);
-TUNE_PARAM(historyPruningBias, 157, -2048, 2048, 205, 0.002);
+TUNE_PARAM(noisyHistoryPruningMultiplier, -1508, -5120, -1024, 205, 0.002);
+TUNE_PARAM(noisyHistoryPruningBias, 157, -2048, 2048, 205, 0.002);
+TUNE_PARAM(quietHistoryPruningMultiplier, -1508, -5120, -1024, 205, 0.002);
+TUNE_PARAM(quietHistoryPruningBias, 157, -2048, 2048, 205, 0.002);
 
 // IIR values
 NO_TUNE_PARAM(IIRDepth, 6, 3, 8, .5, 0.002);

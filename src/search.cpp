@@ -307,7 +307,7 @@ skipPruning:
         }
         if (sameMovePos(currMove, excludedMove)) continue;
 
-        if (!RootNode && quietOrLosing && bestScore >= -mateValue){
+        if (!RootNode && quietOrLosing && bestScore > -mateValue){
             // Late move pruning
             if (!PVNode && moveSearched > lmpMargin[depth][improving]) break;
 
@@ -325,14 +325,20 @@ skipPruning:
             }
             
             // History pruning
-            if (!PVNode && depth <= 4 && currMoveScore < historyPruningMultiplier() * depth + historyPruningBias()) {
+            const auto historyPruningMultiplier = isQuiet
+                ? quietHistoryPruningMultiplier() * depth + quietHistoryPruningBias()
+                : noisyHistoryPruningMultiplier() * depth + noisyHistoryPruningBias()
+            ;
+            if (!PVNode && depth <= 4 && currMoveScore < historyPruningMultiplier
+            ) {
+                skipQuiets = true;
                 continue;
             }
             
             // SEE pruning
             const auto seeThresh = isQuiet
-                ? pvsSeeThresholdNoisy() * depth
-                : pvsSeeThresholdQuiet() * depth * depth
+                ? pvsSeeThresholdQuiet() * depth
+                : pvsSeeThresholdNoisy() * depth * depth
             ;
             if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
         }
