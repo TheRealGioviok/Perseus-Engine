@@ -25,6 +25,7 @@ public:
     Score lastScore = 0;
     U64 nodesPerMoveTable[64 * 64];
     S16 nmpPlies = 0;
+    U64 softNodesLimit = 0xFFFFFFFFFFFFFFFFULL; // No limit by default
     bool stopped = false;
     U8 age = 0;
 

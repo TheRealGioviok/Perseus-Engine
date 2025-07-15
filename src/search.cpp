@@ -784,6 +784,22 @@ void Game::startSearch(bool ageTT = true)
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
+        // Check softnodes limit
+        if (nodes >= softNodesLimit)
+        {
+            std::cout << "info softscore ";
+            if (abs(score) < mateValue){
+                std::cout << "cp " << score << std::endl;
+            }
+            else if (score < -mateValue && score > -mateScore){
+                std::cout << "mate " << -(mateScore + score + 2) / 2 << " ";
+            }
+            else if (score > mateValue && score < mateScore){
+                std::cout << "mate " << (mateScore + 1 - score) / 2 << " ";
+            }
+
+            break;
+        }
     }
 
 bmove:

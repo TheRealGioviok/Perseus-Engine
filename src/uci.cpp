@@ -343,6 +343,15 @@ int goCommand(Game* game, char* command){
     char* winc = strstr((char *)command, "winc");
     char* binc = strstr((char *)command, "binc");
     char* nodes = strstr((char *)command, "nodes");
+    char* soft = strstr((char *)command, "soft");
+
+    if (soft) {
+        game->softNodesLimit = atoll(soft + 5);
+        std::cout << "Soft nodes limit set to " << game->softNodesLimit << std::endl;
+    }
+    else {
+        game->softNodesLimit = 0xFFFFFFFFFFFFFFFFULL; // No limit
+    }
 
     if(depth){
         game->depth = atoi(depth + 6);
