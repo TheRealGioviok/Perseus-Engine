@@ -22,13 +22,13 @@ bool ponder = false;   // True if the engine is pondering.
 U8 timeSet = -1;    // 0 for infinite, 1 for time per move, 2 for depth, 3 for normal play.
 std::string hashDumpFile; // Additional opening hash file
 
-U32 hashSize = 64; // The size of the hash table in MB.
+U32 hashSize = 16; // The size of the hash table in MB.
 
 void uciStr() {
     std::cout << "id name " << "Perseus" << std::endl;
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
-    std::cout << "option name Hash type spin default 64 min 8 max 33554432" << std::endl;
+    std::cout << "option name Hash type spin default 16 min 8 max 33554432" << std::endl;
     
     for(const TunableParam& param : tunableParams())
         std::cout << "option name " << param.name << " type spin default " << param.defaultValue << " min " << param.minValue << " max " << param.maxValue << std::endl;
