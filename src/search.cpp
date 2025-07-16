@@ -720,9 +720,10 @@ void Game::startSearch(bool ageTT = true)
             U64 timer1 = getTime64();                    // Save time for nps calculation
             // Clear the first sstack entry
             ss->wipe();
-            score = search(alpha, beta, currSearch, false, ss); // Search at depth currSearch
+            S32 tentScore = search(alpha, beta, currSearch, false, ss); // Search at depth currSearch
             if (stopped)
                 goto bmove;
+            score = tentScore; // We avoid stopped scores
             bestMove = pvTable[0][0];
             U64 timer2 = getTime64();
 
@@ -771,6 +772,7 @@ bmove:
     {
         std::cout << "mate " << (mateScore + 1 - score) / 2 << " ";
     }
+    std::cout << std::endl;
     // Report final search info (6307869)
     std::cout << "info nodes " << nodes << std::endl;
     std::cout << "bestmove ";
