@@ -347,7 +347,6 @@ int goCommand(Game* game, char* command){
 
     if (soft) {
         game->softNodesLimit = atoll(soft + 5);
-        std::cout << "Soft nodes limit set to " << game->softNodesLimit << std::endl;
     }
     else {
         game->softNodesLimit = 0xFFFFFFFFFFFFFFFFULL; // No limit

@@ -694,10 +694,6 @@ void Game::startSearch(bool ageTT = true)
 
     Score score = search(noScore, infinity, 1, false, ss);
     Move bestMove = pvTable[0][0];
-
-    std::cout << "info depth 1 score cp " << score << " nodes " << nodes << " moves ";
-    printMove(bestMove);
-    std::cout << std::endl;
     
     depth = std::min(depth, Depth(maxPly - 3));
     if (depth < 0)
@@ -734,7 +730,6 @@ void Game::startSearch(bool ageTT = true)
             {
                 beta = (alpha + beta) / 2;
                 alpha = std::max(S32(noScore), score - delta);
-
                 delta *= 1.44;
                 currSearch = searchDepth;
             }
@@ -746,7 +741,6 @@ void Game::startSearch(bool ageTT = true)
             }
             else
             {
-                
                 break;
             }
         }
@@ -777,7 +771,6 @@ bmove:
     {
         std::cout << "mate " << (mateScore + 1 - score) / 2 << " ";
     }
-    std::cout << std::endl;
     // Report final search info (6307869)
     std::cout << "info nodes " << nodes << std::endl;
     std::cout << "bestmove ";
