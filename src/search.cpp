@@ -777,6 +777,7 @@ bmove:
     {
         std::cout << "mate " << (mateScore + 1 - score) / 2 << " ";
     }
+    std::cout << std::endl;
     // Report final search info (6307869)
     std::cout << "info nodes " << nodes << std::endl;
     std::cout << "bestmove ";
