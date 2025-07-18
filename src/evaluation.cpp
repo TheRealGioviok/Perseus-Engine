@@ -427,7 +427,7 @@ PawnStructureResult pawnStructureEval(
             && !(popcount(leverPushes) - phal > 0)            // No lever pushes outnumbering our phalanx support
             && !(popcount(levers) && popcount(leverPushes));  // No lever AND lever pushes (both pushing and not pushing the pawn gets it captured)
         // Backward pawn test.
-        bool backward = !(backwardPawnMask[us][sq] & bb[ourPawnsIndex]) && !advancable;
+        bool backward = !(backwardPawnMask[us][sq] & bb[ourPawnsIndex]) && (!advancable || leverPushes);
 
         // For white, structure penalties are subtracted and bonuses added.
         if (isolated) {
@@ -582,7 +582,7 @@ void extractPawnStructureFeats(
             && !(popcount(leverPushes) - phal > 0)            // No lever pushes outnumbering our phalanx support
             && !(popcount(levers) && popcount(leverPushes));  // No lever AND lever pushes (both pushing and not pushing the pawn gets it captured)
         // Backward pawn test.
-        bool backward = !(backwardPawnMask[us][sq] & bb[ourPawnsIndex]) && !advancable;
+        bool backward = !(backwardPawnMask[us][sq] & bb[ourPawnsIndex]) && (!advancable || leverPushes);
 
         // For white, structure penalties are subtracted and bonuses added.
         if (isolated) {
