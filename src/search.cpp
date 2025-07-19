@@ -100,7 +100,10 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     Score rawEval; // for corrhist
     Score improvement;
     bool improving = true;
+    bool opponentWorsening = false;
     const Move excludedMove = ss->excludedMove;
+    S16 priorReduction = (ss - 1)->reduction;
+    (ss-1)->reduction = 0; // Reset the reduction of the previous stack entry
     // Guard from pvlen editing when in singular extension
     if (!excludedMove) 
         pvLen[ply] = ply;
@@ -170,14 +173,17 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
     if (inCheck)
     {
-        ss->staticEval = eval = rawEval = noScore;
+        rawEval = noScore;
+        ss->staticEval = eval = (ss-2)->staticEval;
         improvement = 0;
         improving = false;
-        goto skipPruning;
+        goto skipPruning; // We are in check, so we cannot prune
     }
-    
-    // Get static eval of the position
-    if (ttHit)
+    else if (excludedMove){
+        rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
+        improvement = 0;
+    }    
+    else if (ttHit)
     {
         // Check if the eval is stored in the TT
         rawEval = tte->eval != noScore ? tte->eval : evaluate();
@@ -186,12 +192,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
             eval = ttScore;
     }
-    else if (excludedMove){
-        rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
-        improvement = 0;
-        improving = false;
-        goto skipPruning;
-    }
+    
     else {
         rawEval = evaluate();
         eval = ss->staticEval = correctStaticEval<true>(pos, rawEval);
@@ -199,6 +200,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         writeTT(pos.hashKey, noScore, rawEval, 0, hashNONE, 0, ply, PVNode, ttPv, age);
     }
 
+    // Calculate the improving and worsening statistics
     improvement = [&](){
         if ((ss - 2)->staticEval != noScore)
             return ss->staticEval - (ss - 2)->staticEval;
@@ -207,8 +209,13 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         return 1; // speculative improvement to cut less
     }();
 
-    // Calculate the improving flag
     improving = improvement > 0;
+    opponentWorsening = ss->staticEval > -(ss - 1)->staticEval;
+
+    if (priorReduction >= 3 && !opponentWorsening)
+        depth++;
+    if (priorReduction >= 1 && depth >= 3 && ss->staticEval + (ss - 1)->staticEval > 175)
+        depth--;
 
     // Pruning time
     if (!PVNode && !excludedMove)
@@ -414,8 +421,10 @@ skipPruning:
                 R = std::max(Depth(0), R);
                 R = std::min(Depth(newDepth - Depth(1)), R);
                 Depth reducedDepth = newDepth - R;
+                ss->reduction = R;
                 // Search at reduced depth
                 score = -search(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
+                ss->reduction = 0;
                 // If failed high on reduced search, research at full depth
                 if (score > alpha && R){
                     bool deeper = score > bestScore + doDeeperMargin() + 2 * newDepth;
