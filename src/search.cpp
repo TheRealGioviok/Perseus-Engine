@@ -100,7 +100,6 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     Score rawEval; // for corrhist
     Score improvement;
     bool improving = true;
-    bool opponentWorsening = false;
     const Move excludedMove = ss->excludedMove;
     S16 priorReduction = (ss - 1)->reduction;
     (ss-1)->reduction = 0; // Reset the reduction of the previous stack entry
@@ -210,10 +209,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     }();
 
     improving = improvement > 0;
-    opponentWorsening = ss->staticEval > -(ss - 1)->staticEval;
 
-    if (priorReduction >= 3 && !opponentWorsening)
-        depth++;
     if (priorReduction >= 1 && depth >= 3 && ss->staticEval + (ss - 1)->staticEval > 175)
         depth--;
 
@@ -342,6 +338,7 @@ skipPruning:
                     && (ttBound & hashLOWER) 
                     && abs(ttScore) < mateValue 
                     && ttDepth >= depth - 3
+                    && ply < currSearch * 2
                 ){
                     // Increase singular candidates
                     //++seCandidates;
