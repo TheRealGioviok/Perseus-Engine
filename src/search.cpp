@@ -287,6 +287,7 @@ skipPruning:
             continue; // Skip no moves
         if (skipQuiets && isQuiet) // Skip quiets if moveloop pruning told us to
             continue;
+        if (sameMovePos(currMove, excludedMove)) continue;
         S32 currMoveScore = 0;
 
         S32 pieceToIndex = indexPieceTo(movePiece(currMove), moveTarget(currMove));
@@ -305,7 +306,6 @@ skipPruning:
                 + ((ss-2)->move ? (ss-2)->contHistEntry[pieceToIndex] : 0)
                 + ((ss-4)->move ? (ss-4)->contHistEntry[pieceToIndex] : 0);   
         }
-        if (sameMovePos(currMove, excludedMove)) continue;
 
         if (!RootNode && quietOrLosing && bestScore > -mateValue){
             // Late move pruning
