@@ -178,7 +178,7 @@ void initSliderAttacks(bool sliderType) {
 
         //init current mask
         U64 attackMask = sliderType ? bishopMasks[square] : rookMasks[square];
-
+        #ifndef USE_PEXT
         //init relevant occupancy bit cnt
         int relevantBitsCount = popcount(attackMask);
 
@@ -208,5 +208,19 @@ void initSliderAttacks(bool sliderType) {
                 rookAttacks[square][magicIndex] = getRookAttacksOnTheFly(square, occupancy);
             }
         }
+        #else
+        int occupancyVariations = 1 << popcount(attackMask);
+        for (int index = 0; index < occupancyVariations; index++){
+            U64 occupancy = setOccupancy(index, popcount(attackMask), attackMask);
+            if (sliderType){
+                int magicIndex = _pext_u64(occupancy, bishopMasks[square]);
+                bishopAttacks[square][magicIndex] = getBishopAttacksOnTheFly(square, occupancy);
+            }
+            else{
+                int magicIndex = _pext_u64(occupancy, rookMasks[square]);
+                rookAttacks[square][magicIndex] = getRookAttacksOnTheFly(square, occupancy);
+            }
+        }
+        #endif
     }
 }

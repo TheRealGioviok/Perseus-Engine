@@ -5,6 +5,13 @@
 #include "magic.h"
 #include "BBmacros.h"
 
+#include "constants.h"
+
+// Check if bmi2 is available
+#ifdef USE_PEXT
+#include <immintrin.h>
+#endif
+
 constexpr BitBoard pawnAttacks[2][64] = {
     {   
         0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
@@ -133,8 +140,12 @@ void initSliderAttacks(bool sliderType);
 inline BitBoard getBishopAttack(int square, U64 occupancy) {
     // get bishop attacks assuming current board occupancy
     occupancy &= bishopMasks[square];
+    #ifdef USE_PEXT
+    occupancy = _pext_u64(occupancy, bishopMasks[square]);
+    #else
     occupancy *= bishopMagicNumbers[square];
     occupancy >>= 64ULL - (U64)bishopRelevantBits[square];
+    #endif
 
     // return bishop attacks
     return bishopAttacks[square][occupancy];
@@ -149,8 +160,12 @@ inline BitBoard getBishopAttack(int square, U64 occupancy) {
 inline BitBoard getRookAttack(int square, U64 occupancy) {
     // get rook attacks assuming current board occupancy
     occupancy &= rookMasks[square];
+    #ifdef USE_PEXT
+    occupancy = _pext_u64(occupancy, rookMasks[square]);
+    #else
     occupancy *= rookMagicNumbers[square];
     occupancy >>= 64ULL - (U64)rookRelevantBits[square];
+    #endif
 
     // return rook attacks
     return rookAttacks[square][occupancy];
