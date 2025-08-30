@@ -307,8 +307,8 @@ skipPruning:
             }
             else if (quietOrLosing) continue;
             const auto seeThresh = isQuiet
-                ? pvsSeeThresholdQuiet() * depth 
-                : pvsSeeThresholdNoisy() * depth * depth
+                ? pvsSeeThresholdNoisy() * depth 
+                : pvsSeeThresholdQuiet() * depth * depth
             ;
             if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
         }
