@@ -220,8 +220,10 @@ TUNE_PARAM(historyPruningBias, 157, -2048, 2048, 205, 0.002);
 NO_TUNE_PARAM(IIRDepth, 6, 3, 8, .5, 0.002);
 
 // FFP values
-TUNE_PARAM(futPruningMultiplier, 49, 30, 130, 4, 0.002);
-TUNE_PARAM(futPruningAdd, 254, 150, 350, 8, 0.002);
+TUNE_PARAM(futPruningMultiplier, 49, 30, 130, 5, 0.002);
+TUNE_PARAM(futPruningAdd, 254, 150, 350, 10, 0.002);
+TUNE_PARAM(noisyFutPruningMultiplier, 49, 30, 130, 5, 0.002);
+TUNE_PARAM(noisyFutPruningAdd, 254, 150, 350, 10, 0.002);
 NO_TUNE_PARAM(futPruningDepth, 9, 6, 10, 0.5, 0.002);
 TUNE_PARAM(qsFutilityMargin, 77, 0, 150, 8, 0.002)
 

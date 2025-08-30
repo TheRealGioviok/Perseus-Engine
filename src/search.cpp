@@ -289,17 +289,29 @@ skipPruning:
         if (moveSearched){
             if (!skipQuiets) { 
                 if (!PVNode && moveSearched >= lmpMargin[depth][improving]) skipQuiets = true;
-                if (!PVNode
-                    && depth <= 8
-                    && !inCheck
-                    && bestScore > -KNOWNWIN
-                    && std::abs(alpha) < KNOWNWIN
-                    && isQuiet
-                    && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
+                if (!inCheck && !PVNode && bestScore > -KNOWNWIN && std::abs(alpha) < KNOWNWIN)
                 {
-                    skipQuiets = true;
-                    continue;
+                    if (isQuiet) {
+                        if (depth <= 8 && ss->staticEval + futPruningAdd() + futPruningMultiplier() * depth <= alpha)
+                        {
+                            skipQuiets = true;
+                            continue;
+                        }
+                    }
+                    
+                    else {
+                        if (quietOrLosing && depth <= 5)
+                        {
+                            Score margin = futPruningAdd() + futPruningMultiplier() * depth;
+                            if (abs(bestScore) < mateValue && bestScore <= ss->staticEval + margin)
+                            {
+                                bestScore = ss->staticEval + margin;
+                                break;
+                            }
+                        }
+                    }
                 }
+                
                 if (!PVNode && depth <= 4 && (isQuiet ? (currMoveScore - QUIETSCORE) : (currMoveScore - BADNOISYMOVE)) < ( historyPruningMultiplier() * depth) + historyPruningBias()){
                     skipQuiets = true;
                     continue;
