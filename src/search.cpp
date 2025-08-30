@@ -134,7 +134,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
 
     if (ttScore != noScore)
     {
-        if (!PVNode && ttDepth >= depth)
+        if (!PVNode && ttDepth >= depth && ttScore && (cutNode || ttScore < alpha))
         {
             if (ttBound == hashEXACT)
                 return ttScore;
@@ -307,8 +307,8 @@ skipPruning:
             }
             else if (quietOrLosing) continue;
             const auto seeThresh = isQuiet
-                ? pvsSeeThresholdNoisy() * depth 
-                : pvsSeeThresholdQuiet() * depth * depth
+                ? pvsSeeThresholdQuiet() * depth 
+                : pvsSeeThresholdNoisy() * depth * depth
             ;
             if (quietOrLosing && depth <= pvsSeeMaxDepth() && !pos.SEE(currMove, seeThresh)) continue;
         }
