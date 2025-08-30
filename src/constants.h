@@ -8,31 +8,32 @@
 constexpr U64 comfrequency = 2047LL; // The search-uci communication frequency is expressed as 2^n - 1, and it will make the search communicate with the uci every 2^n nodes.
 
 // The mate scores are used to recognize if a score is a mate or not.
-constexpr Score infinity  = 32500;   // The score considered infinite.
-constexpr Score mateScore = 32000;   // The score of mate in 0 ply.
-constexpr Score mateValue = 31500;   // The score above which a score is to be considered a mate.
-constexpr Score noScore  = -32500;   // The score considered no score.
-constexpr Move  noMove   = 0;        // The move considered no move.
+constexpr Score infinity = 32500;  // The score considered infinite.
+constexpr Score mateScore = 32000; // The score of mate in 0 ply.
+constexpr Score mateValue = 31500; // The score above which a score is to be considered a mate.
+constexpr Score noScore = -32500;  // The score considered no score.
+constexpr Move noMove = 0;		   // The move considered no move.
 
 // The draw scores are used to recognize if a score is a draw or not.
-constexpr Score drawScore = 0;       // The score of a draw.
+constexpr Score drawScore = 0; // The score of a draw.
 
 // The score above which the position is theoretically won.
-constexpr Score KNOWNWIN = 12000;   // The score above which the position is theoretically won.
+constexpr Score KNOWNWIN = 12000; // The score above which the position is theoretically won.
 
 // The maximum ply the engine will search to.
-constexpr U16 maxPly = 128;        // The maximum ply the engine will search to.
+constexpr U16 maxPly = 128; // The maximum ply the engine will search to.
 
 // The number of colors and squares on the board.
-constexpr int NUM_COLORS = 2;       // The number of colors.
-constexpr int NUM_SQUARES = 64;     // The number of squares on the board.
-constexpr int NUM_PIECES = 12;      // The number of piece types (color sensitive).
-constexpr int NUM_PIECE_TYPES = 6;  // The number of piece types (color insensitive).
+constexpr int NUM_COLORS = 2;	   // The number of colors.
+constexpr int NUM_SQUARES = 64;	   // The number of squares on the board.
+constexpr int NUM_PIECES = 12;	   // The number of piece types (color sensitive).
+constexpr int NUM_PIECE_TYPES = 6; // The number of piece types (color insensitive).
 
 // ENUMS
 
 // The enum of side to move.
-enum Side {
+enum Side
+{
 	// White to move.
 	WHITE = 0,
 	// Black to move.
@@ -42,7 +43,8 @@ enum Side {
 };
 
 // The enum of castle rights
-enum CastleRights {
+enum CastleRights
+{
 	// White castle kingside.
 	WK = 1,
 	// White castle queenside.
@@ -54,95 +56,167 @@ enum CastleRights {
 };
 
 // The enum of pieces
-enum Pieces {
-	P, N, B, R, Q, K, p, n, b, r, q, k, NOPIECE
+enum Pieces
+{
+	P,
+	N,
+	B,
+	R,
+	Q,
+	K,
+	p,
+	n,
+	b,
+	r,
+	q,
+	k,
+	NOPIECE
 };
 
-
-
 // The enum of squares.
-enum Squares {
-	a8, b8, c8, d8, e8, f8, g8, h8,
-	a7, b7, c7, d7, e7, f7, g7, h7,
-	a6, b6, c6, d6, e6, f6, g6, h6,
-	a5, b5, c5, d5, e5, f5, g5, h5,
-	a4, b4, c4, d4, e4, f4, g4, h4,
-	a3, b3, c3, d3, e3, f3, g3, h3,
-	a2, b2, c2, d2, e2, f2, g2, h2,
-	a1, b1, c1, d1, e1, f1, g1, h1, noSquare
+enum Squares
+{
+	a8,
+	b8,
+	c8,
+	d8,
+	e8,
+	f8,
+	g8,
+	h8,
+	a7,
+	b7,
+	c7,
+	d7,
+	e7,
+	f7,
+	g7,
+	h7,
+	a6,
+	b6,
+	c6,
+	d6,
+	e6,
+	f6,
+	g6,
+	h6,
+	a5,
+	b5,
+	c5,
+	d5,
+	e5,
+	f5,
+	g5,
+	h5,
+	a4,
+	b4,
+	c4,
+	d4,
+	e4,
+	f4,
+	g4,
+	h4,
+	a3,
+	b3,
+	c3,
+	d3,
+	e3,
+	f3,
+	g3,
+	h3,
+	a2,
+	b2,
+	c2,
+	d2,
+	e2,
+	f2,
+	g2,
+	h2,
+	a1,
+	b1,
+	c1,
+	d1,
+	e1,
+	f1,
+	g1,
+	h1,
+	noSquare
 };
 
 // FUNCTIONALITY SYMBOL DEFINITIONS
 
 // SEARCH TECHNIQUES
 /* -- TT PARAMETERS */
-#define TTEXACTDEPTHBONUS 				0 // The depth bonus for exact entries in the transposition table.
-
+#define TTEXACTDEPTHBONUS 0 // The depth bonus for exact entries in the transposition table.
 
 /* -- SEARCH TECHNIQUES -- */
-#define ENABLETTSCORING                 true // If true the transposition table is used for cutoffs. The transposition table is automatically implemented in the search function if this is true.
-#define DETECTREPETITION                true // If true the repetition detection is used. The repetition detection is automatically implemented in the search function if this is true.
-#define ENABLEPREFETCHING               true // If true the prefetching is used. The prefetching is automatically implemented in the search function if this is true.
+#define ENABLETTSCORING true   // If true the transposition table is used for cutoffs. The transposition table is automatically implemented in the search function if this is true.
+#define DETECTREPETITION true  // If true the repetition detection is used. The repetition detection is automatically implemented in the search function if this is true.
+#define ENABLEPREFETCHING true // If true the prefetching is used. The prefetching is automatically implemented in the search function if this is true.
 
 /* -- PRUNING TECHNIQUES -- */
-#define ENABLENMP                       true // If true the null move pruning is used. The null move pruning is automatically implemented in the search function if this is true.
+#define ENABLENMP true // If true the null move pruning is used. The null move pruning is automatically implemented in the search function if this is true.
 
 /* -- MOVE ORDERING TECHNIQUES -- */
-#define ENABLEMVVLVASORTING             true // If true the move ordering is sorted by the MVV/LVA heuristic. The move ordering is automatically implemented in the search function if this is true.
-#define ENABLEPROMOTIONSORTING          true // If true the move ordering is sorted by the promotion heuristic. The move ordering is automatically implemented in the search function if this is true.
-#define ENABLEPSQTDIFFSORTING           true // If true the move ordering is sorted by the difference in the piece square tables. The move ordering is automatically implemented in the search function if this is true.
-#define ENABLEHISTORYHEURISTIC          true // If true the history heuristic is used. The history heuristic is automatically implemented in the search function if this is true.
-#define ENABLETTORDERING                true // If true the transposition table is used for move ordering. The transposition table is automatically implemented in the search function if this is true. ENABLETTSCORING must be true for this to work.
-#define ENABLEKILLERHEURISTIC           true // If true the killer heuristic is used. The killer heuristic is automatically implemented in the search function if this is true.
-#define ENABLECOUNTERMOVEHEURISTIC      true // If true the counter move heuristic is used. The counter move heuristic is automatically implemented in the search function if this is true.
-#define ENABLEBETTERHISTORYFORMULA      true // If true the better history formula is used. The better history formula is automatically implemented in the search function if this is true.
+#define ENABLEMVVLVASORTING true		// If true the move ordering is sorted by the MVV/LVA heuristic. The move ordering is automatically implemented in the search function if this is true.
+#define ENABLEPROMOTIONSORTING true		// If true the move ordering is sorted by the promotion heuristic. The move ordering is automatically implemented in the search function if this is true.
+#define ENABLEPSQTDIFFSORTING true		// If true the move ordering is sorted by the difference in the piece square tables. The move ordering is automatically implemented in the search function if this is true.
+#define ENABLEHISTORYHEURISTIC true		// If true the history heuristic is used. The history heuristic is automatically implemented in the search function if this is true.
+#define ENABLETTORDERING true			// If true the transposition table is used for move ordering. The transposition table is automatically implemented in the search function if this is true. ENABLETTSCORING must be true for this to work.
+#define ENABLEKILLERHEURISTIC true		// If true the killer heuristic is used. The killer heuristic is automatically implemented in the search function if this is true.
+#define ENABLECOUNTERMOVEHEURISTIC true // If true the counter move heuristic is used. The counter move heuristic is automatically implemented in the search function if this is true.
+#define ENABLEBETTERHISTORYFORMULA true // If true the better history formula is used. The better history formula is automatically implemented in the search function if this is true.
 
 // QUIESCENCE TECHNIQUES
-#define ENABLEQUIESCENCESEARCH          true // If true the quiescence search is used. The quiescence search is automatically implemented in the search function if this is true.
-#define EVASIONSINQUIESCENCE            true // If true the search function will search for evasions in quiescence search. Quiescence search must be enabled for this to work.
-#define DODELTAPRUNING                  true // If true the delta pruning is used. Quiescence search must be enabled for this to work.
+#define ENABLEQUIESCENCESEARCH true // If true the quiescence search is used. The quiescence search is automatically implemented in the search function if this is true.
+#define EVASIONSINQUIESCENCE true	// If true the search function will search for evasions in quiescence search. Quiescence search must be enabled for this to work.
+#define DODELTAPRUNING true			// If true the delta pruning is used. Quiescence search must be enabled for this to work.
 
 // DEBUGGING SYMBOL DEFINITIONS
-#define DEBUG                           false // If true the debugging is used. The debugging is automatically implemented in the code if this is true.
-#define ASSERTS                         true // If true the asserts are used. The asserts are automatically implemented in the code if this is true.
-#define LOGROOTMOVEDEPTH                127 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
+#define DEBUG false			 // If true the debugging is used. The debugging is automatically implemented in the code if this is true.
+#define ASSERTS true		 // If true the asserts are used. The asserts are automatically implemented in the code if this is true.
+#define LOGROOTMOVEDEPTH 127 // The depth at which the root moves are logged. Setting this to >= 128 will disable logging.
 
-struct TunableParam {
-    std::string name;
-    S32 defaultValue;
-    S32 minValue;
-    S32 maxValue;
+struct TunableParam
+{
+	std::string name;
+	S32 defaultValue;
+	S32 minValue;
+	S32 maxValue;
 	float cEnd;
 	float rEnd;
 	S32 value;
 
-    inline TunableParam(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd)
-        : name(name), defaultValue(defaultValue), minValue(minValue), maxValue(maxValue), cEnd(cEnd), rEnd(rEnd), value(defaultValue){}
-    
-    inline operator int() const { return value; }
-	inline TunableParam& operator=(int value) {
+	inline TunableParam(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd)
+		: name(name), defaultValue(defaultValue), minValue(minValue), maxValue(maxValue), cEnd(cEnd), rEnd(rEnd), value(defaultValue) {}
+
+	inline operator int() const { return value; }
+	inline TunableParam &operator=(int value)
+	{
 		this->value = value;
 		return *this;
 	}
 };
 
-std::vector<TunableParam>&  tunableParams();
-TunableParam& addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd);
+std::vector<TunableParam> &tunableParams();
+TunableParam &addTune(std::string name, S32 defaultValue, S32 minValue, S32 maxValue, float cEnd, float rEnd);
 
-//#define TUNE
+// #define TUNE
 
 #ifdef TUNE
-	#define TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd) \
-		inline const TunableParam& tuned_##name = addTune(#name, defaultValue, minValue, maxValue, cEnd, rEnd); \
-		inline S32 name() { return tuned_##name.value; }
+#define TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd)                                      \
+	inline const TunableParam &tuned_##name = addTune(#name, defaultValue, minValue, maxValue, cEnd, rEnd); \
+	inline S32 name() { return tuned_##name.value; }
 #else
-	#define TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd); \
-		constexpr S32 name() { return defaultValue; }
+#define TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd) \
+	;                                                                  \
+	constexpr S32 name() { return defaultValue; }
 #endif
 
 // Easy way to enable / disable some params from being modifiable
-#define NO_TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd); \
-		constexpr S32 name() { return defaultValue; }
+#define NO_TUNE_PARAM(name, defaultValue, minValue, maxValue, cEnd, rEnd) \
+	;                                                                     \
+	constexpr S32 name() { return defaultValue; }
 
 // History stuff
 TUNE_PARAM(maxHistoryBonus, 2272, 1, 4096, 128, 0.002);
@@ -180,8 +254,8 @@ TUNE_PARAM(lmrNoisyHistoryDivisorB, 6587, 2000, 14000, 500, 0.002)
 TUNE_PARAM(doDeeperMargin, 33, 10, 50, 2, 0.002)
 
 // PVS SEE
-TUNE_PARAM(pvsSeeThresholdNoisy, -16, -160, -10, 6, 0.002)
-TUNE_PARAM(pvsSeeThresholdQuiet, -109, -160, -10, 6, 0.002)
+TUNE_PARAM(pvsSeeThresholdNoisy, -112, -160, -10, 6, 0.002)
+TUNE_PARAM(pvsSeeThresholdQuiet, -16, -160, -10, 6, 0.002)
 NO_TUNE_PARAM(pvsSeeMaxDepth, 7, 5, 10, 0.5, 0.002)
 
 // LMP values
@@ -204,7 +278,7 @@ NO_TUNE_PARAM(nmpQ2, 3, 0, 5, .5, 0.002);
 
 // Razoring value
 TUNE_PARAM(razorQ1, 97, -200, 200, 16, 0.002);
-TUNE_PARAM(razorQ2, 239,  100, 500, 16, 0.002);
+TUNE_PARAM(razorQ2, 239, 100, 500, 16, 0.002);
 NO_TUNE_PARAM(razorDepth, 3, 2, 5, .5, 0.002);
 
 // Singular Extensions
