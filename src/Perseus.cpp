@@ -73,7 +73,7 @@ void perftSuite(){
 
 int main(int argc, char* argv[]){
     initAll();
-    // perftSuite();
+    //perftSuite();
     Game game;
 
     // Check if the first argument is "bench"
