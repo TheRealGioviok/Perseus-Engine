@@ -278,6 +278,7 @@ skipPruning:
 
     MoveList moveList;
     generateMoves(moveList, ss);
+    (ss+1)->failHighCount = 0;
     // Iterate through moves
     for (int i = (ttMove ? sortTTUp(moveList, ttMove) : 1); i < moveList.count; i++) // Slot 0 is reserved for the tt move, wheter it is present or not
     {
@@ -408,6 +409,7 @@ skipPruning:
                         granularR -= std::clamp((currMoveScore - GOODNOISYMOVE - BADNOISYMOVE) * RESOLUTION, -6000000LL, 12000000LL) / lmrNoisyHistoryDivisorB();
                     }
                 }
+                granularR += std::min(static_cast<U16>(4),(ss+1)->failHighCount) * lmrFailedHighBonus();
                 // The function looked cool on desmos
                 granularR -= lmrCieckA() * improvement / (std::abs(improvement * lmrCieckB() / 1000) + lmrCieckC());
                 Depth R = granularR / RESOLUTION;
@@ -448,6 +450,7 @@ skipPruning:
 
             if (score > bestScore) {
                 bestScore = score;
+                ss->failHighCount++;
                 if (score > alpha) {
                     bestMove = currMove;
                     
