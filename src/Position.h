@@ -21,8 +21,8 @@ struct SStack;
 #define BADNOISYMOVE 16384LL
 
 constexpr Score pieceValues[15] = {
-    100, 422, 422, 642, 1015, 0, // White pieces
-    100, 422, 422, 642, 1015, 0, // Black pieces
+    100, 450, 450, 650, 1250, 0, // White pieces
+    100, 450, 450, 650, 1250, 0, // Black pieces
     0, 0, 0                      // Padding for special cases
 };
 
