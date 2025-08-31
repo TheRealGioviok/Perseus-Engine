@@ -177,7 +177,7 @@ TUNE_PARAM(lmrQuietTTPV, 980, 250, 2750, 125, 0.002)
 TUNE_PARAM(lmrBadNoisyCutNode, 648, 250, 2750, 125, 0.002);
 TUNE_PARAM(lmrNoisyHistoryDivisorA, 5192, 2000, 14000, 500, 0.002)
 TUNE_PARAM(lmrNoisyHistoryDivisorB, 6587, 2000, 14000, 500, 0.002)
-TUNE_PARAM(lmrFailedHighBonus, 384, 128, 2048, 128, 0.002)
+TUNE_PARAM(lmrFailedHighBonus, 1024, 128, 2048, 128, 0.002)
 
 // Deeper / shallower
 TUNE_PARAM(doDeeperMargin, 33, 10, 50, 2, 0.002)
