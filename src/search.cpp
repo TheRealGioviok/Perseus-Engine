@@ -582,7 +582,8 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
         if (!inCheck && moveCount && getScore(moveList.moves[i]) < GOODNOISYMOVE)
             break;
         // Futility pruning
-        if (!inCheck && futility <= alpha && !pos.SEE(move, 1)){
+        if (!inCheck && bestScore >= -mateValue && okToReduce(move) && futility <= alpha && !pos.SEE(move, 1))
+        {
             bestScore = std::max(bestScore, futility);
             continue;
         }
