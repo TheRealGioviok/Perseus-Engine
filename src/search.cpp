@@ -307,6 +307,7 @@ skipPruning:
             }
             else if (quietOrLosing) continue;
             const auto seeThresh = isQuiet
+
                 ? pvsSeeThresholdNoisy() * depth 
                 : pvsSeeThresholdQuiet() * depth * depth
             ;
@@ -335,6 +336,7 @@ skipPruning:
                     && (ttBound & hashLOWER) 
                     && abs(ttScore) < mateValue 
                     && ttDepth >= depth - 3
+                    && ply < currSearch * 2
                 ){
                     // Increase singular candidates
                     //++seCandidates;
@@ -436,6 +438,18 @@ skipPruning:
             if (PVNode && (!moveSearched || score > alpha))
                 score = -search(-beta, -alpha, newDepth, false, ss + 1);
             
+            // Dart extension: if tt move suggested not failing low and ttdepth is close to current depth and we failed low by a very small margin, try a 1 ply extension
+            if (i == 0
+                && (ttBound != hashUPPER)
+                && abs(ttScore) < mateValue
+                && ttDepth + 2 >= depth
+                && score < alpha
+                && score + std::clamp(10 - depth, 2, 10) >= alpha
+                && extension == 0
+                && ply < currSearch
+            ){
+                score = -search(-alpha - 1, -alpha, newDepth + 1, !cutNode, ss + 1);
+            }
             undo(undoer, currMove);
 
 
