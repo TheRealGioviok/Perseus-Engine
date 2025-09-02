@@ -443,6 +443,7 @@ skipPruning:
                 && (ttBound != hashUPPER)
                 && abs(ttScore) < mateValue
                 && ttDepth + 2 >= depth
+                && cutNode
                 && score < alpha
                 && score + std::clamp(10 - depth, 2, 10) >= alpha
                 && extension == 0
