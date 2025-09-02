@@ -440,7 +440,7 @@ skipPruning:
             
             // Dart extension: if tt move suggested not failing low and ttdepth is close to current depth and we failed low by a very small margin, try a 1 ply extension
             if (i == 0
-                && (ttBound != hashUPPER)
+                && (ttBound == hashLOWER)
                 && abs(ttScore) < mateValue
                 && ttDepth + 2 >= depth
                 && cutNode
