@@ -723,25 +723,22 @@ inline void Position::addPromotion(MoveList* ml, ScoredMove move){
 }
 
 inline void Position::addQuiet(MoveList *ml, ScoredMove move, Square source, Square target, Move killer1, Move killer2, Move counterMove, const S16 *ply1contHist, const S16 *ply2contHist, const S16 *ply4contHist) {
-    if (sameMovePos(move, killer1)){
-        ml->moves[ml->count++] = (KILLER1SCORE << 32) | move;
-        return;
-    }
-    else if (sameMovePos(move, killer2)){
-        ml->moves[ml->count++] = (KILLER2SCORE << 32) | move;
-        return;
-    }
-    else if (sameMovePos(move, counterMove)){
-        ml->moves[ml->count++] = (COUNTERSCORE << 32) | move;
-        return;
-    }
-    ml->moves[ml->count++] = ((
-        (S64)(historyTable[side][indexFromTo(source, target)][getThreatsIndexing(threats,move)])
+    S64 hh = (S64)(historyTable[side][indexFromTo(source, target)][getThreatsIndexing(threats,move)])
         + (S64)(ply1contHist ? ply1contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply2contHist ? ply2contHist[indexPieceTo(movePiece(move), target)] : 0)
         + (S64)(ply4contHist ? ply4contHist[indexPieceTo(movePiece(move), target)] : 0)
-        + QUIETSCORE
-    ) << 32) | move;
+        + QUIETSCORE;
+
+    if (sameMovePos(move, killer1)){
+        hh += KILLER1SCORE;
+    }
+    else if (sameMovePos(move, killer2)){
+        hh += KILLER2SCORE;
+    }
+    else if (sameMovePos(move, counterMove)){
+        hh += COUNTERSCORE;
+    }
+    ml->moves[ml->count++] = ((hh << 32) | move);
 }
 
 inline void Position::addUnsorted(MoveList* ml, ScoredMove move){
