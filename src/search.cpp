@@ -784,6 +784,8 @@ void Game::startSearch(bool ageTT = true)
         }
         // Check optim time quit
         if (getTime64() > startTime + optim * nodesTmScale) break;
+        // Check soft nodes limit
+        if (nodes > softNodesLimit) break;
     }
 
 bmove:

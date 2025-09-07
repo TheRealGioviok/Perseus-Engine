@@ -68,9 +68,10 @@ int goCommand(Game *game, char *command);
 /**
  * @brief The setOptionCommand function handles the setOption command
  * @param command The command string.
+ * @param game The game object.
  * @return The return value is the return value of the command.
  */
-int setOptionCommand(char* command);
+int setOptionCommand(char* command, Game* game);
 
 /**
  * @brief The inputWaiting function waits for input from the GUI. The code is based on the code from Code Monkey King's BBC chess engine which is based on the code from VICE by BlueFeverSoftware.

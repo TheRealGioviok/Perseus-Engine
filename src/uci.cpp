@@ -29,6 +29,7 @@ void uciStr() {
     std::cout << "id author " << "G.M. Manduca" << std::endl;
     std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
     std::cout << "option name Hash type spin default 64 min 8 max 33554432" << std::endl;
+    std::cout << "option name UseSoftNodes type check default false" << std::endl;
     
     for(const TunableParam& param : tunableParams())
         std::cout << "option name " << param.name << " type spin default " << param.defaultValue << " min " << param.minValue << " max " << param.maxValue << std::endl;
@@ -136,7 +137,7 @@ int executeCommand(Game* game, char* command) {
 	
 
     if (setOption){
-        setOptionCommand(command);
+        setOptionCommand(command, game);
         return 0;
     }
 
@@ -229,7 +230,7 @@ int executeCommand(Game* game, char* command) {
     return 0;
 }
 
-int setOptionCommand(char* command) {
+int setOptionCommand(char* command, Game* game) {
     // For now, we only have the stposHashDump command
     // Get option name
     char* optionNamec = command + 15;
@@ -254,8 +255,10 @@ int setOptionCommand(char* command) {
             return 0;
         }
     }
-
-    if (optionName == "stposHashDump") {
+    if (optionName == "UseSoftNodes") {
+        game->useSoftNodes = (arg == "true" || arg == "1");
+    }
+    else if (optionName == "stposHashDump") {
         // Set hashDumpFile to arg
         hashDumpFile = arg;
     }
@@ -390,10 +393,19 @@ int goCommand(Game* game, char* command){
     }
 
     if(nodes){
-        game->hardNodesLimit = atoll(nodes + 6);
+        if (game->useSoftNodes){
+            game->softNodesLimit = atoll(nodes + 6);
+            // Set hard limit to * 64 the soft limit
+            game->hardNodesLimit = game->softNodesLimit * 64;
+        }
+        else {
+            game->hardNodesLimit = atoll(nodes + 6);
+            game->softNodesLimit = 0xFFFFFFFFFFFFFFFF;
+        }
     }
     else {
         game->hardNodesLimit = 0xFFFFFFFFFFFFFFFF;
+        game->softNodesLimit = 0xFFFFFFFFFFFFFFFF;
     }
 
     game->startSearch(true);

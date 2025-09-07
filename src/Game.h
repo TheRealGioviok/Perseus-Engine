@@ -10,6 +10,7 @@ class Game {
 public:
     U64 nodes = 0;
     U64 hardNodesLimit = 0;
+    U64 softNodesLimit = 0;
     Ply ply;
     Position pos;
     Depth depth;
@@ -27,6 +28,7 @@ public:
     S16 nmpPlies = 0;
     bool stopped = false;
     U8 age = 0;
+    bool useSoftNodes = false;
 
     /**
      * @brief The print function prints the position to stdout.
