@@ -106,6 +106,11 @@ int main(int argc, char* argv[]){
             convertToFeatures(inputFilename, outputFilename);
             return 0;
         }
+        // Check if the first argument STARTS with "genfens"
+        else if (std::string(argv[1]).rfind("genfens", 0) == 0) {
+            handle_genfens(argv[1]);
+            return 0;
+        }
     }
     uciLoop(&game);
     return 0;

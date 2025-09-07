@@ -73,6 +73,8 @@ int goCommand(Game *game, char *command);
  */
 int setOptionCommand(char* command, Game* game);
 
+void handle_genfens(char* command);
+
 /**
  * @brief The inputWaiting function waits for input from the GUI. The code is based on the code from Code Monkey King's BBC chess engine which is based on the code from VICE by BlueFeverSoftware.
  * @return The return value is the length of the input string (0 means no input).

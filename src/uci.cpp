@@ -10,6 +10,10 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <algorithm>
+#include <unordered_set>
 
 bool quit = false;
 int movesToGo = -1; // UCI parameter for the moves until the next time control.
@@ -77,6 +81,7 @@ int executeCommand(Game* game, char* command) {
     char* flip = strstr((char*)command, "flip");
     char* bench = strstr((char*)command, "bench");
     char* extract = strstr((char*)command, "extract");
+    char* genfens = strstr((char*)command, "genfens");
     if (tuneStr){
         for(const TunableParam& param : tunableParams())
             std::cout  << param.name << ", int, " << param.defaultValue << ", " << param.minValue << ", " << param.maxValue << ", " << param.cEnd << ", " << param.rEnd << std::endl;
@@ -227,6 +232,10 @@ int executeCommand(Game* game, char* command) {
     convertToFeatures(inputFilename.c_str(), outputFilename.c_str());
 }
 
+if(genfens) {
+    handle_genfens(command);
+}
+
     return 0;
 }
 
@@ -324,6 +333,111 @@ int positionCommand(Game *game, char* command){
     }
 
     return 0;
+}
+
+void handle_genfens(char* command)
+{
+    std::istringstream is(command + 8); // Skip "genfens "
+    S32 N = 0;
+    U64 seed = 0;
+    bool seed_provided = false;
+    std::string book = "None";
+    std::string token;
+
+    // Parse arguments
+    if (!(is >> N) || N <= 0)
+    {
+        std::cout << "Invalid or missing number of positions (N)." << std::endl;
+        return;
+    }
+
+    while (is >> token)
+    {
+        if (token == "seed")
+        {
+            if (!(is >> seed))
+            {
+                std::cout << "Invalid seed value." << std::endl;
+                return;
+            }
+            seed_provided = true;
+        }
+        else if (token == "book")
+        {
+            if (!(is >> book))
+            {
+                std::cout << "Missing book filename after 'book'." << std::endl;
+                return;
+            }
+        }
+        else
+        {
+            std::cout << "Invalid genfens argument: " << token << std::endl;
+            return;
+        }
+    }
+
+    // Require book file
+    if (book == "None")
+    {
+        std::cout << "Please specify a book file using 'book <filename>'." << std::endl;
+        return;
+    }
+
+    // Set RNG state
+    if (!seed_provided)
+    {
+        std::cout << "Seed not provided. Defaulting to 0." << std::endl;
+    }
+
+    state = seed;
+
+    // Open the book file
+    std::ifstream file(book);
+    if (!file)
+    {
+        std::cout << "Could not open file: " << book << std::endl;
+        return;
+    }
+
+    // Load all lines
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (!line.empty())
+        {
+            lines.push_back(line);
+        }
+    }
+
+    // Safety checks
+    if (lines.empty())
+    {
+        std::cout << "Book file is empty." << std::endl;
+        return;
+    }
+
+    if (N > static_cast<int>(lines.size()))
+    {
+        std::cout << "Requested " << N << " positions, but only " << lines.size() << " available."
+                  << std::endl;
+        return;
+    }
+
+    // Pick N unique random indices
+    std::unordered_set<size_t> selected_indices;
+    while (selected_indices.size() < static_cast<size_t>(N))
+    {
+        U64 rand_val = getRandom64();
+        selected_indices.insert(rand_val % lines.size());
+    }
+
+    // Output the selected FENs
+    for (size_t idx : selected_indices)
+    {
+        std::cout << "info string genfens " << lines[idx] << std::endl;
+    }
 }
 
 int goCommand(Game* game, char* command){
