@@ -431,28 +431,38 @@ void handle_genfens(char* command)
 
     while (generated < N)
     {
+reset:
         // Pick a random line
         std::string fen = lines[getRandom64() % lines.size()];
         game.reset();
         game.parseFEN((char*)fen.c_str());
 
         int movesPlayed = 0;
-        int maxMoves = 8; // Avoid infinite loops
+        int maxMoves = 8 * 2; // Avoid infinite loops
 
-        while (movesPlayed < maxMoves)
+        while (movesPlayed < maxMoves || (game.pos.inCheck() && movesPlayed < maxMoves + 4))
         {
             MoveList moveList;
             UndoInfo undoer = UndoInfo(game.pos);
             game.pos.generateUnsortedMoves(moveList);
+            S32 tries = 0;
             while (true){
+                tries++;
                 S32 randomIndex = getRandom64() % moveList.count;
                 Move move = moveList.moves[randomIndex];
                 if (game.makeMove(move))
                     break; 
                 else
                     undoer.undoMove(game.pos, move);
+                if (tries > 35) // If we tried 35 times, we probably have no legal moves
+                    goto reset;
             }
             movesPlayed++;
+            if (movesPlayed == maxMoves + 4 && game.pos.inCheck())
+            {
+                // We are in check after maxMoves + 4 moves. This is probably a forced mate, so we discard the position
+                goto reset;
+            }
         }
         // Verify the position
         game.nodes = 0;
