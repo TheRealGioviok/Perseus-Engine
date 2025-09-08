@@ -377,12 +377,6 @@ void handle_genfens(char* command)
         }
     }
 
-    // Require book file
-    if (book == "None")
-    {
-        std::cout << "Please specify a book file using 'book <filename>'." << std::endl;
-        return;
-    }
 
     // Set RNG state
     if (!seed_provided)
@@ -391,53 +385,89 @@ void handle_genfens(char* command)
     }
 
     state = seed;
-
-    // Open the book file
-    std::ifstream file(book);
-    if (!file)
-    {
-        std::cout << "Could not open file: " << book << std::endl;
-        return;
-    }
-
-    // Load all lines
     std::vector<std::string> lines;
     std::string line;
-    while (std::getline(file, line))
+    if (book != "None")
     {
-        if (!line.empty())
+            std::cout << "Using book file: " << book << std::endl;
+        
+        // Open the book file
+        std::ifstream file(book);
+        if (!file)
         {
-            lines.push_back(line);
+            std::cout << "Could not open file: " << book << std::endl;
+            return;
+        }
+
+        // Load all lines
+        while (std::getline(file, line))
+        {
+            if (!line.empty())
+            {
+                lines.push_back(line);
+            }
+        }
+
+        if (lines.empty())
+        {
+            std::cout << "Book file is empty." << std::endl;
+            return;
+        }
+        file.close();
+    }
+    else {
+        // Add startpositions to lines
+        lines.push_back(startPosition);
+    }
+
+    // Line generation is as follows:
+    // 1) Pick a random line from the book (or startposition if no book)
+    // 2) Play random legal moves (see passing noisy or quiet moves) 
+    // Launch a depth 12 verification search to make sure the position doesn't lose immediately
+    // 3) If the position is legal, print it
+
+    Game game;
+    int generated = 0;
+
+    while (generated < N)
+    {
+        // Pick a random line
+        std::string fen = lines[getRandom64() % lines.size()];
+        game.reset();
+        game.parseFEN((char*)fen.c_str());
+
+        int movesPlayed = 0;
+        int maxMoves = 8; // Avoid infinite loops
+
+        while (movesPlayed < maxMoves)
+        {
+            MoveList moveList;
+            UndoInfo undoer = UndoInfo(game.pos);
+            game.pos.generateUnsortedMoves(moveList);
+            while (true){
+                S32 randomIndex = getRandom64() % moveList.count;
+                Move move = moveList.moves[randomIndex];
+                if (game.makeMove(move))
+                    break; 
+                else
+                    undoer.undoMove(game.pos, move);
+            }
+            movesPlayed++;
+        }
+        // Verify the position
+        game.nodes = 0;
+        game.searchMode = 1; // Depth mode
+        game.depth = 12;
+        game.stopped = false;
+        game.hardNodesLimit = 10000000; // 10 million nodes should be enough
+        game.softNodesLimit = 0xFFFFFFFFFFFFFFFF;
+        Score score = game.startSearch(false, true);
+        if (abs(score) < 300) {
+            std::cout << "info string genfens " << game.pos.getFEN() << std::endl;
+            generated++;
         }
     }
 
-    // Safety checks
-    if (lines.empty())
-    {
-        std::cout << "Book file is empty." << std::endl;
-        return;
-    }
-
-    if (N > static_cast<int>(lines.size()))
-    {
-        std::cout << "Requested " << N << " positions, but only " << lines.size() << " available."
-                  << std::endl;
-        return;
-    }
-
-    // Pick N unique random indices
-    std::unordered_set<size_t> selected_indices;
-    while (selected_indices.size() < static_cast<size_t>(N))
-    {
-        U64 rand_val = getRandom64();
-        selected_indices.insert(rand_val % lines.size());
-    }
-
-    // Output the selected FENs
-    for (size_t idx : selected_indices)
-    {
-        std::cout << "info string genfens " << lines[idx] << std::endl;
-    }
 }
 
 int goCommand(Game* game, char* command){

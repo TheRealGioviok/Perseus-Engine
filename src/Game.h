@@ -163,7 +163,7 @@ public:
      * @brief The startSearch function starts the search. It uses the internal parameters set by the GUI.
      * @param ageTT If true, the game age will be increased by one at the start of the search, making previous entries old.
      */
-    void startSearch(bool ageTT);
+    Score startSearch(bool ageTT, bool silent = false);
 
     /**
      * @brief The contempt function returns the contempt score. The contempt score is used to assign a non-zero score to draw positions, depending on the optimism of the engine.

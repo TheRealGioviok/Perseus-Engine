@@ -947,6 +947,10 @@ std::string Position::getFEN() {
     else {
         fen += "- ";
     }
+
+    fen += std::to_string(fiftyMove) + " ";
+    fen += std::to_string((totalPly + 1) / 2);
+    
     return fen;
 }
 
