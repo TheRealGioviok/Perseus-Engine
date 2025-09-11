@@ -559,8 +559,12 @@ Score Game::quiescence(Score alpha, Score beta, SStack *ss)
         writeTT(pos.hashKey, noScore, rawEval, 0, hashNONE, 0, ply, PVNode, ttPv, age);
     }
 
-    if (bestScore >= beta)
+    if (bestScore >= beta) {
+        if (!ttHit) {
+            writeTT(pos.hashKey, bestScore, rawEval, 0, hashLOWER, 0, ply, PVNode, ttPv, age);
+        }
         return bestScore;
+    }
     alpha = std::max(alpha, bestScore);
 
     // Generate moves
