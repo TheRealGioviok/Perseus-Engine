@@ -162,6 +162,8 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
     // Quiescence drop
     if (depth <= 0) return quiescence(alpha, beta, ss);
 
+    bool ttCorrectedEval = false;
+
     UndoInfo undoer = UndoInfo(pos);
 
     if (!excludedMove){
@@ -184,8 +186,11 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
         eval = ss->staticEval = correctStaticEval<true>(pos, rawEval);
         // Also, we might be able to use the score as a better eval
         if (ttScore != noScore && (ttBound == hashEXACT || (ttBound == hashUPPER && ttScore < eval) || (ttBound == hashLOWER && ttScore > eval)))
-            eval = ttScore;
-    }
+            {
+                eval = ttScore;
+                ttCorrectedEval = true;
+            }
+            }
     else if (excludedMove){
         rawEval = eval = ss->staticEval; // We already have the eval from the main search in the current ss entry
         improvement = 0;
@@ -218,7 +223,7 @@ Score Game::search(Score alpha, Score beta, Depth depth, bool cutNode, SStack *s
             return eval;
         
         // Razoring
-        if (depth <= razorDepth() && abs(eval) < mateValue && eval + razorQ1() + depth * razorQ2() < alpha && alpha < KNOWNWIN)
+        if (depth <= razorDepth() && abs(eval) < mateValue && eval + razorQ1() + std::max(1,(depth - ttCorrectedEval * ttDepth)) * razorQ2() < alpha && alpha < KNOWNWIN)
         {
             const Score razorScore = quiescence(alpha, beta, ss);
             if (razorScore <= alpha) return razorScore;
