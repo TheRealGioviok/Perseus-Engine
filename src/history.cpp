@@ -45,6 +45,15 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
     }
 }
 
+S16 getContHistScore(const S16* ply1contHist, const S16* ply2contHist, const S16* ply4contHist, Move move) {
+    S32 score = 0;
+    size_t index = indexPieceTo(movePiece(move), moveTarget(move));
+    if (ply1contHist) score += ply1contHist[index];
+    if (ply2contHist) score += ply2contHist[index];
+    if (ply4contHist) score += ply4contHist[index];
+    return score;
+}
+
 static inline void updateSingleCorrHist(S32& entry, const S32 bonus, const S32 weight){
     const S32 MAXCORRHIST = CORRHISTSCALE * MAXCORRHISTUNSCALED();
     const S32 MAXCORRHISTUPDATE = MAXCORRHIST * MAXCORRHISTMILLIUPDATE() / CORRECTIONGRANULARITY;
