@@ -354,9 +354,9 @@ skipPruning:
                         // Increase singular activations
                         // ++seActivations;
                     }
-                    else if (singularBeta >= beta){ // Multicut
+                    else if (singularScore >= beta){ // Multicut
                         undo(undoer, currMove);
-                        return singularBeta;
+                        return singularScore;
                     }
                     else if (ttScore >= beta){
                         extension -= 1 + !PVNode;
