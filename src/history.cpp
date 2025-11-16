@@ -45,7 +45,7 @@ void updateHH(SStack* ss, bool side, BitBoard threats, Depth depth, Move bestMov
     }
 }
 
-S16 getContHistScore(const S16* ply1contHist, const S16* ply2contHist, const S16* ply4contHist, Move move) {
+S32 getContHistScore(const S16* ply1contHist, const S16* ply2contHist, const S16* ply4contHist, Move move) {
     S32 score = 0;
     size_t index = indexPieceTo(movePiece(move), moveTarget(move));
     if (ply1contHist) score += ply1contHist[index];

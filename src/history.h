@@ -116,7 +116,7 @@ Score correctStaticEval(Position& pos, Score eval) {
 }
 
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth);
-S16 getContHistScore(const S16* ply1contHist, const S16* ply2contHist, const S16* ply4contHist, Move move);
+S32 getContHistScore(const S16* ply1contHist, const S16* ply2contHist, const S16* ply4contHist, Move move);
 
 static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
     S16 *current = &historyTable[side][indexFromTo(moveSource(move), moveTarget(move))][getThreatsIndexing(threats, move)];
