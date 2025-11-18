@@ -878,11 +878,11 @@ Score pestoEval(Position *pos){
     score += BISHOPONINTOUTPOST * intBishopOutpostDiff;
 
     // Add bonus for bishop-pawn concordance
-    const Score bishopPawnsDiff =
-        popcount(bb[B] & squaresOfColor[WHITE]) * BISHOPPAWNS[popcount(squaresOfColor[WHITE] & bb[P])] * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B])) -
-        popcount(bb[b] & squaresOfColor[WHITE]) * BISHOPPAWNS[popcount(squaresOfColor[WHITE] & bb[p])] * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[WHITE] & bb[b])) +
-        popcount(bb[B] & squaresOfColor[BLACK]) * BISHOPPAWNS[popcount(squaresOfColor[BLACK] & bb[P])] * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[BLACK] & bb[B])) -
-        popcount(bb[b] & squaresOfColor[BLACK]) * BISHOPPAWNS[popcount(squaresOfColor[BLACK] & bb[p])] * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[BLACK] & bb[b]));
+    const PScore bishopPawnsDiff =
+        BISHOPPAWNS[popcount(squaresOfColor[WHITE] & bb[P])] * (popcount(bb[B] & squaresOfColor[WHITE]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B]))) -
+        BISHOPPAWNS[popcount(squaresOfColor[WHITE] & bb[p])] * (popcount(bb[b] & squaresOfColor[WHITE]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[WHITE] & bb[b]))) +
+        BISHOPPAWNS[popcount(squaresOfColor[BLACK] & bb[P])] * (popcount(bb[B] & squaresOfColor[BLACK]) *  (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[BLACK] & bb[B]))) -
+        BISHOPPAWNS[popcount(squaresOfColor[BLACK] & bb[p])] * (popcount(bb[b] & squaresOfColor[BLACK]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[BLACK] & bb[b])));
 
     score += bishopPawnsDiff;
 
