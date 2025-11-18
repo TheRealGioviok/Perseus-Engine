@@ -74,7 +74,7 @@ constexpr PScore KNIGHTONINTOUTPOST = S(22, 38);
 constexpr PScore BISHOPONINTOUTPOST = S(33, -6);
 constexpr PScore KNIGHTPROTECTOR = S(-6, -2);
 constexpr PScore BISHOPPROTECTOR = S(-5, -1);
-constexpr PScore BISHOPPAWNS = S(0, -7);
+constexpr PScore BISHOPPAWNS[9] = {S(0,0), S(0,0), S(0,0), S(0,0), S(0,0), S(0,0), S(0,0), S(0,0), S(0,0)};
 constexpr PScore THREATSAFEPAWN = S(46, -41);
 constexpr PScore THREATPAWNPUSH = S(20, 38);
 constexpr PScore PAWNHANGING = S(-1, -53);
@@ -879,12 +879,12 @@ Score pestoEval(Position *pos){
 
     // Add bonus for bishop-pawn concordance
     const Score bishopPawnsDiff =
-        popcount(bb[B] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B])) -
-        popcount(bb[b] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[p]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[WHITE] & bb[b])) +
-        popcount(bb[B] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[BLACK] & bb[B])) -
-        popcount(bb[b] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[p]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[BLACK] & bb[b])) ;
-    
-    score += BISHOPPAWNS * bishopPawnsDiff;
+        popcount(bb[B] & squaresOfColor[WHITE]) * BISHOPPAWNS[popcount(squaresOfColor[WHITE] & bb[P])] * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B])) -
+        popcount(bb[b] & squaresOfColor[WHITE]) * BISHOPPAWNS[popcount(squaresOfColor[WHITE] & bb[p])] * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[WHITE] & bb[b])) +
+        popcount(bb[B] & squaresOfColor[BLACK]) * BISHOPPAWNS[popcount(squaresOfColor[BLACK] & bb[P])] * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[BLACK] & bb[B])) -
+        popcount(bb[b] & squaresOfColor[BLACK]) * BISHOPPAWNS[popcount(squaresOfColor[BLACK] & bb[p])] * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[BLACK] & bb[b]));
+
+    score += bishopPawnsDiff;
 
     // Threats
     const BitBoard threatSafePawns[2] = {
@@ -1169,7 +1169,9 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(BISHOPPROTECTOR.mg());
 
     // Now, bishop pawns
-    weights.push_back(BISHOPPAWNS.mg());
+    for (U8 i = 0; i <= 8; i++){
+        weights.push_back(BISHOPPAWNS[i].mg());
+    }
 
     // Now, threats
     weights.push_back(THREATSAFEPAWN.mg());
@@ -1259,7 +1261,9 @@ std::vector<Score> getCurrentEvalWeights(){
     weights.push_back(BISHOPPROTECTOR.eg());
 
     // Now, bishop pawns
-    weights.push_back(BISHOPPAWNS.eg());
+    for (U8 i = 0; i <= 8; i++){
+        weights.push_back(BISHOPPAWNS[i].eg());
+    }
 
     // Now, threats
     weights.push_back(THREATSAFEPAWN.eg());
@@ -1576,15 +1580,12 @@ void getEvalFeaturesTensor(Position *pos, S8* tensor){
     tensor += 2;
 
     // Add bonus for bishop-pawn concordance (technically broken in two same colored bishop cases, but kek)
-    Score bishopPawnsDiff =
-        popcount(bb[B] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B])) -
-        popcount(bb[b] & squaresOfColor[WHITE]) * popcount(squaresOfColor[WHITE] & bb[p]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[WHITE] & bb[b])) +
-        popcount(bb[B] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[P]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[BLACK] & bb[B])) -
-        popcount(bb[b] & squaresOfColor[BLACK]) * popcount(squaresOfColor[BLACK] & bb[p]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[BLACK] & bb[b])) ;
+    tensor[popcount(squaresOfColor[WHITE] & bb[P])] += popcount(bb[B] & squaresOfColor[WHITE]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[WHITE] & bb[B]));
+    tensor[popcount(squaresOfColor[WHITE] & bb[p])] -= popcount(bb[b] & squaresOfColor[WHITE]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[WHITE] & bb[b]));
+    tensor[popcount(squaresOfColor[BLACK] & bb[P])] += popcount(bb[B] & squaresOfColor[BLACK]) * (popcount(blockedPawns[WHITE] & centralFiles) + !(pawnAttackedSquares[WHITE] & squaresOfColor[BLACK] & bb[B]));
+    tensor[popcount(squaresOfColor[BLACK] & bb[p])] -= popcount(bb[b] & squaresOfColor[BLACK]) * (popcount(blockedPawns[BLACK] & centralFiles) + !(pawnAttackedSquares[BLACK] & squaresOfColor[BLACK] & bb[b]));
     
-    tensor[0] += bishopPawnsDiff;
-
-    tensor++;
+    tensor += 9;
 
     // Threats
     BitBoard threatSafePawns[2] = {
