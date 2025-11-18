@@ -46,100 +46,97 @@ void initTables() {
     }
 }
 
-constexpr PScore DOUBLEISOLATEDPEN = S(-16, -36);
+constexpr PScore DOUBLEISOLATEDPEN = S(-17, -36);
 constexpr PScore ISOLATEDPEN = S(-18, -20);
-constexpr PScore BACKWARDPEN = S(-6, 8);
-constexpr PScore DOUBLEDPEN = S(-18, -21);
-constexpr PScore SUPPORTEDPHALANX = S(3, 9);
+constexpr PScore BACKWARDPEN = S(-7, 8);
+constexpr PScore DOUBLEDPEN = S(-17, -20);
+constexpr PScore SUPPORTEDPHALANX = S(3, 10);
 constexpr PScore ADVANCABLEPHALANX = S(5, 8);
 constexpr PScore R_SUPPORTEDPHALANX = S(3, 0);
 constexpr PScore R_ADVANCABLEPHALANX = S(3, 0);
 constexpr PScore passedRankBonus[2][7] = {
-    {S(0, 0), S(13, -66), S(-2, -43), S(1, 10), S(20, 67), S(43, 160), S(118, 232)},
-    {S(0, 0), S(0, 0), S(11, -58), S(12, -2), S(53, 68), S(152, 187), S(395, 260)}};
+    {S(0, 0), S(13, -66), S(-2, -43), S(1, 10), S(19, 67), S(43, 159), S(118, 233)}, 
+    {S(0, 0), S(0, 0), S(12, -57), S(12, -2), S(53, 68), S(151, 188), S(395, 260)}
+};
 constexpr PScore PASSEDPATHBONUS = S(-6, 23);
 constexpr PScore candidateRankBonus[2][7] = {
-    {S(0, 0), S(-35, 6), S(-24, 23), S(-11, 59), S(1, 127), S(30, 103), S(0, 0)},
-    {S(0, 0), S(0, 0), S(-6, 34), S(1, 67), S(42, 143), S(118, 170), S(0, 0)}};
-constexpr PScore INNERSHELTER = S(2, 4);
+    {S(0, 0), S(-36, 6), S(-25, 23), S(-11, 60), S(2, 127), S(30, 103), S(0, 0)}, 
+    {S(0, 0), S(0, 0), S(-7, 34), S(1, 67), S(42, 143), S(118, 170), S(0, 0)}
+};
+constexpr PScore INNERSHELTER = S(3, 4);
 constexpr PScore OUTERSHELTER = S(13, 16);
-constexpr PScore BISHOPPAIR = S(19, 117);
+constexpr PScore BISHOPPAIR = S(19, 116);
 constexpr PScore ROOKONOPENFILE = S(20, 9);
-constexpr PScore ROOKONSEMIOPENFILE = S(23, 9);
-constexpr PScore KNIGHTONEXTOUTPOST = S(30, 38);
-constexpr PScore BISHOPONEXTOUTPOST = S(38, 2);
+constexpr PScore ROOKONSEMIOPENFILE = S(22, 9);
+constexpr PScore KNIGHTONEXTOUTPOST = S(31, 39);
+constexpr PScore BISHOPONEXTOUTPOST = S(38, 3);
 constexpr PScore KNIGHTONINTOUTPOST = S(22, 41);
-constexpr PScore BISHOPONINTOUTPOST = S(33, -5);
+constexpr PScore BISHOPONINTOUTPOST = S(32, -5);
 constexpr PScore KNIGHTPROTECTOR = S(-6, -3);
 constexpr PScore BISHOPPROTECTOR = S(-4, -2);
-constexpr PScore BISHOPPAWNS[9] = {
-    S(-1, -5),
-    S(-2, -9),
-    S(-1, -18),
-    S(-2, -25),
-    S(-2, -30),
-    S(-3, -35),
-    S(-3, -39),
-    S(-2, -39),
-    S(-3, -48),
-};
-constexpr PScore THREATSAFEPAWN = S(46, -40);
+constexpr PScore BISHOPPAWNS[9] = {S(-1, -5), S(-1, -9), S(-1, -18), S(-1, -25), S(-2, -30), S(-2, -35), S(-3, -39), S(-2, -40), S(-3, -49), };
+constexpr PScore THREATSAFEPAWN = S(46, -41);
 constexpr PScore THREATPAWNPUSH = S(20, 38);
-constexpr PScore PAWNHANGING = S(-1, -54);
+constexpr PScore PAWNHANGING = S(0, -54);
 constexpr PScore NONPAWNHANGING = S(-9, -39);
 constexpr PScore PAWNTHREAT[2][5] = {
-    {S(12, -67), S(31, 78), S(26, 115), S(27, 40), S(9, 26)},
-    {S(6, -26), S(12, 126), S(12, 163), S(24, 91), S(16, 84)}};
+    {S(12, -68), S(30, 78), S(26, 115), S(27, 40), S(9, 26)}, 
+    {S(6, -26), S(12, 126), S(13, 164), S(23, 91), S(16, 84)}
+};
 constexpr PScore KNIGHTTHREAT[2][5] = {
-    {S(6, 18), S(0, -37), S(24, 19), S(58, -11), S(41, 15)},
-    {S(-7, 7), S(2, 13), S(26, 71), S(53, 61), S(44, 45)}};
+    {S(7, 18), S(0, -36), S(24, 19), S(59, -11), S(40, 15)}, 
+    {S(-7, 7), S(2, 12), S(26, 71), S(53, 61), S(44, 45)}
+};
 constexpr PScore BISHOPTHREAT[2][5] = {
-    {S(11, 16), S(32, 22), S(-12, -41), S(56, -7), S(54, 22)},
-    {S(1, 7), S(33, 69), S(-7, 9), S(50, 67), S(50, 67)}};
+    {S(12, 17), S(32, 22), S(-12, -41), S(57, -7), S(53, 21)}, 
+    {S(0, 7), S(33, 69), S(-7, 9), S(51, 67), S(50, 67)}
+};
 constexpr PScore ROOKTHREAT[2][5] = {
-    {S(3, 19), S(10, 48), S(21, 38), S(-11, -54), S(60, -16)},
-    {S(-10, 5), S(1, 25), S(6, 22), S(-3, -2), S(45, 37)}};
+    {S(4, 18), S(11, 49), S(21, 38), S(-12, -54), S(60, -16)}, 
+    {S(-10, 5), S(1, 25), S(6, 22), S(-3, -2), S(45, 36)}
+};
 constexpr PScore QUEENTHREAT[2][5] = {
-    {S(12, -1), S(25, -2), S(25, 27), S(-3, -19), S(5, -145)},
-    {S(-2, 8), S(6, 0), S(5, 15), S(0, 7), S(12, -123)}};
+    {S(11, -2), S(25, -1), S(25, 27), S(-4, -19), S(5, -145)}, 
+    {S(-2, 9), S(6, 0), S(5, 15), S(0, 6), S(11, -124)}
+};
 constexpr PScore KINGTHREAT = S(-6, -5);
-constexpr PScore QUEENINFILTRATION = S(7, 8);
+constexpr PScore QUEENINFILTRATION = S(6, 7);
 constexpr PScore INVASIONSQUARES = S(7, 6);
-constexpr PScore RESTRICTEDSQUARES = S(4, 5);
+constexpr PScore RESTRICTEDSQUARES = S(4, 4);
 constexpr PScore TEMPO = S(20, 33);
 
-constexpr PScore PAWNATTACKINNERRING = S(37, -46);
-constexpr PScore KNIGHTATTACKINNERRING = S(75, 43);
-constexpr PScore BISHOPATTACKINNERRING = S(111, 84);
-constexpr PScore ROOKATTACKINNERRING = S(110, 109);
-constexpr PScore QUEENATTACKINNERRING = S(51, -79);
-constexpr PScore PAWNATTACKOUTERRING = S(60, 23);
-constexpr PScore KNIGHTATTACKOUTERRING = S(87, 13);
-constexpr PScore BISHOPATTACKOUTERRING = S(92, -17);
-constexpr PScore ROOKATTACKOUTERRING = S(33, 9);
-constexpr PScore QUEENATTACKOUTERRING = S(69, 164);
-constexpr PScore NOQUEENDANGER = S(-848, 372);
-constexpr PScore PINNEDSHELTERDANGER = S(102, -174);
-constexpr PScore FLANKATTACKS[2] = {S(24, -31), S(32, -6), };
-constexpr PScore FLANKDEFENSES[2] = {S(-33, 35), S(-6, 16), };
-constexpr PScore SAFECHECK[4] = {S(313, -50), S(96, -13), S(234, 110), S(236, -96), };
-constexpr PScore ALLCHECKS[4] = {S(76, 2), S(28, 157), S(72, 36), S(15, 114), };
-constexpr PScore SAFETYINNERSHELTER = S(-49, 188);
-constexpr PScore SAFETYOUTERSHELTER = S(-3, 284);
-constexpr PScore INNERWEAKNESS = S(109, -126);
-constexpr PScore OUTERWEAKNESS = S(18, 1);
-constexpr PScore KSTEMPO = S(30, -22);
+constexpr PScore PAWNATTACKINNERRING = S(39, -51);
+constexpr PScore KNIGHTATTACKINNERRING = S(77, 48);
+constexpr PScore BISHOPATTACKINNERRING = S(110, 96);
+constexpr PScore ROOKATTACKINNERRING = S(108, 124);
+constexpr PScore QUEENATTACKINNERRING = S(52, -87);
+constexpr PScore PAWNATTACKOUTERRING = S(60, 27);
+constexpr PScore KNIGHTATTACKOUTERRING = S(88, 14);
+constexpr PScore BISHOPATTACKOUTERRING = S(92, -18);
+constexpr PScore ROOKATTACKOUTERRING = S(33, 12);
+constexpr PScore QUEENATTACKOUTERRING = S(71, 191);
+constexpr PScore NOQUEENDANGER = S(-849, 422);
+constexpr PScore PINNEDSHELTERDANGER = S(109, -194);
+constexpr PScore FLANKATTACKS[2] = {S(24, -33), S(32, -5), };
+constexpr PScore FLANKDEFENSES[2] = {S(-33, 38), S(-4, 21), };
+constexpr PScore SAFECHECK[4] = {S(314, -61), S(97, -19), S(228, 122), S(234, -114), };
+constexpr PScore ALLCHECKS[4] = {S(78, -1), S(28, 173), S(72, 43), S(15, 131), };
+constexpr PScore SAFETYINNERSHELTER = S(-48, 216);
+constexpr PScore SAFETYOUTERSHELTER = S(-3, 327);
+constexpr PScore INNERWEAKNESS = S(107, -141);
+constexpr PScore OUTERWEAKNESS = S(16, 4);
+constexpr PScore KSTEMPO = S(28, -24);
 
-constexpr Score COMPLEXITYPASSERS = 491;
-constexpr Score COMPLEXITYPAWNS = 1146;
-constexpr Score COMPLEXITYBLOCKEDPAIRS = -355;
-constexpr Score COMPLEXITYPAWNTENSION = -701;
-constexpr Score COMPLEXITYOUTFLANKING = -37;
-constexpr Score COMPLEXITYINFILTRATION = -578;
-constexpr Score COMPLEXITYPAWNBOTHFLANKS = 10221;
-constexpr Score COMPLEXITYPAWNENDING = 13613;
-constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3267;
-constexpr Score COMPLEXITYBIAS = -21672;
+constexpr Score COMPLEXITYPASSERS = 484;
+constexpr Score COMPLEXITYPAWNS = 1151;
+constexpr Score COMPLEXITYBLOCKEDPAIRS = -367;
+constexpr Score COMPLEXITYPAWNTENSION = -723;
+constexpr Score COMPLEXITYOUTFLANKING = -36;
+constexpr Score COMPLEXITYINFILTRATION = -664;
+constexpr Score COMPLEXITYPAWNBOTHFLANKS = 10236;
+constexpr Score COMPLEXITYPAWNENDING = 13611;
+constexpr Score COMPLEXITYALMOSTUNWINNABLE = -3290;
+constexpr Score COMPLEXITYBIAS = -21675;
 
 // Function to access the table values
 static inline S32 getKingSafetyFromTable(const std::array<int, KSTABLESIZE>& table, int x) {
