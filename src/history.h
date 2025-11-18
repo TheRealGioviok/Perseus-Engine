@@ -116,6 +116,7 @@ Score correctStaticEval(Position& pos, Score eval) {
 }
 
 void updateCorrHist(Position& pos, const Score bonus, const Depth depth);
+S32 getContHistScore(const S16* ply1contHist, const S16* ply2contHist, const S16* ply4contHist, Move move);
 
 static inline void updateHistoryMove(const bool side, const BitBoard threats, const Move move, const S32 delta) {
     S16 *current = &historyTable[side][indexFromTo(moveSource(move), moveTarget(move))][getThreatsIndexing(threats, move)];
@@ -128,13 +129,25 @@ static inline void updateCaptureHistory(Move move, const BitBoard threats, S32 d
     *current += delta - *current * abs(delta) / MAXHISTORYABS;
 }
 
-static inline void updateContHistOffset(SStack* ss, const Move move, const S32 delta, const S32 offset){
-    S16 *current = &(ss - offset)->contHistEntry[indexPieceTo(movePiece(move), moveTarget(move))];
-    *current += delta - *current * abs(delta) / MAXHISTORYABS;
+static inline void updateSingleContHist(SStack* ss, const Move move, S32 base, S32 delta){
+    S16 *current = &ss->contHistEntry[indexPieceTo(movePiece(move), moveTarget(move))];
+    base = (3 * (*current) + base) / 4; 
+    S16 newValue = *current + delta - base * abs(delta) / MAXHISTORYABS;
+    *current = std::clamp(newValue, static_cast<S16>(-MAXHISTORYABS), static_cast<S16>(MAXHISTORYABS));
 }
 
 static inline void updateContHist(SStack* ss, const Move move, const S32 delta){
-    updateContHistOffset(ss, move, delta, 1);
-    updateContHistOffset(ss, move, delta, 2);
-    updateContHistOffset(ss, move, delta, 4);
+    S32 conthist = getContHistScore((ss-1)->move ? (ss - 1)->contHistEntry : nullptr,
+                                   (ss-2)->move ? (ss - 2)->contHistEntry : nullptr,
+                                   (ss-4)->move ? (ss - 4)->contHistEntry : nullptr,
+                                   move);
+    if ((ss-1)->move) {
+        updateSingleContHist(ss - 1, move, conthist, delta);
+    }
+    if ((ss-2)->move) {
+        updateSingleContHist(ss - 2, move, conthist, delta);
+    }
+    if ((ss-4)->move) {
+        updateSingleContHist(ss - 4, move, conthist, delta);
+    }
 }
